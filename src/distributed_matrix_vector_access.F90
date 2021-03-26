@@ -187,6 +187,8 @@ MODULE DistributedMatrixVectorAccessRoutines
 
   PUBLIC DistributedMatrix_SymmetryTypeGet
 
+  PUBLIC DistributedMatrix_TotalNumberOfLocalRowsGet
+  
   PUBLIC DistributedMatrix_TransposeTypeGet
 
   PUBLIC DistributedMatrixCMISS_DistributedMatrixGet
@@ -1053,6 +1055,38 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DistributedMatrix_SymmetryTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the total number of local rows in a distributed matrix.
+  SUBROUTINE DistributedMatrix_TotalNumberOfLocalRowsGet(distributedMatrix,totalNumberOfLocalRows,err,error,*)
+
+    !Argument variables
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfLocalRows !<On return, the total number of local rows in the matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DomainMappingType), POINTER :: rowMapping
+
+    ENTERS("DistributedMatrix_TotalNumberOfLocalRowsGet",err,error,*999)
+
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+#ifdef WITH_PRECHECKS    
+    rowMapping=>distributedMatrix%rowDomainMapping
+    IF(.NOT.ASSOCIATED(rowMapping)) CALL FlagError("Row mapping is not associated for the distributed matrix.",err,error,*999)
+#endif    
+    
+    totalNumberOfLocalRows=rowMapping%totalNumberOfLocal
+
+    EXITS("DistributedMatrix_TotalNumberOfLocalRowsGet")
+    RETURN
+999 ERRORSEXITS("DistributedMatrix_TotalNumberOfLocalRowsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedMatrix_TotalNumberOfLocalRowsGet
 
   !
   !================================================================================================================================

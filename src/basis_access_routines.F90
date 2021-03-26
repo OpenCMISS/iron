@@ -240,6 +240,8 @@ MODULE BasisAccessRoutines
 
   PUBLIC Basis_LineNodeNumberGet
 
+  PUBLIC Basis_LineNodeDerivativeNumberGet
+
   PUBLIC Basis_LineNumberOfNodesGet
 
   PUBLIC Basis_LineXiNormalsGet

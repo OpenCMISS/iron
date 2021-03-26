@@ -53,12 +53,15 @@ MODULE ReactionDiffusionEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE CoordinateSystemRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -75,6 +78,7 @@ MODULE ReactionDiffusionEquationsRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Timer
   USE Types
   
@@ -564,13 +568,13 @@ CONTAINS
           CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
           CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
           CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-          CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
           CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
           !Create the equations matrices
           NULLIFY(vectorMatrices)
           CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
           !Set up matrix storage and structure
-          CALL EquationsSet_LumpingTypeGet(equations,lumpingType,err,error,*999)
+          CALL Equations_LumpingTypeGet(equations,lumpingType,err,error,*999)
           IF(lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
             !Set up lumping
             CALL EquationsMatricesVector_DynamicLumpingTypeSet(vectorMatrices,[EQUATIONS_MATRIX_UNLUMPED, &
@@ -984,7 +988,7 @@ CONTAINS
         
         !Calculate jacobianGaussWeight.
 !!TODO: Think about symmetric problems. 
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         
@@ -1371,7 +1375,7 @@ CONTAINS
           CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
           CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
           CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-          CALL SolverEquations_TypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
         CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
           !Get the solver
           NULLIFY(solvers)
@@ -1383,7 +1387,7 @@ CONTAINS
           CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
           CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
           CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-          CALL SolverEquations_TypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
         CASE(PROBLEM_REAC_DIFF_NO_SPLIT_SUBTYPE)
           !Get the solver
           NULLIFY(solvers)
@@ -1395,7 +1399,7 @@ CONTAINS
           CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
           CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
           CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-          CALL SolverEquations_TypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
         CASE DEFAULT
           localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
             & " is invalid for a reaction-diffusion problem type of a classical problem class."
@@ -1718,7 +1722,7 @@ CONTAINS
       CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
       DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
-        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,solverMapping,err,error,*999)
+        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(region)
         CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
         CALL EquationsSet_GlobalNumberGet(equationsSet,esNumber,err,error,*999)
@@ -1824,7 +1828,7 @@ CONTAINS
       NULLIFY(vectorMatrices)
       CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
       NULLIFY(dynamicMatrices)
-      CALL EquationsMatricesVector_DynamicMatrices(vectorMatrices,dynamicMatrices,err,error,*999)
+      CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
       NULLIFY(stiffnessMatrix)
       CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffnessMatrix,err,error,*999)
       NULLIFY(dampingMatrix)

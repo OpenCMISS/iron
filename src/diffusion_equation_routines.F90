@@ -53,6 +53,7 @@ MODULE DiffusionEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE CoordinateSystemRoutines
   USE DecompositionRoutines
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
@@ -74,6 +75,7 @@ MODULE DiffusionEquationsRoutines
   USE MatrixVector
   USE MeshAccessRoutines
   USE ProblemAccessRoutines
+  USE RegionAccessRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
@@ -99,8 +101,6 @@ MODULE DiffusionEquationsRoutines
 
   PUBLIC Diffusion_AnalyticFunctionsEvaluate,Diffusion_BoundaryConditionAnalyticCalculate
 
-  PUBLIC Diffusion_PreLoop  
-
   PUBLIC Diffusion_EquationsSetSetup
 
   PUBLIC Diffusion_EquationsSetSolutionMethodSet
@@ -120,6 +120,8 @@ MODULE DiffusionEquationsRoutines
   PUBLIC Diffusion_PreSolve
 
   PUBLIC Diffusion_PostSolve
+
+  PUBLIC Diffusion_PostLoop  
 
 !!TODO: should the following two routines really be public???
 
@@ -1125,7 +1127,7 @@ CONTAINS
           & esSpecification(3)==EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE.OR. &
           & esSpecification(3)==EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE) THEN
           NULLIFY(equationsField)
-          CALL EquationsSet_EquationtFieldGet(equationsSet,equationsField,err,error,*999)
+          CALL EquationsSet_EquationsFieldGet(equationsSet,equationsField,err,error,*999)
           numberOfEquationsSetVariables = 1
           numberOfEquationsSetComponents = 2
           IF(equationsField%equationsSetFieldAutoCreated) THEN
@@ -1165,7 +1167,7 @@ CONTAINS
           & esSpecification(3)==EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE.OR. &
           & esSpecification(3)==EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE) THEN
           NULLIFY(equationsField)
-          CALL EquationsSet_EquationtFieldGet(equationsSet,equationsField,err,error,*999)
+          CALL EquationsSet_EquationsFieldGet(equationsSet,equationsField,err,error,*999)
           IF(equationsField%equationsSetFieldAutoCreated) THEN
             CALL Field_CreateFinish(equationsField%equationsSetField,err,error,*999)
             CALL Field_ComponentValuesInitialise(equationsField%equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1, &
@@ -2127,7 +2129,7 @@ CONTAINS
           CALL EquationsSet_SourceFieldExists(equationsSet,sourceField,err,error,*999)
           IF(ASSOCIATED(sourceField)) THEN
             CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-            CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+            CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
           ENDIF
           CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
           !Create the equations matrices
@@ -2369,7 +2371,7 @@ CONTAINS
     IF(esSpecification(3)==EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE) THEN
       NULLIFY(equationsSetField)
       NULLIFY(equationsSetFieldData)
-      CALL EquationsSet_EquationSetFieldGet(equationsSet,equationsSetField,err,error,*999)
+      CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
       CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,equationsSetFieldData, &
         & err,error,*999)
       myCompartment=equationsSetFieldData(1)
@@ -2592,7 +2594,7 @@ CONTAINS
         
         !Calculate jacobianGaussWeight.
 !!TODO: Think about symmetric problems. 
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         
@@ -2907,7 +2909,7 @@ CONTAINS
     END SELECT
     
     NULLIFY(equations)
-    CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
@@ -2978,7 +2980,7 @@ CONTAINS
       CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
       NULLIFY(dependentQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
       
       NULLIFY(geometricInterpParameters)
       CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -3023,7 +3025,7 @@ CONTAINS
           & cParam=materialsInterpPoint%values(3,NO_PART_DERIV)
 
         !Calculate jacobianGaussWeight.
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
          
@@ -3218,7 +3220,7 @@ CONTAINS
     END SELECT
     
     NULLIFY(equations)
-    CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
@@ -3325,7 +3327,7 @@ CONTAINS
       CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
       NULLIFY(dependentQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
       
       NULLIFY(geometricInterpParameters)
       CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -3403,7 +3405,7 @@ CONTAINS
         
         !Calculate jacobianGaussWeight.
 !!TODO: Think about symmetric problems. 
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         
@@ -3921,7 +3923,7 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
-    CALL ControlLoop_Problem(controlLoop,problem,err,error,*999)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     SELECT CASE(pSpecification(3))
@@ -3930,7 +3932,7 @@ CONTAINS
       ! do nothing ???
     CASE(PROBLEM_LINEAR_ALE_DIFFUSION_SUBTYPE, &
       & PROBLEM_NONLINEAR_ALE_DIFFUSION_SUBTYPE)
-      CALL ControLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
+      CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
       CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)     
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -4048,7 +4050,7 @@ CONTAINS
     CASE(PROBLEM_NONLINEAR_DIFFUSION_SUBTYPE)
       ! do nothing ???
     CASE(PROBLEM_COUPLED_DIFFUSION_DIFFUSION_SUBTYPE)
-      CALL Solver_NumberGet(solver,solverNumber,err,error,*999)
+      CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
       CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
       IF(solverNumber==1) THEN
         !--- Get the dependent field of the diffusion-one equations
@@ -4059,7 +4061,7 @@ CONTAINS
         NULLIFY(solverDiffusionOne)
         CALL Solvers_SolverGet(solvers,1,solverDiffusionOne,err,error,*999)
         NULLIFY(solverEquationsDiffusionOne)
-        CALL Solver_SolverEquationsGt(solverDiffusionOne,solverEquationsDiffusionOne,err,error,*999)
+        CALL Solver_SolverEquationsGet(solverDiffusionOne,solverEquationsDiffusionOne,err,error,*999)
         NULLIFY(solverMappingDiffusionOne)
         CALL SolverEquations_SolverMappingGet(solverEquationsDiffusionOne,solverMappingDiffusionOne,err,error,*999)
         NULLIFY(equationsSetDiffusionOne)
@@ -4090,7 +4092,7 @@ CONTAINS
         
       ENDIF
     CASE(PROBLEM_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
-      CALL Solver_NumberGet(solver,solverNumber,err,error,*999)
+      CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
       CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
       IF(solverNumber==2) THEN
         !--- Get the dependent field of the diffusion equations
@@ -4102,7 +4104,7 @@ CONTAINS
         NULLIFY(solverDiffusionOne)
         CALL Solvers_SolverGet(solvers,2,solverDiffusionOne,err,error,*999)
         NULLIFY(solverEquationsDiffusionOne)
-        CALL Solver_SolverEquationsGt(solverDiffusionOne,solverEquationsDiffusionOne,err,error,*999)
+        CALL Solver_SolverEquationsGet(solverDiffusionOne,solverEquationsDiffusionOne,err,error,*999)
         NULLIFY(solverMappingDiffusionOne)
         CALL SolverEquations_SolverMappingGet(solverEquationsDiffusionOne,solverMappingDiffusionOne,err,error,*999)
         NULLIFY(equationsSetDiffusionOne)
@@ -4182,7 +4184,7 @@ CONTAINS
     CASE(PROBLEM_NONLINEAR_DIFFUSION_SUBTYPE)
       ! do nothing ???
     CASE(PROBLEM_COUPLED_DIFFUSION_DIFFUSION_SUBTYPE)
-      CALL Solver_NumberGet(solver,solverNumber,err,error,*999)
+      CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
       CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
       IF(solverNumber==1) THEN
         !--- Get the dependent field of the diffusion_two equations
@@ -4606,7 +4608,7 @@ CONTAINS
   !
 
   !>Runs after each control loop iteration
-  SUBROUTINE Diffusion_PreLoop(controlLoop,err,error,*)
+  SUBROUTINE Diffusion_PostLoop(controlLoop,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop.
@@ -4628,12 +4630,12 @@ CONTAINS
     TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: filename,localError,method
 
-    ENTERS("Diffusion_PreLoop",err,error,*999)
+    ENTERS("Diffusion_PostLoop",err,error,*999)
 
     CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
     IF(outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
 !!TODO: 1) WHY IS OUTPUT PRELOOP RATHER THAN POST LOOP 2) WHY IS OUTPUT TIME USED TO DETERMINE DEPENDENT OUTPUT???
-      CALL ControlLoop_LoopTypeGet(controlLoop,loopType,err,error,*999)
+      CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
       SELECT CASE(loopType)
       CASE(CONTROL_SIMPLE_TYPE)
         !do nothing
@@ -4682,12 +4684,12 @@ CONTAINS
       END SELECT
     ENDIF
 
-    EXITS("Diffusion_PreLoop")
+    EXITS("Diffusion_PostLoop")
     RETURN
-999 ERRORSEXITS("Diffusion_PreLoop",err,error)
+999 ERRORSEXITS("Diffusion_PostLoop",err,error)
     RETURN 1
     
-  END SUBROUTINE Diffusion_PreLoop
+  END SUBROUTINE Diffusion_PostLoop
 
   !
   !================================================================================================================================

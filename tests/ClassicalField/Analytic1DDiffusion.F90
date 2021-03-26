@@ -224,7 +224,7 @@ PROGRAM Analytic1DDiffusionExample
   CALL cmfe_EquationsSet_Initialise(EquationsSet,err)
   CALL cmfe_Field_Initialise(EquationsSetField,err)
   CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,[CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS, &
-    & CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE],EquationsSetFieldUserNumber, &
+    & CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_GENERALISED_DIFFUSION_SUBTYPE],EquationsSetFieldUserNumber, &
     & EquationsSetField,EquationsSet,err)
   !Finish creating the equations set
   CALL cmfe_EquationsSet_CreateFinish(EquationsSet,err)
@@ -275,7 +275,7 @@ PROGRAM Analytic1DDiffusionExample
   !Create the problem
   CALL cmfe_Problem_Initialise(Problem,err)
   CALL cmfe_Problem_CreateStart(ProblemUserNumber,context,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS, &
-    & CMFE_PROBLEM_DIFFUSION_EQUATION_TYPE,CMFE_PROBLEM_LINEAR_SOURCE_DIFFUSION_SUBTYPE],Problem,err)
+    & CMFE_PROBLEM_DIFFUSION_EQUATION_TYPE,CMFE_PROBLEM_LINEAR_DIFFUSION_SUBTYPE],Problem,err)
   !Finish the creation of a problem.
   CALL cmfe_Problem_CreateFinish(Problem,err)
 

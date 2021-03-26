@@ -56,6 +56,7 @@ MODULE FiniteElasticityRoutines
   USE ControlLoopAccessRoutines
   USE CoordinateSystemRoutines  
   USE CoordinateSystemAccessRoutines
+  USE DataProjectionAccessRoutines
   USE DecompositionRoutines
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
@@ -86,11 +87,11 @@ MODULE FiniteElasticityRoutines
 #endif
   USE ProblemAccessRoutines
   USE ProfilingRoutines
+  USE RegionAccessRoutines
   USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMappingAccessRoutines
   USE SolverMatricesAccessRoutines
-  USE RegionAccessRoutines
   USE Strings
   USE Timer
   USE Types
@@ -637,7 +638,7 @@ CONTAINS
 
     ENTERS("FiniteElasticity_CbarElasticityTensorCalculate",err,error,*999)
 
-    CALL EqutionsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
 
     materialParameters=>materialInterpolatedPoint%values(:,NO_PART_DERIV)
 
@@ -2067,7 +2068,7 @@ CONTAINS
         CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,independentVariable,err,error,*999)
         CALL FieldVariable_NumberOfComponentsGet(independentVariable,numberOfComponents,err,error,*999)
         DO componentIdx=1,numberOfComponents
-          CALL FieldVariable_ComponentInterpolationTypeGet(independentVariable,componentIdx,interpolationType,err,error,*999)
+          CALL FieldVariable_ComponentInterpolationGet(independentVariable,componentIdx,interpolationType,err,error,*999)
           SELECT CASE(interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)
             VALUE=0.1_DP
@@ -2316,6 +2317,8 @@ CONTAINS
       CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      NULLIFY(residualMapping)
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
       NULLIFY(rhsMapping)
       CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
       NULLIFY(rhsVariable)
@@ -2356,7 +2359,7 @@ CONTAINS
       CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
       
       NULLIFY(colsVariable)
-      CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,colsVariable,err,error,*999)
+      CALL EquationsMappingResidual_VariableGet(residualMapping,1,colsVariable,err,error,*999)
       CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
       
@@ -2367,8 +2370,8 @@ CONTAINS
       
       IF(haveHydrostaticPressure) pressureComponent=numberOfComponents
 
-      NULLIFY(boundaryConditions)
-      CALL EquationsSet_BoundaryConditionsGet(equationsSet,boundaryConditions,err,error,*999)
+!!TODO: Need to fix this as equations sets shouldn't know about boundary conditions.      
+      boundaryConditions=>equationsSet%boundaryConditions
       NULLIFY(boundaryConditionsVariable)
       CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,boundaryConditionsVariable,err,error,*999)
       totalNumberOfSurfacePressureConditions=boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE)+ &
@@ -2470,7 +2473,7 @@ CONTAINS
         NULLIFY(rowQuadratureSchemes(rowComponentIdx)%ptr)
         CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureSchemes(rowComponentIdx)%ptr, &
           & err,error,*999)
-        CALL FieldVariable_ComponentInterpolationTypeGet(rowsVariable,rowComponentIdx,rowsInterpolationType,err,error,*999)
+        CALL FieldVariable_ComponentInterpolationGet(rowsVariable,rowComponentIdx,rowsInterpolationType,err,error,*999)
         SELECT CASE(rowsInterpolationType)
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
           numberOfRowsElementParameters(rowComponentIdx)=1
@@ -2499,7 +2502,7 @@ CONTAINS
         NULLIFY(columnQuadratureSchemes(columnComponentIdx)%ptr)
         CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureSchemes(columnComponentIdx)%ptr, &
           & err,error,*999)
-        CALL FieldVariable_ComponentInterpolationTypeGet(colsVariable,columnComponentIdx,colsInterpolationType,err,error,*999)
+        CALL FieldVariable_ComponentInterpolationGet(colsVariable,columnComponentIdx,colsInterpolationType,err,error,*999)
         SELECT CASE(colsInterpolationType)
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
           numberOfColsElementParameters(columnComponentIdx)=1
@@ -2517,7 +2520,7 @@ CONTAINS
       growthValues=[1.0_DP,1.0_DP,1.0_DP]
 
       IF(haveHydrostaticPressure) &
-        & CALL FieldVariable_ComponentInterpolationTypeGet(colsVariable,pressureComponent,pressureInterpolationType, &
+        & CALL FieldVariable_ComponentInterpolationGet(colsVariable,pressureComponent,pressureInterpolationType, &
         & err,error,*999)
 
       !Loop over all Gauss points
@@ -2891,7 +2894,7 @@ CONTAINS
     CASE DEFAULT
 
       NULLIFY(equations)
-      CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
+      CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
       NULLIFY(vectorEquations)
       CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
       NULLIFY(vectorMatrices)
@@ -2937,7 +2940,7 @@ CONTAINS
           CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
         ENDIF
         NULLIFY(materialsField)
-        CALL EquationsSet_MaterialFieldExists(equationsSet,materialsField,err,error,*999)
+        CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
         NULLIFY(fibreField)
         CALL EquationsSet_FibreFieldExists(equationsSet,fibreField,err,error,*999)
         NULLIFY(independentField)
@@ -2963,7 +2966,7 @@ CONTAINS
         CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
         
         NULLIFY(colsVariable)
-        CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,colsVariable,err,error,*999)
+        CALL EquationsMappingResidual_VariableGet(residualMapping,1,colsVariable,err,error,*999)
         CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
         CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
         
@@ -2972,8 +2975,8 @@ CONTAINS
         CALL BasisQuadratureScheme_NumberOfGaussGet(columnQuadratureScheme,numberOfGauss,err,error,*999)
         CALL Basis_NumberOfXiGet(colsBasis,numberOfXi,err,error,*999)
         
-        NULLIFY(boundaryConditions)
-        CALL EquationsSet_BoundaryConditionsGet(equationsSet,boundaryConditions,err,error,*999)
+!!TODO: Need to fix this as equations sets shouldn't know about boundary conditions.      
+        boundaryConditions=>equationsSet%boundaryConditions
         NULLIFY(boundaryConditionsVariable)
         CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,boundaryConditionsVariable,err,error,*999)
         totalNumSurfacePressureConditions=boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE)+ &
@@ -3062,7 +3065,7 @@ CONTAINS
           NULLIFY(rowQuadratureSchemes(rowComponentIdx)%ptr)
           CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureSchemes(rowComponentIdx)%ptr, &
             & err,error,*999)
-          CALL FieldVariable_ComponentInterpolationTypeGet(rowsVariable,rowComponentIdx,rowsInterpolationType,err,error,*999)
+          CALL FieldVariable_ComponentInterpolationGet(rowsVariable,rowComponentIdx,rowsInterpolationType,err,error,*999)
           SELECT CASE(rowsInterpolationType)
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
             numberOfRowsElementParameters(rowComponentIdx)=1
@@ -3091,7 +3094,7 @@ CONTAINS
           NULLIFY(columnQuadratureSchemes(columnComponentIdx)%ptr)
           CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME, &
             & columnQuadratureSchemes(columnComponentIdx)%ptr,err,error,*999)
-          CALL FieldVariable_ComponentInterpolationTypeGet(colsVariable,columnComponentIdx,columnInterpolationType,err,error,*999)
+          CALL FieldVariable_ComponentInterpolationGet(colsVariable,columnComponentIdx,columnInterpolationType,err,error,*999)
           SELECT CASE(columnInterpolationType)
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
             numberOfColsElementParameters(columnComponentIdx)=1
@@ -3107,7 +3110,7 @@ CONTAINS
         ENDDO !columnComponentIdx
        
         pressureComponent=numberOfColsComponents
-        CALL FieldVariable_ComponentInterpolationType(colsVariable,pressureComponent,pressureInterpolationType,err,error,*999)
+        CALL FieldVariable_ComponentInterpolationGet(colsVariable,pressureComponent,pressureInterpolationType,err,error,*999)
 
         !Loop over all Gauss points
         DO gaussPointIdx=1,numberOfGauss
@@ -3125,8 +3128,8 @@ CONTAINS
             CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint,err,error,*999)
           ENDIF
 
-          CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
-          CALL FieldInterpolatedPointsMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
+          CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
+          CALL FieldInterpolatedPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
           Jznu=Jzxi/Jxxi
 
 !!TODO: Loop over Rows as the outer loop then columns.
@@ -3621,7 +3624,7 @@ CONTAINS
     NULLIFY(rhsVector)
     CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
     
-    CALL EquationsMatricesResidual_UpdateVector(residualVector,updateResidual,err,error,*999)
+    CALL EquationsMatricesResidual_UpdateVectorGet(residualVector,updateResidual,err,error,*999)
     updateMass=.FALSE.
     IF(equationsSetSubtype == EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
       & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE.OR. &
@@ -3638,7 +3641,7 @@ CONTAINS
       CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
       NULLIFY(coordinateSystem)
       CALL Region_CoordinateSystemGet(region,coordinateSystem,err,error,*999)
-      CALL CoordinateSystem_NumberOfDimensionsGet(coordinateSystem,numberOfDimensions,err,error,*999)
+      CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*999)
       NULLIFY(equationsInterpolation)
       CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
       NULLIFY(vectorMapping)
@@ -3646,14 +3649,16 @@ CONTAINS
       NULLIFY(lhsMapping)
       CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
       NULLIFY(rowsVariable)
-      CALL EquationsMappingLHS_VariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
       CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
 !!TODO: Loop over the residuals and the residual variables.
+      NULLIFY(residualMapping)
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
       NULLIFY(dependentVariable)
-      CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,dependentVariable,err,error,*999)
+      CALL EquationsMappingResidual_VariableGet(residualMapping,1,dependentVariable,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfDependentComponents,err,error,*999)
       CALL FieldVariable_VariableTypeGet(dependentVariable,dependentVariableType,err,error,*999)
       NULLIFY(rhsMapping)
@@ -3709,7 +3714,7 @@ CONTAINS
       totalNumberOfSurfacePressureConditions=boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE)+ &
         & boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
 
-      CALL DecompositionsElements_ElementBoundaryElementGet(decompositionElements,elementNumber,boundaryElement,err,error,*999)
+      CALL DecompositionElements_ElementBoundaryElementGet(decompositionElements,elementNumber,boundaryElement,err,error,*999)
       haveSurfacePressure=boundaryElement.AND.totalNumberofSurfacePressureConditions>0
 
       !Set flags for coupled finite elasticity and Darcy problems
@@ -3739,7 +3744,7 @@ CONTAINS
       
       IF(haveHydrostaticPressure) THEN
         pressureComponent=numberOfDependentComponents
-        CALL FieldVariable_ComponentInterpolationTypeGet(dependentVariable,pressureInterpolationType,err,error,*999)
+        CALL FieldVariable_ComponentInterpolationGet(dependentVariable,pressureComponent,pressureInterpolationType,err,error,*999)
       ENDIF
 
       !Grab interpolation parameters, points and metrics.
@@ -3785,7 +3790,7 @@ CONTAINS
       NULLIFY(prevDependentInterpParameters)
       NULLIFY(prevDependentInterpPoint)
       NULLIFY(prevDependentInterpPointMetrics)
-      CALL Equations_TimeDependenceGet(equations,timeDependence,err,error,*999)
+      CALL Equations_TimeDependenceTypeGet(equations,timeDependence,err,error,*999)
       IF(timeDependence/=EQUATIONS_STATIC) THEN
         CALL EquationsInterpolation_PreviousDependentParametersGet(equationsInterpolation,dependentVariableType, &
           & prevDependentInterpParameters,err,error,*999)
@@ -3999,7 +4004,7 @@ CONTAINS
               !Now add up the residual terms
               rowElementDOFIdx=0
               DO rowComponentIdx=1,numberOfDimensions
-                CALL FieldVariable_ComponentInterpolationTypeGet(rowsVariable,rowComponentIdx,rowInterpolationType,err,error,*999)
+                CALL FieldVariable_ComponentInterpolationGet(rowsVariable,rowComponentIdx,rowInterpolationType,err,error,*999)
                 SELECT CASE(rowInterpolationType)
                 CASE(FIELD_NODE_BASED_INTERPOLATION) !node based
                   NULLIFY(rowComponentDomain)
@@ -4187,7 +4192,7 @@ CONTAINS
               CALL Basis_QuadratureSchemeGet(rowComponentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowComponentQuadratureScheme, &
                 & err,error,*999)
               CALL BasisQuadratureScheme_GaussWeightGet(rowComponentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
-              CALL Basis_NumberOfElementParametersRowGet(rowComponentBasis,numberOfRowElementParameters,err,error,*999)
+              CALL Basis_NumberOfElementParametersGet(rowComponentBasis,numberOfRowElementParameters,err,error,*999)
               DO rowElementParameterIdx=1,numberOfRowElementParameters
                 CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowComponentQuadratureScheme,rowElementParameterIdx, &
                   & NO_PART_DERIV,gaussPointIdx,rowPhi,err,error,*999)
@@ -4377,6 +4382,7 @@ CONTAINS
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
@@ -4451,7 +4457,7 @@ CONTAINS
         CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
         NULLIFY(coordinateSystem)
         CALL Region_CoordinateSystemGet(region,coordinateSystem,err,error,*999)
-        CALL CoordinateSystem_NumberOfDimensionsGet(coordinateSystem,numberOfDimensions,err,error,*999)
+        CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*999)
         NULLIFY(equationsInterpolation)
         CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
         NULLIFY(vectorMapping)
@@ -4459,14 +4465,16 @@ CONTAINS
         NULLIFY(lhsMapping)
         CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
         NULLIFY(rowsVariable)
-        CALL EquationsMappingLHS_VariableGet(lhsMapping,rowsVariable,err,error,*999)
+        CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
         CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowComponents,err,error,*999)
         CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
         NULLIFY(nonlinearMapping)
         CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
 !!TODO: Loop over the residuals and the residual variables.
+        NULLIFY(residualMapping)
+        CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
         NULLIFY(dependentVariable)
-        CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,dependentVariable,err,error,*999)
+        CALL EquationsMappingResidual_VariableGet(residualMapping,1,dependentVariable,err,error,*999)
         CALL FieldVariable_VariableTypeGet(dependentVariable,dependentVariableType,err,error,*999)
         NULLIFY(rhsVariable)
         CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
@@ -4534,7 +4542,7 @@ CONTAINS
         pressureComponent=numberOfDependentComponents
         NULLIFY(pressureDomain)
         CALL FieldVariable_ComponentDomainGet(dependentVariable,pressureComponent,pressureDomain,err,error,*999)
-        CALL FieldVariable_ComponentInterpolationTypeGet(dependentVariable,pressureComponent,pressureInterpolationType, &
+        CALL FieldVariable_ComponentInterpolationGet(dependentVariable,pressureComponent,pressureInterpolationType, &
           & err,error,*999)
         NULLIFY(pressureDomainTopology)
         CALL Domain_DomainTopologyGet(pressureDomain,pressureDomainTopology,err,error,*999)
@@ -4542,7 +4550,7 @@ CONTAINS
         CALL DomainTopology_DomainElementsGet(pressureDomainTopology,pressureDomainElements,err,error,*999)
         NULLIFY(pressureBasis)
         CALL DomainElements_ElementBasisGet(pressureDomainElements,elementNumber,pressureBasis,err,error,*999)
-        CALL Basis_NumberOfElementParameters(pressureBasis,numberOfPressureElementParameters,err,error,*999)
+        CALL Basis_NumberOfElementParametersGet(pressureBasis,numberOfPressureElementParameters,err,error,*999)
         NULLIFY(pressureQuadratureScheme)
         CALL Basis_QuadratureSchemeGet(pressureBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,pressureQuadratureScheme,err,error,*999)
 
@@ -4621,7 +4629,7 @@ CONTAINS
         NULLIFY(prevDependentInterpParameters)
         NULLIFY(prevDependentInterpPoint)
         NULLIFY(prevDependentInterpPointMetrics)
-        CALL Equations_TimeDependenceGet(equations,timeDependence,err,error,*999)
+        CALL Equations_TimeDependenceTypeGet(equations,timeDependence,err,error,*999)
         IF(timeDependence/=EQUATIONS_STATIC) THEN
           CALL EquationsInterpolation_PreviousDependentParametersGet(equationsInterpolation,dependentVariableType, &
             & prevDependentInterpParameters,err,error,*999)
@@ -4664,7 +4672,7 @@ CONTAINS
           IF(ASSOCIATED(materialsDensityVariable)) THEN
             CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
               & materialsDensityInterpParameters,err,error,*999)
-            CALL EquationsInterpoaltion_MaterialsPointGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
+            CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
               & materialsDensityInterpPoint,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber, &
               & materialsDensityInterpParameters,err,error,*999)
@@ -4877,7 +4885,7 @@ CONTAINS
           !Loop over gauss points and add residuals
           DO gaussPointIdx=1,numberOfGauss
 
-            CALL BasisQuadratureScheme_GuassWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+            CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
 
             !Interpolate dependent, geometric, fibre and materials fields
             CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
@@ -4903,8 +4911,8 @@ CONTAINS
               CALL FlagWarning(localWarning,err,error,*999) 
             ENDIF
 
-            CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
-            CALL FieldInterpPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
 
             IF(diagnostics1) THEN
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Element Number = ",elementNumber,err,error,*999)
@@ -4970,7 +4978,7 @@ CONTAINS
             !Now add up the residual terms
             rowElementDOFIdx=0
             DO rowComponentIdx=1,numberOfDimensions
-              CALL FieldVariable_ComponentInterpolationTypeGet(rowsVariable,rowComponentIdx,rowInterpolationType,err,error,*999)
+              CALL FieldVariable_ComponentInterpolationGet(rowsVariable,rowComponentIdx,rowInterpolationType,err,error,*999)
               SELECT CASE(rowInterpolationType)
               CASE(FIELD_NODE_BASED_INTERPOLATION) !node based
                 NULLIFY(rowDomain)
@@ -5106,7 +5114,7 @@ CONTAINS
           !Loop over gauss points and add residuals
           DO gaussPointIdx=1,numberOfGauss
 
-            CALL BasisQuadratureScheme_GuassWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+            CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
 
             !Interpolate dependent, geometric, fibre and materials fields
             CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,dependentInterpPoint, &
@@ -5140,8 +5148,8 @@ CONTAINS
               CALL FlagWarning(localWarning,err,error,*999) 
             ENDIF
 
-            CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
-            CALL FieldInterpPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
 
             IF(diagnostics1) THEN
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Element number = ",elementNumber,err,error,*999)
@@ -5222,7 +5230,7 @@ CONTAINS
             !Now add up the residual terms
             rowElementDOFIdx=0
             DO rowComponentIdx=1,numberOfDimensions
-              CALL FieldVariable_ComponentInterpolationTypeGet(rowsVariable,rowComponentIdx,rowInterpolationType,err,error,*999)
+              CALL FieldVariable_ComponentInterpolationGet(rowsVariable,rowComponentIdx,rowInterpolationType,err,error,*999)
               SELECT CASE(rowInterpolationType)
               CASE(FIELD_NODE_BASED_INTERPOLATION) !node based
                 NULLIFY(rowDomain)
@@ -5355,7 +5363,7 @@ CONTAINS
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Gauss Point index = ",gaussPointIdx,err,error,*999)
             ENDIF
 
-            CALL BasisQuadratureScheme_GuassWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+            CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
 
             !Interpolate dependent, geometric, fibre and materials fields
             CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,dependentInterpPoint, &
@@ -5385,8 +5393,8 @@ CONTAINS
             CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,J,err,error,*999)
 
-            CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPoint,Jxxi,err,error,*999)
-            CALL FieldInterpPointMetrics_JacobianGet(dependentInterpPoint,Jzxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
 
             P=dependentInterpPoint%values(pressureComponent,1)
 
@@ -5592,8 +5600,8 @@ CONTAINS
             CALL MatrixProduct(dependentInterpPointMetrics%dXdXi(1:3,1:3),geometricInterpPointMetrics%dXidX(1:3,1:3), &
               & dZdNu(1:3,1:3),err,error,*999)
 
-            CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
-            CALL FieldInterpPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
 
             jacobianGaussWeight=Jzxi*gaussWeight
 
@@ -5734,8 +5742,8 @@ CONTAINS
             CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,J,err,error,*999)
 
-            CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
-            CALL FiledInterpPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
 
             jacobianGaussWeight=Jzxi*gaussWeight
 
@@ -5998,9 +6006,9 @@ CONTAINS
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Jr                = ",Jr,err,error,*999)
             ENDIF
 
-            CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
-            CALL FieldInterpPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
-            CALL FieldInterpPointMetrics_JacobianGet(prevDependentInterpPointMetrics,prevJZXi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(prevDependentInterpPointMetrics,prevJZXi,err,error,*999)
 
             SELECT CASE(equationsSetSubtype)
             CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
@@ -6567,7 +6575,7 @@ CONTAINS
             CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,Jznu,err,error,*999)
 
-            CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
 
             !Calculate Sigma=1/Jznu.FTF', the Cauchy stress tensor at the gauss point
             CALL FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint, &
@@ -6689,7 +6697,7 @@ CONTAINS
             CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,J,err,error,*999)
 
-            CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
 
             !Calculate Cauchy stress tensor at the gauss point
             CALL FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint, &
@@ -6703,7 +6711,7 @@ CONTAINS
             !Add up the residual terms
             rowElementDOFIdx=0
             DO rowComponentIdx=1,numberOfDimensions
-              CALL FieldVariable_ComponentInterpolationTypeGet(rowsVariable,rowInterpolationType,err,error,*999)
+              CALL FieldVariable_ComponentInterpolationGet(rowsVariable,rowComponentIdx,rowInterpolationType,err,error,*999)
               SELECT CASE(rowInterpolationType)
               CASE(FIELD_NODE_BASED_INTERPOLATION) !node based
                 NULLIFY(rowDomain)
@@ -6778,7 +6786,7 @@ CONTAINS
                 density=materialsDensityInterpPoint%values(1,1)
               ENDIF
 
-              CALL FieldInterpPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
+              CALL FieldInterpolatedPointMetrics_JacobianGet(dependentInterpPointMetrics,Jzxi,err,error,*999)
 
               rowElementDOFIdx=0
               DO rowComponentIdx=1,numberOfDimensions
@@ -7061,17 +7069,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(EquationsType), POINTER :: equations
     TYPE(FieldVariableType), POINTER :: derivedVariable
 
     ENTERS("FiniteElasticityEquationsSet_DerivedVariableCalculate",err,error,*999)
-
-    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
-    NULLIFY(equations)
-    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     
     NULLIFY(derivedVariable)
-    CALL Equations_DerivedVariableGet(equations,derivedType,derivedVariable,err,error,*999)
+    CALL EquationsSet_DerivedTypeVariableGet(equationsSet,derivedType,derivedVariable,err,error,*999)
     CALL FiniteElasticity_StressStrainCalculate(equationsSet,derivedType,derivedVariable,err,error,*999)
    
     EXITS("FiniteElasticityEquationsSet_DerivedVariableCalculate")
@@ -7145,7 +7148,7 @@ CONTAINS
             NULLIFY(solverMapping)
             CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
             !CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
-            !DO equationSetIdx=1,numberOfEquationsSets
+            !DO equationsSetIdx=1,numberOfEquationsSets
             NULLIFY(equationsSet)
             CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
             NULLIFY(region)
@@ -7208,6 +7211,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsInterpolationType), POINTER :: interpolation
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: field,dependentField,geometricField,fibreField,independentField,materialsField
@@ -7228,7 +7232,7 @@ CONTAINS
     !Get the coordinate system
     NULLIFY(coordinateSystem)
     CALL EquationsSet_CoordinateSystemGet(equationsSet,coordinateSystem,err,error,*999)
-    CALL CoordinateSystem_NumberOfDimensionsGet(coordinateSystem,numberOfDimensions,err,error,*999)
+    CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*999)
     !Check the provided strain field variable has appropriate components and interpolation
     numberOfComponents=NUMBER_OF_VOIGT(numberOfDimensions)
     NULLIFY(field)
@@ -7269,8 +7273,10 @@ CONTAINS
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMapping)
     CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    NULLIFY(residualMapping)
+    CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
     NULLIFY(residualVariable)
-    CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,residualVariable,err,error,*999)
+    CALL EquationsMappingResidual_VariableGet(residualMapping,1,residualVariable,err,error,*999)
     CALL FieldVariable_NumberOfComponentsGet(residualVariable,numberOfDependentComponents,err,error,*999)
     CALL FieldVariable_VariableTypeGet(residualVariable,residualVariableType,err,error,*999)
   
@@ -7345,8 +7351,8 @@ CONTAINS
     DO partIdx=1,2          
       
       IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-        CALL Cpu_Timer(USER_CPU,userTime1,err,error,*999)
-        CALL Cpu_timer(SYSTEM_CPU,systemTime1,err,error,*999)
+        CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
+        CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
       ENDIF
       
       IF(partIdx==1) THEN
@@ -7444,7 +7450,7 @@ CONTAINS
             
           NULLIFY(quadratureScheme)               
           CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
-          CALL BasisQuadrature_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
+          CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
           
           !Loop over gauss points        
           DO gaussPointIdx=1,numberOfGauss
@@ -7605,8 +7611,8 @@ CONTAINS
       
       !Output timing information if required
       IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-        CALL Cpu_Timer(USER_CPU,userTime2,err,error,*999)
-        CALL Cpu_Timer(SYSTEM_CPU,systemTime2,err,error,*999)
+        CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
+        CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
         userElapsed=userTime2(1)-userTime1(1)
         systemElapsed=systemTime2(1)-systemTime1(1)
         elementUserElapsed=elementUserElapsed+userElapsed
@@ -7623,8 +7629,8 @@ CONTAINS
       
       IF(partIdx==1) THEN
         IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-          CALL Cpu_Timer(USER_CPU,userTime3,err,error,*999)
-          CALL Cpu_Timer(SYSTEM_CPU,systemTime3,err,error,*999)
+          CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
+          CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
         ENDIF
         !Start to update the field
         CALL FieldVariable_ParameterSetUpdateStart(fieldVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
@@ -7633,8 +7639,8 @@ CONTAINS
         CALL FieldVariable_ParameterSetUpdateFinish(fieldVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
         !Output timing information if required
         IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-          CALL Cpu_Timer(USER_CPU,userTime4,err,error,*999)
-          CALL Cpu_Timer(SYSTEM_CPU,systemTime4,err,error,*999)
+          CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
+          CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
           userElapsed=userTime4(1)-userTime3(1)
           systemElapsed=systemTime4(1)-systemTime3(1)
           CALL Profiling_TimingsOutput(1,"Parameters update transfer",userElapsed,systemElapsed,err,error,*999)
@@ -7812,6 +7818,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField,materialsField
@@ -7833,7 +7840,7 @@ CONTAINS
     CALL EquationsSet_FibreFieldExists(equationsSet,fibreField,err,error,*999)
     NULLIFY(coordinateSystem)
     CALL Field_CoordinateSystemGet(dependentField,coordinateSystem,err,error,*999)
-    CALL CoordinateSystem_NumberOfDimensionsGet(coordinateSystem,numberOfDimensions,err,error,*999)
+    CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*999)
     IF(SIZE(values,1)<numberOfDimensions) THEN
       localError="The size of the first dimension of the supplied values array of "// &
         & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//" is too small. The size must be >= "// &
@@ -7854,8 +7861,10 @@ CONTAINS
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMapping)
     CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    NULLIFY(residualMapping)
+    CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
     NULLIFY(residualVariable)
-    CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,residualVariable,err,error,*999)
+    CALL EquationsMappingResidual_VariableGet(residualMapping,1,residualVariable,err,error,*999)
     CALL FieldVariable_VariableTypeGet(residualVariable,dependentVarType,err,error,*999)
     NULLIFY(decomposition)
     CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
@@ -8098,7 +8107,7 @@ CONTAINS
 
     NULLIFY(coordinateSystem)
     CALL EquationsSet_CoordinateSystemGet(equationsSet,coordinateSystem,err,error,*999)
-    CALL CoordinateSystem_NumberOfDimensionsGet(coordinateSystem,numberOfDimensions,err,error,*999)
+    CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*999)
     
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
@@ -8111,7 +8120,7 @@ CONTAINS
     NULLIFY(residualMapping)
     CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
     NULLIFY(residualVariable)
-    CALL EquationsMappingResidual_ResidualVariableGet(residualMapping,1,residualVariable,err,error,*999)
+    CALL EquationsMappingResidual_VariableGet(residualMapping,1,residualVariable,err,error,*999)
     CALL FieldVariable_VariableTypeGet(residualVariable,dependentVarType,err,error,*999)
 
     NULLIFY(dependentField)
@@ -8147,7 +8156,7 @@ CONTAINS
     NULLIFY(geometricInterpPoint)
     CALL EquationsInterpolation_GeometricPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,geometricInterpPoint,err,error,*999)
     NULLIFY(geometricInterpPointMetrics)
-    CALL EquaitonsInterpolation_GeometricPointMetricsGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+    CALL EquationsInterpolation_GeometricPointMetricsGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
       & geometricInterpPointMetrics,err,error,*999)
     CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,geometricInterpParameters,err,error,*999)
 
@@ -8182,7 +8191,7 @@ CONTAINS
         & err,error,*999)
       CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,FIELD_U3_VARIABLE_TYPE,growthInterpPoint, &
         & err,error,*999)
-      CALL Field_InterpolationXi(NO_PART_DERIV,xi,growthInterpPoint,err,error,*999)
+      CALL Field_InterpolateXi(NO_PART_DERIV,xi,growthInterpPoint,err,error,*999)
       growthValues(1:numberOfDimensions)=growthInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
     ELSE
       growthValues = [1.0_DP,1.0_DP,1.0_DP]
@@ -8382,7 +8391,7 @@ CONTAINS
       
       NULLIFY(coordinateSystem)
       CALL EquationsSet_CoordinateSystemGet(equationsSet,coordinateSystem,err,error,*999)
-      CALL CoordinateSystem_NumberOfDimensionsGet(coordinateSystem,numberOfDimensions,err,error,*999)
+      CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*999)
 
       NULLIFY(dependentField)
       CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
@@ -8411,7 +8420,7 @@ CONTAINS
       NULLIFY(lhsMapping)
       CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
       NULLIFY(rowsVariable)
-      CALL EquationsMappingLHS_VariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
       CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
@@ -8554,10 +8563,10 @@ CONTAINS
                   CALL Basis_FaceElementParameterGet(columnBases(columnComponentIdx)%ptr,columnElementParameterIdx,localFaceIdx, &
                     & columnElementParameter,err,error,*999)
                   columnElementDOFIdx=columnElementBaseDOFIndex(columnComponentIdx)+columnElementParameter
-                  CALL BasisQuadratureSchemes_GaussBasisFunctionGet(columnQuadratureSchemes(columnComponentIdx)%ptr, &
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureSchemes(columnComponentIdx)%ptr, &
                     & columnElementParameterIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1),gaussPointIdx,tempvec1(1), &
                     & err,error,*999)
-                  CALL BasisQuadratureSchemes_GaussBasisFunctionGet(columnQuadratureSchemes(columnComponentIdx)%ptr, &
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureSchemes(columnComponentIdx)%ptr, &
                     & columnElementParameterIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(2),gaussPointIdx,tempvec1(2), &
                     & err,error,*999)
                   tempvec1(1:2)=tempvec1(1:2)*pressureGaussWeightW(1:2)
@@ -8565,7 +8574,7 @@ CONTAINS
                     CALL Basis_FaceElementParameterGet(rowBases(rowComponentIdx)%ptr,rowElementParameterIdx,localFaceIdx, &
                       & rowElementParameter,err,error,*999)
                     rowElementDOFIdx=rowElementBaseDOFIndex(rowComponentIdx)+rowElementParameter
-                    CALL BasisQuadratureSchemes_GaussBasisFunctionGet(rowQuadratureSchemes(rowComponentIdx)%ptr, &
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureSchemes(rowComponentIdx)%ptr, &
                       & rowElementParameterIdx,NO_PART_DERIV,gaussPointIdx,tempvec2(1),err,error,*999)
                     tempvec2(2)=tempvec2(1)
                     jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
@@ -8585,10 +8594,10 @@ CONTAINS
                   CALL Basis_FaceElementParameterGet(rowBases(rowComponentIdx)%ptr,rowElementParameterIdx,localFaceIdx, &
                     & rowElementParameter,err,error,*999)
                   rowElementDOFIdx=rowElementBaseDOFIndex(rowComponentIdx)+rowElementParameter
-                  CALL BasisQuadratureSchemes_GaussBasisFunctionGet(rowQuadratureSchemes(rowComponentIdx)%ptr, &
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureSchemes(rowComponentIdx)%ptr, &
                     & rowElementParameterIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1),gaussPointIdx,tempvec1(1), &
                     & err,error,*999)
-                  CALL BasisQuadratureSchemes_GaussBasisFunctionGet(rowQuadratureSchemes(rowComponentIdx)%ptr, &
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureSchemes(rowComponentIdx)%ptr, &
                     & rowElementParameterIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(2),gaussPointIdx,tempvec1(2), &
                     & err,error,*999)
                   tempvec1(1:2)=tempvec1(1:2)*pressureGaussWeightW(1:2)
@@ -8596,7 +8605,7 @@ CONTAINS
                     CALL Basis_FaceElementParameterGet(columnBases(columnComponentIdx)%ptr,columnElementParameterIdx,localFaceIdx, &
                       & columnElementParameter,err,error,*999)
                     columnElementDOFIdx=columnElementBaseDOFIndex(columnComponentIdx)+columnElementParameter
-                    CALL BasisQuadratureSchemes_GaussBasisFunctionGet(columnQuadratureSchemes(columnComponentIdx)%ptr, &
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureSchemes(columnComponentIdx)%ptr, &
                       & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,tempvec2(1),err,error,*999)
                     tempvec2(2)=tempvec2(1)
                     jacobianMatrix%elementJacobian%matrix(columnElementDOFIdx,rowElementDOFIdx)= &
@@ -8747,13 +8756,13 @@ CONTAINS
       
       NULLIFY(coordinateSystem)
       CALL EquationsSet_CoordinateSystemGet(equationsSet,coordinateSystem,err,error,*999)
-      CALL CoordinateSystem_NumberOfDimensionsGet(coordinateSystem,numberOfDimensions,err,error,*999)
+      CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*999)
 
       NULLIFY(dependentField) 
       IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
-        CALL EquationSet_GeometricFieldGet(equationsSet,dependentField,err,error,*999)
+        CALL EquationsSet_GeometricFieldGet(equationsSet,dependentField,err,error,*999)
       ELSE
-        CALL EquationSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+        CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
       END IF
       NULLIFY(decomposition)
       CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
@@ -8780,7 +8789,7 @@ CONTAINS
       NULLIFY(lhsMapping)
       CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
       NULLIFY(rowsVariable)
-      CALL EquationsMappingLHS_VariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
       CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
@@ -8792,7 +8801,7 @@ CONTAINS
       NULLIFY(rhsMapping)
       CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
       NULLIFY(rhsVariable)
-      CALL EquationsMappingRHS_VariableGet(rhsMapping,rhsVariable,err,error,*999)
+      CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
       CALL FieldVariable_VariableTypeGet(rhsVariable,rhsVariableType,err,error,*999)
 
       NULLIFY(equationsInterpolation)
@@ -8906,7 +8915,7 @@ CONTAINS
                 pressureGWNormalComponent=pressureGaussWeight*normal(rowComponentIdx)
                 DO faceParameterIdx=1,numberOfRowFaceParameters
                   CALL Basis_FaceElementParameterGet(rowBasis,faceParameterIdx,localFaceIdx,faceElementParameter,err,error,*999)
-                  CALL BasisQuadratureSchemes_GaussBasisFunctionGet(rowQuadratureScheme,faceParameterIdx,NO_PART_DERIV, &
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,faceParameterIdx,NO_PART_DERIV, &
                     & gaussPointIdx,rowPhi,err,error,*999)
                   rowElementDOFIdx=elementBaseDOFIdx+faceElementParameter
                   residualVector%elementResidual%vector(elementDOFIdx)= &
@@ -9020,7 +9029,7 @@ CONTAINS
     TYPE(FieldInterpolatedPointType), POINTER :: independentInterpPoint
     REAL(DP), INTENT(OUT) :: cauchyTensor(:,:) !<On exit, the Cauchy stress tensor
     REAL(DP), INTENT(OUT) :: Jznu !Determinant of deformation gradient tensor (rCauchyGreen)
-    REAL(DP), INTENT(IN) :: dZdNu(3,3) !Deformation gradient tensor at the Guass point
+    REAL(DP), INTENT(IN) :: dZdNu(3,3) !Deformation gradient tensor at the Gauss point
     INTEGER(INTG), INTENT(IN) :: elementNumber !<Element number
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<Gauss point number
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -9044,7 +9053,6 @@ CONTAINS
       & xbDistortion,xbEnergyPerVolume,xbStiffness
     REAL(DP), DIMENSION (:), POINTER :: C !Parameters for constitutive laws
     REAL(DP), DIMENSION(5) :: parameters
-    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
@@ -9058,10 +9066,6 @@ CONTAINS
 
     CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
 
-    NULLIFY(coordinateSystem)
-    CALL EquationsSet_CoordinateSystemGet(equationsSet,coordinateSystem,err,error,*999)
-    CALL CoordinateSystem_NumberOfDimensionsGet(coordinateSystem,numberOfDimensions,err,error,*999)
-    
     equationsSetSubtype=esSpecification(3)
     C=>materialsInterpPoint%values(:,NO_PART_DERIV)
 
@@ -9082,7 +9086,7 @@ CONTAINS
     CALL FieldVariable_NumberOfComponentsGet(dependentVariable,pressureComponent,err,error,*999)
     P=dependentInterpPoint%values(pressureComponent,NO_PART_DERIV)
 
-    CALL Identity(identityMat(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
+    CALL IdentityMatrix(identityMat(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
 
     SELECT CASE(equationsSetSubtype)
     CASE(EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE)
@@ -9142,7 +9146,7 @@ CONTAINS
       NULLIFY(domainTopology)
       CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
       NULLIFY(domainElements)
-      CALL DomainTopology_DomainElements(domainTopology,domainElements,err,error,*999)
+      CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
       CALL DomainElements_ElementNodeGet(domainElements,13,elementNumber,node1,err,error,*999)
       CALL DomainElements_ElementNodeGet(domainElements,15,elementNumber,node1,err,error,*999)
       
@@ -9573,7 +9577,7 @@ CONTAINS
       NULLIFY(domainTopology)
       CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
       NULLIFY(domainElements)
-      CALL DomainTopology_DomainElements(domainTopology,domainElements,err,error,*999)
+      CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
       CALL DomainElements_ElementNodeGet(domainElements,13,elementNumber,node1,err,error,*999)
       CALL DomainElements_ElementNodeGet(domainElements,15,elementNumber,node1,err,error,*999)
       
@@ -11118,10 +11122,10 @@ CONTAINS
       CALL Invert(rCauchyGreen,piolaDeformation,I3,err,error,*999)
 
       NULLIFY(interpolationParameters)
-      CALL FieldInterpoltedPoint_InterpolationParametersGet(dependentInterpPoint,interpolationParameters,err,error,*999)
+      CALL FieldInterpolatedPoint_InterpolationParametersGet(dependentInterpPoint,interpolationParameters,err,error,*999)
       NULLIFY(fieldVariable)
       CALL FieldInterpolationParameters_FieldVariableGet(interpolationParameters,fieldVariable,err,error,*999)
-      CALL FieldVariable_NumberOfComponetsGet(fieldVariable,pressureComponent,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(fieldVariable,pressureComponent,err,error,*999)
       
       P=dependentInterpPoint%values(pressureComponent,NO_PART_DERIV)
       !Form of constitutive model is:
@@ -11167,17 +11171,17 @@ CONTAINS
       & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE)
       IF(equationsSet%specification(3)==EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
         NULLIFY(interpolationParameters)
-        CALL FieldInterpoltedPoint_InterpolationParametersGet(geometricInterpolatedPoint,interpolationParameters,err,error,*999)
+        CALL FieldInterpolatedPoint_InterpolationParametersGet(geometricInterpolatedPoint,interpolationParameters,err,error,*999)
         NULLIFY(fieldVariable)
         CALL FieldInterpolationParameters_FieldVariableGet(interpolationParameters,fieldVariable,err,error,*999)
-        CALL FieldVariable_NumberOfComponetsGet(fieldVariable,pressureComponent,err,error,*999)
+        CALL FieldVariable_NumberOfComponentsGet(fieldVariable,pressureComponent,err,error,*999)
         P=geometricInterpPoint%values(pressureComponent,NO_PART_DERIV)
       ELSE
         NULLIFY(interpolationParameters)
-        CALL FieldInterpoltedPoint_InterpolationParametersGet(dependentInterpPoint,interpolationParameters,err,error,*999)
+        CALL FieldInterpolatedPoint_InterpolationParametersGet(dependentInterpPoint,interpolationParameters,err,error,*999)
         NULLIFY(fieldVariable)
         CALL FieldInterpolationParameters_FieldVariableGet(interpolationParameters,fieldVariable,err,error,*999)
-        CALL FieldVariable_NumberOfComponetsGet(fieldVariable,pressureComponent,err,error,*999)
+        CALL FieldVariable_NumberOfComponentsGet(fieldVariable,pressureComponent,err,error,*999)
         P=dependentInterpPoint%values(pressureComponent,NO_PART_DERIV)
       ENDIF
       B=[2.0_DP*C(2),2.0_DP*C(3),2.0_DP*C(3),C(4),C(4),C(3)] ![2*b_f,2*b_t,2*b_t,b_ft,b_ft,b_t]
@@ -14710,7 +14714,7 @@ CONTAINS
 
     ENTERS("FiniteElasticity_EquationsSetSolutionMethodSet",err,error,*999)
 
-    CALL EquationsSet_SpecficationGet(equationsSet,3,esSpecification,err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_MEMBRANE_SUBTYPE,EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
       & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
@@ -15220,7 +15224,7 @@ CONTAINS
             CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
             !Get the CellML evaluator solver
             NULLIFY(cellMLSolver)
-            CALL Solver_NewtonCellMLSolverGet(solver,cellMLSolver,err,error,*999)
+            CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*999)
             !Create the CellML equations
             NULLIFY(cellMLEquations)
             CALL CellMLEquations_CreateStart(cellMLSolver,cellMLEquations,err,error,*999)
@@ -15237,7 +15241,7 @@ CONTAINS
             CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
             !Get the CellML evaluator solver
             NULLIFY(cellMLSolver)
-            CALL Solver_NewtonCellMLSolverGet(solver,cellMLSolver,err,error,*999)
+            CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*999)
             !Create the CellML equations
             NULLIFY(cellMLEquations)
             CALL CellMLEquations_CreateStart(cellMLSolver,cellMLEquations,err,error,*999)
@@ -15288,7 +15292,7 @@ CONTAINS
             CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
             !Get the CellML evaluator solver
             NULLIFY(cellMLSolver)
-            CALL Solver_NewtonCellMLSolverGet(solver,cellMLSolver,err,error,*999)
+            CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*999)
             !Get the CellML equations for the CellML evaluator solver
             NULLIFY(cellMLEquations)
             CALL Solver_CellMLEquationsGet(cellMLSolver,cellMLEquations,err,error,*999)
@@ -15308,7 +15312,7 @@ CONTAINS
             CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
             !Get the CellML evaluator solver
             NULLIFY(cellMLSolver)
-            CALL Solver_NewtonCellMLSolverGet(solver,cellMLSolver,err,error,*999)
+            CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*999)
             !Get the CellML equations for the CellML evaluator solver
             NULLIFY(cellMLEquations)
             CALL Solver_CellMLEquationsGet(cellMLSolver,cellMLEquations,err,error,*999)
@@ -15817,7 +15821,7 @@ CONTAINS
       IF(solverNumber==2) THEN
         !Dynamic solver
         NULLIFY(nonlinearSolver)
-        CALL Solver_DynamicNonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
+        CALL Solver_DynamicLinkedNonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
         CALL Solver_NonlinearDivergenceExit(nonlinearSolver,err,error,*999)
         CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)
 !!TODO: shOULDNT THIS BE IN A POSTLOOP?
@@ -15920,9 +15924,9 @@ CONTAINS
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)
-      CALL SolverEquations_SolverMapping(solverEquations,solverMapping,err,error,*999)
+      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       !Make sure the equations sets are up to date
-      CALL SolverMapping_NumberOfEquationsSet(solverMapping,numberOfEquationsSets,err,error,*999)
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
       DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -15958,7 +15962,7 @@ CONTAINS
             CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
             NULLIFY(solverMapping)
             CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-            CALL SolverMapping_NumberOfEquationsSetGet(solverMapping,numberOfEquationsSets,err,error,*999)
+            CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
             DO equationsSetIdx=1,numberOfEquationsSets
               NULLIFY(equationsSet)
               CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -15986,7 +15990,7 @@ CONTAINS
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       !Make sure the equations sets are up to date
-      CALL SolverMapping_NumberOfEquationsSet(solverMapping,numberOfEquationsSets,err,error,*999)
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
       DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -16140,7 +16144,7 @@ CONTAINS
           CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
           NULLIFY(solverMapping)
           CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-          CALL SolverMappping_NumberOfEquationsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+          CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
           DO equationsSetIdx=1,numberOfEquationsSets
             NULLIFY(equationsSet)
             CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -16388,7 +16392,7 @@ CONTAINS
       NULLIFY(equations)
       CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
       NULLIFY(equationsInterpolation)
-      CALL Equation_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+      CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
       NULLIFY(vectorEquations)
       CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
       NULLIFY(vectorMapping)
@@ -16427,8 +16431,8 @@ CONTAINS
       CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,residualVariableType,dependentInterpPoint, &
         & err,error,*999)
       NULLIFY(dependentInterpPointMetrics)
-      CALL EquationInterpolation_DependentPointMetricsGet(equationsInterpolation,residualVariableType,dependentInterpPointMetrics, &
-        & err,error,*999)
+      CALL EquationsInterpolation_DependentPointMetricsGet(equationsInterpolation,residualVariableType, &
+        & dependentInterpPointMetrics,err,error,*999)
       NULLIFY(materialsField)
       CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
       NULLIFY(materialsInterpParameters)
@@ -16460,7 +16464,7 @@ CONTAINS
         NULLIFY(columnDomainElements)
         CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
         NULLIFY(geometricDecomposition)
-        CALL Field_DeocompositionGet(geometricField,geometricDecomposition,err,error,*999)
+        CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
         NULLIFY(geometricDomain)
         CALL Decomposition_DomainGet(geometricDecomposition,0,geometricDomain,err,error,*999)
         NULLIFY(geometricDomainTopology)
@@ -16468,9 +16472,9 @@ CONTAINS
         NULLIFY(geometricDomainElements)
         CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
         NULLIFY(domainMappings)
-        CALL Domain_MappingsGet(geometricDomain,domainMappings,err,error,*999)
+        CALL Domain_DomainMappingsGet(geometricDomain,domainMappings,err,error,*999)
         NULLIFY(elementsMapping)
-        CALL DomainMappings_ElementMappingGet(domainMappings,elementsMapping,err,error,*999)
+        CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
         CALL DomainMapping_InternalStartGet(elementsMapping,internalStart,err,error,*999)
         CALL DomainMapping_InternalFinishGet(elementsMapping,internalFinish,err,error,*999) 
         DO elementIdx=internalStart,internalFinish
@@ -16486,7 +16490,7 @@ CONTAINS
           CALL Basis_NumberOfXiGet(geometricBasis,geometricNumberOfXi,err,error,*999)
 
           !Initialise tensors and matrices
-          CALL Identity(dZdNu(1:3,1:3),err,error,*999)
+          CALL IdentityMatrix(dZdNu(1:3,1:3),err,error,*999)
           
           !Grab interpolation parameters
           CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,geometricInterpParameters, &
@@ -16936,8 +16940,8 @@ CONTAINS
             END IF
           ENDDO !dofIdx
             
-          CALL FieldVariable_ParameterSetRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricFieldValues,err,error,*999)
-          CALL FieldVariable_ParameterSetRestore(geometricVariable,FIELD_MESH_DISPLACEMENT_SET_TYPE,meshPositionValues, &
+          CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricFieldValues,err,error,*999)
+          CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_MESH_DISPLACEMENT_SET_TYPE,meshPositionValues, &
             & err,error,*999)
            
           IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED) THEN
@@ -16952,7 +16956,7 @@ CONTAINS
               & dependentNumberOfDOFs,dependentFieldValues,'(" Updated dependent values :",4(X,E13.6))','(27X,4(X,E13.6))', &
               & err,error,*999)
           ENDIF
-          CALL FieldVariable_ParameterSetRestore(dependentVariable,FIELD_VALUES_SET_TYPE,dependentFieldValues,err,error,*999)
+          CALL FieldVariable_ParameterSetDataRestore(dependentVariable,FIELD_VALUES_SET_TYPE,dependentFieldValues,err,error,*999)
          
         CASE DEFAULT
           ! do nothing
@@ -17129,7 +17133,7 @@ CONTAINS
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(sourceField)
-    CALL EquationSet_SourceFieldExists(equationsSet,sourceField,err,error,*999)
+    CALL EquationsSet_SourceFieldExists(equationsSet,sourceField,err,error,*999)
     IF(ASSOCIATED(sourceField)) THEN
       IF(maximumNumberOfIterations>1) THEN
         IF(iterationNumber==1) THEN

@@ -48,6 +48,7 @@ MODULE DataProjectionAccessRoutines
   USE Kinds
   USE ISO_VARYING_STRING
   USE Strings
+  USE Trees
   USE Types
 
 #include "macros.h"  
@@ -116,6 +117,8 @@ MODULE DataProjectionAccessRoutines
   PUBLIC DataProjection_AssertIsProjected,DataProjection_AssertNotProjected
 
   PUBLIC DataProjection_DataPointsGet
+
+  PUBLIC DataProjection_DataPointGlobalNumberGet
 
   PUBLIC DataProjection_DecompositionGet
 
@@ -372,6 +375,46 @@ CONTAINS
 
   END SUBROUTINE DataProjection_DataPointsGet
 
+  !
+  !================================================================================================================================
+  !  
+
+  !>Gets the user number for a data point identified by a given global number. 
+  SUBROUTINE DataProjection_DataPointGlobalNumberGet(dataProjection,userNumber,globalNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection whose data points to get the number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the data point to get the global number for
+    INTEGER(INTG), INTENT(OUT) :: globalNumber !<On exit, the global number of the specified user data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DataPointsType), POINTER  :: dataPoints
+    TYPE(TreeNodeType), POINTER :: treeNode
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataProjection_DataPointGlobalNumberGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+    NULLIFY(dataPoints)
+    CALL DataProjection_DataPointsGet(dataProjection,dataPoints,err,error,*999)
+    
+    NULLIFY(treeNode)
+    CALL Tree_Search(dataPoints%dataPointsTree,userNumber,treeNode,err,error,*999)
+    IF(ASSOCIATED(treeNode)) THEN
+      CALL Tree_NodeValueGet(dataPoints%dataPointsTree,treeNode,globalNumber,err,error,*999)
+    ELSE
+      localError="A data point with the user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DataProjection_DataPointGlobalNumberGet")
+    RETURN
+999 ERRORSEXITS("DataProjection_DataPointGlobalNumberGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DataProjection_DataPointGlobalNumberGet
+  
   !
   !================================================================================================================================
   !

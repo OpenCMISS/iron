@@ -45,6 +45,7 @@
 MODULE EquationsSetAccessRoutines
   
   USE BaseRoutines
+  USE FieldAccessRoutines
   USE Kinds
   USE ISO_VARYING_STRING
   USE Strings
@@ -398,14 +399,6 @@ MODULE EquationsSetAccessRoutines
   !>@}
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES=7
 
-  !> \addtogroup EquationsSetRoutines_DynamicMatrixTypes EquationsSet::Constants::DynamicMatrixTypes
-  !> \brief Type of matrix in a dynamic equations set
-  !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_STIFFNESS=1 !<A stiffness matrix (multiplies displacement values)
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_DAMPING=2 !<A damping matrix (multiplies velocity values)
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_MASS=3 !<A mass matrix (multiplies acceleration values)
-  !>@}
-  
   !> \addtogroup EquationsSetRoutines_OutputTypes EquationsSet::Constants::OutputTypes
   !> \brief The equations set output types
   !> \see EquationsSetRoutines,OPENCMISS_EquationsConstants
@@ -731,8 +724,6 @@ MODULE EquationsSetAccessRoutines
     & EQUATIONS_SET_CAUCHY_STRESS_TENSOR,EQUATIONS_SET_FIRST_PK_STRESS_TENSOR,EQUATIONS_SET_SECOND_PK_STRESS_TENSOR, &
     & EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES
 
-  PUBLIC EQUATIONS_MATRIX_STIFFNESS,EQUATIONS_MATRIX_DAMPING,EQUATIONS_MATRIX_MASS
-
   PUBLIC EQUATIONS_SET_NO_OUTPUT,EQUATIONS_SET_PROGRESS_OUTPUT
 
   PUBLIC EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1,EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2, &
@@ -796,7 +787,7 @@ MODULE EquationsSetAccessRoutines
   
   PUBLIC EquationsSet_AnalyticFieldGet
   
-  PUBLIC EquationsSet_AnalyticFunctionTypeGet
+  PUBLIC EquationsSet_AnalyticFunctionTypeGet,EquationsSet_AnalyticFunctionTypeSet
 
   PUBLIC EquationsSet_AnalyticTimeGet,EquationsSet_AnalyticTimeSet
 
@@ -832,6 +823,8 @@ MODULE EquationsSetAccessRoutines
   
   PUBLIC EquationsSet_CoordinateSystemGet
 
+  PUBLIC EquationsSet_CurrentTimeGet
+
   PUBLIC EquationsSet_DerivedExists
   
   PUBLIC EquationsSet_DerivedGet
@@ -839,7 +832,11 @@ MODULE EquationsSetAccessRoutines
   PUBLIC EquationsSet_DerivedFieldExists
   
   PUBLIC EquationsSet_DerivedFieldGet
+
+  PUBLIC EquationsSet_DerivedTypeVariableGet
   
+  PUBLIC EquationsSet_DependentFieldExists
+
   PUBLIC EquationsSet_DependentFieldGet
 
   PUBLIC EquationsSet_EquationsGet
@@ -902,7 +899,11 @@ MODULE EquationsSetAccessRoutines
 
   PUBLIC EquationsSet_TimesGet
 
+  PUBLIC EquationsSet_TimeIncrementGet
+
   PUBLIC EquationsSet_UserNumberFind
+
+  PUBLIC EquationsSet_UserNumberGet
 
 CONTAINS
 
@@ -1097,6 +1098,43 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_AnalyticFunctionTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the analytic function type for an equations set.
+  SUBROUTINE EquationsSet_AnalyticFunctionTypeSet(equationsSet,analyticFunctionType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the analytic function type for
+    INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The analytic function type to set for the specified equations set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("EquationsSet_AnalyticFunctionTypeSet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet%analytic)) THEN
+      localError="Analytic information is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    equationsSet%analytic%analyticFunctionType=analyticFunctionType
+       
+    EXITS("EquationsSet_AnalyticFunctionTypeSet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AnalyticFunctionTypeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AnalyticFunctionTypeSet
 
   !
   !================================================================================================================================
@@ -2294,6 +2332,33 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the current time for an equations set.
+  SUBROUTINE EquationsSet_CurrentTimeGet(equationsSet,currentTime,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the current time for
+    REAL(DP), INTENT(OUT) :: currentTime !<The current time for the equations set to get.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_CurrentTimeGet",err,error,*999) 
+
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
+
+    currentTime=equationsSet%currentTime
+      
+    EXITS("EquationsSet_CurrentTimeGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_CurrentTimeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_CurrentTimeGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the equations derived for an equations set if it exists.
   SUBROUTINE EquationsSet_DerivedExists(equationsSet,equationsDerived,err,error,*)
 
@@ -2444,6 +2509,101 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_DerivedFieldGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the derived variable for the derived variable type in an equations set.
+  SUBROUTINE EquationsSet_DerivedTypeVariableGet(equationsSet,derivedType,derivedVariable,err,error,*)
+    
+    !Argument variables
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to get the derived variable for.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to get the derived variable for. \see EquationsSetRoutines_DerivedTypes.
+    TYPE(FieldVariableType), POINTER, INTENT(INOUT) :: derivedVariable !<On return, the derived variable for the derived variable type. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: variableType
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("EquationsSet_DerivedTypeVariableGet",err,error,*998)
+    
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*998)
+    CALL EquationsSet_AssertDerivedIsFinished(equationsSet,err,error,*998)
+    
+#ifdef WITH_PRECHECKS     
+    !Check pointers
+    IF(ASSOCIATED(derivedVariable)) CALL FlagError("Derived field variable is already associated.",err,error,*998)
+    IF(derivedType<0.OR.derivedType>EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES)   THEN
+      localError="The derived variable type of "//TRIM(NumberToVString(derivedType,"*",err,error))// &
+        & " is invalid. It should be >= 1 and <= "//TRIM(NumberToVString(EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(equationsSet%derived%variableTypes)) THEN
+      localError="Equations set derived variable types is not allocated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    variableType=equationsSet%derived%variableTypes(derivedType)
+    CALL Field_VariableExists(equationsSet%derived%derivedField,variableType,derivedVariable,err,error,*999)
+    
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(derivedVariable)) THEN
+      localError="The derived field variable is not associated for derived type "// &
+        & TRIM(NumberToVString(derivedType,"*",err,error))//" for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif     
+    
+    EXITS("EquationsSet_DerivedTypeVariableGet")
+    RETURN
+999 NULLIFY(derivedVariable)
+998 ERRORSEXITS("EquationsSet_DerivedTypeVariableGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_DerivedTypeVariableGet
+   
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks that the dependent field exists for an equations set.
+  SUBROUTINE EquationsSet_DependentFieldExists(equationsSet,dependentField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to check the dependent field for
+    TYPE(FieldType), POINTER :: dependentField !<On exit, a pointer to the dependent field in the specified equations set if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_DependentFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(dependentField)) CALL FlagError("Dependent field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+#endif    
+
+    dependentField=>equationsSet%dependent%dependentField
+       
+    EXITS("EquationsSet_DependentFieldExists")
+    RETURN
+999 NULLIFY(dependentField)
+998 ERRORSEXITS("EquationsSet_DependentFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_DependentFieldExists
 
   !
   !================================================================================================================================
@@ -3766,6 +3926,33 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
   !================================================================================================================================
   !
 
+  !>Gets the current time increment for an equations set. 
+  SUBROUTINE EquationsSet_TimeIncrementGet(equationsSet,deltaTime,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the time increment for
+    REAL(DP), INTENT(OUT) :: deltaTime !<The current time increment for the equations set to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_TimeIncrementGet",err,error,*999) 
+
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
+
+    deltaTime=equationsSet%deltaTime
+      
+    EXITS("EquationsSet_TimeIncrementGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_TimeIncrementGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_TimeIncrementGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Finds and returns a pointer to the equations set identified by user number in the given region. If no equations set with that user number exists the equations set is left nullified.
   SUBROUTINE EquationsSet_UserNumberFind(userNumber,region,equationsSet,err,error,*)
 
@@ -3816,6 +4003,35 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
     RETURN 1
     
   END SUBROUTINE EquationsSet_UserNumberFind
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the user number of an equations set.
+  SUBROUTINE EquationsSet_UserNumberGet(equationsSet,userNumber,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations Set to get the user number for.
+    INTEGER(INTG), INTENT(OUT) :: userNumber !<On return, the user number of the specified equations set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_UserNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+#endif
+    
+    userNumber=equationsSet%userNumber
+    
+    EXITS("EquationsSet_UserNumberGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_UserNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_UserNumberGet
 
   !
   !================================================================================================================================

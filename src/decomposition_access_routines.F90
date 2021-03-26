@@ -143,6 +143,8 @@ MODULE DecompositionAccessRoutines
   
   PUBLIC Decomposition_UserNumberFind
 
+  PUBLIC Decomposition_UserNumberGet
+
   PUBLIC Decomposition_WorkGroupGet
 
   PUBLIC DecompositionDataPoints_DataPointCheckExists
@@ -269,7 +271,7 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DomainLines_LineNodeNumberGet
 
-  PUBLIC DomainMappings_DofsMappingGet
+  PUBLIC DomainMappings_DOFsMappingGet
   
   PUBLIC DomainMappings_DomainGet
   
@@ -344,6 +346,8 @@ MODULE DecompositionAccessRoutines
   PUBLIC DomainNodes_NodeSurroundingElementGet
   
   PUBLIC DomainNodes_NumberOfNodesGet
+  
+  PUBLIC DomainNodes_NumberOfGlobalNodesGet
   
   PUBLIC DomainNodes_TotalNumberOfNodesGet
 
@@ -1752,6 +1756,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Decomposition_UserNumberFind
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the user number for a decomposition. 
+  SUBROUTINE Decomposition_UserNumberGet(decomposition,userNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the decomposition to get the user number for.
+    INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, the user number for the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Decomposition_UserNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
+      
+    userNumber=decomposition%userNumber
+       
+    EXITS("Decomposition_UserNumberGet")
+    RETURN
+999 ERRORSEXITS("Decomposition_UserNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_UserNumberGet
 
   !
   !================================================================================================================================
@@ -5976,6 +6009,35 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE DomainNodes_NumberOfNodesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the global number of nodes from a domain. 
+  SUBROUTINE DomainNodes_NumberOfGlobalNodesGet(domainNodes,numberOfGlobalNodes,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the number of global nodes for
+    INTEGER(INTG), INTENT(OUT) :: numberOfGlobalNodes !<On exit, the number of global nodes for the domain nodes.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainNodes_NumberOfGlobalNodesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain nodes is not associated.",err,error,*999)
+#endif
+
+    numberOfGlobalNodes=domainNodes%numberOfGlobalNodes
+
+    EXITS("DomainNodes_NumberOfGlobalNodesGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_NumberOfGlobalNodesGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_NumberOfGlobalNodesGet
 
   !
   !================================================================================================================================

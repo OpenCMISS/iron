@@ -154,7 +154,7 @@ CONTAINS
     DO variableIdx=1,numberOfVariables
       NULLIFY(dependentVariable)
       CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
-      CALL FieldVariable_ParameterSetEnsurCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
       DO componentIdx=1,numberOfComponents
         CALL FieldVariable_ComponentInterpolationGet(dependentVariable,componentIdx,componentInterpolationType,err,error,*999)
@@ -383,7 +383,7 @@ CONTAINS
           ENDDO !derivativeIdx
         ENDDO !nodeIdx
       ENDDO !componentIdx
-      CALL FieldVarible_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
       CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
     ENDDO !variableIdx
     CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
@@ -610,7 +610,7 @@ CONTAINS
 
         !Calculate Jacobian and Gauss weight.
 !!TODO: Think about symmetric problems. 
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
 
         !Loop over field components
@@ -792,7 +792,7 @@ CONTAINS
     
     ENTERS("Laplace_EquationsSetSetup",err,error,*999)
 
-    CALL EquationSet_SpecificationGet(equationsSet,3,esSpecification,err,error,999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
     
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE, &
@@ -995,7 +995,7 @@ CONTAINS
       !
       NULLIFY(equationsIndependent)
       IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
-        CALL EquationsSet_EquationsIndependentGet(equationsSet,equationsIndependent,err,error,*999)
+        CALL EquationsSet_IndependentGet(equationsSet,equationsIndependent,err,error,*999)
       ENDIF      
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1079,7 +1079,7 @@ CONTAINS
       CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
       NULLIFY(equationsMaterials)
       IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
-        CALL EquationsSet_EquationsMaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+        CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
       ENDIF
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1271,7 +1271,7 @@ CONTAINS
         END SELECT
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
         NULLIFY(equationsAnalytic)
-        CALL EquationsSet_EquationsAnalytic(equationsSet,equationsAnalytic,err,error,*999)
+        CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
         IF(equationsSet%analytic%analyticFieldAutoCreated) &
           & CALL Field_CreateFinish(equationsAnalytic%analyticField,err,error,*999)
       CASE DEFAULT
@@ -1550,7 +1550,7 @@ CONTAINS
         !Start the solvers creation
         NULLIFY(solvers)
         CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
-        CALL Solvers_NumberSet(solvers,1,err,error,*999)
+        CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
         !Set the solver to be a linear solver
         NULLIFY(solver)
         CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)

@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Chris Bradley
+!> Contributor(s): Soroush Safaei, Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -52,12 +52,14 @@ MODULE AdvectionEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -72,6 +74,7 @@ MODULE AdvectionEquationsRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Timer
   USE Types
 
@@ -118,7 +121,7 @@ CONTAINS
     
     ENTERS("Advection_EquationsSetSolutionMethodSet",err,error,*999)
 
-    CALL EquationSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_ADVECTION_SUBTYPE)
       SELECT CASE(solutionMethod)
@@ -942,7 +945,7 @@ CONTAINS
       CALL Basis_NumberOfXiGet(geometricBasis,numberOfDependentXi,err,error,*999)
       NULLIFY(dependentQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
        
       NULLIFY(materialsField)
       CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
@@ -1018,7 +1021,7 @@ CONTAINS
         D=materialsInterpPoint%values(1,NO_PART_DERIV)
         
         !Calculate jacobianGaussWeight.
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         
         !Loop over field components
@@ -1253,7 +1256,7 @@ CONTAINS
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
         & outputIteration,inputIteration,err,error,*999)
       NULLIFY(solverEquations)
-      CALL Solver_SolverEquations(solver,solverEquations,err,error,*999)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       NULLIFY(equationsSet)

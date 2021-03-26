@@ -2323,7 +2323,7 @@ CONTAINS
       ENDDO !sourceDOFIdx
       onlyOneModelIndex=0
       CALL MPI_ALLREDUCE(cellMLModelsField%onlyOneModelIndex,onlyOneModelIndex,1,MPI_INTEGER,MPI_MAX,groupCommunicator,mpiIerror)
-      CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+      CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
       IF(onlyOneModelIndex==0) CALL FlagError("Models field does not have any models set.",err,error,*999)
 !!TODO: Do we need to make sure it is the same model number on different ranks? The only one model optimisation is to ensure
 !!that we don't have to reference the models field inside dof loops on the rank??? 

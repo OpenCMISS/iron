@@ -45,6 +45,7 @@
 MODULE InterfaceMappingRoutines
 
   USE BaseRoutines
+  USE DomainMappings
   USE FieldRoutines
   USE FieldAccessRoutines
   USE InputOutput
@@ -175,7 +176,7 @@ CONTAINS
         !Initialise and setup the interface matrix
         NULLIFY(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr)
         CALL InterfaceMapping_MatrixToVarMapInitialise(interfaceMapping,matrixIdx,err,error,*999)
-        CALL InterfaceMappingCVC_RowVariableIndexGet(createValuesCache,matrixIdx,meshIdx,err,error,*999)
+        CALL InterfaceMappingCVC_MatrixRowVariableIndexGet(createValuesCache,matrixIdx,meshIdx,err,error,*999)
         NULLIFY(equationsSet)
         NULLIFY(fieldVariable)
         DO variableIdx=1,interfaceDependent%numberOfDependentVariables
@@ -202,7 +203,7 @@ CONTAINS
         CALL InterfaceMappingCVC_MatrixCoefficientGet(createValuesCache,matrixIdx,matrixCoefficient,err,error,*999)
         CALL InterfaceMappingCVC_TransposeMatrixCoefficientGet(createValuesCache,matrixIdx,transposeMatrixCoefficient, &
           & err,error,*999)
-        CALL InterfaceMappingCVS_HasTransposeGet(createValuesCache,matrixIdx,hasTranspose,err,error,*999)
+        CALL InterfaceMappingCVC_HasTransposeGet(createValuesCache,matrixIdx,hasTranspose,err,error,*999)
         NULLIFY(interfaceMatrixToVarMap)
         CALL InterfaceMapping_InterfaceMatrixToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixToVarMap,err,error,*999)
         interfaceMatrixToVarMap%equationsSet=>equationsSet
@@ -231,7 +232,7 @@ CONTAINS
         !Initialise and setup the interface matrix
         NULLIFY(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr)
         CALL InterfaceMapping_MatrixToVarMapInitialise(interfaceMapping,matrixIdx,err,error,*999)
-        CALL InterfaceMappingCVC_RowVariableIndexGet(createValuesCache,matrixIdx,meshIdx,err,error,*999)
+        CALL InterfaceMappingCVC_MatrixRowVariableIndexGet(createValuesCache,matrixIdx,meshIdx,err,error,*999)
         NULLIFY(lagrangeVariable)
         CALL Field_VariableGet(lagrangeField,createValuesCache%lagrangeVariableType,lagrangeVariable,err,error,*999)
         CALL FieldVariable_VariableTypeGet(lagrangeVariable,variableType,err,error,*999)
@@ -243,7 +244,7 @@ CONTAINS
         CALL InterfaceMappingCVC_MatrixCoefficientGet(createValuesCache,matrixIdx,matrixCoefficient,err,error,*999)
         CALL InterfaceMappingCVC_TransposeMatrixCoefficientGet(createValuesCache,matrixIdx,transposeMatrixCoefficient, &
           & err,error,*999)
-        CALL InterfaceMappingCVS_HasTransposeGet(createValuesCache,matrixIdx,hasTranspose,err,error,*999)
+        CALL InterfaceMappingCVC_HasTransposeGet(createValuesCache,matrixIdx,hasTranspose,err,error,*999)
         interfaceMatrixToVarMap%interfaceEquations=>interfaceEquations
         interfaceMatrixToVarMap%variableType=variableType
         interfaceMatrixToVarMap%variable=>lagrangeVariable

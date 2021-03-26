@@ -58,6 +58,7 @@ MODULE ClassicalFieldRoutines
   USE PoissonEquationsRoutines
   USE ProblemAccessRoutines
   USE ReactionDiffusionEquationsRoutines
+  USE SolverAccessRoutines
   USE Strings
   USE Types
 

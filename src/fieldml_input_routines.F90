@@ -1,4 +1,4 @@
- !> \file
+!> \file
 !> \author Caton Little
 !> \brief This module handles reading in FieldML files.
 !>
@@ -1312,7 +1312,7 @@ CONTAINS
       
     !TODO Code assumes that the data is dense in both node and component indexes.
     NULLIFY( NODES )
-    CALL REGION_NODES_GET( MESH%REGION, NODES, ERR, ERROR, *999 )
+    CALL Region_NodesGet( MESH%REGION, NODES, ERR, ERROR, *999 )
     CALL NODES_NUMBER_OF_NODES_GET( NODES, MESH_NODE_COUNT, ERR, ERROR, *999 )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( var_str("Cannot get mesh nodes count for mesh ")//mesh%userNumber//".", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )

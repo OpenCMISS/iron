@@ -102,6 +102,8 @@ MODULE InterfaceMappingAccessRoutines
 
   PUBLIC InterfaceMappingCVC_TransposeMatrixCoefficientGet
 
+  PUBLIC InterfaceMappingIMToVMap_EquationsSetGet
+
   PUBLIC InterfaceMappingIMToVMap_HasTransposeGet
 
   PUBLIC InterfaceMappingIMToVMap_InterfaceMatrixGet
@@ -926,6 +928,43 @@ MODULE InterfaceMappingAccessRoutines
     RETURN 1
     
   END SUBROUTINE InterfaceMappingCVC_TransposeMatrixCoefficientGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the equations set for an interface matrix to variable map.
+  SUBROUTINE InterfaceMappingIMToVMap_EquationsSetGet(interfaceMatrixToVarMap,equationsSet,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the equations set for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<On exit, the equations set for the interface matrix to variable map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingIMToVMap_EquationsSetGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatrixToVarMap)) &
+      & CALL FlagError("Interface matrix to variable map is not associated.",err,error,*999)
+#endif    
+
+    equationsSet=>interfaceMatrixToVarMap%equationsSet
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(equationsSet)) &
+      & CALL FlagError("Equations set is not associated for the interface matrix to variable map.",err,error,*999)
+#endif        
+       
+    EXITS("InterfaceMappingIMToVMap_EquationsSetGet")
+    RETURN
+999 NULLIFY(equationsSet)
+998 ERRORSEXITS("InterfaceMappingIMToVMap_EquationsSetGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingIMToVMap_EquationsSetGet
 
   !
   !================================================================================================================================

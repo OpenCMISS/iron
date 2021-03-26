@@ -83,6 +83,7 @@ MODULE EquationsSetRoutines
 #endif
   USE MultiPhysicsRoutines
   USE ProfilingRoutines
+  USE RegionAccessRoutines
   USE Strings
   USE Timer
   USE Types
@@ -336,7 +337,7 @@ CONTAINS
     CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
     NULLIFY(geometricVariable)
     CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
-    CALL FieldCariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
     CALL FieldVariable_InterpolationParameterInitialise(geometricVariable,geometricInterpParameters,err,error,*999)
     CALL Field_InterpolatedPointInitialise(geometricInterpParameters,geometricInterpPoint,err,error,*999)
     CALL Field_InterpolatedPointMetricsInitialise(geometricInterpPoint,geometricInterpPointMetrics,err,error,*999)
@@ -432,7 +433,7 @@ CONTAINS
           !Loop over the local nodes excluding the ghosts.
           CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
           DO nodeIdx=1,numberOfNodes
-            CALL FieldVariable_PositionNormalTangentsCalculateNode(dependentVariable,componentIdx,nodeIdx,position,normal, &
+            CALL Field_PositionNormalTangentsCalculateNode(dependentField,variableType,componentIdx,nodeIdx,position,normal, &
               & tangents,err,error,*999)
             IF(ASSOCIATED(analyticField)) CALL Field_InterpolateFieldVariableNode(NO_PHYSICAL_DERIV,FIELD_VALUES_SET_TYPE, &
                 & analyticVariable,componentIdx,nodeIdx,analyticPhysicalPoint,err,error,*999)
@@ -545,7 +546,7 @@ CONTAINS
     IF(ASSOCIATED(analyticField)) THEN
       CALL Field_PhysicalPointFinalise(analyticPhysicalPoint,err,error,*999)
       CALL Field_InterpolatedPointFinalise(analyticInterpPoint,err,error,*999)
-      CALL FieldVariable_InterpolationParametersFinalise(analyticInterpParameters,err,error,*999)
+      CALL FieldVariable_InterpolationParameterFinalise(analyticInterpParameters,err,error,*999)
     ENDIF
     CALL Field_InterpolatedPointMetricsFinalise(geometricInterpPointMetrics,err,error,*999)
     CALL Field_InterpolatedPointFinalise(geometricInterpPoint,err,error,*999)
@@ -1581,34 +1582,34 @@ CONTAINS
           CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
           IF(stiffnessMatrixNumber/=0) THEN
             NULLIFY(displacementParameters)
-            CALL FieldVariable_ParametersSetGet(dynamicVariable,FIELD_VALUES_SET_TYPE,displacementParameters,err,error,*999)
+            CALL FieldVariable_ParameterSetGet(dynamicVariable,FIELD_VALUES_SET_TYPE,displacementParameters,err,error,*999)
             NULLIFY(displacementDistributedVector)
             CALL FieldParameterSet_ParametersGet(displacementParameters,displacementDistributedVector,err,error,*999)
             NULLIFY(stiffnessMatrix)
-            CALL EquationsMatricesDynamic_EquatMatrixGet(dynamicMatrices,stiffnessMatrixNumber,stiffnessMatrix,err,error,*999)
+            CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,stiffnessMatrixNumber,stiffnessMatrix,err,error,*999)
             NULLIFY(stiffnessDistributedMatrix)
             CALL EquationsMatrix_DistributedMatrixGet(stiffnessMatrix,stiffnessDistributedMatrix,err,error,*999)
             CALL EquationsMatrix_MatrixCoefficientGet(stiffnessMatrix,stiffnessAlpha,err,error,*999)
           ENDIF
           IF(dampingMatrixNumber/=0) THEN
             NULLIFY(velocityParameters)
-            CALL FieldVariable_ParametersSetGet(dynamicVariable,FIELD_VELOCITY_VALUES_SET_TYPE,velocityParameters,err,error,*999)
+            CALL FieldVariable_ParameterSetGet(dynamicVariable,FIELD_VELOCITY_VALUES_SET_TYPE,velocityParameters,err,error,*999)
             NULLIFY(velocityDistributedVector)
             CALL FieldParameterSet_ParametersGet(velocityParameters,velocityDistributedVector,err,error,*999)
             NULLIFY(dampingMatrix)
-            CALL EquationsMatricesDynamic_EquatMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix,err,error,*999)
+            CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix,err,error,*999)
             NULLIFY(dampingDistributedMatrix)
             CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,dampingDistributedMatrix,err,error,*999)
             CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,dampingAlpha,err,error,*999)
           ENDIF
           IF(massMatrixNumber/=0) THEN
             NULLIFY(accelerationParameters)
-            CALL FieldVariable_ParametersSetGet(dynamicVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,accelerationParameters, &
+            CALL FieldVariable_ParameterSetGet(dynamicVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,accelerationParameters, &
               & err,error,*999)
             NULLIFY(accelerationDistributedVector)
             CALL FieldParameterSet_ParametersGet(accelerationParameters,accelerationDistributedVector,err,error,*999)
             NULLIFY(massMatrix)
-            CALL EquationsMatricesDynamic_EquatMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
+            CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
             NULLIFY(massDistributedMatrix)
             CALL EquationsMatrix_DistributedMatrixGet(massMatrix,massDistributedMatrix,err,error,*999)
             CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,massAlpha,err,error,*999)
@@ -1641,7 +1642,7 @@ CONTAINS
           CALL BoundaryConditionsRowVariable_RowConditionTypeGet(lhsBoundaryConditionsRowVariable,equationsRowNumber, &
             & rowCondition,err,error,*999)
           lhsVariableDOF=equationsRowToLHSDOFMap(equationsRowNumber)
-          CALL BoundaryConditionsVariable_LocalDOFTypeGet(lhsBoundaryConditionsVariable,lhsVariableDOF,lhsBoundaryCondition, &
+          CALL BoundaryConditionsVariable_DOFTypeGet(lhsBoundaryConditionsVariable,lhsVariableDOF,lhsBoundaryCondition, &
             & err,error,*999)
 
           rhsVariableDOF=equationsRowToRHSDOFMap(equationsRowNumber)
@@ -1677,7 +1678,7 @@ CONTAINS
                 CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixIdx,linearVariable,err,error,*999)
                 !Get the dependent field variable parameters
                 NULLIFY(linearParameters)
-                CALL FieldVariable_ParametersSetGet(linearVariable,FIELD_VALUES_SET_TYPE,linearParameters,err,error,*999)
+                CALL FieldVariable_ParameterSetGet(linearVariable,FIELD_VALUES_SET_TYPE,linearParameters,err,error,*999)
                 NULLIFY(linearDistributedVector)
                 CALL FieldParameterSet_ParametersGet(linearParameters,linearDistributedVector,err,error,*999)
                 NULLIFY(linearMatrix)
@@ -1716,7 +1717,7 @@ CONTAINS
               ENDDO !sourceIdx
             ENDIF
             !Set the RHS value
-            CALL FieldVariable_PararmeterSetUpdateLocalDOF(rhsVariable,FIELD_VALUES_SET_TYPE,rhsVariableDOF,lhsSum,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(rhsVariable,FIELD_VALUES_SET_TYPE,rhsVariableDOF,lhsSum,err,error,*999)
           CASE(BOUNDARY_CONDITION_NEUMANN_ROW)
             !OK, do nothing
           CASE(BOUNDARY_CONDITION_ROBIN_ROW)
@@ -1849,8 +1850,7 @@ CONTAINS
           & TRIM(NumberToVString(equationsSetRegionUserNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
-      NULLIFY(geometricField)
-      CALL EquationsSet_GeometricFieldExists(equationsSet,geometricField,err,error,*999)
+      geometricField=>equationsSet%geometry%geometricField
       IF(ASSOCIATED(geometricField)) THEN
         !Check that the specified field has the same decomposition as the geometric field
         NULLIFY(geometricDecomposition)
@@ -2268,7 +2268,7 @@ CONTAINS
       CALL EquationsMatricesVector_SourceVectorsExists(vectorMatrices,sourceVectors,err,error,*999)
       IF(ASSOCIATED(sourceVectors)) THEN
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Element source vectors:",err,error,*999)
-        CALL EquationsMatricesSources_NumberOfSourceVectorsGet(sourceVectors,numberOfSources,err,error,*999)
+        CALL EquationsMatricesSources_NumberOfSourcesGet(sourceVectors,numberOfSources,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of source vectors = ",numberOfSources,err,error,*999)
         DO sourceIdx=1,numberOfSources
           NULLIFY(sourceVector)
@@ -2344,7 +2344,7 @@ CONTAINS
       DO matrixIdx=1,numberOfJacobians
         NULLIFY(jacobianMatrix)
         CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
-        CALL JacobianMatrix_JacobianCalculationTypeGet(jacobianMatrix,jacobianCalculationType,err,error,*999)
+        CALL JacobianMatrix_CalculationTypeGet(jacobianMatrix,jacobianCalculationType,err,error,*999)
         SELECT CASE(jacobianCalculationType)
         CASE(EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
           ! None of these routines currently support calculating off diagonal terms for coupled problems,
@@ -2442,6 +2442,7 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -2481,8 +2482,10 @@ CONTAINS
     ! For this equations set, we calculate the residual for the row variable
     ! while pertubing parameters from the column variable.
     ! For non coupled problems these two variables will be the same
+    NULLIFY(residualMapping)
+    CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualNumber,residualMapping,err,error,*999)
     NULLIFY(columnVariable)
-    CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,jacobianNumber,residualNumber,columnVariable,err,error,*999)
+    CALL EquationsMappingResidual_VariableGet(residualMapping,jacobianNumber,columnVariable,err,error,*999)
     NULLIFY(parameterSet)
     CALL FieldVariable_ParameterSetGet(columnVariable,FIELD_VALUES_SET_TYPE,parameterSet,err,error,*999)
     NULLIFY(parameters)
@@ -2502,7 +2505,7 @@ CONTAINS
     ! distributed out, have to use proper field accessing routines..
     ! so let's just loop over component, node/el, derivative
     column=0  ! element jacobian matrix column number
-    CALL FieldVariable_NumberOfComponents(columnVariable,numberOfComponents,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(columnVariable,numberOfComponents,err,error,*999)
     DO componentIdx=1,numberOfComponents
       NULLIFY(domain)
       CALL FieldVariable_ComponentDomainGet(columnVariable,componentIdx,domain,err,error,*999)
@@ -2676,7 +2679,7 @@ CONTAINS
       CALL EquationsMatricesVector_SourceVectorsExists(vectorMatrices,sourceVectors,err,error,*999)
       IF(ASSOCIATED(sourceVectors)) THEN
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Source vectors:",err,error,*999)
-        CALL EquationsMatricesSources_NumberOfSourceVectorsGet(sourceVectors,numberOfSources,err,error,*999)
+        CALL EquationsMatricesSources_NumberOfSourcesGet(sourceVectors,numberOfSources,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of source vectors = ",numberOfSources,err,error,*999)
         DO sourceIdx=1,numberOfSources
           NULLIFY(sourceVector)
@@ -3532,7 +3535,7 @@ CONTAINS
   !
 
   !>Finalises the equation set field variables for an equation set and deallocates all memory.
-  SUBROUTINE EqutionsSet_EquationsFieldFinalise(equationsField,err,error,*)
+  SUBROUTINE EquationsSet_EquationsFieldFinalise(equationsField,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetEquationsFieldType), POINTER :: equationsField !<The pointer to the equations set equations field
@@ -3540,7 +3543,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EqutionsSet_EquationsFieldFinalise",err,error,*999)
+    ENTERS("EquationsSet_EquationsFieldFinalise",err,error,*999)
 
     IF(ASSOCIATED(equationsField)) THEN
       NULLIFY(equationsField%equationsSet)
@@ -3550,12 +3553,12 @@ CONTAINS
       DEALLOCATE(equationsField)
     ENDIF
     
-    EXITS("EqutionsSet_EquationsFieldFinalise")
+    EXITS("EquationsSet_EquationsFieldFinalise")
     RETURN
-999 ERRORSEXITS("EqutionsSet_EquationsFieldFinalise",err,error)
+999 ERRORSEXITS("EquationsSet_EquationsFieldFinalise",err,error)
     RETURN 1
     
-  END SUBROUTINE EqutionsSet_EquationsFieldFinalise
+  END SUBROUTINE EquationsSet_EquationsFieldFinalise
   
   !
   !================================================================================================================================
@@ -4053,7 +4056,7 @@ CONTAINS
     ENDIF
     !Output equations matrices and RHS vector if required
     IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
+      CALL EquationsMatricesVector_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_JacobianEvaluateStaticFEM")
@@ -4188,7 +4191,7 @@ CONTAINS
     ENDIF
     !Output equations matrices and RHS vector if required
     IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
+      CALL EquationsMatricesVector_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
       
     EXITS("EquationsSet_JacobianEvaluateDynamicFEM")
@@ -4246,8 +4249,8 @@ CONTAINS
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Equations set residual evaluate: ",equationsSet%label,err,error,*999)
     ENDIF
 
-    CALL Equations_LinearityGet(equations,linearity,err,error,*999)
-    CALL Equations_TimeDependenceGet(equations,timeDependence,err,error,*999)
+    CALL Equations_LinearityTypeGet(equations,linearity,err,error,*999)
+    CALL Equations_TimeDependenceTypeGet(equations,timeDependence,err,error,*999)
     SELECT CASE(linearity)
     CASE(EQUATIONS_LINEAR)
       CALL FlagError("Can not evaluate a residual for linear equations.",err,error,*999)
@@ -4315,7 +4318,7 @@ CONTAINS
       NULLIFY(residualVector)
       CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
       NULLIFY(residualDistributedVector)
-      CALL EquatiosnMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+      CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
         & residualDistributedVector,err,error,*999)
       CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfResidualVariables,err,error,*999)
       DO residualVariableIdx=1,numberOfResidualVariables
@@ -5463,7 +5466,7 @@ CONTAINS
           ! The boundary conditions parameter set contains the full values and the
           ! current incremented values are transferred to the point values vector
           DO neumannIdx=1,neumannPointIncrementedCount+neumannPointCount
-            CALL BoundaryConditionsNeumman_NeummanDOFIndexGet(neumannBoundaryConditions,neumannIdx,globalNeumannDOFIdx, &
+            CALL BoundaryConditionsNeumann_NeumannDOFIndexGet(neumannBoundaryConditions,neumannIdx,globalNeumannDOFIdx, &
               & err,error,*999)
             CALL BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,globalNeumannDOFIdx,conditionType, &
              & err,error,*999)
@@ -5810,7 +5813,7 @@ CONTAINS
       DO matrixIdx=1,numberOfJacobians
         NULLIFY(jacobianMatrix)
         CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
-        CALL JacobianMatrix_JacobianCalculationTypeGet(jacobianMatrix,jacobianCalculationType,err,error,*999)
+        CALL JacobianMatrix_CalculationTypeGet(jacobianMatrix,jacobianCalculationType,err,error,*999)
         SELECT CASE(jacobianCalculationType)
         CASE(EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
           ! None of these routines currently support calculating off diagonal terms for coupled problems,
@@ -6157,7 +6160,7 @@ CONTAINS
     ENDIF
     !Output equations Jacobian if required
     IF(outputType>=EQUATIONS_MATRIX_OUTPUT) &
-      & CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
+      & CALL EquationsMatricesVector_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
        
     EXITS("EquationsSet_JacobianEvaluateStaticNodal")
     RETURN

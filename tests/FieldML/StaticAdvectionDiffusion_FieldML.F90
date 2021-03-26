@@ -267,7 +267,7 @@ PROGRAM StaticAdvectionDiffusionExample
   CALL cmfe_EquationsSet_Initialise(EquationsSet,Err)
     CALL cmfe_Field_Initialise(EquationsSetField,Err)
   CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,[CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS, &
-    & CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE], &
+    & CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_GENERALISED_STATIC_ADVEC_DIFF_SUBTYPE], &
     & EquationsSetFieldUserNumber,EquationsSetField,EquationsSet,Err)
   !Set the equations set to be a standard Laplace problem
   !Finish creating the equations set

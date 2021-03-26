@@ -169,12 +169,22 @@ MODULE EquationsMatricesAccessRoutines
   PUBLIC EQUATIONS_MATRICES_CURRENT_VECTOR,EQUATIONS_MATRICES_PREVIOUS_VECTOR,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
     & EQUATIONS_MATRICES_PREVIOUS3_VECTOR
 
+  PUBLIC ElementMatrix_Output
+  
+  PUBLIC ElementVector_Output
+  
+  PUBLIC EquationsMatricesDynamic_DampingMatrixGet
+  
   PUBLIC EquationsMatricesDynamic_DynamicMappingGet
   
   PUBLIC EquationsMatricesDynamic_EquationsMatrixGet
 
+  PUBLIC EquationsMatricesDynamic_MassMatrixGet
+  
   PUBLIC EquationsMatricesDynamic_NumberOfDynamicMatricesGet
 
+  PUBLIC EquationsMatricesDynamic_StiffnessMatrixGet
+  
   PUBLIC EquationsMatricesDynamic_TempDistributedVectorExists
   
   PUBLIC EquationsMatricesDynamic_TempDistributedVectorGet
@@ -196,12 +206,16 @@ MODULE EquationsMatricesAccessRoutines
   PUBLIC EquationsMatricesNonlinear_NonlinearMappingGet
   
   PUBLIC EquationsMatricesNonlinear_NumberOfResidualsGet
+
+  PUBLIC EquationsMatricesNonlinear_ResidualVectorGet
   
   PUBLIC EquationsMatricesNonlinear_TempDistributedVectorExists
 
   PUBLIC EquationsMatricesNonlinear_TempDistributedVectorGet
 
   PUBLIC EquationsMatricesNonlinear_VectorMatricesGet
+
+  PUBLIC EquationsMatricesOptimisation_HessianMatrixGet
 
   PUBLIC EquationsMatricesResidual_DistributedVectorExists
 
@@ -243,6 +257,8 @@ MODULE EquationsMatricesAccessRoutines
 
   PUBLIC EquationsMatricesResidual_UpdateVectorGet
 
+  PUBLIC EquationsMatricesResidual_UpdateVectorSet
+
   PUBLIC EquationsMatricesRHS_DistributedVectorExists
   
   PUBLIC EquationsMatricesRHS_DistributedVectorGet
@@ -274,6 +290,8 @@ MODULE EquationsMatricesAccessRoutines
   PUBLIC EquationsMatricesRHS_VectorCoefficientGet
 
   PUBLIC EquationsMatricesRHS_UpdateVectorGet
+
+  PUBLIC EquationsMatricesRHS_UpdateVectorSet
 
   PUBLIC EquationsMatricesScalar_EquationsScalarGet
 
@@ -311,6 +329,8 @@ MODULE EquationsMatricesAccessRoutines
 
   PUBLIC EquationsMatricesSource_UpdateVectorGet
 
+  PUBLIC EquationsMatricesSource_UpdateVectorSet
+
   PUBLIC EquationsMatricesSources_NumberOfSourcesGet
 
   PUBLIC EquationsMatricesSources_SourceVectorGet
@@ -335,6 +355,14 @@ MODULE EquationsMatricesAccessRoutines
   
   PUBLIC EquationsMatricesVector_NonlinearMatricesGet
 
+  PUBLIC EquationsMatricesVector_OptimisationMatricesExists
+
+  PUBLIC EquationsMatricesVector_OptimisationMatricesGet
+
+  PUBLIC EquationsMatricesVector_NumberOfRowsGet
+
+  PUBLIC EquationsMatricesVector_NumberOfGlobalRowsGet
+
   PUBLIC EquationsMatricesVector_RHSVectorExists
   
   PUBLIC EquationsMatricesVector_RHSVectorGet
@@ -342,6 +370,8 @@ MODULE EquationsMatricesAccessRoutines
   PUBLIC EquationsMatricesVector_SourceVectorsExists
   
   PUBLIC EquationsMatricesVector_SourceVectorsGet
+
+  PUBLIC EquationsMatricesVector_TotalNumberOfRowsGet
 
   PUBLIC EquationsMatricesVector_VectorEquationsGet
 
@@ -383,6 +413,8 @@ MODULE EquationsMatricesAccessRoutines
 
   PUBLIC EquationsMatrix_UpdateMatrixGet
 
+  PUBLIC EquationsMatrix_UpdateMatrixSet
+
   PUBLIC JacobianMatrix_CalculationTypeGet
 
   PUBLIC JacobianMatrix_DistributedMatrixGet
@@ -410,6 +442,8 @@ MODULE EquationsMatricesAccessRoutines
   PUBLIC JacobianMatrix_SymmetryFlagGet
 
   PUBLIC JacobianMatrix_UpdateMatrixGet
+
+  PUBLIC JacobianMatrix_UpdateMatrixSet
 
 CONTAINS
 
@@ -478,6 +512,65 @@ CONTAINS
     
   END SUBROUTINE ElementVector_Output
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the dynamic damping matrix for dynamic matrices.
+  SUBROUTINE EquationsMatricesDynamic_DampingMatrixGet(dynamicMatrices,dampingMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices !<A pointer to the dynamic matrices to get the damping matrix for
+    TYPE(EquationsMatrixType), POINTER :: dampingMatrix !<On exit, a pointer to the damping matrix for the dynamic matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dampingMatrixNumber
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("EquationsMatricesDynamic_DampingMatrixGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(dampingMatrix)) CALL FlagError("Damping matrix is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dynamicMatrices)) CALL FlagError("Dynamic matrices is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices)) &
+      & CALL FlagError("Vector matrices is not associated for the dynamic matrices.",err,error,*999)
+    IF(.NOT.ALLOCATED(dynamicMatrices%matrices)) &
+      & CALL FlagError("Matrices is not allocated for the dynamic matrices.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices%vectorEquations)) &
+      & CALL FlagError("Vector equations is not associated for the vector matrices.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices%vectorEquations%vectorMapping)) &
+      & CALL FlagError("Vector mapping is not associated for the vector equations.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices%vectorEquations%vectorMapping%dynamicMapping)) &
+      & CALL FlagError("Dynamic mapping is not associated for the vector mapping.",err,error,*999)
+#endif    
+    dampingMatrixNumber=dynamicMatrices%vectorMatrices%vectorEquations%vectorMapping%dynamicMapping%dampingMatrixNumber
+#ifdef WITH_PRECHECKS
+    IF(dampingMatrixNumber==0) CALL FlagError("The dynamic matrices have no damping matrix.",err,error,*999)
+    IF(dampingMatrixNumber<0.OR.dampingMatrixNumber>dynamicMatrices%numberOfDynamicMatrices) THEN
+      localError="The damping matrix number of "//TRIM(NumberToVString(dampingMatrixNumber,"*",err,error))// &
+        & " is invalid. The damping matrix number should be >= 0 and <= "// &
+        & TRIM(NumberToVString(dynamicMatrices%numberOfDynamicMatrices,"*",err,error))//"."
+    ENDIF
+#endif    
+
+    dampingMatrix=>dynamicMatrices%matrices(dampingMatrixNumber)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(dampingMatrix)) &
+      & CALL FlagError("Damping matrix is not associated for the dynamic matrices.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesDynamic_DampingMatrixGet")
+    RETURN
+999 NULLIFY(dampingMatrix)
+998 ERRORSEXITS("EquationsMatricesDynamic_DampingMatrixGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesDynamic_DampingMatrixGet
+
   !
   !================================================================================================================================
   !
@@ -574,6 +667,65 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the dynamic mass matrix for dynamic matrices.
+  SUBROUTINE EquationsMatricesDynamic_MassMatrixGet(dynamicMatrices,massMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices !<A pointer to the dynamic matrices to get the mass matrix for
+    TYPE(EquationsMatrixType), POINTER :: massMatrix !<On exit, a pointer to the mass matrix for the dynamic matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: massMatrixNumber
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("EquationsMatricesDynamic_MassMatrixGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(massMatrix)) CALL FlagError("Mass matrix is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dynamicMatrices)) CALL FlagError("Dynamic matrices is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices)) &
+      & CALL FlagError("Vector matrices is not associated for the dynamic matrices.",err,error,*999)
+    IF(.NOT.ALLOCATED(dynamicMatrices%matrices)) &
+      & CALL FlagError("Matrices is not allocated for the dynamic matrices.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices%vectorEquations)) &
+      & CALL FlagError("Vector equations is not associated for the vector matrices.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices%vectorEquations%vectorMapping)) &
+      & CALL FlagError("Vector mapping is not associated for the vector equations.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices%vectorEquations%vectorMapping%dynamicMapping)) &
+      & CALL FlagError("Dynamic mapping is not associated for the vector mapping.",err,error,*999)
+#endif    
+    massMatrixNumber=dynamicMatrices%vectorMatrices%vectorEquations%vectorMapping%dynamicMapping%massMatrixNumber
+#ifdef WITH_PRECHECKS
+    IF(massMatrixNumber==0) CALL FlagError("The dynamic matrices have no mass matrix.",err,error,*999)
+    IF(massMatrixNumber<0.OR.massMatrixNumber>dynamicMatrices%numberOfDynamicMatrices) THEN
+      localError="The mass matrix number of "//TRIM(NumberToVString(massMatrixNumber,"*",err,error))// &
+        & " is invalid. The mass matrix number should be >= 0 and <= "// &
+        & TRIM(NumberToVString(dynamicMatrices%numberOfDynamicMatrices,"*",err,error))//"."
+    ENDIF
+#endif    
+
+    massMatrix=>dynamicMatrices%matrices(massMatrixNumber)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(massMatrix)) &
+      & CALL FlagError("Mass matrix is not associated for the dynamic matrices.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesDynamic_MassMatrixGet")
+    RETURN
+999 NULLIFY(massMatrix)
+998 ERRORSEXITS("EquationsMatricesDynamic_MassMatrixGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesDynamic_MassMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the number of dynamic matrices for dynamic matrices.
   SUBROUTINE EquationsMatricesDynamic_NumberOfDynamicMatricesGet(dynamicMatrices,numberOfDynamicMatrices,err,error,*)
 
@@ -598,6 +750,65 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesDynamic_NumberOfDynamicMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the dynamic stiffness matrix for dynamic matrices.
+  SUBROUTINE EquationsMatricesDynamic_StiffnessMatrixGet(dynamicMatrices,stiffnessMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices !<A pointer to the dynamic matrices to get the stiffness matrix for
+    TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix !<On exit, a pointer to the stiffness matrix for the dynamic matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: stiffnessMatrixNumber
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("EquationsMatricesDynamic_StiffnessMatrixGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(stiffnessMatrix)) CALL FlagError("Stiffness matrix is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dynamicMatrices)) CALL FlagError("Dynamic matrices is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices)) &
+      & CALL FlagError("Vector matrices is not associated for the dynamic matrices.",err,error,*999)
+    IF(.NOT.ALLOCATED(dynamicMatrices%matrices)) &
+      & CALL FlagError("Matrices is not allocated for the dynamic matrices.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices%vectorEquations)) &
+      & CALL FlagError("Vector equations is not associated for the vector matrices.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices%vectorEquations%vectorMapping)) &
+      & CALL FlagError("Vector mapping is not associated for the vector equations.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices%vectorMatrices%vectorEquations%vectorMapping%dynamicMapping)) &
+      & CALL FlagError("Dynamic mapping is not associated for the vector mapping.",err,error,*999)
+#endif    
+    stiffnessMatrixNumber=dynamicMatrices%vectorMatrices%vectorEquations%vectorMapping%dynamicMapping%stiffnessMatrixNumber
+#ifdef WITH_PRECHECKS
+    IF(stiffnessMatrixNumber==0) CALL FlagError("The dynamic matrices have no stiffness matrix.",err,error,*999)
+    IF(stiffnessMatrixNumber<0.OR.stiffnessMatrixNumber>dynamicMatrices%numberOfDynamicMatrices) THEN
+      localError="The stiffness matrix number of "//TRIM(NumberToVString(stiffnessMatrixNumber,"*",err,error))// &
+        & " is invalid. The stiffness matrix number should be >= 0 and <= "// &
+        & TRIM(NumberToVString(dynamicMatrices%numberOfDynamicMatrices,"*",err,error))//"."
+    ENDIF
+#endif    
+
+    stiffnessMatrix=>dynamicMatrices%matrices(stiffnessMatrixNumber)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(stiffnessMatrix)) &
+      & CALL FlagError("Stiffness matrix is not associated for the dynamic matrices.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesDynamic_StiffnessMatrixGet")
+    RETURN
+999 NULLIFY(stiffnessMatrix)
+998 ERRORSEXITS("EquationsMatricesDynamic_StiffnessMatrixGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesDynamic_StiffnessMatrixGet
 
   !
   !================================================================================================================================
@@ -1152,6 +1363,58 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesNonlinear_VectorMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the Hessian matrix for optimisation matrices.
+  SUBROUTINE EquationsMatricesOptimisation_HessianMatrixGet(optimisationMatrices,hessianMatrixIdx,hessianMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices !<A pointer to the optimisation matrices to get the Hessian matrix for
+    INTEGER(INTG), INTENT(IN) :: hessianMatrixIdx !<The Hessian matrix index to get
+    TYPE(HessianMatrixType), POINTER :: hessianMatrix !<On exit, a pointer to the Hessian matrix for the optimisation matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("EquationsMatricesOptimisation_HessianMatrixGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(hessianMatrix)) CALL FlagError("Hessian matrix is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(optimisationMatrices)) CALL FlagError("Optimisation matrices is not associated.",err,error,*999)
+    IF(hessianMatrixIdx<1.OR.hessianMatrixIdx>optimisationMatrices%numberOfHessians) THEN
+      localError="The specified Hessian matrix index of "//TRIM(NumberToVString(hessianMatrixIdx,"*",err,error))// &
+        & " is invalid. The Hessian matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(optimisationMatrices%numberOfHessians,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(optimisationMatrices%hessians)) &
+      & CALL FlagError("The Hessians array is not allocated for the optimisation matrices.",err,error,*999)
+#endif    
+
+    hessianMatrix=>optimisationMatrices%hessians(hessianMatrixIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(hessianMatrix)) THEN
+      localError="The Hessian matrix is not associated for Hessian matrix index "// &
+        & TRIM(NumberToVString(hessianMatrixIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+       
+    EXITS("EquationsMatricesOptimisation_HessianMatrixGet")
+    RETURN
+999 NULLIFY(hessianMatrix)
+998 ERRORS("EquationsMatricesOptimisation_HessianMatrixGet",err,error)
+    EXITS("EquationsMatricesOptimisation_HessianMatrixGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesOptimisation_HessianMatrixGet
 
   !
   !================================================================================================================================
@@ -1834,6 +2097,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets/changes the update flag for a residual vector.
+  SUBROUTINE EquationsMatricesResidual_UpdateVectorSet(residualVector,updateVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual vector to set the update flag for
+    LOGICAL, INTENT(IN) :: updateVector !<The update flag for the residual vector to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_UpdateVectorSet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    residualVector%updateResidual=updateVector
+
+    EXITS("EquationsMatricesResidual_UpdateVectorSet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesResidual_UpdateVectorSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_UpdateVectorSet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the vector coefficient for a residual vector.
   SUBROUTINE EquationsMatricesResidual_VectorCoefficientGet(residualVector,vectorCoefficient,err,error,*)
 
@@ -2400,6 +2692,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesRHS_UpdateVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the update flag for a RHS vector.
+  SUBROUTINE EquationsMatricesRHS_UpdateVectorSet(rhsVector,updateVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector !<A pointer to the RHS vector to set the update flag for
+    LOGICAL, INTENT(IN) :: updateVector !<The update flag for the RHS vector to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_UpdateVectorSet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(rhsVector)) CALL FlagError("RHS vector is not associated.",err,error,*999)
+#endif    
+
+    rhsVector%updateVector=updateVector
+
+    EXITS("EquationsMatricesRHS_UpdateVectorSet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesRHS_UpdateVectorSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_UpdateVectorSet
 
   !
   !================================================================================================================================
@@ -3013,6 +3334,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets/changes the update flag for a source vector.
+  SUBROUTINE EquationsMatricesSource_UpdateVectorSet(sourceVector,updateVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the source vector to set the update flag for
+    LOGICAL, INTENT(IN) :: updateVector !<The vector update flag for the source vector to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_UpdateVectorSet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    sourceVector%updateVector=updateVector
+
+    EXITS("EquationsMatricesSource_UpdateVectorSet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesSource_UpdateVectorSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_UpdateVectorSet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the number of sources for a equations matrices sources.
   SUBROUTINE EquationsMatricesSources_NumberOfSourcesGet(sourceVectors,numberOfSources,err,error,*)
 
@@ -3456,6 +3806,135 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks if the optimisation vector matrices for the vector matrices exist.
+  SUBROUTINE EquationsMatricesVector_OptimisationMatricesExists(vectorMatrices,optimisationMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations vector matrices to check the optimisation matrices for
+    TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices !<On exit, a pointer to the optimisation matrices in the specified vector equations matrices if they exist. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesVector_OptimisationMatricesExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(optimisationMatrices)) CALL FlagError("Optimisation matrices is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
+#endif    
+
+    optimisationMatrices=>vectorMatrices%optimisationMatrices
+       
+    EXITS("EquationsMatricesVector_OptimisationMatricesExists")
+    RETURN
+999 NULLIFY(optimisationMatrices)
+998 ERRORS("EquationsMatricesVector_OptimisationMatricesExists",err,error)
+    EXITS("EquationsMatricesVector_OptimisationMatricesExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesVector_OptimisationMatricesExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the optimisation vector matrices for the vector matrices.
+  SUBROUTINE EquationsMatricesVector_OptimisationMatricesGet(vectorMatrices,optimisationMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations vector matrices to get the optimisation matrices for
+    TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices !<On exit, a pointer to the optimisation matrices in the specified vector equations matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesVector_OptimisationMatricesGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(optimisationMatrices)) CALL FlagError("Optimisation matrices is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
+#endif    
+
+    optimisationMatrices=>vectorMatrices%optimisationMatrices
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(optimisationMatrices))  &
+      & CALL FlagError("Optimisation matrices is not associated for the vector matrices.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesVector_OptimisationMatricesGet")
+    RETURN
+999 NULLIFY(optimisationMatrices)
+998 ERRORS("EquationsMatricesVector_OptimisationMatricesGet",err,error)
+    EXITS("EquationsMatricesVector_OptimisationMatricesGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesVector_OptimisationMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of rows in the vector matrices.
+  SUBROUTINE EquationsMatricesVector_NumberOfRowsGet(vectorMatrices,numberOfRows,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations vector matrices to get the number of rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfRows !<On exit, the number of rows in the specified vector equations matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesVector_NumberOfRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
+#endif    
+
+    numberOfRows=vectorMatrices%numberOfRows
+       
+    EXITS("EquationsMatricesVector_NumberOfRowsGet")
+    RETURN
+999 ERRORS("EquationsMatricesVector_NumberOfRowsGet",err,error)
+    EXITS("EquationsMatricesVector_NumberOfRowsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesVector_NumberOfRowsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of global rows in the vector matrices.
+  SUBROUTINE EquationsMatricesVector_NumberOfGlobalRowsGet(vectorMatrices,numberOfGlobalRows,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations vector matrices to get the number of global rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfGlobalRows !<On exit, the number of global rows in the specified vector equations matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesVector_NumberOfGlobalRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
+#endif    
+
+    numberOfGlobalRows=vectorMatrices%numberOfGlobalRows
+       
+    EXITS("EquationsMatricesVector_NumberOfGlobalRowsGet")
+    RETURN
+999 ERRORS("EquationsMatricesVector_NumberOfGlobalRowsGet",err,error)
+    EXITS("EquationsMatricesVector_NumberOfGlobalRowsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesVector_NumberOfGlobalRowsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Checks that the RHS vector exists for the vector matrices.
   SUBROUTINE EquationsMatricesVector_RHSVectorExists(vectorMatrices,equationsMatricesRHS,err,error,*)
 
@@ -3584,6 +4063,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesVector_SourceVectorsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the total number of rows in the vector matrices.
+  SUBROUTINE EquationsMatricesVector_TotalNumberOfRowsGet(vectorMatrices,totalNumberOfRows,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations vector matrices to get the total number of rows for
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfRows !<On exit, the total number of rows in the specified vector equations matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesVector_TotalNumberOfRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
+#endif    
+
+    totalNumberOfRows=vectorMatrices%totalNumberOfRows
+       
+    EXITS("EquationsMatricesVector_TotalNumberOfRowsGet")
+    RETURN
+999 ERRORS("EquationsMatricesVector_TotalNumberOfRowsGet",err,error)
+    EXITS("EquationsMatricesVector_TotalNumberOfRowsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesVector_TotalNumberOfRowsGet
 
   !
   !================================================================================================================================
@@ -4214,6 +4723,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets/changes the update matrix flag for an equations matrix
+  SUBROUTINE EquationsMatrix_UpdateMatrixSet(equationsMatrix,updateMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to set the update matrix flag for
+    LOGICAL, INTENT(IN) :: updateMatrix !The update matrix flag of the equations matrix to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatrix_UpdateMatrixSet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+#endif    
+
+    equationsMatrix%updateMatrix=updateMatrix
+       
+    EXITS("EquationsMatrix_UpdateMatrixSet")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_UpdateMatrixSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_UpdateMatrixSet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the calculation type for an Jacobian matrix
   SUBROUTINE JacobianMatrix_CalculationTypeGet(jacobianMatrix,calculationType,err,error,*)
 
@@ -4625,6 +5163,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE JacobianMatrix_UpdateMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the update matrix flag for a Jacobian matrix
+  SUBROUTINE JacobianMatrix_UpdateMatrixSet(jacobianMatrix,updateMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the Jacobian matrix to set the update matrix flag for
+    LOGICAL, INTENT(IN) :: updateMatrix !<The update matrix flag of the Jacobian matrix to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("JacobianMatrix_UpdateMatrixSet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+#endif    
+
+    jacobianMatrix%updateJacobian=updateMatrix
+       
+    EXITS("JacobianMatrix_UpdateMatrixSet")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_UpdateMatrixSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_UpdateMatrixSet
 
   !
   !================================================================================================================================

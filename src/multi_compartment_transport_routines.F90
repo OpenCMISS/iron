@@ -42,8 +42,6 @@
 !>
 
 !>TThis module handles all routines pertaining to (advection-)diffusion coupled to (advection-)diffusion.
-
-
 MODULE MultiCompartmentTransportRoutines
 
   USE AdvectionDiffusionEquationsRoutines
@@ -54,7 +52,8 @@ MODULE MultiCompartmentTransportRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
-  USE CoordinateSystemRoutines  
+  USE CoordinateSystemRoutines
+  USE DecompositionAccessRoutines
   USE DiffusionEquationsRoutines
   USE DistributedMatrixVector
   USE DomainMappings
@@ -73,6 +72,7 @@ MODULE MultiCompartmentTransportRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Timer
   USE Types
 
@@ -412,7 +412,7 @@ CONTAINS
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       NULLIFY(equationsSet)
-      CALL SolverMapping_EquationsSet(solverMapping,1,equationsSet,err,error,*999)
+      CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
       NULLIFY(equationsAnalytic)
       CALL EquationsSet_AnalyticExists(equationsSet,equationsAnalytic,err,error,*999)
       IF(ASSOCIATED(equationsAnalytic)) THEN
@@ -495,7 +495,7 @@ CONTAINS
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
-    CALL Problem_Specification(problem,3,pSpecification,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
     
@@ -558,7 +558,7 @@ CONTAINS
             NULLIFY(domainTopology)
             CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
             NULLIFY(domainNodes)
-            CALL DomainTopology_DomainNodes(domainTopology,domainNodes,err,error,*999)
+            CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
             NULLIFY(boundaryConditions)
             CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
             NULLIFY(boundaryConditionsVariable)
@@ -614,7 +614,7 @@ CONTAINS
               NULLIFY(domainTopology)
               CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
               NULLIFY(domainNodes)
-              CALL DomainTopology_DomainNodes(domainTopology,domainNodes,err,error,*999)
+              CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
               !Loop over the local nodes excluding the ghosts.
               CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
               DO nodeIdx=1,numberOfNodes

@@ -54,12 +54,14 @@ MODULE DarcyEquationsRoutines
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE CoordinateSystemAccessRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsSetAccessRoutines
@@ -75,9 +77,12 @@ MODULE DarcyEquationsRoutines
   USE MatrixVector
   USE MeshRoutines
   USE ProblemAccessRoutines
+  USE RegionAccessRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
+  USE SolverMatricesAccessRoutines
   USE Timer
   USE Types
 
@@ -531,7 +536,7 @@ CONTAINS
               CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
               !Get the number of Darcy compartments from the equations set field
               NULLIFY(equationsSetField)
-              CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+              CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
               CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_VALUES_SET_TYPE,equationsSetFieldData,err,error,*999)
               numberOfCompartments=equationsSetFieldData(2)
@@ -593,7 +598,7 @@ CONTAINS
               CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
               CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
               NULLIFY(equationsSetField)
-              CALL EquationsSet_EquationSetFieldGet(equationsSet,equationsSetField,err,error,*999)
+              CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
               CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & equationsSetFieldData,err,error,*999)
               numberOfCompartments=equationsSetFieldData(2)
@@ -931,7 +936,7 @@ CONTAINS
         !For a first attempt at this, it will be assumed that the functional form of this law is the same for each
         !compartment, with only the paramenters varying (default will be three components)
         NULLIFY(equationsSetField)
-        CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+        CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
         CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,equationsSetFieldData, &
           & err,error,*999)
         numberOfCompartments=equationsSetFieldData(2)
@@ -1444,11 +1449,11 @@ CONTAINS
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
               IF(esSpecification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
                 CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-                CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               ENDIF
             CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
               NULLIFY(equationsSetField)
-              CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+              CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
               NULLIFY(equationsSetFieldData)
               CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & equationsSetFieldData,err,error,*999)
@@ -1472,7 +1477,7 @@ CONTAINS
               CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,variableUTypes,err,error,*999)
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,variableTypes(2*myMatrixIdx+2),err,error,*999)
               CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
             CASE DEFAULT
               CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE, &
@@ -1585,6 +1590,8 @@ CONTAINS
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
+    TYPE(DecompositionTopologyType), POINTER :: geometricDecompositionTopology
+    TYPE(DecompositionElementsType), POINTER :: geometricDecompositionElements
     TYPE(DomainType), POINTER :: colsDomain,geometricDomain,rowsDomain
     TYPE(DomainElementsType), POINTER :: colsDomainElements,geometricDomainElements,rowsDomainElements
     TYPE(DomainTopologyType), POINTER :: colsDomainTopology,geometricDomainTopology,rowsDomainTopology
@@ -1695,7 +1702,7 @@ CONTAINS
       CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)
       CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)
       NULLIFY(colsVariable)
-      CALL EquationsMappingLinear_MatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
+      CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
     CASE(EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE, &
       & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
       & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
@@ -1843,13 +1850,19 @@ CONTAINS
       CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
       NULLIFY(geometricDecomposition)
       CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+      NULLIFY(geometricDecompositionTopology)
+      CALL Decomposition_DecompositionTopologyGet(geometricDecomposition,geometricDecompositionTopology,err,error,*999)
+      NULLIFY(geometricDecompositionElements)
+      CALL DecompositionTopology_DecompositionElementsGet(geometricDecompositionTopology,geometricDecompositionElements, &
+        & err,error,*999)
+      CALL DecompositionElements_ElementBoundaryElementGet(geometricDecompositionElements,elementNumber,boundaryElement, &
+        & err,error,*999)
       NULLIFY(geometricDomain)
       CALL Decomposition_DomainGet(geometricDecomposition,0,geometricDomain,err,error,*999)
       NULLIFY(geometricDomainTopology)
       CALL Domain_DomainTopologyGet(geometricDomain,geometricDomainTopology,err,error,*999)
       NULLIFY(geometricDomainElements)
       CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
-      CALL DomainElements_ElementBoundaryElementGet(geometricDomainElements,elementNumber,boundaryElement,err,error,*999)
       NULLIFY(geometricBasis)
       CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
@@ -1876,7 +1889,7 @@ CONTAINS
       CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
       NULLIFY(colsQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(colsQuadratureScheme,numberOfGauss,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(colsQuadratureScheme,numberOfGauss,err,error,*999)
 
       NULLIFY(equationsInterpolation)
       CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
@@ -2133,7 +2146,7 @@ CONTAINS
           ENDDO !matrixIdx
         ENDIF
 
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
 
@@ -3069,7 +3082,7 @@ CONTAINS
           CALL Basis_NumberOfLocalFacesGet(dependentBasis,numberOfLocalFaces,err,error,*999)
           DO faceIdx=1,numberOfLocalFaces
             !Get the face normal and quadrature information
-            CALL DecompositionElements_ElementFaceNumberGet(decompositionElements,faceIdx,faceNumber,err,error,*999)
+            CALL DecompositionElements_ElementFaceNumberGet(decompositionElements,faceIdx,elementNumber,faceNumber,err,error,*999)
             !This speeds things up but is also important, as non-boundary faces have an XI_DIRECTION that might
             !correspond to the other element.
             CALL DecompositionFaces_FaceBoundaryFaceGet(decompositionFaces,faceIdx,boundaryFace,err,error,*999)
@@ -3082,8 +3095,8 @@ CONTAINS
             CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,faceBasis,err,error,*999)            
             NULLIFY(faceQuadratureScheme)
             CALL Basis_QuadratureSchemeGet(faceBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,faceQuadratureScheme,err,error,*999)
-            CALL BasisQuadrature_NumberOfGaussGet(faceQuadratureScheme,numberOfGauss,err,error,*999)
-            CALL Basis_NumberOfNodesGet(faceBasis,numberOfFaceNodes,err,error,*999)
+            CALL BasisQuadratureScheme_NumberOfGaussGet(faceQuadratureScheme,numberOfGauss,err,error,*999)
+            CALL Basis_NumberOfLocalNodesGet(faceBasis,numberOfFaceNodes,err,error,*999)
             DO gaussPointIdx=1,numberOfGauss
               !Get interpolated Darcy pressure
               CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,dependentInterpPoint, &
@@ -3095,7 +3108,7 @@ CONTAINS
               !Calculate the metric tensors and Jacobian
               CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_VOLUME_TYPE,geometricInterpPointMetrics, &
                 & err,error,*999)
-              CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+              CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
               CALL BasisQuadratureScheme_GaussWeightGet(faceQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
               DO componentIdx=1,numberOfDependentComponents-1
                 normalProjection=DOT_PRODUCT(geometricInterpPointMetrics%gu(normalComponentIdx,:), &
@@ -3390,7 +3403,7 @@ CONTAINS
       CASE(PROBLEM_SETUP_START_ACTION)
         !Get the control loop
         NULLIFY(controlLoopRoot)
-        CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
         NULLIFY(controlLoop)
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
         !Get the solver
@@ -3532,7 +3545,7 @@ CONTAINS
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     NULLIFY(solverMatrices)
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
+    CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
     DO solverMatrixIdx=1,numberOfSolverMatrices
       NULLIFY(solverMatrix)
       CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
@@ -3546,11 +3559,11 @@ CONTAINS
     CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
       ! do nothing
     CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
-      CALL Solver_NumberGet(solver,solverNumber,err,error,*999)
+      CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
       IF(solveNumber==solverNumberDarcy) CALL Darcy_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
     CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
       CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
-      CALL Solver_NumberGet(solver,solverNumber,err,error,*999)
+      CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
       IF((loopType==CONTROL_SIMPLE_TYPE.OR.loopType==CONTROL_TIME_LOOP_TYPE).AND.solverNumber==solverNumberDarcy) THEN
 !!TODO remove these debug flags
         !--- flags to ensure once-per-time-step output in conjunction with diagnostics
@@ -3593,7 +3606,7 @@ CONTAINS
     CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
-      CALL SolverMatrix_NumberGet(solverMatrix,matrixNumber,err,error,*999)
+      CALL SolverMatrix_MatrixNumberGet(solverMatrix,matrixNumber,err,error,*999)
       IF((loopType==CONTROL_SIMPLE_TYPE.OR.loopType==CONTROL_TIME_LOOP_TYPE).AND.solverNumber==solverNumberMatProperties) THEN
 !!TODO remove these debug flags
         !--- flags to ensure once-per-time-step output in conjunction with diagnostics
@@ -3723,7 +3736,7 @@ CONTAINS
       CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverDarcy,err,error,*999)
     END SELECT
 
-    CALL Solver_NumberGet(solverDarcy,solverNumber,err,error,*999)
+    CALL Solver_GlobalNumberGet(solverDarcy,solverNumber,err,error,*999)
     CALL ControlLoop_IterationNumberGet(controlLoop,iterationNumber,err,error,*999)
     CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
     !If this is the first time step then store reference data
@@ -3816,7 +3829,7 @@ CONTAINS
           NULLIFY(geometricField)
           CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
           NULLIFY(dependentField)
-          CALL EquationstSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
           !--- Store the initial (= reference) geometry field values
           alpha = 1.0_DP
           CALL Field_ParameterSetsCopy(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -4343,7 +4356,7 @@ CONTAINS
         NULLIFY(solverALEDarcy)
         CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverALEDarcy,err,error,*999)
         NULLIFY(solverEquationsALEDarcy)
-        CALL Solver_SolverEquationGet(solverALEDarcy,solverEquationsALEDarcy,err,error,*999)
+        CALL Solver_SolverEquationsGet(solverALEDarcy,solverEquationsALEDarcy,err,error,*999)
         NULLIFY(solverMappingALEDarcy)
         CALL SolverEquations_SolverMappingGet(solverEquationsALEDarcy,solverMappingALEDarcy,err,error,*999)
         NULLIFY(equationsSetALEDarcy)
@@ -4529,8 +4542,8 @@ CONTAINS
             CALL ControlLoop_ParentLoopGet(controlLoop,parentLoop,err,error,*999)
             CALL ControlLoop_TypeGet(parentLoop,parentLoopType,err,error,*999)
             IF(parentLoopType==CONTROL_WHILE_LOOP_TYPE) &
-              & CALL ControlLoop_WhileInformationGet(parentLoop,subIterationNumber,,maximumNumberOfIterations,absoluteTolerance, &
-              & relativeTolerance,continueLoop,err,error,*999)            
+              & CALL ControlLoop_CurrentWhileInformationGet(parentLoop,subIterationNumber,maximumNumberOfIterations, &
+              & absoluteTolerance,relativeTolerance,continueLoop,err,error,*999)            
             IF(outputIteration/=0) THEN
               IF(currentTime<=stopTime) THEN
                 IF(currentIteration<10) THEN
@@ -4590,8 +4603,8 @@ CONTAINS
             CALL ControlLoop_ParentLoopGet(controlLoop,parentLoop,err,error,*999)
             CALL ControlLoop_TypeGet(parentLoop,parentLoopType,err,error,*999)
             IF(parentLoopType==CONTROL_WHILE_LOOP_TYPE) &
-              & CALL ControlLoop_WhileInformationGet(parentLoop,subIterationNumber,maximumNumberOfIterations,absoluteTolerance, &
-              & relativeTolerance,continueLoop,err,error,*999)            
+              & CALL ControlLoop_CurrentWhileInformationGet(parentLoop,subIterationNumber,maximumNumberOfIterations, &
+              & absoluteTolerance,relativeTolerance,continueLoop,err,error,*999)            
 
             IF(outputIteration/=0) THEN
               IF(currentTime<=stopTime) THEN
@@ -4817,7 +4830,7 @@ CONTAINS
         NULLIFY(fieldVariable)
         CALL Field_VariableIndexGet(dependentField,variableIdx,fieldVariable,variableType,err,error,*999)
         CALL FieldVariable_ParameterSetEnsureCreated(fieldVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_NumberOfCompnentsGet(fieldVariable,numberOfComponents,err,error,*999)
+        CALL FieldVariable_NumberOfComponentsGet(fieldVariable,numberOfComponents,err,error,*999)
         DO componentIdx=1,numberOfComponents
           boundCount=0
           CALL FieldVariable_ComponentInterpolationCheck(fieldVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
@@ -4859,7 +4872,7 @@ CONTAINS
                 DO J=1,numberOfNodesXic(2)
                   DO I=1,numberOfNodesXic(1)
                     elementNodeIdx=elementNodeIdx+1
-                    CALL DomainElement_ElementNodeGet(domainElements,elementNodeIdx,elementIdx,elementNode,err,error,*999)
+                    CALL DomainElements_ElementNodeGet(domainElements,elementNodeIdx,elementIdx,elementNode,err,error,*999)
                     IF(elementNode==nodeIdx) EXIT
                     xiCoordinates(1)=xiCoordinates(1)+(1.0_DP/(numberOfNodesXic(1)-1))
                   ENDDO
@@ -4938,7 +4951,7 @@ CONTAINS
               ENDIF
 
               DO K=1,maxElementParameters
-                CALL DomainElement_ElementNodeGet(domainElements,K,elementIdx,elementNode,err,error,*999)
+                CALL DomainElements_ElementNodeGet(domainElements,K,elementIdx,elementNode,err,error,*999)
                 IF(elementNode==nodeIdx) EXIT
               ENDDO !K
 
@@ -5543,7 +5556,7 @@ CONTAINS
     ENDIF
 
     NULLIFY(rootControlLoop)
-    CALL Problem_RootControlLoopGet(problem,rootControlLoop,err,error,*999)
+    CALL Problem_ControlLoopRootGet(problem,rootControlLoop,err,error,*999)
     CALL Solver_OutputTypeGet(solver,solverOutputType,err,error,*999)
     NULLIFY(solvers)
     CALL Solver_SolversGet(solver,solvers,err,error,*999)
@@ -5602,7 +5615,7 @@ CONTAINS
       NULLIFY(solverMappingFiniteElasticity)
       CALL SolverEquations_SolverMappingGet(solverEquationsFiniteElasticity,solverMappingFiniteElasticity,err,error,*999)
       NULLIFY(equationsSetFiniteElasticity)
-      CALL SolverMapping_EquationsSetGet(solverMappingFiniteElasticity,equationsSetFiniteElasticity,err,error,*999)
+      CALL SolverMapping_EquationsSetGet(solverMappingFiniteElasticity,1,equationsSetFiniteElasticity,err,error,*999)
       NULLIFY(dependentFieldFiniteElasticity)
       CALL EquationsSet_DependentFieldGet(equationsSetFiniteElasticity,dependentFieldFiniteElasticity,err,error,*999)
       !No longer needed, since no more 'Field_ParametersToFieldParametersCopy'
@@ -5616,7 +5629,7 @@ CONTAINS
         CALL Solvers_SolverGet(solvers,2,solverDarcy,err,error,*999)
       ENDIF
       NULLIFY(solverEquationsDarcy)
-      CALL Solver_SolverEquations(solverDarcy,solverEquationsDarcy,err,error,*999)
+      CALL Solver_SolverEquationsGet(solverDarcy,solverEquationsDarcy,err,error,*999)
       NULLIFY(solverMappingDarcy)
       CALL SolverEquations_SolverMappingGet(solverEquationsDarcy,solverMappingDarcy,err,error,*999)
       NULLIFY(equationsSetDarcy)
@@ -5775,13 +5788,13 @@ CONTAINS
           NULLIFY(dependentField)
           CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
           IF(solverOutputType>=SOLVER_PROGRESS_OUTPUT) THEN
-            CALL WriteStirng(GENERAL_OUTPUT_TYPE,'-------------------------------------------------------',err,error,*999)
-            CALL WriteStirng(GENERAL_OUTPUT_TYPE,'+++     Storing previous subiteration iterate       +++',err,error,*999)
-            CALL WriteStirng(GENERAL_OUTPUT_TYPE,'-------------------------------------------------------',err,error,*999)
+            CALL WriteString(GENERAL_OUTPUT_TYPE,'-------------------------------------------------------',err,error,*999)
+            CALL WriteString(GENERAL_OUTPUT_TYPE,'+++     Storing previous subiteration iterate       +++',err,error,*999)
+            CALL WriteString(GENERAL_OUTPUT_TYPE,'-------------------------------------------------------',err,error,*999)
           ENDIF
           !--- Store the DEPENDENT field values of the previous subiteration iterate
           NULLIFY(equations)
-          CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
+          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
           NULLIFY(vectorEquations)
           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
           NULLIFY(vectorMapping)
@@ -5789,7 +5802,7 @@ CONTAINS
           SELECT CASE(esSpecification(3))
           CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
             NULLIFY(linearMapping)
-            CALL EquationsMapping_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+            CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
             NULLIFY(fieldVariable)
             CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,fieldVariable,err,error,*999)
           CASE(EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
@@ -6030,7 +6043,7 @@ CONTAINS
       ! do nothing
     CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       NULLIFY(solverEquations)
-      CALL Solver_SolverEquationGet(solver,solverEquations,err,error,*999)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
@@ -6056,11 +6069,11 @@ CONTAINS
           NULLIFY(vectorEquations)
           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
           NULLIFY(vectorMapping)
-          CALL EquationsVector_VectorMapping(vectorEquations,vectorMapping,err,error,*999)
+          CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
           SELECT CASE(esSpecification(3))
           CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
             NULLIFY(linearMapping)
-            CALL EquationsMappingVector_LinearMapping(vectorMapping,linearMapping,err,error,*999)
+            CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
             NULLIFY(fieldVariable)
             CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,fieldVariable,err,error,*999)
           CASE(EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
@@ -6219,7 +6232,7 @@ CONTAINS
       CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
       DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
-        CALL SolverMapping_EquationSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
         SELECT CASE(esSpecification(3))
         CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE,EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, &
@@ -6282,7 +6295,7 @@ CONTAINS
                 & err,error,*999)
             ENDDO !dofNumber
             CALL FieldVariable_ParameterSetUpdateStart(fieldVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-            CALL FieldCariable_ParameterSetUpdateFinish(fieldVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateFinish(fieldVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
           END IF
           CALL FieldVariable_ParameterSetDataRestore(fieldVariable,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,iterationValuesN, &
             & err,error,*999)
@@ -6340,7 +6353,7 @@ CONTAINS
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     NULLIFY(rootControlLoop)
-    CALL Problem_RootControlLoopGet(problem,rootControlLoop,err,error,*999)
+    CALL Problem_ControlLoopRootGet(problem,rootControlLoop,err,error,*999)
     
     CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
       
@@ -6483,7 +6496,7 @@ CONTAINS
     NULLIFY(dynamicMapping)
     CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
     NULLIFY(dynamicVariable)
-    CALL EquationMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
+    CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
     NULLIFY(dynamicMatrices)
     CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
     NULLIFY(stiffnessMatrix)
@@ -6513,16 +6526,16 @@ CONTAINS
     NULLIFY(equationsInterpolation)
     CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
     NULLIFY(geometricInterpParameters)
-    CALL EquationsInterpolation_GeometricInterpParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+    CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
       & geometricInterpParameters,err,error,*999)
     NULLIFY(geometricInterpPoint)
-    CALL EquationsInterpolation_GeometricInterpPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+    CALL EquationsInterpolation_GeometricPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
       & geometricInterpPoint,err,error,*999)
     NULLIFY(independentInterpParameters)
-    CALL EquationsInterpolation_IndependentInterpParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+    CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
       & independentInterpParameters,err,error,*999)
     NULLIFY(independentInterpPoint)
-    CALL EquationsInterpolation_IndependentInterpPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+    CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
       & independentInterpPoint,err,error,*999)
     NULLIFY(dependentBasis)
     CALL DomainElements_ElementBasisGet(domainElements,elementNumber,dependentBasis,err,error,*999)
@@ -6548,10 +6561,10 @@ CONTAINS
 
         ! To find out which faces are set impermeable:
         NULLIFY(faceVelocityInterpParameters)
-        CALL EquationsInterpolation_IndependentInterpParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,  &
+        CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,  &
           & faceVelocityInterpParameters,err,error,*999)
         NULLIFY(faceInterpPoint)
-        CALL EquationsInterpolation_IndependentInterpPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,faceInterpPoint, &
+        CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,faceInterpPoint, &
           & err,error,*999)
         CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,faceNumber,independentInterpParameters,err,error,*999)
 
@@ -6605,7 +6618,7 @@ CONTAINS
 
               elementBaseDOFIdx1 = (componentIdx1-1) * numberOfElementParameters
 
-              CALL Basis_NumberOfNodesGet(faceBasis,numberOfNodes,err,error,*999)
+              CALL Basis_NumberOfLocalNodesGet(faceBasis,numberOfNodes,err,error,*999)
               DO faceNodeIdx1=1,numberOfNodes
                 CALL Basis_FaceNodeNumberGet(dependentBasis,faceNodeIdx1,elementFaceIdx1,elementNodeIdx1,err,error,*999)
                 CALL Basis_FaceNodeNumberOfDerivativesGet(faceBasis,faceNodeIdx1,elementFaceIdx1,numberOfNodeDerivatives1, &

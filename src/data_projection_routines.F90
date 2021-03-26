@@ -1223,46 +1223,6 @@ CONTAINS
   
   !
   !================================================================================================================================
-  !  
-
-  !>Gets the user number for a data point identified by a given global number. 
-  SUBROUTINE DataProjection_DataPointGlobalNumberGet(dataProjection,userNumber,globalNumber,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection whose data points to get the number for
-    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the data point to get the global number for
-    INTEGER(INTG), INTENT(OUT) :: globalNumber !<On exit, the global number of the specified user data point
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(DataPointsType), POINTER  :: dataPoints
-    TYPE(TreeNodeType), POINTER :: treeNode
-    TYPE(VARYING_STRING) :: localError
-    
-    ENTERS("DataProjection_DataPointGlobalNumberGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    NULLIFY(dataPoints)
-    CALL DataProjection_DataPointsGet(dataProjection,dataPoints,err,error,*999)
-    
-    NULLIFY(treeNode)
-    CALL Tree_Search(dataPoints%dataPointsTree,userNumber,treeNode,err,error,*999)
-    IF(ASSOCIATED(treeNode)) THEN
-      CALL Tree_NodeValueGet(dataPoints%dataPointsTree,treeNode,globalNumber,err,error,*999)
-    ELSE
-      localError="A data point with the user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" does not exist."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
-    EXITS("DataProjection_DataPointGlobalNumberGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_DataPointGlobalNumberGet",err,error)    
-    RETURN 1
-   
-  END SUBROUTINE DataProjection_DataPointGlobalNumberGet
-  
-  !
-  !================================================================================================================================
   !
 
   !>Evaluates a data projection.
@@ -1626,7 +1586,7 @@ CONTAINS
       !gather and distribute the number of closest elements from all computation nodes
       CALL MPI_ALLGATHER(numberOfClosestCandidates,1,MPI_INTEGER,globalNumberOfClosestCandidates,1,MPI_INTEGER, &
         & groupCommunicator,MPIIError)
-      CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPIIError,err,error,*999)
+      CALL MPI_ErrorCheck("MPI_ALLGATHER",MPIIError,err,error,*999)
       !Sum all number of closest candidates from all computation nodes
       totalNumberOfClosestCandidates=SUM(globalNumberOfClosestCandidates,1) 
       !Allocate arrays to store information gathered from all computation node
@@ -1638,9 +1598,9 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate sorting indices 1.",err,error,*999)
       !MPI:create and commit MPI_TYPE_CONTIGUOUS      
       CALL MPI_TYPE_CONTIGUOUS(numberOfDataPoints,MPI_DOUBLE_PRECISION,MPIClosestDistances,MPIIError)
-      CALL MPI_ERROR_CHECK("MPI_TYPE_CONTIGUOUS",MPIIError,err,error,*999)        
+      CALL MPI_ErrorCheck("MPI_TYPE_CONTIGUOUS",MPIIError,err,error,*999)        
       CALL MPI_TYPE_COMMIT(MPIClosestDistances,MPIIError)
-      CALL MPI_ERROR_CHECK("MPI_TYPE_COMMIT",MPIIError,err,error,*999)
+      CALL MPI_ErrorCheck("MPI_TYPE_COMMIT",MPIIError,err,error,*999)
       !Create displacement vectors for MPI_ALLGATHERV
       globalMPIDisplacements(1)=0
       DO computationNodeIdx=1,(numberOfGroupComputationNodes-1)
@@ -1651,7 +1611,7 @@ CONTAINS
       CALL MPI_ALLGATHERV(closestDistances(1,1),numberOfClosestCandidates,MPIClosestDistances, &
         & globalClosestDistances,globalNumberOfClosestCandidates,globalMPIDisplacements, &
         & MPIClosestDistances,groupCommunicator,MPIIError)
-      CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
+      CALL MPI_ErrorCheck("MPI_ALLGATHERV",MPIIError,err,error,*999)
       reducedNumberOfCLosestCandidates=MIN(dataProjection%numberOfClosestElements,totalNumberOfClosestCandidates)
       projectedDistance(2,:)=myComputationNode
       !Find the globally closest distance in the current domain
@@ -1758,7 +1718,7 @@ CONTAINS
       !Find the shortest projected distance in all domains
       CALL MPI_ALLREDUCE(MPI_IN_PLACE,projectedDistance,numberOfDataPoints,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
         & groupCommunicator,MPIIError)
-      CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPIIError,err,error,*999)
+      CALL MPI_ErrorCheck("MPI_ALLREDUCE",MPIIError,err,error,*999)
       !Sort the computation node/rank from 0 to number of computation node
       CALL Sorting_BubbleIndexSort(projectedDistance(2,:),sortingIndices2,err,error,*999)
       DO computationNodeIdx=0,(numberOfGroupComputationNodes-1)
@@ -1776,29 +1736,29 @@ CONTAINS
       CALL MPI_ALLGATHERV(projectedElement(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
         & myComputationNode+1),MPI_INTEGER,projectedElement,globalNumberOfProjectedPoints, &
         & globalMPIDisplacements,MPI_INTEGER,groupCommunicator,MPIIError) !projectedElement
-      CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
+      CALL MPI_ErrorCheck("MPI_ALLGATHERV",MPIIError,err,error,*999)
       IF(boundaryProjection) THEN
         CALL MPI_ALLGATHERV(projectedLineFace(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
           & myComputationNode+1),MPI_INTEGER,projectedLineFace,globalNumberOfProjectedPoints, &
           & globalMPIDisplacements,MPI_INTEGER,groupCommunicator,MPIIError) !projectedLineFace
-        CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999) 
+        CALL MPI_ErrorCheck("MPI_ALLGATHERV",MPIIError,err,error,*999) 
       ENDIF
       DO xiIdx=1,dataProjection%numberOfXi
         CALL MPI_ALLGATHERV(projectedXi(xiIdx,sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
           & myComputationNode+1),MPI_DOUBLE_PRECISION,projectedXi(xiIdx,:),globalNumberOfProjectedPoints, &
           & globalMPIDisplacements,MPI_DOUBLE_PRECISION,groupCommunicator,MPIIError) !projectedXi
-        CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
+        CALL MPI_ErrorCheck("MPI_ALLGATHERV",MPIIError,err,error,*999)
       ENDDO !xiIdx
       CALL MPI_ALLGATHERV(projectionExitTag(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
         & myComputationNode+1),MPI_INTEGER,projectionExitTag,globalNumberOfProjectedPoints, &
         & globalMPIDisplacements,MPI_INTEGER,groupCommunicator,MPIIError) !projectionExitTag
-      CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
+      CALL MPI_ErrorCheck("MPI_ALLGATHERV",MPIIError,err,error,*999)
       DO xiIdx=1,dataProjection%numberOfCoordinates
         CALL MPI_ALLGATHERV(projectionVectors(xiIdx, sortingIndices2(startIdx:finishIdx)), &
           & globalNumberOfProjectedPoints(myComputationNode+1),MPI_DOUBLE_PRECISION,projectionVectors(xiIdx,:), &
           & globalNumberOfProjectedPoints,globalMPIDisplacements,MPI_DOUBLE_PRECISION,groupCommunicator, &
           & MPIIError)  !projectionVectors
-        CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
+        CALL MPI_ErrorCheck("MPI_ALLGATHERV",MPIIError,err,error,*999)
       ENDDO
       !Assign projection information to projected points
       DO dataPointIdx=1,numberOfDataPoints

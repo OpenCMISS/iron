@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Chris Bradley
+!> Contributor(s): Ting Yu, Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -290,13 +290,13 @@ CONTAINS
               !Global RMS values
               !Collect the values across the ranks
               CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,1,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
-              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
               CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorPer,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
-              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
               CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorAbs,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
-              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
               CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorRel,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
-              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
               CALL WriteString(outputID,"Global RMS errors:",err,error,*999)
               localString="                                                     % error  Absolute err  Relative err"
               CALL WriteString(outputID,localString,err,error,*999)
@@ -408,13 +408,13 @@ CONTAINS
               !Global RMS values
               !Collect the values across the ranks
               CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,8,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
-              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
               CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorPer,8,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
-              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
               CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorAbs,8,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
-              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
               CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorRel,8,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
-              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
               CALL WriteString(outputID,"Global RMS errors:",err,error,*999)
               localString="            Deriv#                                   % error  Absolute err  Relative err"
               CALL WriteString(outputID,localString,err,error,*999)
@@ -545,7 +545,7 @@ CONTAINS
         localString="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
         CALL WriteString(outputID,localString,err,error,*999)
         DO componentIdx=1,fieldVariable%numberOfComponents
-          CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
           values(1)=integralErrors(1,componentIdx)
           values(2)=integralErrors(3,componentIdx)
           values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
@@ -1670,9 +1670,9 @@ CONTAINS
         !Global RMS values
         !Collect the values across the ranks
         CALL MPI_ALLREDUCE(MPI_IN_PLACE,number,8,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
-        CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+        CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
         CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsError,8,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
-        CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+        CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
         DO derivativeIdx=1,8
           IF(number(derivativeIdx)>0) globalRMS(derivativeIdx)=SQRT(rmsError(derivativeIdx)/number(derivativeIdx))
         ENDDO !derivativeIdx
@@ -1799,9 +1799,9 @@ CONTAINS
         !Global RMS values
         !Collect the values across the ranks
         CALL MPI_ALLREDUCE(MPI_IN_PLACE,number,1,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
-        CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+        CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
         CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsError,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
-        CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+        CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
         globalRMS=SQRT(rmsError/number)
       ENDIF
     ENDIF

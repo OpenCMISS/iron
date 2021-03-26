@@ -50,6 +50,7 @@ MODULE FSIRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE DecompositionAccessRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsSetAccessRoutines
@@ -64,6 +65,7 @@ MODULE FSIRoutines
   USE Kinds
   USE NavierStokesEquationsRoutines
   USE ProblemAccessRoutines
+  USE RegionAccessRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
@@ -586,7 +588,7 @@ CONTAINS
       & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-      CALL Solver_TypeGet(solver,solveType,err,error,*999)
+      CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
       IF(solveType==SOLVER_DYNAMIC_TYPE.OR.solveType==SOLVER_LINEAR_TYPE) THEN
         IF(solveType==SOLVER_DYNAMIC_TYPE) THEN
           CALL NavierStokes_PreSolveALEUpdateMesh(solver,err,error,*999)
@@ -648,7 +650,7 @@ CONTAINS
       & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-      CALL Solver_TypeGet(solver,solveType,err,error,*999)
+      CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
       NULLIFY(solvers)
       CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
       IF(solveType==SOLVER_LINEAR_TYPE) THEN

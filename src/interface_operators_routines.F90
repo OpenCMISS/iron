@@ -145,7 +145,7 @@ CONTAINS
     
     ENTERS("FieldContinuity_FiniteElementCalculate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FLAG_error("Interface condition is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
  
     NULLIFY(interfaceEquations)
     CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
@@ -160,7 +160,7 @@ CONTAINS
 
     SELECT CASE(interfaceCondition%method)
     CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
-      CALL FLAG_error("Not implemented.",err,error,*999)
+      CALL FlagError("Not implemented.",err,error,*999)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       SELECT CASE(interfaceCondition%integrationType)
       CASE(INTERFACE_CONDITION_GAUSS_INTEGRATION)
@@ -639,11 +639,11 @@ CONTAINS
       END SELECT !interfaceCondition%integrationType
 
     CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
-      CALL FLAG_error("Not implemented.",err,error,*999)
+      CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
       localError="Interface condition method "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
         & " is not valid."
-      CALL FLAG_error(localError,err,error,*999)
+      CALL FlagError(localError,err,error,*999)
     END SELECT
 
     EXITS("FieldContinuity_FiniteElementCalculate")

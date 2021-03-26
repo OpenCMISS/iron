@@ -498,7 +498,7 @@ CONTAINS
         IF(ASSOCIATED(dataPoints%interface)) THEN
           CALL DataPoints_DestroyGeneric(dataPoints%interface%dataPointSets,dataPoints,err,error,*999)
         ELSE
-          CALL FLAG_ERROR("Data points region or interface is not associated.",err,error,*999)
+          CALL FlagError("Data points region or interface is not associated.",err,error,*999)
         ENDIF
       ENDIF
     ELSE

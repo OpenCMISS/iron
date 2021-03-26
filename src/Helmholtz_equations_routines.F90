@@ -52,11 +52,14 @@ MODULE HelmholtzEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE CoordinateSystemRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -184,7 +187,7 @@ CONTAINS
           !Loop over the derivatives
           CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
           DO derivativeIdx=1,numberOfNodeDerivatives
-            CALL DomainNode_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
+            CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
             SELECT CASE(analyticFunctionType)
             CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1)
               !u=cos(k*x/sqrt(2))*sin(k*y/sqrt(2))
@@ -439,7 +442,7 @@ CONTAINS
         
          !Calculate jacobianGaussWeight.
 !!TODO: Think about symmetric problems. 
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         
@@ -1138,7 +1141,7 @@ CONTAINS
       CASE(PROBLEM_SETUP_FINISH_ACTION)
         !Finish the control loops
         NULLIFY(controlLoopRoot)
-        CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
         NULLIFY(controlLoop)
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
         CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)            
@@ -1154,7 +1157,7 @@ CONTAINS
       !-----------------------------------------------------------------
       !Get the control loop
       NULLIFY(controlLoopRoot)
-      CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+      CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
       NULLIFY(controlLoop)
       CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
       SELECT CASE(problemSetup%actionType)
@@ -1187,7 +1190,7 @@ CONTAINS
       !-----------------------------------------------------------------
       !Get the control loop
       NULLIFY(controlLoopRoot)
-      CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+      CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
       NULLIFY(controlLoop)
       CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
       !Get the solver

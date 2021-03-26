@@ -49,6 +49,7 @@ MODULE ProblemAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Strings
   USE Types
   

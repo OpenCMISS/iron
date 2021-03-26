@@ -106,6 +106,8 @@ MODULE InterfaceMatricesAccessRoutines
   PUBLIC InterfaceMatrices_InterfaceMappingGet
 
   PUBLIC InterfaceMatrices_InterfaceMatrixGet
+
+  PUBLIC InterfaceMatrices_NumberOfInterfaceMatricesGet
   
   PUBLIC InterfaceMatrices_RHSVectorExists
 
@@ -334,6 +336,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMatrices_InterfaceMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of interface matrices for interface matrices.
+  SUBROUTINE InterfaceMatrices_NumberOfInterfaceMatricesGet(interfaceMatrices,numberOfInterfaceMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices to get the number of interface matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfInterfaceMatrices !<On exit, the number of interface matrices.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfaceMatrices_NumberOfInterfaceMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+#endif    
+    
+    numberOfInterfaceMatrices=interfaceMatrices%numberOfInterfaceMatrices
+    
+    EXITS("InterfaceMatrices_NumberOfInterfaceMatricesGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_NumberOfInterfaceMatricesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrices_NumberOfInterfaceMatricesGet
 
   !
   !================================================================================================================================
@@ -910,7 +942,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceMatrix_TempTranposeDistributedVectorGet",err,error,*998)
+    ENTERS("InterfaceMatrix_TempTransposeDistributedVectorGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(tempTransDistributedVector)) &

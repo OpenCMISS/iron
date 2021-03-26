@@ -53,12 +53,14 @@ MODULE StokesEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsSetAccessRoutines
@@ -71,9 +73,11 @@ MODULE StokesEquationsRoutines
   USE Kinds
   USE MatrixVector
   USE ProblemAccessRoutines
-  USE Strings
+  USE RegionAccessRoutines
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
+  USE Strings
   USE Timer
   USE Types
 
@@ -673,7 +677,7 @@ CONTAINS
         localError="The third equations set specification of "// &
           & TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
           " is invalid for a Stokes flow equations set."
-        CALL FLAG_ERROR(localError,err,error,*999)
+        CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
       SELECT CASE(equationsSetSetup%actionType)
@@ -1272,7 +1276,7 @@ CONTAINS
       CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
       NULLIFY(dependentQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
       
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
@@ -1339,7 +1343,7 @@ CONTAINS
 
         !Calculate Jacobian and Gauss weight.
 !!TODO: Think about symmetric problems. 
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
 
@@ -1717,7 +1721,7 @@ CONTAINS
     CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE)
       CALL Stokes_PostSolveOutputData(solver,err,error,*999)
     CASE(PROBLEM_ALE_STOKES_SUBTYPE)
-      CALL Solver_TypeGet(solver,solveType,err,error,*999)
+      CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
       IF(solveType==SOLVER_LINEAR_TYPE) THEN
         !Post solve for the linear solver
         IF(outputType>=SOLVER_PROGRESS_OUTPUT) &
@@ -1784,7 +1788,7 @@ CONTAINS
     CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE)
       CALL Stokes_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
     CASE(PROBLEM_ALE_STOKES_SUBTYPE)
-      CALL Solver_TypeGet(solver,solveType,err,error,*999)
+      CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
       !Pre solve for the linear solver
       IF(solveType==SOLVER_LINEAR_TYPE) THEN
         IF(outputType>=SOLVER_PROGRESS_OUTPUT) &
@@ -1843,9 +1847,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,boundaryConditionCheckVariable,componentIdx,currentIteration,derivativeIdx,dimensionIdx, &
-      & elementIdx,globalDerivativeIndex,i,inputIteration,j,k,localDOFIdx,localNodeIdx,localNodeNumber, &
+      & elementIdx,globalDerivativeIndex,i,inputIteration,inputOption,j,k,localDOFIdx,localNodeIdx,localNodeNumber, &
       & maximumNumberOfElementParameters,nodeIdx,numberOfComponents,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives, &
       & numberOfNodesXic(3),numberOfVariables,outputIteration,outputType,pSpecification(3),solveType,variableIdx,variableType
+    INTEGER(INTG), POINTER :: boundaryNodes(:)
     REAL(DP) :: analyticValue,currentTime,displacementValue,muParam,rhoParam,startTime,stopTime,tCoordinates(20,3), &
       & timeIncrement,x(3),xiCoordinates(4)
     REAL(DP), POINTER :: boundaryValues(:),geometricParameters(:),materialsParameters(:),meshVelocityValues(:)
@@ -1878,7 +1883,7 @@ CONTAINS
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
 
-    CALL Solver_TypeGet(solver,solveType,err,error,*999)
+    CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
     CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
       & outputIteration,inputIteration,err,error,*999)
@@ -1912,7 +1917,7 @@ CONTAINS
           NULLIFY(geometricParameters)
           CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
           NULLIFY(interpolationParameters)
-          CALL FieldVariable_InterpolationParametersInitialise(geometricVariable,interpolationParameters,err,error,*999)
+          CALL FieldVariable_InterpolationParameterInitialise(geometricVariable,interpolationParameters,err,error,*999)
           NULLIFY(interpolatedPoint)
           CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
           NULLIFY(materialsField)
@@ -2108,7 +2113,7 @@ CONTAINS
         NULLIFY(boundaryConditions)
         CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
         NULLIFY(equationsSet)
-        CALL SolverMapping_EquationsSetGet(solverEquations,1,equationsSet,err,error,*999)
+        CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
         NULLIFY(geometricField)
         CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
         NULLIFY(geometricVariable)
@@ -2126,8 +2131,8 @@ CONTAINS
         CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,independentVariable,err,error,*999)
         NULLIFY(boundaryValues)
         CALL FieldVariable_ParameterSetDataGet(independentVariable,FIELD_BOUNDARY_SET_TYPE,boundaryValues,err,error,*999)
-        CALL FLUID_MECHANICS_IO_READ_boundaryConditions(SOLVER_LINEAR_TYPE,boundaryValues,numberOfDimensions, &
-          & BOUNDARY_CONDITION_MOVED_WALL,inputIteration,currentIteration,,currentTime,1.0_DP,err,error,*999)
+        CALL FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_LINEAR_TYPE,boundaryValues,numberOfDimensions, &
+          & BOUNDARY_CONDITION_MOVED_WALL,inputOption,currentIteration,currentTime,1.0_DP,err,error,*999)
         CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
         DO variableIdx=1,numberOfVariables
           NULLIFY(dependentVariable)
@@ -2173,7 +2178,7 @@ CONTAINS
         NULLIFY(boundaryConditions)
         CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
         NULLIFY(equationsSet)
-        CALL SolverMapping_EquationsSetGet(solverEquations,1,equationsSet,err,error,*999)
+        CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
         NULLIFY(geometricField)
         CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
         NULLIFY(geometricVariable)
@@ -2193,7 +2198,7 @@ CONTAINS
         CALL FieldVariable_ParameterSetDataGet(independentVariable,FIELD_MESH_VELOCITY_SET_TYPE,meshVelocityValues,err,error,*999)
         NULLIFY(boundaryValues)
         CALL FieldVariable_ParameterSetDataGet(independentVariable,FIELD_BOUNDARY_SET_TYPE,boundaryValues,err,error,*999)
-        CALL FLUID_MECHANICS_IO_READ_boundaryConditions(SOLVER_LINEAR_TYPE,boundaryValues,numberOfDimensions, &
+        CALL FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_LINEAR_TYPE,boundaryValues,numberOfDimensions, &
           & BOUNDARY_CONDITION_FIXED_INLET,inputIteration,currentIteration,currentTime,1.0_DP,err,error,*999)
         CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
         DO variableIdx=1,numberOfVariables
@@ -2292,7 +2297,7 @@ CONTAINS
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
 
-    CALL Solver_TypeGet(solver,solveType,err,error,*999)
+    CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
       & outputIteration,inputIteration,err,error,*999)
 
@@ -2313,16 +2318,16 @@ CONTAINS
       NULLIFY(solverLaplace)
       CALL Solvers_SolverGet(solvers,1,solverLaplace,err,error,*999)
       NULLIFY(solverEquationsLaplace)
-      CALL Solver_SolverEquations(solverLaplace,solverEquationsLaplace,err,error,*999)
+      CALL Solver_SolverEquationsGet(solverLaplace,solverEquationsLaplace,err,error,*999)
       NULLIFY(solverMappingLaplace)
       CALL SolverEquations_SolverMappingGet(solverEquationsLaplace,solverMappingLaplace,err,error,*999)
       NULLIFY(equationsSetLaplace)
-      CALL SolverMapping_EquationsSetGet(solverMappingLaplace,equationsSetLaplace,err,error,*999)
+      CALL SolverMapping_EquationsSetGet(solverMappingLaplace,1,equationsSetLaplace,err,error,*999)
       NULLIFY(geometricFieldLaplace)
       CALL EquationsSet_GeometricFieldGet(equationsSetLaplace,geometricFieldLaplace,err,error,*999)
       NULLIFY(geometricVariableLaplace)
       CALL Field_VariableGet(geometricFieldLaplace,FIELD_U_VARIABLE_TYPE,geometricVariableLaplace,err,error,*999)
-      CALL FieldVarible_NumberOfComponentsGet(geometricVariableLaplace,numberOfDimensionsLaplace,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(geometricVariableLaplace,numberOfDimensionsLaplace,err,error,*999)
       NULLIFY(dependentFieldLaplace)
       CALL EquationsSet_DependentFieldGet(equationsSetLaplace,dependentFieldLaplace,err,error,*999)
       !Get the independent field for the ALE Stokes problem
@@ -2372,12 +2377,12 @@ CONTAINS
       DO variableIdx=1,numberOfVariables
         NULLIFY(dependentVariableALEStokes)
         CALL Field_VariableIndexGet(dependentFieldALEStokes,variableIdx,dependentVariableALEStokes,variableType,err,error,*999)
-        CALL FieldVariable_NumberOfComponents(dependentVariableALEStokes,numberOfComponents,err,error,*999)
+        CALL FieldVariable_NumberOfComponentsGet(dependentVariableALEStokes,numberOfComponents,err,error,*999)
         DO componentIdx=1,numberOfComponents
           NULLIFY(domain)
           CALL FieldVariable_ComponentDomainGet(dependentVariableALEStokes,componentIdx,domain,err,error,*999)
           NULLIFY(domainTopology)
-          CALL Domain_DomainTopology(domain,domainTopology,err,error,*999)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
           NULLIFY(domainNodes)
           CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
           !Loop over the local nodes excluding the ghosts.
@@ -2449,7 +2454,7 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
-    CALL ControlLoop_Problem(controlLoop,problem,err,error,*999)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
@@ -2460,7 +2465,7 @@ CONTAINS
     CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE)
       ! do nothing ???
     CASE(PROBLEM_ALE_STOKES_SUBTYPE)
-      CALL Solver_TypeGet(solver,solveType,err,error,*999)
+      CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
       IF(solveType==SOLVER_LINEAR_TYPE) THEN
         !Get the independent field for the ALE Stokes problem
         NULLIFY(solverEquations)
@@ -2484,7 +2489,7 @@ CONTAINS
             NULLIFY(domain)
             CALL FieldVariable_ComponentDomainGet(dependentVariable,componentIdx,domain,err,error,*999)
             NULLIFY(domainTopology)
-            CALL Doman_DomainTopologyGet(domain,domainTopology,err,error,*999)
+            CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
             NULLIFY(domainNodes)
             CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
             !Loop over the local nodes excluding the ghosts.
@@ -2554,7 +2559,7 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
-    CALL ControLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
 
     CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
@@ -2672,6 +2677,7 @@ CONTAINS
     INTEGER(INTG) :: analyticFunctionType,boundCount,componentIdx,derivativeIdx,dimensionIdx,elementIdx,globalDerivativeIndex, &
       & i,j,k,localDOFIdx,localNodeIdx,localNodeNumber,maximumNumberOfElementParameters,nodeIdx,numberOfComponents, &
       & numberOfDimensions,numberOfNodes,numberOfNodeDerivatives,numberOfNodesXiC(4),numberOfVariables,variableIdx,variableType
+    INTEGER(INTG), POINTER :: boundaryNodes(:)
     REAL(DP) :: analyticValue,currentTime,muParam,rhoParam,tCoordinates(20,3),x(3),xiCoordinates(3)
     !REAL(DP) :: boundaryTolerance, boundaryX(3,2),muParam,L
     REAL(DP), POINTER :: geometricParameters(:),materialsParameters(:)
@@ -2708,7 +2714,7 @@ CONTAINS
     NULLIFY(geometricParameters)
     CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
     NULLIFY(interpolationParameters)
-    CALL FieldVariable_InterpolationParametersInitialise(geometricVariable,interpolationParameters,err,error,*999)
+    CALL FieldVariable_InterpolationParameterInitialise(geometricVariable,interpolationParameters,err,error,*999)
     NULLIFY(interpolatedPoint)
     CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
     NULLIFY(dependentField)
@@ -2967,7 +2973,7 @@ CONTAINS
     CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
     CALL FieldVariable_ParameterSetDataRestore(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
     CALL Field_InterpolatedPointFinalise(interpolatedPoint,err,error,*999)
-    CALL FieldVariable_InterpolationParametersFinalise(interpolationParameters,err,error,*999)
+    CALL FieldVariable_InterpolationParameterFinalise(interpolationParameters,err,error,*999)
 
     EXITS("Stokes_BoundaryConditionsAnalyticCalculate")
     RETURN

@@ -52,11 +52,13 @@ MODULE LinearElasticityRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -169,7 +171,7 @@ CONTAINS
         CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
           & err,error,*999)
         NULLIFY(domain)
-        CALL FieldVariable_ComponentDomainGt(dependentVariable,componentIdx,domain,err,error,*999)
+        CALL FieldVariable_ComponentDomainGet(dependentVariable,componentIdx,domain,err,error,*999)
         NULLIFY(domainTopology)
         CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
         NULLIFY(domainNodes)
@@ -366,7 +368,7 @@ CONTAINS
         CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
           & err,error,*999)
         NULLIFY(domain)
-        CALL FieldVariable_ComponentDomainGt(dependentVariable,componentIdx,domain,err,error,*999)
+        CALL FieldVariable_ComponentDomainGet(dependentVariable,componentIdx,domain,err,error,*999)
         NULLIFY(domainTopology)
         CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
         NULLIFY(domainNodes)
@@ -1102,7 +1104,7 @@ CONTAINS
 !!TODO:: Check whether quadrature scheme being used is suffient to interpolate highest order basis function    
 !!Q - TPBG: Need to be able to use different Interpolation for Geometric & Dependent field?
 
-    CALL EquationSet_SpecificaionGet(equationsSet,3,esSpecification,err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
 
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE, &
@@ -1220,7 +1222,7 @@ CONTAINS
       CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
       NULLIFY(dependentQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
 
       NULLIFY(materialsField)
       CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
@@ -1259,7 +1261,7 @@ CONTAINS
         NULLIFY(columnDomain)
         CALL FieldVariable_ComponentDomainGet(colsVariable,colsComponentIdx,columnDomain,err,error,*999)
         NULLIFY(columnDomainTopology)
-        CALL Domain_DomainTopology(columnDomain,columnDomainTopology,err,error,*999)
+        CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
         NULLIFY(columnDomainElements)
         CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
         NULLIFY(dependentBases(colsComponentIdx)%ptr)
@@ -1314,7 +1316,7 @@ CONTAINS
           ENDIF
 
           !Calculate jacobianGaussWeight.
-          CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+          CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
           CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
           jacobianGaussWeight=jacobian*gaussWeight
           
@@ -1469,7 +1471,7 @@ CONTAINS
         CALL Field_ScalingTypeGet(dependentField,scalingType,err,error,*999)
         IF(scalingType/=FIELD_NO_SCALING) THEN
           NULLIFY(colsInterpParameters)
-          CALL EquationsInterpolation_DependentInterpParametersGet(equationsInterpolation,colsVariableType,colsInterpParameters, &
+          CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,colsVariableType,colsInterpParameters, &
             & err,error,*999)
           DO xiIdx=1,numberOfXi
             sf(diagonalSubMatrixLocation(xiIdx)+1:SUM(numberDependentElementParameters(1:xiIdx)))= &

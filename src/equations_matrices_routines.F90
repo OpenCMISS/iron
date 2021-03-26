@@ -45,8 +45,11 @@
 MODULE EquationsMatricesRoutines
 
   USE BaseRoutines
+  USE BasisAccessRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
+  USE DomainMappings
   USE EquationsAccessRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesAccessRoutines
@@ -270,7 +273,7 @@ MODULE EquationsMatricesRoutines
         NULLIFY(equationsMatrixToVarMap)
         CALL EquationsMappingDynamic_EquationsMatrixToVarMapGet(dynamicMapping,matrixIdx,equationsMatrixToVarMap,err,error,*999)
         NULLIFY(columnDomainMap)
-        CALL EquationsMappingEMToVMap_ColumnDOFsMappingGet(equationsMatrixToVarMap,columnDomainMap,err,error,*999)
+        CALL EquationsMappingVectorEMToVMap_ColumnDOFsMappingGet(equationsMatrixToVarMap,columnDomainMap,err,error,*999)
         !Create the distributed equations matrix
         NULLIFY(dynamicMatrix%matrix)
         CALL DistributedMatrix_CreateStart(rowDomainMap,columnDomainMap,dynamicMatrix%matrix,err,error,*999)
@@ -304,7 +307,7 @@ MODULE EquationsMatricesRoutines
         NULLIFY(equationsMatrixToVarMap)
         CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,matrixIdx,equationsMatrixToVarMap,err,error,*999)
         NULLIFY(columnDomainMap)
-        CALL EquationsMappingEMToVMap_ColumnDOFsMappingGet(equationsMatrixToVarMap,columnDomainMap,err,error,*999)
+        CALL EquationsMappingVectorEMToVMap_ColumnDOFsMappingGet(equationsMatrixToVarMap,columnDomainMap,err,error,*999)
         !Create the distributed equations matrix
         NULLIFY(linearMatrix%matrix)
         CALL DistributedMatrix_CreateStart(rowDomainMap,columnDomainMap,linearMatrix%matrix,err,error,*999)
@@ -350,7 +353,7 @@ MODULE EquationsMatricesRoutines
           NULLIFY(jacobianMatrixToVarMap)
           CALL EquationsMappingResidual_JacobianMatrixToVarMapGet(residualMapping,matrixIdx,jacobianMatrixToVarMap,err,error,*999)
           NULLIFY(columnDomainMap)
-          CALL EquationsMappingJMToVMap_ColumnDOFsMapGet(jacobianMatrixToVarMap,columnDomainMap,err,error,*999)
+          CALL EquationsMappingVectorJMToVMap_ColumnDOFsMappingGet(jacobianMatrixToVarMap,columnDomainMap,err,error,*999)
 !!TODO: Set the distributed matrix not to allocate the data if the Jacobian is not calculated.
           !Create the distributed Jacobian matrix
           NULLIFY(jacobianMatrix%jacobian)
@@ -581,7 +584,7 @@ MODULE EquationsMatricesRoutines
               NULLIFY(decompositionTopology)
               CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
               NULLIFY(dataPoints)
-              CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*999)
+              CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,dataPoints,err,error,*999)
               CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,rowElementNumber,numberOfElementDataPoints, &
                 & err,error,*999)
               DO dataPointIdx=1,numberOfElementDataPoints
@@ -665,7 +668,7 @@ MODULE EquationsMatricesRoutines
               NULLIFY(decompositionTopology)
               CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
               NULLIFY(dataPoints)
-              CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*999)
+              CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,dataPoints,err,error,*999)
               CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,rowElementNumber,numberOfElementDataPoints, &
                 & err,error,*999)
                DO dataPointIdx=1,numberOfElementDataPoints
@@ -747,7 +750,7 @@ MODULE EquationsMatricesRoutines
               NULLIFY(decompositionTopology)
               CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
               NULLIFY(dataPoints)
-              CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*999)
+              CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,dataPoints,err,error,*999)
               CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,rowElementNumber,numberOfElementDataPoints, &
                 & err,error,*999)
               DO dataPointIdx=1,numberOfElementDataPoints
@@ -941,10 +944,10 @@ MODULE EquationsMatricesRoutines
         CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
         NULLIFY(domainElements)
         CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+        CALL DomainElements_TotalNumberOfElementsGet(domainElements,totalNumberOfElements,err,error,*999)
         CALL FieldVariable_ComponentInterpolationGet(rowsFieldVariable,componentIdx,interpolationType,err,error,*999)
         NULLIFY(domainMapping)
         CALL FieldVariable_DomainMappingGet(rowsFieldVariable,domainMapping,err,error,*999)
-        CALL DomianMapping_TotalNumberOfElementsGet(domain,totalNumberOfElements,err,error,*999)
         IF(elementNumber<1.OR.elementNumber>totalNumberOfElements) THEN
           localError="Element number "//TRIM(NumberToVString(elementNumber,"*",err,error))// &
             & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
@@ -989,7 +992,7 @@ MODULE EquationsMatricesRoutines
           NULLIFY(decompositionTopology)
           CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
           NULLIFY(dataPoints)
-          CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*999)
+          CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,dataPoints,err,error,*999)
           CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,elementNumber,numberOfElementDataPoints, &
             & err,error,*999)
            DO dataPointIdx=1,numberOfElementDataPoints
@@ -1708,7 +1711,7 @@ MODULE EquationsMatricesRoutines
         & rowVariable,err,error,*999)
     ENDIF
     NULLIFY(sourceVectors)
-    CALL EquationsMatricesVector_SourceVectorExists(vectorMatrices,sourceVectors,err,error,*999)
+    CALL EquationsMatricesVector_SourceVectorsExists(vectorMatrices,sourceVectors,err,error,*999)
     IF(ASSOCIATED(sourceVectors)) THEN
       DO sourceIdx=1,sourceVectors%numberOfSources
         NULLIFY(sourceVector)
@@ -2245,7 +2248,7 @@ MODULE EquationsMatricesRoutines
         NULLIFY(linearMatrix)
         CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,linearMatrix,err,error,*999)
         NULLIFY(colsVariable)
-        CALL EquationsMatricesLinear_LinearMatrixVariableGet(linearMatrices,matrixIdx,colsVariable,err,error,*999)
+        CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,matrixIdx,colsVariable,err,error,*999)
         CALL EquationsMatrices_NodalMatrixSetup(linearMatrix%nodalMatrix,rowsVariable,colsVariable,err,error,*999)
       ENDDO !matrixIdx
     ENDIF
@@ -2331,7 +2334,7 @@ MODULE EquationsMatricesRoutines
     nodalMatrix%maxNumberOfColumns=0
     CALL FieldVariable_NumberOfComponentsGet(colsFieldVariable,numberOfComponents,err,error,*999)
     DO componentIdx=1,numberOfComponents
-      CALL FieldVariable_ComponentMaxNodalInterpParametersGet(colsFieldVariable,componentIdx,maxNodeInterpParameters, &
+      CALL FieldVariable_ComponentMaxNodeInterpParametersGet(colsFieldVariable,componentIdx,maxNodeInterpParameters, &
         & err,error,*999)
       nodalMatrix%maxNumberOfColumns=nodalMatrix%maxNumberOfColumns+maxNodeInterpParameters
     ENDDO !componentIdx
@@ -2445,7 +2448,7 @@ MODULE EquationsMatricesRoutines
     IF(ASSOCIATED(nonlinearMatrices)) THEN
       DO residualIdx=1,nonlinearMatrices%numberOfResiduals
         NULLIFY(residualVector)
-        CALL EquationsMatricesVector_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+        CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
         CALL EquationsMatrices_NodalVectorFinalise(residualVector%nodalResidual,err,error,*999)
         DO matrixIdx=1,residualVector%numberOfJacobians
           NULLIFY(jacobianMatrix)
@@ -2767,7 +2770,7 @@ MODULE EquationsMatricesRoutines
     NULLIFY(rowsVariable)
     CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
     NULLIFY(dynamicMatrices)
-    CALL EquationsMappingVector_DynamicMatricesExists(vectorMatrices,dynamicMatrices,err,err,*999)
+    CALL EquationsMatricesVector_DynamicMatricesExists(vectorMatrices,dynamicMatrices,err,error,*999)
     IF(ASSOCIATED(dynamicMatrices)) THEN
       !Initialise the dynamic element matrices
       NULLIFY(dynamicMapping)
@@ -2782,7 +2785,7 @@ MODULE EquationsMatricesRoutines
       ENDDO !matrixIdx
     ENDIF
     NULLIFY(LinearMatrices)
-    CALL EquationsMappingVector_LinearMatricesExists(vectorMatrices,linearMatrices,err,err,*999)
+    CALL EquationsMatricesVector_LinearMatricesExists(vectorMatrices,linearMatrices,err,error,*999)
     IF(ASSOCIATED(linearMatrices)) THEN
       !Initialise the linear element matrices
       NULLIFY(linearMapping)
@@ -2797,7 +2800,7 @@ MODULE EquationsMatricesRoutines
       ENDDO !matrixIdx
     ENDIF
     NULLIFY(nonlinearMatrices)
-    CALL EquationsMappingVector_NonlinearMatricesExists(vectorMatrices,nonlinearMatrices,err,err,*999)
+    CALL EquationsMatricesVector_NonlinearMatricesExists(vectorMatrices,nonlinearMatrices,err,error,*999)
     IF(ASSOCIATED(nonlinearMatrices)) THEN
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
@@ -2980,7 +2983,7 @@ MODULE EquationsMatricesRoutines
     NULLIFY(linearMapping)
     CALL EquationsMatricesLinear_LinearMappingGet(linearMatrices,linearMapping,err,error,*999)
     NULLIFY(equationsMatrixToVarMap)
-    CALL EquationsMappingLinear_EquationsMatrixToVarGet(linearMapping,matrixNumber,equationsMatrixToVarMap,err,error,*999)
+    CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,matrixNumber,equationsMatrixToVarMap,err,error,*999)
     
     ALLOCATE(linearMatrices%matrices(matrixNumber)%ptr,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate equations matrix.",err,error,*999)
@@ -3072,7 +3075,7 @@ MODULE EquationsMatricesRoutines
     NULLIFY(vectorMapping)
     CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*998)
     NULLIFY(dynamicMapping)
-    CALL EquationsMapping_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*998)
+    CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*998)
  
     IF(ASSOCIATED(dynamicMapping)) THEN
       ALLOCATE(vectorMatrices%dynamicMatrices,STAT=err)
@@ -3312,7 +3315,7 @@ MODULE EquationsMatricesRoutines
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
     NULLIFY(residualVector)
-    CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIndex,err,error,*999)
+    CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIndex,residualVector,err,error,*999)
     NULLIFY(vectorMapping)
     CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMapping)
@@ -3381,7 +3384,7 @@ MODULE EquationsMatricesRoutines
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
     NULLIFY(residualVector)
-    CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIndex,err,error,*999)
+    CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIndex,residualVector,err,error,*999)
     NULLIFY(vectorMapping)
     CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMapping)
@@ -4151,7 +4154,7 @@ MODULE EquationsMatricesRoutines
 
     ENTERS("EquationsMatricesVector_DynamicStructureTypeSet",err,error,*999)
 
-    CALL EqutionsMatricesVector_AssertNotFinished(vectorMatrices,err,error,*999)
+    CALL EquationsMatricesVector_AssertNotFinished(vectorMatrices,err,error,*999)
     NULLIFY(dynamicMatrices)
     CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
     IF(SIZE(structureTypes,1)<dynamicMatrices%numberOfDynamicMatrices) THEN
@@ -4292,7 +4295,7 @@ MODULE EquationsMatricesRoutines
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*998)
     NULLIFY(residualVector)
-    CALL EquationsMatricesNonlinear_ResisdualVectorGet(nonlinearMatrices,residualVector,err,error,*998)
+    CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*998)
 
     ALLOCATE(structureTypes(residualVector%numberOfJacobians),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate storage types.",err,error,*999)
@@ -4931,6 +4934,7 @@ MODULE EquationsMatricesRoutines
     TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("EquationsMatricesSources_SourceVectorInitialise",err,error,*998)
@@ -4949,8 +4953,12 @@ MODULE EquationsMatricesRoutines
         & TRIM(NumberToVString(sourceIdx,"*",err,error))//" of the source vectors."
       CALL FlagError(localError,err,error,*998)
     ENDIF
+    NULLIFY(vectorMatrices)
+    CALL EquationsMatricesSources_VectorMatricesGet(sourceVectors,vectorMatrices,err,error,*999)
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)    
     NULLIFY(sourcesMapping)
-    CALL EquationsMatricesSources_SourcesMappingGet(sourceVectors,sourcesMapping,err,error,*998)
+    CALL EquationsMappingVector_SourcesMappingGet(vectorMapping,sourcesMapping,err,error,*998)
     NULLIFY(sourceMapping)
     CALL EquationsMappingSources_SourceMappingGet(sourcesMapping,sourceIdx,sourceMapping,err,error,*998)
     CALL EquationsMappingSource_VectorCoefficientGet(sourceMapping,sourceCoefficient,err,error,*999)
@@ -5001,7 +5009,7 @@ MODULE EquationsMatricesRoutines
     
     ENTERS("EquationsMatricesVector_Output",err,error,*999)
 
-    CALL EquationsMatricesVector_AssertIsFinalised(vectorMatrices,err,error,*999)
+    CALL EquationsMatricesVector_AssertIsFinished(vectorMatrices,err,error,*999)
      
     CALL WriteString(id,"",err,error,*999)
     CALL WriteString(id,"Equations matrices:",err,error,*999)
@@ -5035,7 +5043,7 @@ MODULE EquationsMatricesRoutines
       CALL WriteString(id,"Nonlinear vectors:",err,error,*999)
       DO residualIdx=1,nonlinearMatrices%numberOfResiduals
         NULLIFY(residualVector)
-        CALL EqutionsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+        CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
         CALL WriteStringValue(id,"Residual vector : ",residualIdx,err,error,*999)
         CALL DistributedVector_Output(id,residualVector%residual,err,error,*999)
       ENDDO !residualIdx
@@ -5091,6 +5099,9 @@ MODULE EquationsMatricesRoutines
     REAL(DP) :: sparsity
     LOGICAL :: boundaryElement,boundaryNode
     TYPE(BasisType), POINTER :: colsBasis,rowsBasis
+    TYPE(DecompositionType), POINTER :: colsDecomposition
+    TYPE(DecompositionElementsType), POINTER :: colsDecompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: colsDecompositionTopology
     TYPE(DomainType), POINTER :: colsDomain,rowsDomain
     TYPE(DomainElementsType), POINTER :: colsDomainElements,rowsDomainElements
     TYPE(DomainMappingType), POINTER :: colsDOFsDomainMapping,rowsDOFsDomainMapping
@@ -5195,7 +5206,7 @@ MODULE EquationsMatricesRoutines
           CASE(FIELD_CONSTANT_DOF_TYPE)
             CALL FlagError("Constant based DOFs is not implemented.",err,error,*999)
           CASE(FIELD_NODE_DOF_TYPE)
-            CALL FieldVariable_DOFParameterGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
+            CALL FieldVariable_DOFParametersGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
               & componentNumber,err,error,*999)
             NULLIFY(rowsDomain)
             CALL FieldVariable_ComponentDomainGet(rowsVariable,componentNumber,rowsDomain,err,error,*999)
@@ -5241,9 +5252,9 @@ MODULE EquationsMatricesRoutines
                     CALL DomainElements_ElementNodeGet(colsDomainElements,localNodeIdx,elementNumber,nodeNumber2,err,error,*999)
                     CALL Basis_NodeNumberOfDerivativesGet(colsBasis,localNodeIdx,numberOfNodeDerivatives,err,error,*999)
                     DO derivativeIdx=1,numberOfNodeDerivatives
-                      CALL DomainElemennts_ElementDerivativeGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber,&
+                      CALL DomainElements_ElementDerivativeGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber,&
                         & derivativeNumber2,err,error,*999)
-                      CALL DomainElemennts_ElementVersionGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
+                      CALL DomainElements_ElementVersionGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
                         & versionNumber2,err,error,*999)
                       !Find the local and global column and add the global column to the indices list
                       CALL FieldVariable_LocalNodeDOFGet(colsVariable,versionNumber2,derivativeNumber2,nodeNumber2,componentIdx, &
@@ -5270,7 +5281,7 @@ MODULE EquationsMatricesRoutines
             numberOfNonZeros=numberOfNonZeros+numberOfColumns
             rowIndices(localDOFIdx+1)=numberOfNonZeros+1
           CASE(FIELD_ELEMENT_DOF_TYPE)
-            CALL FieldVariable_DOFParameterGetElement(rowsVariable,dofTypeIdx,elementNumber,componentNumber,err,error,*999)
+            CALL FieldVariable_DOFParametersGetElement(rowsVariable,dofTypeIdx,elementNumber,componentNumber,err,error,*999)
             CALL FieldVariable_ComponentMaxElementInterpParametersGet(rowsVariable,componentNumber,maxElementInterpParameters, &
               & err,error,*999)
             NULLIFY(rowsDomain)
@@ -5312,9 +5323,9 @@ MODULE EquationsMatricesRoutines
                   CALL DomainElements_ElementNodeGet(colsDomainElements,localNodeIdx,elementNumber,nodeNumber2,err,error,*999)
                   CALL Basis_NodeNumberOfDerivativesGet(colsBasis,localNodeIdx,numberOfNodeDerivatives,err,error,*999)
                   DO derivativeIdx=1,numberOfNodeDerivatives
-                    CALL DomainElemennts_ElementDerivativeGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
+                    CALL DomainElements_ElementDerivativeGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
                       & derivativeNumber2,err,error,*999)
-                    CALL DomainElemennts_ElementVersionGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
+                    CALL DomainElements_ElementVersionGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
                       & versionNumber2,err,error,*999)
                     !Find the local and global column and add the global column to the indices list
                     CALL FieldVariable_LocalNodeDOFGet(colsVariable,versionNumber2,derivativeNumber2,nodeNumber2,componentIdx, &
@@ -5377,7 +5388,7 @@ MODULE EquationsMatricesRoutines
             localError="Local DOF number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" is not a node based DOF."
             CALL FlagError(localError,err,error,*999)
           ENDIF
-          CALL FieldVariable_DOFParameterGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
+          CALL FieldVariable_DOFParametersGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
             & componentNumber,err,error,*999)
           NULLIFY(rowsDomain)
           CALL FieldVariable_ComponentDomainGet(rowsVariable,componentNumber,rowsDomain,err,error,*999)
@@ -5452,25 +5463,33 @@ MODULE EquationsMatricesRoutines
           CASE(FIELD_CONSTANT_DOF_TYPE)
             CALL FlagError("Constant based DOFs is not implemented.",err,error,*999)
           CASE(FIELD_ELEMENT_DOF_TYPE)
-            CALL FieldVariable_DOFParameterGetElement(rowsVariable,dofTypeIdx,elementNumber,componentNumber,err,error,*999)
+            CALL FieldVariable_DOFParametersGetElement(rowsVariable,dofTypeIdx,elementNumber,componentNumber,err,error,*999)
             NULLIFY(colsDomain)
             CALL FieldVariable_ComponentDomainGet(colsVariable,componentNumber,colsDomain,err,error,*999)
             NULLIFY(colsDomainTopology)
             CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
             NULLIFY(colsDomainElements)
             CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
-            CALL DomainElements_ElementBoundaryElementGet(colsDomainElements,elementNumber,boundaryElement,err,error,*999)
+            NULLIFY(colsDecomposition)
+            CALL Domain_DecompositionGet(colsDomain,colsDecomposition,err,error,*999)
+            NULLIFY(colsDecompositionTopology)
+            CALL Decomposition_DecompositionTopologyGet(colsDecomposition,colsDecompositionTopology,err,error,*999)
+            NULLIFY(colsDecompositionElements)
+            CALL DecompositionTopology_DecompositionElementsGet(colsDecompositionTopology,colsDecompositionElements, &
+              & err,error,*999)
+            CALL DecompositionElements_ElementBoundaryElementGet(colsDecompositionElements,elementNumber,boundaryElement, &
+              & err,error,*999)
             !Check whether boundary element    
             IF(boundaryElement) CALL LinkedList_Add(list(columns(columnIdx)),localDOFIdx,err,error,*999)
           CASE(FIELD_NODE_DOF_TYPE)
-            CALL FieldVariable_DOFParameterGetNode(colsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
+            CALL FieldVariable_DOFParametersGetNode(colsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
               & componentNumber,err,error,*999)
             NULLIFY(colsDomain)
             CALL FieldVariable_ComponentDomainGet(colsVariable,componentNumber,colsDomain,err,error,*999)
             NULLIFY(colsDomainTopology)
             CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
             NULLIFY(colsDomainNodes)
-            CALL DomainTopology_DomainNodesGt(colsDomainTopology,colsDomainNodes,err,error,*999)
+            CALL DomainTopology_DomainNodesGet(colsDomainTopology,colsDomainNodes,err,error,*999)
             CALL DomainNodes_NodeBoundaryNodeGet(colsDomainNodes,nodeNumber,boundaryNode,err,error,*999)            
             !Check whether boundary node    
             IF(boundaryNode) CALL LinkedList_Add(list(columns(columnIdx)),localDOFIdx,err,error,*999)
@@ -5634,7 +5653,7 @@ MODULE EquationsMatricesRoutines
           CASE(FIELD_CONSTANT_DOF_TYPE)
             CALL FlagError("Constant based DOFs is not implemented.",err,error,*999)
           CASE(FIELD_NODE_DOF_TYPE)
-            CALL FieldVariable_DOFParameterGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
+            CALL FieldVariable_DOFParametersGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
               & componentNumber,err,error,*999)
             NULLIFY(rowsDomain)
             CALL FieldVariable_ComponentDomainGet(rowsVariable,componentNumber,rowsDomain,err,error,*999)
@@ -5681,9 +5700,9 @@ MODULE EquationsMatricesRoutines
                       & err,error,*999)
                     CALL Basis_NodeNumberOfDerivativesGet(colsBasis,localNodeIdx,numberOfNodeDerivatives,err,error,*999)
                     DO derivativeIdx=1,numberOfNodeDerivatives
-                      CALL DomainElemennts_ElementDerivativeGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber,&
+                      CALL DomainElements_ElementDerivativeGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber,&
                         & derivativeNumber2,err,error,*999)
-                      CALL DomainElemennts_ElementVersionGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
+                      CALL DomainElements_ElementVersionGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
                         & versionNumber2,err,error,*999)
                       !Find the local and global column and add the global column to the indices list
                       CALL FieldVariable_LocalNodeDOFGet(colsVariable,versionNumber2,derivativeNumber2,nodeNumber2,componentIdx, &
@@ -5710,7 +5729,7 @@ MODULE EquationsMatricesRoutines
             numberOfNonZeros=numberOfNonZeros+numberOfColumns
             rowIndices(localDOFIdx+1)=numberOfNonZeros+1
           CASE(FIELD_ELEMENT_DOF_TYPE)
-            CALL FieldVariable_DOFParameterGetElement(rowsVariable,dofTypeIdx,elementNumber,componentNumber,err,error,*999)
+            CALL FieldVariable_DOFParametersGetElement(rowsVariable,dofTypeIdx,elementNumber,componentNumber,err,error,*999)
             CALL FieldVariable_ComponentMaxElementInterpParametersGet(rowsVariable,componentNumber,maxElementInterpParameters, &
               & err,error,*999)
             NULLIFY(rowsDomain)
@@ -5752,9 +5771,9 @@ MODULE EquationsMatricesRoutines
                   CALL DomainElements_ElementNodeGet(colsDomainElements,localNodeIdx,elementNumber,nodeNumber2,err,error,*999)
                   CALL Basis_NodeNumberOfDerivativesGet(colsBasis,localNodeIdx,numberOfNodeDerivatives,err,error,*999)
                   DO derivativeIdx=1,numberOfNodeDerivatives
-                    CALL DomainElemennts_ElementDerivativeGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
+                    CALL DomainElements_ElementDerivativeGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
                       & derivativeNumber2,err,error,*999)
-                    CALL DomainElemennts_ElementVersionGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
+                    CALL DomainElements_ElementVersionGet(colsDomainElements,derivativeIdx,localNodeIdx,elementNumber, &
                       & versionNumber2,err,error,*999)
                     !Find the local and global column and add the global column to the indices list
                     CALL FieldVariable_LocalNodeDOFGet(colsVariable,versionNumber2,derivativeNumber2,nodeNumber2,componentIdx, &
@@ -5814,7 +5833,7 @@ MODULE EquationsMatricesRoutines
           CASE(FIELD_CONSTANT_DOF_TYPE)
             CALL FlagError("Constant based DOFs is not implemented yet.",err,error,*999)
           CASE(FIELD_NODE_DOF_TYPE)
-            CALL FieldVariable_DOFParameterGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
+            CALL FieldVariable_DOFParametersGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
               & componentNumber,err,error,*999)
             NULLIFY(rowsDomain)
             CALL FieldVariable_ComponentDomainGet(rowsVariable,componentNumber,rowsDomain,err,error,*999)

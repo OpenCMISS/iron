@@ -50,9 +50,11 @@ MODULE CharacteristicEquationsRoutines
 
   USE BaseRoutines
   USE BasisRoutines
+  USE BasisAccessRoutines
   USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
@@ -75,6 +77,8 @@ MODULE CharacteristicEquationsRoutines
   USE ProblemAccessRoutines
   USE Strings
   USE SolverRoutines
+  USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Timer
   USE Types
 
@@ -264,7 +268,7 @@ CONTAINS
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsField%equationsSetField, &
               & err,error,*999)
             NULLIFY(equationsSetField)
-            CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+            CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
             CALL Field_LabelSet(equationsSetField,"Equations Set Field",err,error,*999)
             CALL Field_TypeSetAndLock(equationsSetField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_NumberOfVariablesSet(equationsSetField,1,err,error,*999)
@@ -294,7 +298,7 @@ CONTAINS
           NULLIFY(equationsField)
           CALL EquationsSet_EquationsFieldGet(equationsSet,equationsField,err,error,*999)
           NULLIFY(equationsSetField)
-          CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+          CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
           NULLIFY(geometricField)
           CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
           IF(equationsField%equationsSetFieldAutoCreated) THEN
@@ -791,7 +795,7 @@ CONTAINS
     END SELECT
 
     NULLIFY(equations)
-    CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
@@ -1021,7 +1025,7 @@ CONTAINS
     END SELECT
 
     NULLIFY(equations)
-    CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
@@ -1252,7 +1256,7 @@ CONTAINS
     ENTERS("Characteristic_Extrapolate",err,error,*999)
 
     NULLIFY(solverEquations)
-    CALL Solver_SolverEquations(solver,solverEquations,err,error,*999)
+    CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     NULLIFY(equationsSet)
@@ -1315,7 +1319,7 @@ CONTAINS
     CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,independentVariable,err,error,*999)
 
     NULLIFY(equationsInterpolation)
-    CALL Equations_EquationsInterpolationGet(equations,equationsInterpolation,err,error,*999)
+    CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
     NULLIFY(dependentUInterpParameters)
     CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
       & dependentUInterpParameters,err,error,*999)
@@ -1364,7 +1368,7 @@ CONTAINS
           CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
           NULLIFY(materialsBasis)
           CALL DomainElements_ElementBasisGet(materialsDomainElements,elementNumber,materialsBasis,err,error,*999)
-          CALL Basis_NumberOfNodesGet(dependentBasis,numberOfElementNodes,err,error,*999)
+          CALL Basis_NumberOfLocalNodesGet(dependentBasis,numberOfElementNodes,err,error,*999)
           DO elementNodeIdx=1,numberOfElementNodes
             CALL DomainElements_ElementNodeGet(dependentDomainElements,elementNodeIdx,elementNumber,elementNodeNumber, &
               & err,error,*999)

@@ -295,7 +295,7 @@ CONTAINS
     
     ENTERS("DiffusionAdvectionDiffusion_ProblemSetup",err,error,*999)
 
-    CALL Problem_Specification(problem,3,pSpecification,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
 
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
@@ -331,7 +331,7 @@ CONTAINS
         CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
         NULLIFY(controlLoop)
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
-        CALL ContolLoop_CreateFinish(controlLoop,err,error,*999)            
+        CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)            
       CASE DEFAULT
         localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
           & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
@@ -514,7 +514,7 @@ CONTAINS
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
-    CALL Problem_Specification(problem,3,pSpecification,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)

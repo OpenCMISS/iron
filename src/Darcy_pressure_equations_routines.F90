@@ -51,11 +51,14 @@ MODULE DarcyPressureEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE CoordinateSystemRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -68,8 +71,9 @@ MODULE DarcyPressureEquationsRoutines
   USE Maths
   USE MatrixVector
   USE ProblemAccessRoutines
-  USE Strings
   USE SolverRoutines
+  USE SolverAccessRoutines
+  USE Strings
   USE Timer
   USE Types
 
@@ -167,7 +171,7 @@ CONTAINS
     END SELECT
       
     NULLIFY(equations)
-    CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
@@ -256,7 +260,7 @@ CONTAINS
       CALL Basis_NumberOfXiGet(fluidBasis,numberOfFluidXi,err,error,*999)
       NULLIFY(quadratureScheme)
       CALL Basis_QuadratureSchemeGet(fluidBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
             
       NULLIFY(materialsVariable)
       materialsVariableType=FIELD_U1_VARIABLE_TYPE
@@ -347,7 +351,7 @@ CONTAINS
         
         !Calculate jacobianGaussWeight.      
 !!TODO: Think about symmetric problems.
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         

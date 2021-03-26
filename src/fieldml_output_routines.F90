@@ -513,7 +513,7 @@ CONTAINS
     SELECT CASE( FIELDTYPE_ )
     CASE( FIELD_GEOMETRIC_TYPE )
       NULLIFY( COORDINATE_SYSTEM )
-      CALL REGION_COORDINATE_SYSTEM_GET( REGION, COORDINATE_SYSTEM, ERR, ERROR, *999 )
+      CALL Region_CoordinateSystemGet( REGION, COORDINATE_SYSTEM, ERR, ERROR, *999 )
       CALL CoordinateSystem_TypeGet( COORDINATE_SYSTEM, SUB_TYPE, ERR, ERROR, *999 )
       CALL FIELDML_OUTPUT_GET_COORDINATES_TYPE( FML_HANDLE, SUB_TYPE, COUNT, DO_IMPORT, TYPE_HANDLE, ERR, ERROR, *999 )
     
@@ -657,7 +657,7 @@ CONTAINS
         firstInterpolation = xiInterpolations(i)
       ELSE IF( xiInterpolations(i) /= firstInterpolation ) THEN
         !Do not yet support inhomogeneous simplex bases
-        CALL Flag_Error( "Translation of inhomogeneous tensor-product basis not yet supported.", err, error, *999 )
+        CALL FlagError( "Translation of inhomogeneous tensor-product basis not yet supported.", err, error, *999 )
       ENDIF
     ENDDO
    
@@ -676,7 +676,7 @@ CONTAINS
         parameterName = "parameters.3d.unit.triquadraticSimplex.zienkiewicz"
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL Flag_Error( var_str("Quadratic simplex interpolation not supported for ")//xiCount//" dimensions.", &
+        CALL FlagError( var_str("Quadratic simplex interpolation not supported for ")//xiCount//" dimensions.", &
           & err, error, *999 )
       ENDIF
     ELSE IF( firstInterpolation == BASIS_LINEAR_SIMPLEX_INTERPOLATION ) THEN
@@ -691,26 +691,26 @@ CONTAINS
         parameterName = "parameters.3d.unit.trilinearSimplex"
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL Flag_Error( var_str("Linear simplex interpolation not supported for ")//xiCount//" dimensions.", &
+        CALL FlagError( var_str("Linear simplex interpolation not supported for ")//xiCount//" dimensions.", &
           & err, error, *999 )
       ENDIF
     ELSE
-      CALL Flag_Error( var_str("FieldML translation not yet supported for interpolation type ")//firstInterpolation//".", &
+      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")//firstInterpolation//".", &
         & err, error, *999 )
     ENDIF
 
     evaluatorHandle = FIELDML_OUTPUT_IMPORT_FML( fmlHandle, interpolatorName, err, error )
-    IF( err /= 0 ) CALL Flag_Error( "Could not import interpolator "//char(interpolatorName)//".", err, error, *999 )
+    IF( err /= 0 ) CALL FlagError( "Could not import interpolator "//char(interpolatorName)//".", err, error, *999 )
 
     parametersHandle = FIELDML_OUTPUT_IMPORT_FML( fmlHandle, parameterName, err, error )
-    IF( err /= 0 ) CALL Flag_Error( "Could not import parameter type "//char(parameterName)//".", err, error, *999 )
+    IF( err /= 0 ) CALL FlagError( "Could not import parameter type "//char(parameterName)//".", err, error, *999 )
     
     IF( evaluatorHandle == FML_INVALID_HANDLE ) THEN
-      CALL Flag_Error( "Cannot get a handle for basis evaluator "//char(interpolatorName)//".", err, error, *999 )
+      CALL FlagError( "Cannot get a handle for basis evaluator "//char(interpolatorName)//".", err, error, *999 )
     ENDIF
 
     IF( parametersHandle == FML_INVALID_HANDLE ) THEN
-      CALL Flag_Error( "Cannot get a handle for basis parameters "//char(parameterName)//".", err, error, *999 )
+      CALL FlagError( "Cannot get a handle for basis parameters "//char(parameterName)//".", err, error, *999 )
     ENDIF
     
     EXITS( "FieldmlOutputGetSimplexBasisEvaluator" )
@@ -832,7 +832,7 @@ CONTAINS
     DO i = 2, xiCount
       IF( xiInterpolations(i) /= firstInterpolation ) THEN
         !Do not yet support inhomogeneous TP bases
-        CALL Flag_Error( "FieldML translation of inhomogeneous simplex bases are not yet supported.", &
+        CALL FlagError( "FieldML translation of inhomogeneous simplex bases are not yet supported.", &
           & err, error, *999 )
       ENDIF
     ENDDO
@@ -846,7 +846,7 @@ CONTAINS
         layoutName = "localNodes.3d.tetrahedron10.zienkiewicz"
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL Flag_Error( var_str("Quadratic Simplex interpolation not supported for ")//xiCount//" dimensions.", &
+        CALL FlagError( var_str("Quadratic Simplex interpolation not supported for ")//xiCount//" dimensions.", &
           & err, error, *999 )
       ENDIF
     ELSE IF( firstInterpolation == BASIS_LINEAR_SIMPLEX_INTERPOLATION ) THEN
@@ -858,11 +858,11 @@ CONTAINS
         layoutName = "localNodes.3d.tetrahedron4"
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL Flag_Error( var_str("Linear Simplex interpolation not supported for ")//xiCount//" dimensions.", &
+        CALL FlagError( var_str("Linear Simplex interpolation not supported for ")//xiCount//" dimensions.", &
           & err, error, *999 )
       ENDIF
     ELSE
-      CALL Flag_Error( var_str("FieldML translation not yet supported for interpolation type ")//firstInterpolation//".", &
+      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")//firstInterpolation//".", &
         & err, error, *999 )
     ENDIF
 
@@ -2021,7 +2021,7 @@ CONTAINS
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
     NULLIFY( NODES )
-    CALL REGION_NODES_GET( REGION, NODES, ERR, ERROR, *999 )
+    CALL Region_NodesGet( REGION, NODES, ERR, ERROR, *999 )
     CALL NODES_NUMBER_OF_NODES_GET( NODES, NODE_COUNT, ERR, ERROR, *999 )
 
     FIELDML_INFO%NODES_HANDLE = Fieldml_CreateEnsembleType( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".nodes") )

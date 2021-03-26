@@ -46,6 +46,7 @@ MODULE FieldAccessRoutines
   
   USE BaseRoutines
   USE DecompositionAccessRoutines
+  USE DomainMappings
   USE Kinds
   USE ISO_VARYING_STRING
   USE Strings
@@ -457,6 +458,8 @@ MODULE FieldAccessRoutines
 
   PUBLIC Field_UserNumberFind
 
+  PUBLIC Field_UserNumberGet
+
   PUBLIC Field_VariableExists
   
   PUBLIC Field_VariableGet
@@ -494,6 +497,14 @@ MODULE FieldAccessRoutines
   PUBLIC FieldVariable_AssertIsINTGData,FieldVariable_AssertIsSPData,FieldVariable_AssertIsDPData,FieldVariable_AssertIsLData
   
   PUBLIC FieldVariable_AssertComponentNumberOK
+
+  PUBLIC FieldVariable_ComponentDOFGetConstant
+
+  PUBLIC FieldVariable_ComponentDOFGetUserDataPoint
+
+  PUBLIC FieldVariable_ComponentDOFGetUserElement
+
+  PUBLIC FieldVariable_ComponentDOFGetUserNode
 
   PUBLIC FieldVariable_ComponentDomainGet
 
@@ -657,7 +668,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the dof numbers for a field variable component that corresponds to the specified constant
+  !>Returns the DOF numbers for a field variable component that corresponds to the specified constant
   SUBROUTINE Field_ComponentDOFGetConstant(field,variableType,componentNumber,localDOF,globalDOF,err,error,*)
 
     !Argument variables
@@ -677,12 +688,8 @@ CONTAINS
     CALL Field_AssertIsFinished(field,err,error,*999)
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-    CALL FieldVariable_ConstantDOFGet(fieldVariable,componentNumber,localDOF,err,error,*999)
-    NULLIFY(domainMapping)
-    CALL FieldVariable_DomainMappingGet(fieldVariable,domainMapping,err,error,*999)
-    
-    globalDOF=domainMapping%localToGlobalMap(localDOF)
-    
+    CALL FieldVariable_ComponentDOFGetConstant(fieldVariable,componentNumber,localDOF,globalDOF,err,error,*999)
+   
     EXITS("Field_ComponentDOFGetConstant")
     RETURN
 999 ERRORSEXITS("Field_ComponentDOFGetConstant",err,error)
@@ -694,22 +701,20 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the dof numbers for a field component that corresponds to the specified user data point.
-  SUBROUTINE Field_ComponentDOFGetUserDataPoint(field,variableType,userDataPointNumber,componentNumber,localDof, &
-    & globalDof,err,error,*)
+  !>Returns the DOF numbers for a field component that corresponds to the specified user data point.
+  SUBROUTINE Field_ComponentDOFGetUserDataPoint(field,variableType,userDataPointNumber,componentNumber,localDOF, &
+    & globalDOF,err,error,*)
 
     !Argument variables
     TYPE(FieldType), POINTER :: field !<A pointer to the field to get the dof for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the dof for \see FieldRoutines_VariableTypes,FieldRoutines
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The user data point number to get the dof for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
-    INTEGER(INTG), INTENT(OUT) :: localDof !<On exit, the local dof corresponding to the user data point
-    INTEGER(INTG), INTENT(OUT) :: globalDof !<On exit, the global dof corresponding to the user data point
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the user data point
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the user data point
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    LOGICAL :: ghostDof
-    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ComponentDOFGetUserDataPoint",err,error,*999)
@@ -717,11 +722,8 @@ CONTAINS
     CALL Field_AssertIsFinished(field,err,error,*999)
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-    CALL FieldVariable_UserDataPointDofGet(fieldVariable,userDataPointNumber,componentNumber,localDof,ghostDOf,err,error,*999)
-    NULLIFY(domainMapping)
-    CALL FieldVariable_DomainMappingGet(fieldVariable,domainMapping,err,error,*999)
-    
-    globalDof=domainMapping%localToGlobalMap(localDof)
+    CALL FieldVariable_ComponentDOFGetUserDataPoint(fieldVariable,userDataPointNumber,componentNumber,localDOF,globalDOF, &
+      & err,error,*999)
 
     EXITS("Field_ComponentDOFGetUserDataPoint")
     RETURN
@@ -748,8 +750,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    LOGICAL :: ghostDOF
-    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ComponentDOFGetUserElement",err,error,*999)
@@ -757,10 +757,8 @@ CONTAINS
     CALL Field_AssertIsFinished(field,err,error,*999)
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-    CALL FieldVariable_UserElementDofGet(fieldVariable,userElementNumber,componentNumber,localDOF,ghostDOF,err,error,*999)
-    NULLIFY(domainMapping)
-    CALL FieldVariable_DomainMappingGet(fieldVariable,domainMapping,err,error,*999)
-    globalDOF=domainMapping%localToGlobalMap(localDOF)
+    CALL FieldVariable_ComponentDOFGetUserElement(fieldVariable,userElementNumber,componentNumber,localDOF,globalDOF, &
+      & err,error,*999)
 
     EXITS("Field_ComponentDOFGetUserElement")
     RETURN
@@ -773,7 +771,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the dof numbers for a field component that corresponds to the specified user node and derivative.
+  !>Returns the DOF numbers for a field component that corresponds to the specified user node and derivative.
   SUBROUTINE Field_ComponentDOFGetUserNode(field,variableType,versionNumber,derivativeNumber,userNodeNumber, & 
     & componentNumber,localDOF,globalDOF,err,error,*)
 
@@ -784,13 +782,11 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the dof for
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the dof for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
-    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the user node
-    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the user node
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local DOF corresponding to the user node
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global DOF corresponding to the user node
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    LOGICAL :: ghostDOF
-    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ComponentDOFGetUserNode",err,error,*999)
@@ -798,11 +794,8 @@ CONTAINS
     CALL Field_AssertIsFinished(field,err,error,*999)
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-    CALL FieldVariable_UserNodeDofGet(fieldVariable,versionNumber,derivativeNumber,userNodeNumber,componentNumber, &
-      & localDOF,ghostDOF,err,error,*999)
-    NULLIFY(domainMapping)
-    CALL FieldVariable_DomainMappingGet(fieldVariable,domainMapping,err,error,*999)
-    globalDOF=domainMapping%localToGlobalMap(localDOF)
+    CALL FieldVariable_ComponentDOFGetUserNode(fieldVariable,versionNumber,derivativeNumber,userNodeNumber,componentNumber, &
+      & localDOF,globalDOF,err,error,*999)
 
     EXITS("Field_ComponentDOFGetUserNode")
     RETURN
@@ -2668,6 +2661,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the field user number for a field.
+  SUBROUTINE Field_UserNumberGet(field,userNumber,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the user number for
+    INTEGER(INTG), INTENT(OUT) :: userNumber !<On return, the field user number for the specified field
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Field_UserNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+#endif    
+
+    userNumber=field%userNumber
+
+    EXITS("Field_UserNumberGet")
+    RETURN
+999 ERRORSEXITS("Field_UserNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_UserNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the label for a field variable for character labels. \see OpenCMISS::Iron::cmfe_Field_VariableLabelGet
   SUBROUTINE Field_VariableLabelGetC(field,variableType,label,err,error,*)
 
@@ -3616,6 +3638,142 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Field_VariableTypesGet1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the dof numbers for a field variable component that corresponds to the specified constant
+  SUBROUTINE FieldVariable_ComponentDOFGetConstant(fieldVariable,componentNumber,localDOF,globalDOF,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the dof for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the constant
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the constant
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DomainMappingType), POINTER :: domainMapping
+
+    ENTERS("FieldVariable_ComponentDOFGetConstant",err,error,*999)
+
+    CALL FieldVariable_ConstantDOFGet(fieldVariable,componentNumber,localDOF,err,error,*999)
+    NULLIFY(domainMapping)
+    CALL FieldVariable_DomainMappingGet(fieldVariable,domainMapping,err,error,*999)
+    CALL DomainMapping_LocalToGlobalGet(domainMapping,localDOF,globalDOF,err,error,*999)
+    
+    EXITS("FieldVariable_ComponentDOFGetConstant")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ComponentDOFGetConstant",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_ComponentDOFGetConstant
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the dof numbers for a field variable component that corresponds to the specified user data point.
+  SUBROUTINE FieldVariable_ComponentDOFGetUserDataPoint(fieldVariable,userDataPointNumber,componentNumber,localDof, &
+    & globalDof,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the dof for
+    INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The user data point number to get the dof for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the user data point
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the user data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    LOGICAL :: ghostDOF
+    TYPE(DomainMappingType), POINTER :: domainMapping
+
+    ENTERS("FieldVariable_ComponentDOFGetUserDataPoint",err,error,*999)
+
+    CALL FieldVariable_UserDataPointDOFGet(fieldVariable,userDataPointNumber,componentNumber,localDOF,ghostDOF,err,error,*999)
+    NULLIFY(domainMapping)
+    CALL FieldVariable_DomainMappingGet(fieldVariable,domainMapping,err,error,*999)
+    CALL DomainMapping_LocalToGlobalGet(domainMapping,localDOF,globalDOF,err,error,*999)
+
+    EXITS("FieldVariable_ComponentDOFGetUserDataPoint")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ComponentDOFGetUserDataPoint",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_ComponentDOFGetUserDataPoint
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the DOF numbers for a field variable component that corresponds to the specified user element.
+  SUBROUTINE FieldVariable_ComponentDOFGetUserElement(fieldVariable,userElementNumber,componentNumber,localDOF, &
+    & globalDOF,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the dof for
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the dof for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the user element
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the user element
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    LOGICAL :: ghostDOF
+    TYPE(DomainMappingType), POINTER :: domainMapping
+
+    ENTERS("Field_ComponentDOFGetUserElement",err,error,*999)
+
+    CALL FieldVariable_UserElementDOFGet(fieldVariable,userElementNumber,componentNumber,localDOF,ghostDOF,err,error,*999)
+    NULLIFY(domainMapping)
+    CALL FieldVariable_DomainMappingGet(fieldVariable,domainMapping,err,error,*999)
+    CALL DomainMapping_LocalToGlobalGet(domainMapping,localDOF,globalDOF,err,error,*999)
+
+    EXITS("FieldVariable_ComponentDOFGetUserElement")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ComponentDOFGetUserElement",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_ComponentDOFGetUserElement
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the DOF numbers for a field variable component that corresponds to the specified user node and derivative.
+  SUBROUTINE FieldVariable_ComponentDOFGetUserNode(fieldVariable,versionNumber,derivativeNumber,userNodeNumber, & 
+    & componentNumber,localDOF,globalDOF,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the dof for
+    INTEGER(INTG), INTENT(IN) :: versionNumber !<The version number to get the dof for
+    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the dof for
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the dof for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the user node
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the user node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    LOGICAL :: ghostDOF
+    TYPE(DomainMappingType), POINTER :: domainMapping
+
+    ENTERS("FieldVariable_ComponentDOFGetUserNode",err,error,*999)
+
+    CALL FieldVariable_UserNodeDOFGet(fieldVariable,versionNumber,derivativeNumber,userNodeNumber,componentNumber, &
+      & localDOF,ghostDOF,err,error,*999)
+    NULLIFY(domainMapping)
+    CALL FieldVariable_DomainMappingGet(fieldVariable,domainMapping,err,error,*999)
+    CALL DomainMapping_LocalToGlobalGet(domainMapping,localDOF,globalDOF,err,error,*999)
+
+    EXITS("FieldVariable_ComponentDOFGetUserNode")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ComponentDOFGetUserNode",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_ComponentDOFGetUserNode
 
   !
   !================================================================================================================================

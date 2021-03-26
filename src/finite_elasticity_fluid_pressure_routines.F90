@@ -331,7 +331,7 @@ CONTAINS
       CASE(PROBLEM_SETUP_FINISH_ACTION)
         !Finish the control loops
         NULLIFY(controlLoopRoot)
-        CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
         NULLIFY(controlLoop)
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
         CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)            
@@ -344,7 +344,7 @@ CONTAINS
     CASE(PROBLEM_SETUP_SOLVERS_TYPE)
       !Get the control loop
       NULLIFY(controlLoopRoot)
-      CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+      CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
       NULLIFY(controlLoop)
       CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
       SELECT CASE(problemSetup%actionType)
@@ -373,7 +373,7 @@ CONTAINS
     CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
       !Get the control loop and solvers
       NULLIFY(controlLoopRoot)
-      CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+      CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
       NULLIFY(controlLoop)
       CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
       NULLIFY(solvers)

@@ -48,6 +48,7 @@ MODULE NavierStokesEquationsRoutines
   USE AnalyticAnalysisRoutines
   USE BaseRoutines
   USE BasisRoutines
+  USE BasisAccessRoutines
   USE BoundaryConditionsRoutines
   USE BoundaryConditionAccessRoutines
   USE CharacteristicEquationsRoutines
@@ -88,12 +89,12 @@ MODULE NavierStokesEquationsRoutines
 #endif
   USE ProblemAccessRoutines
   USE RegionAccessRoutines
-  USE StreeEquationsRoutines
-  USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMappingAccessRoutines
   USE SolverMatricesAccessRoutines
+  USE StreeEquationsRoutines
+  USE Strings
   USE Timer
   USE Types
 
@@ -309,7 +310,7 @@ CONTAINS
     CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
 
     NULLIFY(region)
-    CALL EqutionsSet_RegionGet(equationsSet,region,err,error,*999)
+    CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
        
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE, &
@@ -1134,7 +1135,7 @@ CONTAINS
         CASE(EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE, &
           & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)
           NULLIFY(equationsIndependent)
-          CALL EquationsSet_EquationsIndependentGet(equationsSet,equationsIndependent,err,error,*999)
+          CALL EquationsSet_IndependentGet(equationsSet,equationsIndependent,err,error,*999)
           SELECT CASE(equationsSetSetup%actionType)
             !Set start action
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1226,7 +1227,7 @@ CONTAINS
         CASE(EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, &
           & EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE)
           NULLIFY(equationsIndependent)
-          CALL EquationsSet_EquationsIndependentGet(equationsSet,equationsIndependent,err,error,*999)
+          CALL EquationsSet_IndependentGet(equationsSet,equationsIndependent,err,error,*999)
           SELECT CASE(equationsSetSetup%actionType)
             !Set start action
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1310,7 +1311,7 @@ CONTAINS
         CASE(EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
           & EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE)
           NULLIFY(equationsIndependent)
-          CALL EquationsSet_EquationsIndependentGet(equationsSet,equationsIndependent,err,error,*999)
+          CALL EquationsSet_IndependentGet(equationsSet,equationsIndependent,err,error,*999)
           SELECT CASE(equationsSetSetup%actionType)
             !Set start action
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1346,7 +1347,7 @@ CONTAINS
           & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE, &
           & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE)
           NULLIFY(equationsIndependent)
-          CALL EquationsSet_EquationsIndependentGet(equationsSet,equationsIndependent,err,error,*999)
+          CALL EquationsSet_IndependentGet(equationsSet,equationsIndependent,err,error,*999)
           SELECT CASE(equationsSetSetup%actionType)
             !Set start action
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1465,7 +1466,7 @@ CONTAINS
           & EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE, &
           & EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE)
           NULLIFY(equationsAnalytic)
-          CALL EquationsSet_EquationsAnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
+          CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
           SELECT CASE(equationsSetSetup%actionType)
             !Set start action
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1736,7 +1737,7 @@ CONTAINS
         !-----------------------------------------------------------------
         CALL EquationsSet_AssertMaterialsIsCreated(equationsSet,err,error,*999)
         NULLIFY(equationsMaterials)
-        CALL EquationsSet_EquationsMaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+        CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
         NULLIFY(geometricField)
         CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
         CALL Field_NumberOfCOmponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
@@ -2391,7 +2392,7 @@ CONTAINS
         CALL NavierStokes_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
       CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE, &
         & PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE)
-        CALL Solver_TypeGet(solver,solveType,err,error,*999)
+        CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
         SELECT CASE(solveType)
         CASE(SOLVER_DYNAMIC_TYPE)
           ! --- D y n a m i c    S o l v e r s ---
@@ -2399,7 +2400,7 @@ CONTAINS
           CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
           NULLIFY(solverMapping)
           CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-          CALL SolverMapping_NumberOfEquationsSetGet(solverMapping,numberOfEquationsSets,err,error,*999)
+          CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
           DO equationsSetIdx=1,numberOfEquationsSets
             NULLIFY(equationsSet)
             CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -2520,7 +2521,7 @@ CONTAINS
         &  PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE, &
         &  PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE, &
         &  PROBLEM_STREE1D0D_ADV_NAVIER_STOKES_SUBTYPE)
-        CALL Solver_TypeGet(solver,solveType,err,error,*999)
+        CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
         SELECT CASE(solveType)
           ! This switch takes advantage of the uniqueness of the solver types to do pre-solve operations
           ! for each of solvers in the various possible 1D subloops
@@ -2618,7 +2619,7 @@ CONTAINS
         CALL NavierStokes_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
       CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
         !Pre solve for the linear solver
-        CALL Solver_TypeGet(solver,solveType,err,error,*999)
+        CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
         IF(solveType==SOLVER_LINEAR_TYPE) THEN
           !Update boundary conditions for mesh-movement
           CALL NavierStokes_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
@@ -2663,7 +2664,7 @@ CONTAINS
           & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-          CALL Solver_TypeGet(solver,solveType,err,error,*999)
+          CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
           !Pre solve for the linear solver
           IF(solveType==SOLVER_LINEAR_TYPE) THEN
             !TODO if first time step smooth imported mesh with respect to absolute nodal position?
@@ -3042,7 +3043,7 @@ CONTAINS
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
             !Get the CellML evaluator solver
-            CALL Solver_NewtonCellMLSolverGet(solver,cellmlSolver,err,error,*999)
+            CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellmlSolver,err,error,*999)
             !Create the CellML equations
             CALL CellMLEquations_CreateStart(cellmlSolver,cellMLEquations,err,error,*999)
             !Set the time dependence
@@ -3069,7 +3070,7 @@ CONTAINS
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
             !Get the CellML evaluator solver
-            CALL Solver_NewtonCellMLSolverGet(solver,cellmlSolver,err,error,*999)
+            CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellmlSolver,err,error,*999)
             !Get the CellML equations for the CellML evaluator solver
             CALL Solver_CellMLEquationsGet(cellmlSolver,cellMLEquations,err,error,*999)
             !Finish the CellML equations creation
@@ -5106,13 +5107,13 @@ CONTAINS
       CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
       NULLIFY(coordinateSystem)
       CALL Region_CoordinateSystemGet(region,coordinateSystem,err,error,*999)
-      CALL CoordinateSystem_NumberOfDimensionsGet(coordinateSystem,numberOfDimensions,err,error,*999)
+      CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*999)
       NULLIFY(equationsInterpolation)
       CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
       NULLIFY(lhsMapping)
       CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
       NULLIFY(rowsVariable)
-      CALL EquationsMappingLHS_VariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
       CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
       NULLIFY(nonlinearMapping)
@@ -5120,9 +5121,9 @@ CONTAINS
       NULLIFY(residualMapping)
       CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
       NULLIFY(residualVariable)
-      CALL EquationsMappingResidual_ResidualVariableGet(residualMapping,1,residualVariable,err,error,*999)
+      CALL EquationsMappingResidual_VariableGet(residualMapping,1,residualVariable,err,error,*999)
       CALL FieldVariable_VariableTypeGet(residualVariable,residualVariableType,err,error,*999)
-      CALL FieldVariable_NumberOfCompnentsGet(residualVariable,numberOfResidualComponents,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(residualVariable,numberOfResidualComponents,err,error,*999)
       
       NULLIFY(dependentField)
       CALL EquationsInterpolation_DependentFieldGet(equationsInterpolation,dependentField,err,error,*999)
@@ -5327,7 +5328,7 @@ CONTAINS
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,uMaterialsInterpPoint, &
           & err,error,*999)
 
-        CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         DO xiIdx=1,numberOfXi
           DO coordinateIdx=1,numberOfDimensions
             dXidX(xiIdx,coordinateIdx)=geometricInterpPointMetrics%dXidX(xiIdx,coordinateIdx)
@@ -5868,7 +5869,7 @@ CONTAINS
         & esSpecification(3)==EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE .OR. &
         & esSpecification(3)==EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE) THEN
         IF(updateResidual) THEN
-          CALL Basis_NumberOfLocalNodes(dependentBasis,numberOfElementNodes,err,error,*999)
+          CALL Basis_NumberOfLocalNodesGet(dependentBasis,numberOfElementNodes,err,error,*999)
           CALL DomainElements_MaxElementParametersGet(dependentDomainElements,numberOfParameters,err,error,*999)
           CALL DomainElements_ElementNodeGet(dependentDomainElements,elementNumber,1,firstNode,err,error,*999)
           CALL DomainElements_ElementNodeGet(dependentDomainElements,elementNumber,numberOfParameters,lastNode,err,error,*999)
@@ -6141,10 +6142,10 @@ CONTAINS
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
       NULLIFY(residualMapping)
-      CALL EquationsMappingNonlinear_ResidualMppingGet(nonlinearMapping,1,residualMapping,err,error,*999)
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
       NULLIFY(residualVariable)
       CALL EquationsMappingResidual_VariableGet(residualMapping,1,residualVariable,err,error,*999)
-      CALL FieldVariable_TypeGet(residualVariable,residualVariableType,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(residualVariable,residualVariableType,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(residualVariable,numberOfResidualComponents,err,error,*999)
 
       dXidX=0.0_DP
@@ -6281,7 +6282,7 @@ CONTAINS
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,uMaterialsInterpPoint, &
           & err,error,*999)
 
-        CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         DO xiIdx=1,numberOfXi
           DO coordinateIdx=1,numberOfDimensions
             dXidX(xiIdx,coordinateIdx)=geometricInterpPointMetrics%dXidX(xiIdx,coordinateIdx)
@@ -6560,7 +6561,7 @@ CONTAINS
         & esSpecification(3)==EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE .OR. &
         & esSpecification(3)==EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE .OR. &
         & esSpecification(3)==EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE) THEN
-        CALL Basis_NumberOfLocalNodes(dependentBasis,numberOfElementNodes,err,error,*999)
+        CALL Basis_NumberOfLocalNodesGet(dependentBasis,numberOfElementNodes,err,error,*999)
         CALL DomainElements_MaxElementParametersGet(dependentDomainElements,numberOfParameters,err,error,*999)
         CALL DomainElements_ElementNodeGet(dependentDomainElements,elementNumber,1,firstNode,err,error,*999)
         CALL DomainElements_ElementNodeGet(dependentDomainElements,elementNumber,numberOfParameters,lastNode,err,error,*999)
@@ -6693,7 +6694,7 @@ CONTAINS
       CALL Solver_GlobalNumberGet(solver,solverGlobalNumber,err,error,*999)
       IF(solverGlobalNumber==2) CALL NavierStokes_PostSolveOutputData(solver,err,error,*999)
     CASE(PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE)
-      CALL Solver_TypeGet(solver,solveType,err,error,*999)
+      CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
       SELECT CASE(solveType)
       CASE(SOLVER_NONLINEAR_TYPE)
         ! Characteristic solver- copy branch Q,A values to new parameter set
@@ -6924,7 +6925,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
-      CALL Solver_TypeGet(solver,solveType,err,error,*999)
+      CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
       SELECT CASE(solveType)
       CASE(SOLVER_LINEAR_TYPE)
         !Post solve for the linear solver
@@ -6932,7 +6933,7 @@ CONTAINS
         CALL Solver_SolversGet(solver,solvers,err,error,*999)
         NULLIFY(solver2)
         CALL Solvers_SolverGet(solvers,2,solver2,err,error,*999)
-        CALL Solver_TypeGet(solver2,solveType2,err,error,*999)
+        CALL Solver_SolverTypeGet(solver2,solveType2,err,error,*999)
         IF(solveType2/=SOLVER_DYNAMIC_TYPE) CALL FlagError("Dynamic solver is not associated for ALE problem.",err,error,*999)
         NULLIFY(dynamicSolver)
         CALL Solver_DynamicSolverGet(solver2,dynamicSolver,err,error,*999)
@@ -7097,7 +7098,7 @@ CONTAINS
             CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfDependentComponents,err,error,*999)
             numberOfDimensions = numberOfDependentComponents - 1
             !Get the nodes on this computation domain
-            CALL FieldVariable_ComponentInterpolationTypeGet(independentVariable,componentNumberVelocity, &
+            CALL FieldVariable_ComponentInterpolationGet(independentVariable,componentNumberVelocity, &
               & velocityInterpolationType,err,error,*999)
             IF(velocityInterpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
               NULLIFY(domain)
@@ -7195,7 +7196,7 @@ CONTAINS
               NULLIFY(materialsParameters)
               NULLIFY(equationsMaterials)
               IF(ASSOCIATED(materialsField)) THEN
-                CALL EquationsSet_EquationsMaterialsGet(equationsSet,equationsMaterials,err,error,*999)                
+                CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)                
                 CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
                 CALL FieldVariable_ParameterSetDataGet(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
               ENDIF
@@ -7216,7 +7217,7 @@ CONTAINS
                 CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
                 CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfDependentComponents,err,error,*999)
                 DO componentIdx=1,numberOfDependentComponents
-                  CALL FieldVariable_ComponentInterpolationTypeGet(dependentVariable,componentIdx,interpolationType,err,error,*999)
+                  CALL FieldVariable_ComponentInterpolationGet(dependentVariable,componentIdx,interpolationType,err,error,*999)
                   IF(interpolationType/=FIELD_NODE_BASED_INTERPOLATION) &
                     & CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
                   NULLIFY(domain)
@@ -7437,7 +7438,7 @@ CONTAINS
               IF(ASSOCIATED(boundaryConditionsVariable)) THEN
                 CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfDependentComponents,err,error,*999)
                 DO componentIdx=1,numberOfDependentComponents
-                  CALL FieldVariable_ComponentInterpolationTypeGet(dependentVariable,componentIdx,interpolationType, &
+                  CALL FieldVariable_ComponentInterpolationGet(dependentVariable,componentIdx,interpolationType, &
                     & err,error,*999)
                   IF(interpolationType/=FIELD_NODE_BASED_INTERPOLATION) &
                     & CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
@@ -7540,7 +7541,7 @@ CONTAINS
               IF(ASSOCIATED(boundaryConditionsVariable)) THEN
                 CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfDependentComponents,err,error,*999)
                 DO componentIdx=1,numberOfDependentComponents
-                  CALL FieldVariable_ComponentInterpolationTypeGet(dependentVariable,componentIdx,interpolationType,err,error,*999)
+                  CALL FieldVariable_ComponentInterpolationGet(dependentVariable,componentIdx,interpolationType,err,error,*999)
                   IF(interpolationType/=FIELD_NODE_BASED_INTERPOLATION) &
                     & CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
                   NULLIFY(domain)
@@ -7589,7 +7590,7 @@ CONTAINS
       CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE, &
         & PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE)
         !TODO: this should be set up so it uses the same pre_solve steps as the individual 3D/1D equations sets
-        CALL Solver_TypeGet(solver,solveType,err,error,*999)
+        CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
         SELECT CASE(solveType)
         CASE(SOLVER_DYNAMIC_TYPE)
           ! --- D y n a m i c    S o l v e r s ---
@@ -7635,7 +7636,7 @@ CONTAINS
                 !Loop over nodes and update independent field values. If a fixed fitted boundary, also update dependent
                 componentNumberVelocity = 1
                 !Get the nodes on this computation domain
-                CALL FieldVariable_ComponentInterpolationTypeGet(independentVariable,componentNumberVelocity,interpolationType, &
+                CALL FieldVariable_ComponentInterpolationGet(independentVariable,componentNumberVelocity,interpolationType, &
                   & err,error,*999)
                 IF(interpolationType/=FIELD_NODE_BASED_INTERPOLATION) &
                   & CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
@@ -7743,7 +7744,7 @@ CONTAINS
                   CALL EquationsSet_AnalyticTimeSet(equationsSet,currentTime,err,error,*999)
                   NULLIFY(dependentField)
                   CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-                  CALL FieldVariable_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+                  CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
                   DO variableIdx=1,numberOfVariables
                     NULLIFY(dependentVariable)
                     CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,dependentVariableType,err,error,*999)
@@ -7753,7 +7754,7 @@ CONTAINS
                     IF(ASSOCIATED(boundaryConditionsVariable)) THEN
                       CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfDependentComponents,err,error,*999)
                       DO componentIdx=1,numberOfDependentComponents
-                        CALL FieldVariable_ComponentInterpolationTypeGet(dependentVariable,componentIdx,interpolationType, &
+                        CALL FieldVariable_ComponentInterpolationGet(dependentVariable,componentIdx,interpolationType, &
                           & err,error,*999)
                         IF(interpolationType==FIELD_NODE_BASED_INTERPOLATION) &
                           & CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
@@ -7916,7 +7917,7 @@ CONTAINS
         CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
         CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
       CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
-        CALL Solver_TypeGet(solver,solveType,err,error,*999)
+        CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
         CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)          
         !Pre solve for the linear solver
         IF(solveType==SOLVER_LINEAR_TYPE) THEN
@@ -8077,8 +8078,8 @@ CONTAINS
           & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-          CALL Solver_TypeGet(solver,solveType,err,error,*999)
-          CALL ControlLoop_OutputType(controlLoop,outputType,err,error,*999)
+          CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
+          CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
           !Pre solve for the linear solver
           IF(solveType==SOLVER_LINEAR_TYPE) THEN
             IF(outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
@@ -8154,7 +8155,7 @@ CONTAINS
             CALL Solver_SolverEquationsGet(solver2,fluidSolverEquations,err,error,*999)
             NULLIFY(fluidSolverMapping)
             CALL SolverEquations_SolverMappingGet(fluidSolverEquations,fluidSolverMapping,err,error,*999)
-            CALL SolverMapping_NumberOfEquationsSetGet(fluidSolverMapping,numberOfEquationsSets,err,error,*999)
+            CALL SolverMapping_NumberOfEquationsSetsGet(fluidSolverMapping,numberOfEquationsSets,err,error,*999)
             equationsSetIndex=1
             fluidEquationsSetFound=.FALSE.
             DO WHILE (.NOT.fluidEquationsSetFound.AND.equationsSetIndex<=numberOfEquationsSets)
@@ -8636,7 +8637,7 @@ CONTAINS
           CALL Field_VariableGet(interfaceGeometricField,FIELD_U_VARIABLE_TYPE,interfaceGeometricVariable,err,error,*999)
           CALL FieldVariable_NumberOfComponentsGet(interfaceGeometricVariable,numberOfComponents,err,error,*999)
           DO componentIdx=1,numberOfComponents
-            CALL FieldVariable_ComponentInterpolationTypeGet(interfaceGeometricVariable,componentIdx,interpolationType, &
+            CALL FieldVariable_ComponentInterpolationGet(interfaceGeometricVariable,componentIdx,interpolationType, &
               & err,error,*999)
             SELECT CASE(interpolationType)
             CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -8661,7 +8662,7 @@ CONTAINS
                       & derivativeIdx,solidNode,componentIdx,previousSolidNodePosition,err,error,*999)
                     solidDelta=solidNodePosition-previousSolidNodePosition
                     IF(ABS(solidDelta)>ZERO_TOLERANCE) THEN
-                      CALL FieldVarible_ParameterSetAddNode(fluidIndependentVariable,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
+                      CALL FieldVariable_ParameterSetAddNode(fluidIndependentVariable,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
                         & versionIdx,derivativeIdx,fluidNode,componentIdx,solidDelta,err,error,*999)
                     ENDIF
                   ENDDO !versionIdx
@@ -8780,7 +8781,7 @@ CONTAINS
         & PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE,PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE)
         ! do nothing ???
       CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
-        CALL Solver_TypeGet(solver,solveType,err,error,*999)
+        CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
         IF(solveType/=SOLVER_LINEAR_TYPE) CALL FlagError("Mesh motion calculation not successful for ALE problem.",err,error,*999)
         !Get the independent field for the ALE Navier-Stokes problem
         NULLIFY(solverEquations)
@@ -8841,7 +8842,7 @@ CONTAINS
           & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-          CALL Solver_TypeGet(solver,solveType,err,error,*999)
+          CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
           IF(solveType/=SOLVER_LINEAR_TYPE) CALL FlagError("Mesh motion calculation not successful for ALE problem.",err,error,*999)
           !Get the independent field for the ALE Navier-Stokes problem
           NULLIFY(solverEquations)
@@ -8862,7 +8863,7 @@ CONTAINS
           DO variableIdx=1,numberOfVariables
             NULLIFY(dependentVariable)
             CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
-            CALL FieldVariabl_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
+            CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
             DO componentIdx=1,numberOfComponents
               NULLIFY(domain)
               CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
@@ -8990,7 +8991,7 @@ CONTAINS
         NULLIFY(solverMapping)
         CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
         !Make sure the equations sets are up to date
-        CALL SolverMapping_NumberOfEquationsSets(solverMapping,numberOfEquationsSets,err,error,*999)
+        CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
         DO equationsSetIdx=1,numberOfEquationsSets
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -9021,7 +9022,7 @@ CONTAINS
                 ENDIF
               ENDIF
               NULLIFY(equationsAnalytic)
-              CALL EquationsSet_EquationsAnalyticExists(equationsSet,equationsAnalytic,err,error,*999)
+              CALL EquationsSet_AnalyticExists(equationsSet,equationsAnalytic,err,error,*999)
               IF(ASSOCIATED(equationsAnalytic)) THEN
                 CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
                 IF(analyticFunctionType==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4.OR. &
@@ -9049,7 +9050,7 @@ CONTAINS
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       !Make sure the equations sets are up to date
-      CALL SolverMapping_NumberOfEquationsSets(solverMapping,numberOfEquationsSets,err,error,*999)
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
       DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -9144,7 +9145,7 @@ CONTAINS
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       !Make sure the equations sets are up to date
-      CALL SolverMpapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
       DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -9183,7 +9184,7 @@ CONTAINS
               CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             ENDIF
             NULLIFY(equationsAnalytic)
-            CALL EquationsSet_EquationsAnalyticExists(equationsSet,equationsAnalytic,err,error,*999)
+            CALL EquationsSet_AnalyticExists(equationsSet,equationsAnalytic,err,error,*999)
             IF(ASSOCIATED(equationsAnalytic)) THEN
               CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
               IF(analyticFunctionType==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4.OR. &
@@ -9199,7 +9200,7 @@ CONTAINS
             ENDIF
           ENDIF
         ENDIF
-      ENDDO !equtionsSetIdx
+      ENDDO !equationsSetIdx
     CASE DEFAULT
       localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
         & " is not valid for a Navier-Stokes equation fluid type of a fluid mechanics problem class."
@@ -9297,7 +9298,7 @@ CONTAINS
       CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
       DO componentIdx=1,numberOfComponents
         boundaryCount=0
-        CALL FieldVariable_ComponentInterpolationTypeGet(dependentVariable,componentIdx,interpolationType,err,error,*999)
+        CALL FieldVariable_ComponentInterpolationGet(dependentVariable,componentIdx,interpolationType,err,error,*999)
         IF(interpolationType==FIELD_NODE_BASED_INTERPOLATION) &
           & CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
         NULLIFY(domain)
@@ -9313,7 +9314,7 @@ CONTAINS
         DO nodeIdx=1,numberOfNodes
           CALL DomainNodes_UserNodeNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
           CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-          CALL DomainNodes_NodeSurroundingElmeentGet(domainNodes,1,nodeIdx,elementIdx,err,error,*999)
+          CALL DomainNodes_NodeSurroundingElementGet(domainNodes,1,nodeIdx,elementIdx,err,error,*999)
           NULLIFY(basis)
           CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
           CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,interpolationParameters,err,error,*999)
@@ -9467,7 +9468,7 @@ CONTAINS
             & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5)
             !Quad/Hex
             !\todo: Use boundary flag
-            CALL DomainElements_MaxElementParameterGet(domainElements,maximumNumberOfElementParameters,err,error,*999)
+            CALL DomainElements_MaxElementParametersGet(domainElements,maximumNumberOfElementParameters,err,error,*999)
             IF(maximumNumberOfElementParameters==4.AND.numberOfDimensions==2.OR. &
               & maximumNumberOfElementParameters==9.OR. &
               & maximumNumberOfElementParameters==16.OR. &
@@ -10691,7 +10692,7 @@ CONTAINS
       CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
       NULLIFY(dependentVariable)
       CALL EquationsMappingResidual_VariableGet(residualMapping,1,dependentVariable,err,error,*999)
-      CALL FieldVariable_TypeGet(dependentVariable,variableType,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(dependentVariable,variableType,err,error,*999)
       NULLIFY(vectorMatrices)
       CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
       NULLIFY(nonlinearMatrices)
@@ -10853,7 +10854,7 @@ CONTAINS
             dXidX(xiIdx,dimensionIdx)=geometricInterpPointMetrics%dXidX(xiIdx,dimensionIdx)
           ENDDO !xiIdx
         ENDDO !dimensionIdx
-        CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(quadratureVelocity,gaussNumber,velocityGaussWeight,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(quadraturePressure,gaussNumber,pressureGaussWeight,err,error,*999)
 
@@ -11307,6 +11308,7 @@ CONTAINS
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: equationsSetField
     TYPE(QuadratureSchemeType), POINTER :: quadratureVelocity
@@ -11356,10 +11358,12 @@ CONTAINS
       CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      NULLIFY(residualMapping)
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
       !Set general and specific pointers
       NULLIFY(dependentVariable)
-      CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,dependentVariable,err,error,*999)
-      CALL FieldVariable_TypeGet(dependentVariable,variableType,err,error,*999)
+      CALL EquationsMappingResidual_VariableGet(residualMapping,1,dependentVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(dependentVariable,variableType,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfDependentComponents,err,error,*999)
       NULLIFY(dependentDecomposition)
       CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
@@ -11371,8 +11375,8 @@ CONTAINS
       CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
       NULLIFY(basisVelocity)
       CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basisVelocity,err,error,*999)
-      CALL Basis_NumberOfXi(basisVelocity,numberOfXi,err,error,*999)
-      CALL Basis_NumberOfElementParameters(basisVelocity,numberOfElementParameters,err,error,*999)
+      CALL Basis_NumberOfXiGet(basisVelocity,numberOfXi,err,error,*999)
+      CALL Basis_NumberOfElementParametersGet(basisVelocity,numberOfElementParameters,err,error,*999)
       NULLIFY(quadratureVelocity)
       CALL Basis_QuadratureSchemeGet(basisVelocity,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureVelocity,err,error,*999)
  
@@ -11482,7 +11486,7 @@ CONTAINS
         dXidX(1:numberOfDimensions,1:numberOfDimensions)= &
           & geometricInterpPointMetrics%dXidX(1:numberOfDimensions,1:numberOfDimensions)
 
-        CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(quadratureVelocity,gaussNumber,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
 
@@ -11907,8 +11911,8 @@ CONTAINS
             ENDIF
           ENDIF
 
-          CALL Basis_NumberOfNodesGet(basis1,numberOfNodes1,err,error,*999)
-          CALL Basis_NumberOfNodesGet(basis2,numberOfNodes2,err,error,*999)
+          CALL Basis_NumberOfLocalNodesGet(basis1,numberOfNodes1,err,error,*999)
+          CALL Basis_NumberOfLocalNodesGet(basis2,numberOfNodes2,err,error,*999)
           CALL Basis_NumberOfXiGet(basis2,numberOfXi2,err,error,*999)
           NULLIFY(quadratureScheme1)
           CALL Basis_QuadratureSchemeGet(basis1,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme1,err,error,*999)
@@ -11949,7 +11953,7 @@ CONTAINS
                 & err,error,*999)
             ENDIF
             !Jacobian and Gauss weighting term
-            CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
             CALL BasisQuadratureScheme_GaussWeightGet(quadratureScheme1,gaussIdx,gaussWeight,err,error,*999)
             jacobianGaussWeights=jacobian*gaussWeight
 
@@ -12151,6 +12155,7 @@ CONTAINS
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField1D,dependentField3D,equationsSetField3D,geometricField3D, &
       & independentField1D,materialsField1D,materialsField3D
@@ -12217,9 +12222,11 @@ CONTAINS
       CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      NULLIFY(residualMapping)
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
       NULLIFY(dependentVariable3D)
-      CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,dependentVariable3D,err,error,*999)
-      CALL FieldVariable_TypeGet(dependentVariable3D,dependentVariableType,err,error,*999)
+      CALL EquationsMappingResidual_VariableGet(residualMapping,1,dependentVariable3D,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(dependentVariable3D,dependentVariableType,err,error,*999)
       !Get the mesh decomposition and mapping
       NULLIFY(decomposition3D)
       CALL Field_DecompositionGet(dependentField3D,decomposition3D,err,error,*999)
@@ -12319,7 +12326,7 @@ CONTAINS
         CALL FieldVariable_ParameterSetGetLocalElement(vEquationsSetVariable3D,FIELD_VALUES_SET_TYPE,elementIdx,8, &
           & boundaryValue,err,error,*999)
         boundaryID=NINT(boundaryValue)
-        CALL Field_VariableParameterSetGetLocalElement(vEquationsSetVariable3D,FIELD_VALUES_SET_TYPE,elementIdx,9, &
+        CALL FieldVariable_ParameterSetGetLocalElement(vEquationsSetVariable3D,FIELD_VALUES_SET_TYPE,elementIdx,9, &
           & boundaryValue,err,error,*999)
         boundaryType=NINT(boundaryValue)
         !Check if is a non-wall boundary element
@@ -12367,7 +12374,7 @@ CONTAINS
                 & geometricInterpPoint,err,error,*999)
               CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_VOLUME_TYPE,geometricInterpPointMetrics, &
                 & err,error,*999)
-              CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)              
+              CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)              
 
               !TODO: this sort of thing should be moved to a more general Basis_FaceNormalGet (or similar) routine
               SELECT CASE(dependentBasisType)
@@ -12560,8 +12567,10 @@ CONTAINS
       CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      NULLIFY(residualMapping)
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
       NULLIFY(dependentVariable3D)
-      CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,dependentVariable3D,err,error,*999)
+      CALL EquationsMappingResidual_VariableGet(residualMapping,1,dependentVariable3D,err,error,*999)
       CALL FieldVariable_VariableTypeGet(dependentVariable3D,dependentVariableType,err,error,*999)
       NULLIFY(uDependentVariable3D)
       CALL Field_VariableGet(dependentField3D,FIELD_U_VARIABLE_TYPE,uDependentVariable3D,err,error,*999)
@@ -12754,10 +12763,10 @@ CONTAINS
           ! U p d a t e    N o d a l   V a l u e s
           ! --------------------------------------------------
           ! Update local nodes with integrated boundary flow values
-          CALL Basis_NumberOfNodesGet(faceBasis,numberOfNodes,err,error,*999)
+          CALL Basis_NumberOfLocalNodesGet(faceBasis,numberOfNodes,err,error,*999)
           DO faceNodeIdx=1,numberOfNodes
             CALL Basis_FaceNodeNumberGet(dependentBasis2,faceNodeIdx,faceIdx,elementNodeIdx,err,error,*999)
-            CALL DomainElements_ElementNodeNumberGet(domainElements,elementIdx,elementNodeIdx,nodeNumber,err,error,*999)
+            CALL DomainElements_ElementNodeGet(domainElements,elementIdx,elementNodeIdx,nodeNumber,err,error,*999)
             CALL Basis_NodeNumberOfDerivativesGet(faceBasis,faceNodeIdx,numberOfNodeDerivatives,err,error,*999)
             DO faceNodeDerivativeIdx=1,numberOfNodeDerivatives
               versionNumber=1
@@ -13791,6 +13800,7 @@ CONTAINS
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField
     TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpPoint,geometricInterpPoint
@@ -13823,12 +13833,14 @@ CONTAINS
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMapping)
     CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    NULLIFY(residualMapping)
+    CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
 
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE)
       NULLIFY(dependentVariable)
-      CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,dependentVariable,err,error,*999)
-      CALL FieldVariable_TypeGet(dependentVariable,variableType,err,error,*999)
+      CALL EquationsMappingResidual_VariableGet(residualMapping,1,dependentVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(dependentVariable,variableType,err,error,*999)
       !Get the mesh decomposition and mapping
       NULLIFY(dependentField)
       CALL FieldVariable_FieldGet(dependentVariable,dependentField,err,error,*999)
@@ -13873,7 +13885,7 @@ CONTAINS
       ! Loop over internal and boundary elements, skipping ghosts
       DO elementIdx=startElement,stopElement
         CALL DomainMapping_NumberGet(elementsMapping,elementIdx,localElementNumber,err,error,*999)
-        CALL DecompositionElements_UserNumberGet(decompositionElements,localElementNumber,userElementNumber,err,error,*999)
+        CALL DecompositionElements_UserElementNumberGet(decompositionElements,localElementNumber,userElementNumber,err,error,*999)
         !Check computation node for elementIdx
         elementExists=.FALSE.
         ghostElement=.TRUE.
@@ -14060,7 +14072,7 @@ CONTAINS
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
-    CALL ControlLoop_LoopTypeGet(controlLoop,loopType,err,error,*999)
+    CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
     
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE, &
@@ -14179,7 +14191,7 @@ CONTAINS
         DO solverIdx=1,numberOfSolvers
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-          CALL Solver_TypeGet(solver,solveType,err,error,*999)
+          CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
           SELECT CASE(solveType)
           CASE(SOLVER_DYNAMIC_TYPE)
             NULLIFY(solverEquations)
@@ -14265,7 +14277,7 @@ CONTAINS
         DO subloopIdx=1,numberOfSubLoops
           NULLIFY(subLoop)
           CALL ControlLoop_SubLoopGet(controlLoop,subLoopIdx,subLoop,err,error,*999)
-          CALL ContorlLoop_NumberOfSubLoopsGet(subLoop,numberOfSubLoops2,err,error,*999)
+          CALL ControlLoop_NumberOfSubLoopsGet(subLoop,numberOfSubLoops2,err,error,*999)
           IF(numberOfSubLoops2==0) CALL FlagError("Navier-Stokes Multiscale problem level 2 loop has no subloops.",err,error,*999)
           DO subloopIdx2=1,numberOfSubLoops2
             NULLIFY(subLoop2)
@@ -14284,7 +14296,7 @@ CONTAINS
                 DO solverIdx=1,numberOfSolvers
                   NULLIFY(solver)
                   CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-                  CALL Solver_TypeGet(solver,solveType,err,error,*999)
+                  CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
                   IF(solveType==SOLVER_DYNAMIC_TYPE) CALL NavierStokes_PostSolveOutputData(solver,err,error,*999)
                 ENDDO !solverIdx
               ENDDO !subLoopIdx3
@@ -14296,7 +14308,7 @@ CONTAINS
               DO solverIdx=1,numberOfSolvers
                 NULLIFY(solver)
                 CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-                CALL Solver_TypeGet(solver,solveType,err,error,*999)
+                CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
                 IF(solveType==SOLVER_DYNAMIC_TYPE) CALL NavierStokes_PostSolveOutputData(solver,err,error,*999)
               ENDDO !solverIdx
             ENDIF
@@ -14643,7 +14655,7 @@ CONTAINS
                 ACellML=((pCellml-pExternal)/beta+SQRT(A0))**2.0_DP
                 IF(normalWave(1,1) > ZERO_TOLERANCE) THEN
                   !  O u t l e t
-                  CALL FieldVersion_ParameterSetGetLocalNode(vDependentVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                  CALL FieldVariable_ParameterSetGetLocalNode(vDependentVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
                     & nodeIdx,1,W1,err,error,*999)
                   !Calculate W2 from 0D domain
                   W2 = QCellml/ACellml-4.0_DP*SQRT(beta/(2.0_DP*rho))*(ACellml**0.25_DP-A0**0.25_DP)
@@ -14748,6 +14760,7 @@ CONTAINS
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField3D,equationsSetField3D,geometricField3D,materialsField
     TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpPoint,geometricInterpPoint
@@ -14792,8 +14805,10 @@ CONTAINS
       CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      NULLIFY(residualMapping)
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
       NULLIFY(dependentVariable3D)
-      CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,dependentVariable3D,err,error,*999)
+      CALL EquationsMappingResidual_VariableGet(residualMapping,1,dependentVariable3D,err,error,*999)
       NULLIFY(dependentField3D)
       CALL FieldVariable_FieldGet(dependentVariable3D,dependentField3D,err,error,*999)
       NULLIFY(materialsField)
@@ -14954,7 +14969,7 @@ CONTAINS
                 & err,error,*999)
 
               CALL BasisQuadratureScheme_GaussWeightGet(faceQuadratureScheme,gaussIdx,gaussWeight,err,error,*999)
-              CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+              CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
               jacobianGaussWeight=jacobian*gaussWeight
               
               !Make sure this is the boundary face that corresponds with boundaryID (could be a wall rather than inlet/outlet)
@@ -15134,11 +15149,11 @@ CONTAINS
           ! U p d a t e    N o d a l   V a l u e s
           ! --------------------------------------------------
           ! Update local nodes with integrated boundary flow values
-          CALL Basis_NumberOfNodesGet(faceBasis,numberOfNodes,err,error,*999)
+          CALL Basis_NumberOfLocalNodesGet(faceBasis,numberOfNodes,err,error,*999)
           DO faceNodeIdx=1,numberOfNodes
             CALL Basis_FaceNodeNumberGet(dependentBasis2,faceNodeIdx,faceIdx,elementNodeIdx,err,error,*999)
             CALL DomainElements_ElementNodeGet(domainElements,elementNodeIdx,elementIdx,nodeNumber,err,error,*999)
-            CALL Basis_NodeNumberOfDerivativessGet(faceBasis,faceNodeIdx,numberOfNodeDerivatives,err,error,*999)
+            CALL Basis_NodeNumberOfDerivativesGet(faceBasis,faceNodeIdx,numberOfNodeDerivatives,err,error,*999)
             DO faceNodeDerivativeIdx=1,numberOfNodeDerivatives
               versionNumber=1
               IF(boundaryType==BOUNDARY_CONDITION_FIXED_CELLML) THEN
@@ -15225,6 +15240,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField
@@ -15261,8 +15277,10 @@ CONTAINS
         CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
         NULLIFY(nonlinearMapping)
         CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+        NULLIFY(residualMapping)
+        CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
         NULLIFY(dependentVariable)
-        CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,dependentVariable,err,error,*999)
+        CALL EquationsMappingResidual_VariableGet(residualMapping,1,dependentVariable,err,error,*999)
         NULLIFY(decomposition)
         CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
         NULLIFY(decompositionTopology)
@@ -15353,7 +15371,7 @@ CONTAINS
               CALL DomainElements_ElementBasisGet(domainElements,elementNumber,velocityBasis,err,error,*999)
               !Find node position
               found=.FALSE.
-              CALL Basis_NumberOfNodesGet(boundaryBasis,numberOfNodes,err,error,*999)
+              CALL Basis_NumberOfLocalNodesGet(boundaryBasis,numberOfNodes,err,error,*999)
               DO localNodeIdx=1,numberOfNodes
                 IF(line%nodesInLine(localNodeIdx)==nodeNumber) THEN
                   found=.TRUE.
@@ -15378,7 +15396,7 @@ CONTAINS
               CALL DomainElements_ElementBasisGet(domainElements,elementNumber,velocityBasis,err,error,*999)
               !Find node position
               found=.FALSE.
-              CALL Basis_NumberOfNodesGet(boundaryBasis,numberOfNodes,err,error,*999)
+              CALL Basis_NumberOfLocalNodesGet(boundaryBasis,numberOfNodes,err,error,*999)
               DO localNodeIdx=1,numberOfNodes
                 IF(face%nodesInFace(localNodeIdx)==nodeNumber) THEN
                   found=.TRUE.

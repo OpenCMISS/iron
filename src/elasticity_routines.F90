@@ -689,7 +689,7 @@ CONTAINS
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
-    CALL Problem_SpecficationGet(problem,2,pSpecification,err,error,*999)
+    CALL Problem_SpecificationGet(problem,2,pSpecification,err,error,*999)
    
     SELECT CASE(pSpecification(2))
     CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)

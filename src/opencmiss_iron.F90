@@ -85,6 +85,7 @@ MODULE OpenCMISS_Iron
  USE DistributedMatrixVector
  USE DistributedMatrixVectorAccessRoutines
  USE EquationsRoutines
+ USE EquationsMappingAccessRoutines
  USE EquationsMatricesAccessRoutines
  USE EquationsSetRoutines
  USE EquationsSetAccessRoutines
@@ -122,6 +123,7 @@ MODULE OpenCMISS_Iron
  USE RegionAccessRoutines
  USE SolverRoutines
  USE SolverAccessRoutines
+ USE SolverMatricesAccessRoutines
  USE Strings
  USE Types
 
@@ -2501,7 +2503,14 @@ MODULE OpenCMISS_Iron
  !> \addtogroup OpenCMISS_EquationsConstants OpenCMISS::Iron::Equations::Constants
  !> \brief Equations constants.
  !>@{
- !> \addtogroup OpenCMISS_EquationsOutputTypes OpenCMISS::Iron::Equations::Constants::OutputTypes
+  !> \addtogroup OpenCMISS_EquationsDynamicMatrixTypes OpenCMISS::Iron::Equations::Constants::DynamicMatrixTypes
+  !> \brief Type of dynamic matrix in a dynamic equations
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_STIFFNESS=EQUATIONS_MATRIX_STIFFNESS !<A stiffness matrix (multiplies displacement values) \see OpenCMISS_EquationsDynamicMatrixTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_DAMPING=EQUATIONS_MATRIX_DAMPING !<A damping matrix (multiplies velocity values) \see OpenCMISS_EquationsDynamicMatrixTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_MASS=EQUATIONS_MATRIX_MASS !<A mass matrix (multiplies acceleration values) \see OpenCMISS_EquationsDynamicMatrixTypes,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_EquationsOutputTypes OpenCMISS::Iron::Equations::Constants::OutputTypes
  !> \brief Equations output types
  !> \see OpenCMISS::Iron::Equations,OpenCMISS
  !>@{
@@ -2559,11 +2568,26 @@ MODULE OpenCMISS_Iron
 
  !Interfaces
 
- !>Destroys equations for an equations set.
+ !>Destroys equations for an equations.
  INTERFACE cmfe_Equations_Destroy
    MODULE PROCEDURE cmfe_Equations_DestroyNumber
    MODULE PROCEDURE cmfe_Equations_DestroyObj
  END INTERFACE cmfe_Equations_Destroy
+
+ !>Gets the distributed matrix for a dynamic matrix in an equations specified by matrix number.
+ INTERFACE cmfe_Equations_DynamicMatrixGet
+   MODULE PROCEDURE cmfe_Equations_DynamicMatrixGetObj
+ END INTERFACE cmfe_Equations_DynamicMatrixGet
+
+ !>Gets the distributed matrix for a dynamic matrix in an equation specified by matrix type.
+ INTERFACE cmfe_Equations_DynamicMatrixGetByType
+   MODULE PROCEDURE cmfe_Equations_DynamicMatrixGetByTypeObj
+ END INTERFACE cmfe_Equations_DynamicMatrixGetByType
+
+ !>Gets the type (stiffness, damping, mass) of a dynamic matrix in an equations specified by matrix number.
+ INTERFACE cmfe_Equations_DynamicMatrixTypeGet
+   MODULE PROCEDURE cmfe_Equations_DynamicMatrixTypeGetObj
+ END INTERFACE cmfe_Equations_DynamicMatrixTypeGet
 
  !>Sets/changes the Jacobian matrix calculation types for equations
  INTERFACE cmfe_Equations_JacobianCalculationTypeSet
@@ -2577,11 +2601,26 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj
  END INTERFACE cmfe_Equations_JacobianFiniteDifferenceStepSizeSet
   
+ !>Gets the distributed matrix for a Jacobian matrix in an equation specified by variable number.
+ INTERFACE cmfe_Equations_JacobianMatrixGetByNumber
+   MODULE PROCEDURE cmfe_Equations_JacobianMatrixGetByNumberObj
+ END INTERFACE cmfe_Equations_JacobianMatrixGetByNumber
+
+ !>Gets the distributed matrix for a Jacobian matrix in an equation specified by variable type.
+ INTERFACE cmfe_Equations_JacobianMatrixGetByType
+   MODULE PROCEDURE cmfe_Equations_JacobianMatrixGetByTypeObj
+ END INTERFACE cmfe_Equations_JacobianMatrixGetByType
+
  !>Gets the linearity type for equations.
  INTERFACE cmfe_Equations_LinearityTypeGet
    MODULE PROCEDURE cmfe_Equations_LinearityTypeGetNumber
    MODULE PROCEDURE cmfe_Equations_LinearityTypeGetObj
  END INTERFACE cmfe_Equations_LinearityTypeGet
+
+ !>Gets the distributed matrix for a linear matrix in equations.
+ INTERFACE cmfe_Equations_LinearMatrixGet
+   MODULE PROCEDURE cmfe_Equations_LinearMatrixGetObj
+ END INTERFACE cmfe_Equations_LinearMatrixGet
 
  !>Gets the lumping type for equations.
  INTERFACE cmfe_Equations_LumpingTypeGet
@@ -2595,6 +2634,31 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Equations_LumpingTypeSetObj
  END INTERFACE cmfe_Equations_LumpingTypeSet
 
+ !>Gets the number of dynamic matrices in the equations.
+ INTERFACE cmfe_Equations_NumberOfDynamicMatricesGet
+   MODULE PROCEDURE cmfe_Equations_NumberOfDynamicMatricesGetObj
+ END INTERFACE cmfe_Equations_NumberOfDynamicMatricesGet
+
+ !>Gets the number of Jacobian matrices in a residual vector in the equations.
+ INTERFACE cmfe_Equations_NumberOfJacobianMatricesGet
+   MODULE PROCEDURE cmfe_Equations_NumberOfJacobianMatricesGetObj
+ END INTERFACE cmfe_Equations_NumberOfJacobianMatricesGet
+
+ !>Gets the number of linear matrices in the equations.
+ INTERFACE cmfe_Equations_NumberOfLinearMatricesGet
+   MODULE PROCEDURE cmfe_Equations_NumberOfLinearMatricesGetObj
+ END INTERFACE cmfe_Equations_NumberOfLinearMatricesGet
+
+ !>Gets the number of residual vectors in the equations.
+ INTERFACE cmfe_Equations_NumberOfResidualVectorsGet
+   MODULE PROCEDURE cmfe_Equations_NumberOfResidualVectorsGetObj
+ END INTERFACE cmfe_Equations_NumberOfResidualVectorsGet
+
+ !>Gets the number of source vectors in the equations.
+ INTERFACE cmfe_Equations_NumberOfSourceVectorsGet
+   MODULE PROCEDURE cmfe_Equations_NumberOfSourceVectorsGetObj
+ END INTERFACE cmfe_Equations_NumberOfSourceVectorsGet
+
  !>Gets the output type for equations.
  INTERFACE cmfe_Equations_OutputTypeGet
    MODULE PROCEDURE cmfe_Equations_OutputTypeGetNumber
@@ -2607,7 +2671,32 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Equations_OutputTypeSetObj
  END INTERFACE cmfe_Equations_OutputTypeSet
 
-!>Gets the sparsity type for equations.
+ !>Gets the number of variables in a residual vector in equations.
+ INTERFACE cmfe_Equations_ResidualNumberOfVariablesGet
+   MODULE PROCEDURE cmfe_Equations_ResidualNumberOfVariablesGetObj
+ END INTERFACE cmfe_Equations_ResidualNumberOfVariablesGet
+
+ !>Gets the variable type for a variable in a residual vector in equations.
+ INTERFACE cmfe_Equations_ResidualVariableTypeGet
+   MODULE PROCEDURE cmfe_Equations_ResidualVariableTypeGetObj
+ END INTERFACE cmfe_Equations_ResidualVariableTypeGet
+
+ !>Gets the variable types in a residual vector in equations.
+ INTERFACE cmfe_Equations_ResidualVariableTypesGet
+   MODULE PROCEDURE cmfe_Equations_ResidualVariableTypesGetObj
+ END INTERFACE cmfe_Equations_ResidualVariableTypesGet
+
+ !>Gets the distributed vector for a residual vector in equations.
+ INTERFACE cmfe_Equations_ResidualVectorGet
+   MODULE PROCEDURE cmfe_Equations_ResidualVectorGetObj
+ END INTERFACE cmfe_Equations_ResidualVectorGet
+
+ !>Gets the distributed vector for a right hand side vector in equations.
+ INTERFACE cmfe_Equations_RHSVectorGet
+   MODULE PROCEDURE cmfe_Equations_RHSVectorGetObj
+ END INTERFACE cmfe_Equations_RHSVectorGet
+
+ !>Gets the sparsity type for equations.
  INTERFACE cmfe_Equations_SparsityTypeGet
    MODULE PROCEDURE cmfe_Equations_SparsityTypeGetNumber
    MODULE PROCEDURE cmfe_Equations_SparsityTypeGetObj
@@ -2619,12 +2708,19 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Equations_SparsityTypeSetObj
  END INTERFACE cmfe_Equations_SparsityTypeSet
 
+ !>Gets the distributed vector for a source vector in equations.
+ INTERFACE cmfe_Equations_SourceVectorGet
+   MODULE PROCEDURE cmfe_Equations_SourceVectorGetObj
+ END INTERFACE cmfe_Equations_SourceVectorGet
+
  !>Gets the time dependence type for equations.
  INTERFACE cmfe_Equations_TimeDependenceTypeGet
    MODULE PROCEDURE cmfe_Equations_TimeDependenceTypeGetNumber
    MODULE PROCEDURE cmfe_Equations_TimeDependenceTypeGetObj
  END INTERFACE cmfe_Equations_TimeDependenceTypeGet
 
+ PUBLIC CMFE_EQUATIONS_MATRIX_STIFFNESS,CMFE_EQUATIONS_MATRIX_DAMPING,CMFE_EQUATIONS_MATRIX_MASS
+ 
  PUBLIC CMFE_EQUATIONS_NO_OUTPUT,CMFE_EQUATIONS_TIMING_OUTPUT,CMFE_EQUATIONS_MATRIX_OUTPUT, &
    & CMFE_EQUATIONS_ELEMENT_MATRIX_OUTPUT,CMFE_EQUATIONS_NODAL_MATRIX_OUTPUT
 
@@ -2637,28 +2733,9 @@ MODULE OpenCMISS_Iron
  PUBLIC CMFE_EQUATIONS_LINEAR,CMFE_EQUATIONS_NONLINEAR,CMFE_EQUATIONS_NONLINEAR_BCS
 
  PUBLIC CMFE_EQUATIONS_STATIC,CMFE_EQUATIONS_QUASISTATIC,CMFE_EQUATIONS_FIRST_ORDER_DYNAMIC, &
-   & CMFE_EQUATIONS_SECOND_ORDER_DYNAMIC, &
-   & CMFE_EQUATIONS_TIME_STEPPING
+   & CMFE_EQUATIONS_SECOND_ORDER_DYNAMIC,CMFE_EQUATIONS_TIME_STEPPING
 
  PUBLIC cmfe_Equations_Destroy
-
- PUBLIC cmfe_Equations_JacobianCalculationTypeSet
-
- PUBLIC cmfe_Equations_JacobianFiniteDifferenceStepSizeSet
-
- PUBLIC cmfe_Equations_LinearityTypeGet
-
- PUBLIC cmfe_Equations_LumpingTypeGet,cmfe_Equations_LumpingTypeSet
-
- PUBLIC cmfe_Equations_NumberOfLinearMatricesGet
-
- PUBLIC cmfe_Equations_NumberOfJacobianMatricesGet
-
- PUBLIC cmfe_Equations_NumberOfDynamicMatricesGet
-
- PUBLIC cmfe_Equations_LinearMatrixGet
-
- PUBLIC cmfe_Equations_JacobianMatrixGet
 
  PUBLIC cmfe_Equations_DynamicMatrixGet
 
@@ -2666,18 +2743,44 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_Equations_DynamicMatrixTypeGet
 
- PUBLIC cmfe_Equations_RhsVectorGet
+ PUBLIC cmfe_Equations_JacobianCalculationTypeSet
 
- PUBLIC cmfe_Equations_ResidualVectorGet
+ PUBLIC cmfe_Equations_JacobianFiniteDifferenceStepSizeSet
+
+ PUBLIC cmfe_Equations_JacobianMatrixGetByNumber
+
+ PUBLIC cmfe_Equations_JacobianMatrixGetByType
+
+ PUBLIC cmfe_Equations_LinearityTypeGet
+
+ PUBLIC cmfe_Equations_LinearMatrixGet
+
+ PUBLIC cmfe_Equations_LumpingTypeGet,cmfe_Equations_LumpingTypeSet
+
+ PUBLIC cmfe_Equations_NumberOfDynamicMatricesGet
+
+ PUBLIC cmfe_Equations_NumberOfJacobianMatricesGet
+
+ PUBLIC cmfe_Equations_NumberOfLinearMatricesGet
+
+ PUBLIC cmfe_Equations_NumberOfResidualVectorsGet
+
+ PUBLIC cmfe_Equations_NumberOfSourceVectorsGet
+
+ PUBLIC cmfe_Equations_OutputTypeGet,cmfe_Equations_OutputTypeSet
 
  PUBLIC cmfe_Equations_ResidualNumberOfVariablesGet
 
- PUBLIC cmfe_Equations_ResidualVariablesGet
+ PUBLIC cmfe_Equations_ResidualVariableTypeGet
+
+ PUBLIC cmfe_Equations_ResidualVariableTypesGet
+
+ PUBLIC cmfe_Equations_ResidualVectorGet
+
+ PUBLIC cmfe_Equations_RHSVectorGet
 
  PUBLIC cmfe_Equations_SourceVectorGet
  
- PUBLIC cmfe_Equations_OutputTypeGet,cmfe_Equations_OutputTypeSet
-
  PUBLIC cmfe_Equations_SparsityTypeGet,cmfe_Equations_SparsityTypeSet
 
  PUBLIC cmfe_Equations_TimeDependenceTypeGet
@@ -3082,13 +3185,6 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_SECOND_PK_STRESS = EQUATIONS_SET_SECOND_PK_STRESS_TENSOR !<2nd Piola-Kirchoff stress tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
   !>@}
 
-  !> \addtogroup OpenCMISS_EquationsSetDynamicMatrixTypes OpenCMISS::Iron::EquationsSet::DynamicMatrixTypes
-  !> \brief Type of matrix in a dynamic equations set
-  !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_STIFFNESS=EQUATIONS_MATRIX_STIFFNESS !<A stiffness matrix (multiplies displacement values)
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_DAMPING=EQUATIONS_MATRIX_DAMPING !<A damping matrix (multiplies velocity values)
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_MASS=EQUATIONS_MATRIX_MASS !<A mass matrix (multiplies acceleration values)
-  !>@}
   !> \addtogroup OpenCMISS_EquationsSetOutputTypes OpenCMISS::Iron::EquationsSet::OutputTypes
   !> \brief Equations set output types
   !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
@@ -3435,8 +3531,6 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_DERIVED_CAUCHY_STRESS,CMFE_EQUATIONS_SET_DERIVED_FIRST_PK_STRESS, &
     & CMFE_EQUATIONS_SET_DERIVED_SECOND_PK_STRESS
  
-  PUBLIC CMFE_EQUATIONS_MATRIX_STIFFNESS,CMFE_EQUATIONS_MATRIX_DAMPING,CMFE_EQUATIONS_MATRIX_MASS
-
   PUBLIC CMFE_EQUATIONS_SET_NO_OUTPUT,CMFE_EQUATIONS_SET_PROGRESS_OUTPUT
 
   PUBLIC CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2, &
@@ -7645,6 +7739,13 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_SolverEquations_InterfaceConditionAddObj
  END INTERFACE cmfe_SolverEquations_InterfaceConditionAdd
 
+ !>Gets the sparsity type for solver equations.
+ INTERFACE cmfe_SolverEquations_SparsityTypeGet
+   MODULE PROCEDURE cmfe_SolverEquations_SparsityTypeGetNumber0
+   MODULE PROCEDURE cmfe_SolverEquations_SparsityTypeGetNumber1
+   MODULE PROCEDURE cmfe_SolverEquations_SparsityTypeGetObj
+ END INTERFACE cmfe_SolverEquations_SparsityTypeGet
+
  !>Sets/changes the sparsity type for solver equations.
  INTERFACE cmfe_SolverEquations_SparsityTypeSet
    MODULE PROCEDURE cmfe_SolverEquations_SparsityTypeSetNumber0
@@ -7931,9 +8032,9 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_SolverEquations_ResidualVectorGet
 
- PUBLIC cmfe_SolverEquations_RhsVectorGet
+ PUBLIC cmfe_SolverEquations_RHSVectorGet
 
- PUBLIC cmfe_SolverEquations_SparsityTypeSet
+ PUBLIC cmfe_SolverEquations_SparsityTypeGet,cmfe_SolverEquations_SparsityTypeSet
 
  PUBLIC cmfe_SolverEquations_SymmetryTypeGet,cmfe_SolverEquations_SymmetryTypeSet
 
@@ -9986,7 +10087,7 @@ CONTAINS
     ENTERS("cmfe_SolverEquations_Finalise",err,error,*999)
 
     IF(ASSOCIATED(cmfe_SolverEquations%solverEquations))  &
-      & CALL SOLVER_EQUATIONS_DESTROY(cmfe_SolverEquations%solverEquations,err,error,*999)
+      & CALL SolverEquations_Destroy(cmfe_SolverEquations%solverEquations,err,error,*999)
 
     EXITS("cmfe_SolverEquations_Finalise")
     RETURN
@@ -18167,7 +18268,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_CURRENT_TIMES_GET(controlLoop,currentTime,timeIncrement,err,error,*999)
+    CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
 
     EXITS("cmfe_ControlLoop_CurrentTimesGetNumber0")
     RETURN
@@ -18209,7 +18310,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_CURRENT_TIMES_GET(controlLoop,currentTime,timeIncrement,err,error,*999)
+    CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
 
     EXITS("cmfe_ControlLoop_CurrentTimesGetNumber1")
     RETURN
@@ -18236,7 +18337,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_CurrentTimesGetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_CURRENT_TIMES_GET(controlLoop%controlLoop,currentTime,timeIncrement,err,error,*999)
+    CALL ControlLoop_CurrentTimesGet(controlLoop%controlLoop,currentTime,timeIncrement,err,error,*999)
 
     EXITS("cmfe_ControlLoop_CurrentTimesGetObj")
     RETURN
@@ -18381,7 +18482,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopRootIdentifier,rootControlLoop,err,error,*999)
-    CALL CONTROL_LOOP_GET(rootControlLoop,controlLoopIdentifier,controlLoop%controlLoop,err,error,*999)
+    CALL ControlLoop_Get(rootControlLoop,controlLoopIdentifier,controlLoop%controlLoop,err,error,*999)
 
     EXITS("cmfe_ControlLoop_ControlLoopGetNumber00")
     RETURN
@@ -18423,7 +18524,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopRootIdentifiers,rootControlLoop,err,error,*999)
-    CALL CONTROL_LOOP_GET(rootControlLoop,controlLoopIdentifier,controlLoop%controlLoop,err,error,*999)
+    CALL ControlLoop_Get(rootControlLoop,controlLoopIdentifier,controlLoop%controlLoop,err,error,*999)
 
     EXITS("cmfe_ControlLoop_ControlLoopGetNumber10")
     RETURN
@@ -18465,7 +18566,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopRootIdentifier,rootControlLoop,err,error,*999)
-    CALL CONTROL_LOOP_GET(rootControlLoop,controlLoopIdentifiers,controlLoop%controlLoop,err,error,*999)
+    CALL ControlLoop_Get(rootControlLoop,controlLoopIdentifiers,controlLoop%controlLoop,err,error,*999)
 
     EXITS("cmfe_ControlLoop_ControlLoopGetNumber01")
     RETURN
@@ -18507,7 +18608,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopRootIdentifiers,rootControlLoop,err,error,*999)
-    CALL CONTROL_LOOP_GET(rootControlLoop,controlLoopIdentifiers,controlLoop%controlLoop,err,error,*999)
+    CALL ControlLoop_Get(rootControlLoop,controlLoopIdentifiers,controlLoop%controlLoop,err,error,*999)
 
     EXITS("cmfe_ControlLoop_ControlLoopGetNumber11")
     RETURN
@@ -18534,7 +18635,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_ControlLoopGetObj0",err,error,*999)
 
-    CALL CONTROL_LOOP_GET(controlLoopRoot%controlLoop,controlLoopIdentifier,controlLoop%controlLoop,err,error,*999)
+    CALL ControlLoop_Get(controlLoopRoot%controlLoop,controlLoopIdentifier,controlLoop%controlLoop,err,error,*999)
 
     EXITS("cmfe_ControlLoop_ControlLoopGetObj0")
     RETURN
@@ -18561,7 +18662,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_ControlLoopGetObj1",err,error,*999)
 
-    CALL CONTROL_LOOP_GET(controlLoopRoot%controlLoop,controlLoopIdentifiers,controlLoop%controlLoop,err,error,*999)
+    CALL ControlLoop_Get(controlLoopRoot%controlLoop,controlLoopIdentifiers,controlLoop%controlLoop,err,error,*999)
 
     EXITS("cmfe_ControlLoop_ControlLoopGetObj1")
     RETURN
@@ -18604,7 +18705,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_ITERATIONS_SET(controlLoop,startIteration,stopIteration,iterationIncrement,err,error,*999)
+    CALL ControlLoop_IterationsSet(controlLoop,startIteration,stopIteration,iterationIncrement,err,error,*999)
 
     EXITS("cmfe_ControlLoop_IterationsSetNumber0")
     RETURN
@@ -18647,7 +18748,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_ITERATIONS_SET(controlLoop,startIteration,stopIteration,iterationIncrement,err,error,*999)
+    CALL ControlLoop_IterationsSet(controlLoop,startIteration,stopIteration,iterationIncrement,err,error,*999)
 
     EXITS("cmfe_ControlLoop_IterationsSetNumber1")
     RETURN
@@ -18674,7 +18775,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_IterationsSetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_ITERATIONS_SET(controlLoop%controlLoop,startIteration,stopIteration,iterationIncrement,err,error,*999)
+    CALL ControlLoop_IterationsSet(controlLoop%controlLoop,startIteration,stopIteration,iterationIncrement,err,error,*999)
 
     EXITS("cmfe_ControlLoop_IterationsSetObj")
     RETURN
@@ -18821,7 +18922,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_LABEL_GET(controlLoop,label,err,error,*999)
+    CALL ControlLoop_LabelGet(controlLoop,label,err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelGetCNumber0")
     RETURN
@@ -18861,7 +18962,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_LABEL_GET(controlLoop,label,err,error,*999)
+    CALL ControlLoop_LabelGet(controlLoop,label,err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelGetCNumber1")
     RETURN
@@ -18887,7 +18988,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_LabelGetCObj",err,error,*999)
 
-    CALL CONTROL_LOOP_LABEL_GET(controlLoop%controlLoop,label,err,error,*999)
+    CALL ControlLoop_LabelGet(controlLoop%controlLoop,label,err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelGetCObj")
     RETURN
@@ -18927,7 +19028,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_LABEL_GET(controlLoop,label,err,error,*999)
+    CALL ControlLoop_LabelGet(controlLoop,label,err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelGetVSNumber0")
     RETURN
@@ -18967,7 +19068,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_LABEL_GET(controlLoop,label,err,error,*999)
+    CALL ControlLoop_LabelGet(controlLoop,label,err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelGetVSNumber1")
     RETURN
@@ -18993,7 +19094,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_LabelGetVSObj",err,error,*999)
 
-    CALL CONTROL_LOOP_LABEL_GET(controlLoop%controlLoop,label,err,error,*999)
+    CALL ControlLoop_LabelGet(controlLoop%controlLoop,label,err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelGetVSObj")
     RETURN
@@ -19033,7 +19134,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_LABEL_SET(controlLoop,label,err,error,*999)
+    CALL ControlLoop_LabelSet(controlLoop,label,err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelSetCNumber0")
     RETURN
@@ -19073,7 +19174,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_LABEL_SET(controlLoop,label,err,error,*999)
+    CALL ControlLoop_LabelSet(controlLoop,label,err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelSetCNumber1")
     RETURN
@@ -19099,7 +19200,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_LabelSetCObj",err,error,*999)
 
-    CALL CONTROL_LOOP_LABEL_SET(controlLoop%controlLoop,label,err,error,*999)
+    CALL ControlLoop_LabelSet(controlLoop%controlLoop,label,err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelSetCObj")
     RETURN
@@ -19139,7 +19240,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_LABEL_SET(controlLoop,CHAR(label),err,error,*999)
+    CALL ControlLoop_LabelSet(controlLoop,CHAR(label),err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelSetVSNumber0")
     RETURN
@@ -19179,7 +19280,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_LABEL_SET(controlLoop,CHAR(label),err,error,*999)
+    CALL ControlLoop_LabelSet(controlLoop,CHAR(label),err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelSetVSNumber1")
     RETURN
@@ -19205,7 +19306,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_LabelSetVSObj",err,error,*999)
 
-    CALL CONTROL_LOOP_LABEL_SET(controlLoop%controlLoop,CHAR(label),err,error,*999)
+    CALL ControlLoop_LabelSet(controlLoop%controlLoop,CHAR(label),err,error,*999)
 
     EXITS("cmfe_ControlLoop_LabelSetVSObj")
     RETURN
@@ -19246,7 +19347,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_MAXIMUM_ITERATIONS_SET(controlLoop,maximumIterations,err,error,*999)
+    CALL ControlLoop_MaximumIterationsSet(controlLoop,maximumIterations,err,error,*999)
 
     EXITS("cmfe_ControlLoop_MaximumIterationsSetNumber0")
     RETURN
@@ -19288,7 +19389,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_MAXIMUM_ITERATIONS_SET(controlLoop,maximumIterations,err,error,*999)
+    CALL ControlLoop_MaximumIterationsSet(controlLoop,maximumIterations,err,error,*999)
 
     EXITS("cmfe_ControlLoop_MaximumIterationsSetNumber1")
     RETURN
@@ -19315,7 +19416,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_MaximumIterationsSetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_MAXIMUM_ITERATIONS_SET(controlLoop%controlLoop,maximumIterations,err,error,*999)
+    CALL ControlLoop_MaximumIterationsSet(controlLoop%controlLoop,maximumIterations,err,error,*999)
 
     EXITS("cmfe_ControlLoop_MaximumIterationsSetObj")
     RETURN
@@ -19341,7 +19442,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_LoadOutputSet",err,error,*999)
 
-    CALL CONTROL_LOOP_LOAD_OUTPUT_SET(controlLoop%controlLoop,outputFrequency,err,error,*999)
+    CALL ControlLoop_LoadOutputSet(controlLoop%controlLoop,outputFrequency,err,error,*999)
 
     EXITS("cmfe_ControlLoop_LoadOutputSet")
     RETURN
@@ -19930,7 +20031,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_SET(controlLoop,numberOfSubLoops,err,error,*999)
+    CALL ControlLoop_NumberOfSubLoopsSet(controlLoop,numberOfSubLoops,err,error,*999)
 
     EXITS("cmfe_ControlLoop_NumberOfSubLoopsSetNumber0")
     RETURN
@@ -19971,7 +20072,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_SET(controlLoop,numberOfSubLoops,err,error,*999)
+    CALL ControlLoop_NumberOfSubLoopsSet(controlLoop,numberOfSubLoops,err,error,*999)
 
     EXITS("cmfe_ControlLoop_NumberOfSubLoopsSetNumber1")
     RETURN
@@ -19997,7 +20098,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_NumberOfSubLoopsSetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_SET(controlLoop%controlLoop,numberOfSubLoops,err,error,*999)
+    CALL ControlLoop_NumberOfSubLoopsSet(controlLoop%controlLoop,numberOfSubLoops,err,error,*999)
 
     EXITS("cmfe_ControlLoop_NumberOfSubLoopsSetObj")
     RETURN
@@ -20037,7 +20138,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_OUTPUT_TYPE_GET(controlLoop,outputType,err,error,*999)
+    CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
 
     EXITS("cmfe_ControlLoop_OutputTypeGetNumber0")
     RETURN
@@ -20077,7 +20178,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_OUTPUT_TYPE_GET(controlLoop,outputType,err,error,*999)
+    CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
 
     EXITS("cmfe_ControlLoop_OutputTypeGetNumber1")
     RETURN
@@ -20103,7 +20204,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_OutputTypeGetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_OUTPUT_TYPE_GET(controlLoop%controlLoop,outputType,err,error,*999)
+    CALL ControlLoop_OutputTypeGet(controlLoop%controlLoop,outputType,err,error,*999)
 
     EXITS("cmfe_ControlLoop_OutputTypeGetObj")
     RETURN
@@ -20143,7 +20244,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_OUTPUT_TYPE_SET(controlLoop,outputType,err,error,*999)
+    CALL ControlLoop_OutputTypeSet(controlLoop,outputType,err,error,*999)
 
     EXITS("cmfe_ControlLoop_OutputTypeSetNumber0")
     RETURN
@@ -20183,7 +20284,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_OUTPUT_TYPE_SET(controlLoop,outputType,err,error,*999)
+    CALL ControlLoop_OutputTypeSet(controlLoop,outputType,err,error,*999)
 
     EXITS("cmfe_ControlLoop_OutputTypeSetNumber1")
     RETURN
@@ -20209,7 +20310,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_OutputTypeSetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_OUTPUT_TYPE_SET(controlLoop%controlLoop,outputType,err,error,*999)
+    CALL ControlLoop_OutputTypeSet(controlLoop%controlLoop,outputType,err,error,*999)
 
     EXITS("cmfe_ControlLoop_OutputTypeSetObj")
     RETURN
@@ -20469,7 +20570,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_TIME_OUTPUT_SET(controlLoop,outputFrequency,err,error,*999)
+    CALL ControlLoop_TimeOutputSet(controlLoop,outputFrequency,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimeOutputSetNumber0")
     RETURN
@@ -20509,7 +20610,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_TIME_OUTPUT_SET(controlLoop,outputFrequency,err,error,*999)
+    CALL ControlLoop_TimeOutputSet(controlLoop,outputFrequency,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimeOutputSetNumber1")
     RETURN
@@ -20535,7 +20636,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_TimeOutputSetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_TIME_OUTPUT_SET(controlLoop%controlLoop,outputFrequency,err,error,*999)
+    CALL ControlLoop_TimeOutputSet(controlLoop%controlLoop,outputFrequency,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimeOutputSetObj")
     RETURN
@@ -20575,7 +20676,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_TIME_OUTPUT_SET(controlLoop,inputOption,err,error,*999)
+    CALL ControlLoop_TimeOutputSet(controlLoop,inputOption,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimeInputSetNumber0")
     RETURN
@@ -20615,7 +20716,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_TIME_OUTPUT_SET(controlLoop,inputOption,err,error,*999)
+    CALL ControlLoop_TimeOutputSet(controlLoop,inputOption,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimeInputSetNumber1")
     RETURN
@@ -20641,7 +20742,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_TimeInputSetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_TIME_INPUT_SET(controlLoop%controlLoop,inputOption,err,error,*999)
+    CALL ControlLoop_TimeInputSet(controlLoop%controlLoop,inputOption,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimeInputSetObj")
     RETURN
@@ -20688,7 +20789,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_TIMES_GET(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
+    CALL ControlLoop_TimesGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
       & currentLoopIteration,outputIterationNumber,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimesGetNumber0")
@@ -20735,7 +20836,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_TIMES_GET(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
+    CALL ControlLoop_TimesGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
       & currentLoopIteration,outputIterationNumber,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimesGetNumber1")
@@ -20768,7 +20869,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_TimesGetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_TIMES_GET(controlLoop%controlLoop,startTime,stopTime,currentTime,timeIncrement, &
+    CALL ControlLoop_TimesGet(controlLoop%controlLoop,startTime,stopTime,currentTime,timeIncrement, &
       & currentLoopIteration,outputIterationNumber,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimesGetObj")
@@ -20812,7 +20913,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_TIMES_SET(controlLoop,startTime,stopTime,timeIncrement,err,error,*999)
+    CALL ControlLoop_TimesSet(controlLoop,startTime,stopTime,timeIncrement,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimesSetNumber0")
     RETURN
@@ -20855,7 +20956,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_TIMES_SET(controlLoop,startTime,stopTime,timeIncrement,err,error,*999)
+    CALL ControlLoop_TimesSet(controlLoop,startTime,stopTime,timeIncrement,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimesSetNumber1")
     RETURN
@@ -20883,7 +20984,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_TimesSetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_TIMES_SET(controlLoop%controlLoop,startTime,stopTime,timeIncrement,err,error,*999)
+    CALL ControlLoop_TimesSet(controlLoop%controlLoop,startTime,stopTime,timeIncrement,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimesSetObj")
     RETURN
@@ -20923,7 +21024,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_TYPE_SET(controlLoop,loopType,err,error,*999)
+    CALL ControlLoop_TypeSet(controlLoop,loopType,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TypeSetNumber0")
     RETURN
@@ -20963,7 +21064,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_TYPE_SET(controlLoop,loopType,err,error,*999)
+    CALL ControlLoop_TypeSet(controlLoop,loopType,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TypeSetNumber1")
     RETURN
@@ -20989,7 +21090,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_TypeSetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_TYPE_SET(controlLoop%controlLoop,loopType,err,error,*999)
+    CALL ControlLoop_TypeSet(controlLoop%controlLoop,loopType,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TypeSetObj")
     RETURN
@@ -28193,108 +28294,141 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get a dynamic equations matrix from equations using the dynamic matrix index
-  SUBROUTINE cmfe_Equations_DynamicMatrixGet(equations,matrixIndex,matrix,err)
-    !DLLEXPORT(cmfe_Equations_DynamicMatrixGet)
+  !>Get a dynamic equations distributed matrix from equations using the dynamic matrix index
+  SUBROUTINE cmfe_Equations_DynamicMatrixGetObj(equations,matrixIndex,matrix,err)
+    !DLLEXPORT(cmfe_Equations_DynamicMatrixGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix for
     INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the dynamic matrix to get
     TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: dynamicMatrix
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+  
+    ENTERS("cmfe_Equations_DynamicMatrixGetObj",err,error,*999)
 
-    ENTERS("cmfe_Equations_DynamicMatrixGet",err,error,*999)
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMatrices)
+    NULLIFY(dynamicMatrices)
+    NULLIFY(dynamicMatrix)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatricesVector_DynamicMatricesExists(vectorMatrices,dynamicMatrices,err,error,*999)
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIndex,dynamicMatrix,err,error,*999)
+      CALL EquationsMatrix_DistributedMatrixGet(dynamicMatrix,matrix%distributedMatrix,err,error,*999)
+    ELSE
+      NULLIFY(matrix%distributedMatrix)
+    ENDIF
 
-    CALL Equations_DynamicMatrixGet(equations%equations,matrixIndex,matrix%distributedMatrix,err,error,*999)
-
-    EXITS("cmfe_Equations_DynamicMatrixGet")
+    EXITS("cmfe_Equations_DynamicMatrixGetObj")
     RETURN
-999 ERRORSEXITS("cmfe_Equations_DynamicMatrixGet",err,error)
+999 ERRORSEXITS("cmfe_Equations_DynamicMatrixGetObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Equations_DynamicMatrixGet
+  END SUBROUTINE cmfe_Equations_DynamicMatrixGetObj
 
   !
   !================================================================================================================================
   !
 
-  !>Get a dynamic equations matrix from equations using the dynamic matrix type
-  SUBROUTINE cmfe_Equations_DynamicMatrixGetByType(equations,matrixType,matrix,err)
-    !DLLEXPORT(cmfe_Equations_DynamicMatrixGetByType)
+  !>Get a dynamic equations distributed matrix from equations using the dynamic matrix type
+  SUBROUTINE cmfe_Equations_DynamicMatrixGetByTypeObj(equations,matrixType,matrix,err)
+    !DLLEXPORT(cmfe_Equations_DynamicMatrixGetByTypeObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix for
-    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see OpenCMISS_EquationsSetDynamicMatrixTypes
+    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see OpenCMISS_EquationsDynamicMatrixTypes
     TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    INTEGER(INTG) :: matrixNumber
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: dynamicMatrix
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+ 
+    ENTERS("cmfe_Equations_DynamicMatrixGetByTypeObj",err,error,*999)
 
-    ENTERS("cmfe_Equations_DynamicMatrixGetByType",err,error,*999)
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(dynamicMapping)
+    NULLIFY(vectorMatrices)
+    NULLIFY(dynamicMatrices)
+    NULLIFY(dynamicMatrix)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      CALL EquationsMappingDynamic_MatrixTypeNumberGet(dynamicMapping,matrixType,matrixNumber,err,error,*999)
+      IF(matrixNumber/=0) THEN
+        CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+        CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixNumber,dynamicMatrix,err,error,*999)
+        CALL EquationsMatrix_DistributedMatrixGet(dynamicMatrix,matrix%distributedMatrix,err,error,*999)
+      ELSE
+        NULLIFY(matrix%distributedMatrix)
+      ENDIF
+    ELSE
+      NULLIFY(matrix%distributedMatrix)
+    ENDIF
 
-    CALL Equations_DynamicMatrixGetByType(equations%equations,matrixType,matrix%distributedMatrix,err,error,*999)
-
-    EXITS("cmfe_Equations_DynamicMatrixGetByType")
+    EXITS("cmfe_Equations_DynamicMatrixGetByTypeObj")
     RETURN
-999 ERRORSEXITS("cmfe_Equations_DynamicMatrixGetByType",err,error)
+999 ERRORSEXITS("cmfe_Equations_DynamicMatrixGetByTypeObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Equations_DynamicMatrixGetByType
+  END SUBROUTINE cmfe_Equations_DynamicMatrixGetByTypeObj
 
   !
   !================================================================================================================================
   !
 
-  !>Get the type of a dynamic matrix from equations set equations
-  SUBROUTINE cmfe_Equations_DynamicMatrixTypeGet(equations,matrixIndex,matrixType,err)
-    !DLLEXPORT(cmfe_Equations_DynamicMatrixTypeGet)
+  !>Get the type of a dynamic matrix from an equations set equations
+  SUBROUTINE cmfe_Equations_DynamicMatrixTypeGetObj(equations,matrixIndex,matrixType,err)
+    !DLLEXPORT(cmfe_Equations_DynamicMatrixTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix type from
     INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the dynamic matrix to get the type of
-    INTEGER(INTG), INTENT(OUT) :: matrixType !<On return, the dynamic matrix type. \see OpenCMISS_EquationsSetDynamicMatrixTypes
+    INTEGER(INTG), INTENT(OUT) :: matrixType !<On return, the dynamic matrix type. \see OpenCMISS_EquationsDynamicMatrixTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
 
-    ENTERS("cmfe_Equations_DynamicMatrixTypeGet",err,error,*999)
+    ENTERS("cmfe_Equations_DynamicMatrixTypeGetObj",err,error,*999)
 
-    CALL Equations_DynamicMatrixTypeGet(equations%equations,matrixIndex,matrixType,err,error,*999)
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(dynamicMapping)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
+    IF(ASSOCIATED(dynamicMapping)) THEN
+      CALL EquationsMappingDynamic_MatrixTypeGet(dynamicMapping,matrixIndex,matrixType,err,error,*999)
+    ELSE
+      matrixType=0
+      CALL FlagError("The specified equations do not contain any dynamic matrices.",err,error,*999)
+    ENDIF
 
-    EXITS("cmfe_Equations_DynamicMatrixTypeGet")
+    EXITS("cmfe_Equations_DynamicMatrixTypeGetObj")
     RETURN
-999 ERRORSEXITS("cmfe_Equations_DynamicMatrixTypeGet",err,error)
+999 ERRORSEXITS("cmfe_Equations_DynamicMatrixTypeGetObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Equations_DynamicMatrixTypeGet 
+  END SUBROUTINE cmfe_Equations_DynamicMatrixTypeGetObj
   
-  !
-  !================================================================================================================================
-  !
-
-  !>Get a Jacobian matrix from the equations
-  SUBROUTINE cmfe_Equations_JacobianMatrixGet(equations,residualIndex,variableType,matrix,err)
-    !DLLEXPORT(cmfe_Equations_JacobianMatrixGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the Jacobian matrix for
-    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the Jacobian matrix for
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
-    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested Jacobian matrix
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_JacobianMatrixGet",err,error,*999)
-
-    CALL Equations_JacobianMatrixGet(equations%equations, &
-      & residualIndex,variableType,matrix%distributedMatrix,err,error,*999)
-
-    EXITS("cmfe_Equations_JacobianMatrixGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_JacobianMatrixGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_JacobianMatrixGet
-
   !
   !================================================================================================================================
   !
@@ -28444,7 +28578,7 @@ CONTAINS
   !
 
   !>Sets/changes the finite difference step size used for calculating the Jacobian
-  SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj(equations,variableTYpe,residualIndex, &
+  SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj(equations,variableType,residualIndex, &
     & jacobianFiniteDifferenceStepSize,err)
     !DLLEXPORT(cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj)
 
@@ -28475,6 +28609,113 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get a Jacobian matrix distributed matrix for a specified residual and variable indices from equations
+  SUBROUTINE cmfe_Equations_JacobianMatrixGetByNumberObj(equations,residualIndex,variableIndex,matrix,err)
+    !DLLEXPORT(cmfe_Equations_JacobianMatrixGetByNumberObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the Jacobian matrix for
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the Jacobian matrix for
+    INTEGER(INTG), INTENT(IN) :: variableIndex !<The index of the residual variable to get the Jacobian matrix for
+    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested Jacobian matrix distributed matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
+
+    ENTERS("cmfe_Equations_JacobianMatrixGetByNumberObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMatrices)
+    NULLIFY(nonlinearMatrices)
+    NULLIFY(residualVector)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatricesVector_NonlinearMatricesExists(vectorMatrices,nonlinearMatrices,err,error,*999)
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIndex,residualVector,err,error,*999)
+      CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,variableIndex,jacobianMatrix,err,error,*999)
+      CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,matrix%distributedMatrix,err,error,*999)
+    ELSE
+      CALL FlagError("The specified equations do not contain any nonlinear matrices.",err,error,*999)
+    ENDIF
+
+    EXITS("cmfe_Equations_JacobianMatrixGetByNumberObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_JacobianMatrixGetByNumberObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianMatrixGetByNumberObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get a Jacobian matrix distributed matrix for a specified residual index and variable type from an equations
+  SUBROUTINE cmfe_Equations_JacobianMatrixGetByTypeObj(equations,residualIndex,variableType,matrix,err)
+    !DLLEXPORT(cmfe_Equations_JacobianMatrixGetByTypeObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the Jacobian matrix for
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the Jacobian matrix for
+     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type in the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested Jacobian matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    INTEGER(INTG) :: variableIndex
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
+
+    ENTERS("cmfe_Equations_JacobianMatrixGetByTypeObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(nonlinearMapping)
+    NULLIFY(residualMapping)
+    NULLIFY(vectorMatrices)
+    NULLIFY(nonlinearMatrices)
+    NULLIFY(residualVector)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
+    IF(ASSOCIATED(nonlinearMapping)) THEN
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIndex,residualMapping,err,error,*999)
+      CALL EquationsMappingResidual_VariableIndexGet(residualMapping,variableType,variableIndex,err,error,*999)
+      IF(variableIndex/=0) THEN
+        CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+        CALL EquationsMatricesVector_NonlinearMatricesExists(vectorMatrices,nonlinearMatrices,err,error,*999)
+        CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIndex,residualVector,err,error,*999)
+        CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,variableIndex,jacobianMatrix,err,error,*999)
+        CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,matrix%distributedMatrix,err,error,*999)
+      ELSE
+        NULLIFY(matrix%distributedMatrix)
+      ENDIF
+    ELSE
+      CALL FlagError("The specified equations do not contain any nonlinear matrices.",err,error,*999)
+    ENDIF
+
+    EXITS("cmfe_Equations_JacobianMatrixGetByObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_JacobianMatrixGetByObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianMatrixGetByTypeObj
 
   !
   !================================================================================================================================
@@ -28544,6 +28785,49 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Equations_LinearityTypeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get a linear equations distributed matrix from the equations
+  SUBROUTINE cmfe_Equations_LinearMatrixGetObj(equations,matrixIndex,matrix,err)
+    !DLLEXPORT(cmfe_Equations_LinearMatrixGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the linear matrix for
+    INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the linear matrix to get
+    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested linear matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: linearMatrix
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+  
+    ENTERS("cmfe_Equations_LinearMatrixGetObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMatrices)
+    NULLIFY(linearMatrices)
+    NULLIFY(linearMatrix)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatricesVector_LinearMatricesExists(vectorMatrices,linearMatrices,err,error,*999)
+    IF(ASSOCIATED(linearMatrices)) THEN
+      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIndex,linearMatrix,err,error,*999)
+      CALL EquationsMatrix_DistributedMatrixGet(linearMatrix,matrix%distributedMatrix,err,error,*999)
+    ELSE
+      NULLIFY(matrix%distributedMatrix)
+    ENDIF
+
+    EXITS("cmfe_Equations_LinearMatrixGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_LinearMatrixGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_LinearMatrixGetObj
 
   !
   !================================================================================================================================
@@ -28687,103 +28971,202 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the number of linear matrices in the equations
-  SUBROUTINE cmfe_Equations_NumberOfLinearMatricesGet(equations,numberOfMatrices,err)
-    !DLLEXPORT(cmfe_Equations_NumberOfLinearMatricesGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of linear matrices for
-    INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of linear matrices
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_NumberOfLinearMatricesGet",err,error,*999)
-
-    CALL Equations_NumberOfLinearMatricesGet(equations%equations,numberOfMatrices,err,error,*999)
-
-    EXITS("cmfe_Equations_NumberOfLinearMatricesGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_NumberOfLinearMatricesGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_NumberOfLinearMatricesGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get the number of Jacobian matrices in the equations
-  SUBROUTINE cmfe_Equations_NumberOfJacobianMatricesGet(equations,numberOfMatrices,err)
-    !DLLEXPORT(cmfe_Equations_NumberOfJacobianMatricesGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of Jacobian matrices for
-    INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of Jacobian matrices
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_NumberOfJacobianMatricesGet",err,error,*999)
-
-    CALL Equations_NumberOfJacobianMatricesGet(equations%equations,numberOfMatrices,err,error,*999)
-
-    EXITS("cmfe_Equations_NumberOfJacobianMatricesGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_NumberOfJacobianMatricesGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_NumberOfJacobianMatricesGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Get the number of dynamic matrices in the equations
-  SUBROUTINE cmfe_Equations_NumberOfDynamicMatricesGet(equations,numberOfMatrices,err)
+  SUBROUTINE cmfe_Equations_NumberOfDynamicMatricesGetObj(equations,numberOfMatrices,err)
     !DLLEXPORT(cmfe_Equations_NumberOfDynamicMatricesGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of dynamic matrices for
     INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of dynamic matrices
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
 
-    ENTERS("cmfe_Equations_NumberOfDynamicMatricesGet",err,error,*999)
+    ENTERS("cmfe_Equations_NumberOfDynamicMatricesGetObj",err,error,*999)
 
-    CALL Equations_NumberOfDynamicMatricesGet(equations%equations,numberOfMatrices,err,error,*999)
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(dynamicMapping)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
+    IF(ASSOCIATED(dynamicMapping)) THEN
+      CALL EquationsMappingDynamic_NumberOfDynamicMatricesGet(dynamicMapping,numberOfMatrices,err,error,*999)
+    ELSE
+      numberOfMatrices=0
+    ENDIF
 
-    EXITS("cmfe_Equations_NumberOfDynamicMatricesGet")
+    EXITS("cmfe_Equations_NumberOfDynamicMatricesGetObj")
     RETURN
-999 ERRORSEXITS("cmfe_Equations_NumberOfDynamicMatricesGet",err,error)
+999 ERRORSEXITS("cmfe_Equations_NumberOfDynamicMatricesGetObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Equations_NumberOfDynamicMatricesGet
+  END SUBROUTINE cmfe_Equations_NumberOfDynamicMatricesGetObj
 
   !
   !================================================================================================================================
   !
-  !
 
-  !>Get a linear equations matrix from the equations
-  SUBROUTINE cmfe_Equations_LinearMatrixGet(equations,matrixIndex,matrix,err)
-    !DLLEXPORT(cmfe_Equations_LinearMatrixGet)
+  !>Get the number of Jacobian matrices in a residual vector in the equations
+  SUBROUTINE cmfe_Equations_NumberOfJacobianMatricesGetObj(equations,residualNumber,numberOfMatrices,err)
+    !DLLEXPORT(cmfe_Equations_NumberOfJacobianMatricesGetObj)
 
     !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the linear matrix for
-    INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the linear matrix to get
-    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested linear matrix
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of Jacobian matrices for
+    INTEGER(INTG), INTENT(IN) :: residualNumber !<The residual number to get the number of Jacobian matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of Jacobian matrices for the residual vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
 
-    ENTERS("cmfe_Equations_LinearMatrixGet",err,error,*999)
+    ENTERS("cmfe_Equations_NumberOfJacobianMatricesGetObj",err,error,*999)
 
-    CALL Equations_LinearMatrixGet(equations%equations,matrixIndex,matrix%distributedMatrix,err,error,*999)
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(nonlinearMapping)
+    NULLIFY(residualMapping)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
+    IF(ASSOCIATED(nonlinearMapping)) THEN
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualNumber,residualMapping,err,error,*999)
+      CALL EquationsMappingResidual_NumberOfJacobianMatricesGet(residualMapping,numberOfMatrices,err,error,*999)
+    ELSE
+      numberOfMatrices=0
+    ENDIF
 
-    EXITS("cmfe_Equations_LinearMatrixGet")
+    EXITS("cmfe_Equations_NumberOfJacobianMatricesGetObj")
     RETURN
-999 ERRORSEXITS("cmfe_Equations_LinearMatrixGet",err,error)
+999 ERRORSEXITS("cmfe_Equations_NumberOfJacobianMatricesGetObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Equations_LinearMatrixGet
+  END SUBROUTINE cmfe_Equations_NumberOfJacobianMatricesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the number of linear matrices in the equations
+  SUBROUTINE cmfe_Equations_NumberOfLinearMatricesGetObj(equations,numberOfMatrices,err)
+    !DLLEXPORT(cmfe_Equations_NumberOfLinearMatricesGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of linear matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of linear matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+
+    ENTERS("cmfe_Equations_NumberOfLinearMatricesGetObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(linearMapping)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
+    IF(ASSOCIATED(linearMapping)) THEN
+      CALL EquationsMappingLinear_NumberOfLinearMatricesGet(linearMapping,numberOfMatrices,err,error,*999)
+    ELSE
+      numberOfMatrices=0
+    ENDIF
+
+    EXITS("cmfe_Equations_NumberOfLinearMatricesGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_NumberOfLinearMatricesGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_NumberOfLinearMatricesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the number of residual vectors in the equations
+  SUBROUTINE cmfe_Equations_NumberOfResidualVectorsGetObj(equations,numberOfVectors,err)
+    !DLLEXPORT(cmfe_Equations_NumberOfResidualVectorsGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of residual vectors for
+    INTEGER(INTG), INTENT(OUT) :: numberOfVectors !<On return, the number of residual vectors in the equations
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+
+    ENTERS("cmfe_Equations_NumberOfResidualVectorsGetObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(nonlinearMapping)
+    NULLIFY(residualMapping)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
+    IF(ASSOCIATED(nonlinearMapping)) THEN
+      CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfVectors,err,error,*999)
+    ELSE
+      numberOfVectors=0
+    ENDIF
+
+    EXITS("cmfe_Equations_NumberOfResidualVectorsGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_NumberOfResidualVectorsGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_NumberOfResidualVectorsGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the number of source vectors in the equations
+  SUBROUTINE cmfe_Equations_NumberOfSourceVectorsGetObj(equations,numberOfVectors,err)
+    !DLLEXPORT(cmfe_Equations_NumberOfSourceVectorsGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of source vectors for
+    INTEGER(INTG), INTENT(OUT) :: numberOfVectors !<On return, the number of source vectors in the equations
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+
+    ENTERS("cmfe_Equations_NumberOfSourceVectorsGetObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(sourcesMapping)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
+    IF(ASSOCIATED(sourcesMapping)) THEN
+      CALL EquationsMappingSources_NumberOfSourcesGet(sourcesMapping,numberOfVectors,err,error,*999)
+    ELSE
+      numberOfVectors=0
+    ENDIF
+
+    EXITS("cmfe_Equations_NumberOfSourceVectorsGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_NumberOfSourceVectorsGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_NumberOfSourceVectorsGetObj
 
   !
   !================================================================================================================================
@@ -28927,6 +29310,233 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Get the number of field variables that contribute to the residual vector
+  SUBROUTINE cmfe_Equations_ResidualNumberOfVariablesGetObj(equations,residualIndex,numberOfVariables,err)
+    !DLLEXPORT(cmfe_Equations_ResidualNumberOfVariablesGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the residual vector number of variables for
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the number of variables for
+    INTEGER(INTG), INTENT(OUT) :: numberOfVariables !<On return, the number of variables that contribute to the residual vector
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+
+    ENTERS("cmfe_Equations_ResidualNumberOfVariablesGetObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(nonlinearMapping)
+    NULLIFY(residualMapping)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
+    IF(ASSOCIATED(nonlinearMapping)) THEN
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIndex,residualMapping,err,error,*999)
+      CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfVariables,err,error,*999)
+    ELSE
+      numberOfVariables=0
+    ENDIF
+ 
+    EXITS("cmfe_Equations_ResidualNumberOfVariablesGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_ResidualNumberOfVariablesGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_ResidualNumberOfVariablesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the field variable type in a residual vector
+  SUBROUTINE cmfe_Equations_ResidualVariableTypeGetObj(equations,residualIndex,variableIndex,residualVariableType,err)
+    !DLLEXPORT(cmfe_Equations_ResidualVariableTypeGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the residual vector variables for
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the variable type for
+    INTEGER(INTG), INTENT(IN) :: variableIndex !<The index of the variable in the residual vector to get the variable type for
+    INTEGER(INTG), INTENT(OUT) :: residualVariableType !<On return, the field variable type for the variableIndex'th residual variable. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+
+    ENTERS("cmfe_Equations_ResidualVariableTypeGetObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(nonlinearMapping)
+    NULLIFY(residualMapping)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
+    IF(ASSOCIATED(nonlinearMapping)) THEN
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIndex,residualMapping,err,error,*999)
+      CALL EquationsMappingResidual_VariableTypeGet(residualMapping,variableIndex,residualVariableType,err,error,*999)
+    ELSE
+      residualVariableType=0
+    ENDIF
+
+    EXITS("cmfe_Equations_ResidualVariableTypeGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_ResidualVariableTypeGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_ResidualVariableTypeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the field variables that contribute to the residual vector
+  SUBROUTINE cmfe_Equations_ResidualVariableTypesGetObj(equations,residualIndex,residualVariableTypes,err)
+    !DLLEXPORT(cmfe_Equations_ResidualVariableTypesGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the residual vector variables for
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the variables for
+    INTEGER(INTG), INTENT(OUT) :: residualVariableTypes(:) !<residualVariableTypes(varIdx). On return, the field variable type for the varIdx'th residual variable. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    INTEGER(INTG) :: numberOfVariables,variableIdx
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_Equations_ResidualVariableTypesGetObj",err,error,*999)
+
+    residualVariableTypes=0
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(nonlinearMapping)
+    NULLIFY(residualMapping)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
+    IF(ASSOCIATED(nonlinearMapping)) THEN
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIndex,residualMapping,err,error,*999)
+      CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfVariables,err,error,*999)
+      IF(SIZE(residualVariableTypes,1)<numberOfVariables) THEN
+        localError="The size of the specified residual variable types array of "// &
+          & TRIM(NumberToVString(SIZE(residualVariableTypes,1),"*",err,error))// &
+          & " is too small. The size of the residual variable types array should be >= "// &
+          & TRIM(NumberToVString(numberOfVariables,"*",err,error))//" for residual number "// &
+          & TRIM(NumberToVString(residualIndex,"*",err,error))//" of the equations."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      DO variableIdx=1,numberOfVariables
+        CALL EquationsMappingResidual_VariableTypeGet(residualMapping,variableIdx,residualVariableTypes(variableIdx), &
+          & err,error,*999)
+      ENDDO !variableIdx
+    ENDIF
+
+    EXITS("cmfe_Equations_ResidualVariableTypesGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_ResidualVariableTypesGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_ResidualVariableTypesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get a residual distributed vector for equations
+  SUBROUTINE cmfe_Equations_ResidualVectorGetObj(equations,residualIndex,vector,err)
+    !DLLEXPORT(cmfe_Equations_ResidualVectorGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the residual vector for
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get
+    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: vector !<On return, the residual distributed vector for the equations
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+
+    ENTERS("cmfe_Equations_ResidualVectorGetObj",err,error,*999)
+    
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMatrices)
+    NULLIFY(nonlinearMatrices)
+    NULLIFY(residualVector)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatricesVector_NonlinearMatricesExists(vectorMatrices,nonlinearMatrices,err,error,*999)
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIndex,residualVector,err,error,*999)
+      CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+        & vector%distributedVector,err,error,*999)
+    ELSE
+      NULLIFY(vector%distributedVector)
+    ENDIF
+
+    EXITS("cmfe_Equations_ResidualVectorGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_ResidualVectorGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_ResidualVectorGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the right hand side distributed vector for equations
+  SUBROUTINE cmfe_Equations_RHSVectorGetObj(equations,vector,err)
+    !DLLEXPORT(cmfe_Equations_RhsVectorGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the right hand side vector for
+    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: vector !<On return, the right hand side distributed vector for the equations
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+
+    ENTERS("cmfe_Equations_RHSVectorGetObj",err,error,*999)
+    
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMatrices)
+    NULLIFY(rhsVector)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatricesVector_RHSVectorExists(vectorMatrices,rhsVector,err,error,*999)
+    IF(ASSOCIATED(rhsVector)) THEN
+      CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR,vector%distributedVector, &
+        & err,error,*999)
+    ELSE
+      NULLIFY(vector%distributedVector)
+    ENDIF
+
+    EXITS("cmfe_Equations_RHSVectorGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_RHSVectorGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_RHSVectorGetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the sparsity type for equations identified by a user number.
   SUBROUTINE cmfe_Equations_SparsityTypeGetNumber(contextUserNumber,regionUserNumber,equationsSetUserNumber,sparsityType,err)
     !DLLEXPORT(cmfe_Equations_SparsityTypeGetNumber)
@@ -29065,129 +29675,45 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the right hand side vector for equations
-  SUBROUTINE cmfe_Equations_RhsVectorGet(equations,rhsVector,err)
-    !DLLEXPORT(cmfe_Equations_RhsVectorGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the right hand side vector for
-    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: rhsVector !<On return, the right hand side vector for the equations
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_RhsVectorGet",err,error,*999)
-
-    CALL Equations_RhsVectorGet(equations%equations,rhsVector%distributedVector,err,error,*999)
-
-    EXITS("cmfe_Equations_RhsVectorGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_RhsVectorGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_RhsVectorGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get the source vector for equations
-  SUBROUTINE cmfe_Equations_SourceVectorGet(equations,sourceVector,err)
-    !DLLEXPORT(cmfe_Equations_SourceVectorGet)
+  !>Get the source distributed vector for equations
+  SUBROUTINE cmfe_Equations_SourceVectorGetObj(equations,sourceIndex,vector,err)
+    !DLLEXPORT(cmfe_Equations_SourceVectorGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the source vector for
-    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: sourceVector !<On return, the source vector for the equations
+    INTEGER(INTG), INTENT(IN) :: sourceIndex !<The index of the source vector to get the distributed vector for
+    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: vector !<On return, the source distributed vector for the equations
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
 
-    ENTERS("cmfe_Equations_SourceVectorGet",err,error,*999)
+    ENTERS("cmfe_Equations_SourceVectorGetObj",err,error,*999)
+    
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMatrices)
+    NULLIFY(sourceVectors)
+    NULLIFY(sourceVector)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatricesVector_SourceVectorsExists(vectorMatrices,sourceVectors,err,error,*999)
+    IF(ASSOCIATED(sourceVectors)) THEN
+      CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIndex,sourceVector,err,error,*999)
+      CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_CURRENT_VECTOR,vector%distributedVector, &
+        & err,error,*999)
+    ELSE
+      NULLIFY(vector%distributedVector)
+    ENDIF
 
-    CALL Equations_SourceVectorGet(equations%equations,sourceVector%distributedVector,err,error,*999)
-
-    EXITS("cmfe_Equations_SourceVectorGet")
+    EXITS("cmfe_Equations_SourceVectorGetObj")
     RETURN
-999 ERRORSEXITS("cmfe_Equations_SourceVectorGet",err,error)
+999 ERRORSEXITS("cmfe_Equations_SourceVectorGetObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Equations_SourceVectorGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get a residual vector for equations
-  SUBROUTINE cmfe_Equations_ResidualVectorGet(equations,residualIndex,residualVector,err)
-    !DLLEXPORT(cmfe_Equations_ResidualVectorGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the residual vector for
-    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get
-    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: residualVector !<On return, the residual vector for the equations
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_ResidualVectorGet",err,error,*999)
-
-    CALL Equations_ResidualVectorGet(equations%equations,residualIndex,residualVector%distributedVector,err,error,*999)
-
-    EXITS("cmfe_Equations_ResidualVectorGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_ResidualVectorGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_ResidualVectorGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get the number of field variables that contribute to the residual vector
-  SUBROUTINE cmfe_Equations_ResidualNumberOfVariablesGet(equations,residualIndex,numberOfVariables,err)
-    !DLLEXPORT(cmfe_Equations_ResidualNumberOfVariablesGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the residual vector number of variables for
-    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the number of variables for
-    INTEGER(INTG), INTENT(OUT) :: numberOfVariables !<On return, the number of variables that contribute to the residual vector
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_ResidualNumberOfVariablesGet",err,error,*999)
-
-    CALL Equations_ResidualNumberOfVariablesGet(equations%equations,residualIndex,numberOfVariables,err,error,*999)
-
-    EXITS("cmfe_Equations_ResidualNumberOfVariablesGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_ResidualNumberOfVariablesGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_ResidualNumberOfVariablesGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get the field variables that contribute to the residual vector
-  SUBROUTINE cmfe_Equations_ResidualVariablesGet(equations,residualIndex,residualVariables,err)
-    !DLLEXPORT(cmfe_Equations_ResidualVariablesGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the residual vector variables for
-    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the variables for
-    INTEGER(INTG), INTENT(OUT) :: residualVariables(:) !<residualVariables(varIdx). On return, the field variable type for the varIdx'th residual variable. \see OpenCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_ResidualVariablesGet",err,error,*999)
-
-    CALL Equations_ResidualVariablesGet(equations%equations,residualIndex,residualVariables,err,error,*999)
-
-    EXITS("cmfe_Equations_ResidualVariablesGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_ResidualVariablesGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_ResidualVariablesGet
+  END SUBROUTINE cmfe_Equations_SourceVectorGetObj
 
   !
   !================================================================================================================================
@@ -29561,7 +30087,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_ANALYTIC_TIME_GET(equationsSet,time,err,error,*999)
+    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticTimeGetNumber")
     RETURN
@@ -29587,7 +30113,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_AnalyticTimeGetObj",err,error,*999)
 
-    CALL EQUATIONS_SET_ANALYTIC_TIME_GET(equationsSet%equationsSet,time,err,error,*999)
+    CALL EquationsSet_AnalyticTimeGet(equationsSet%equationsSet,time,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticTimeGetObj")
     RETURN
@@ -29627,7 +30153,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_ANALYTIC_TIME_SET(equationsSet,time,err,error,*999)
+    CALL EquationsSet_AnalyticTimeSet(equationsSet,time,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticTimeSetNumber")
     RETURN
@@ -29653,7 +30179,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_AnalyticTimeSetObj",err,error,*999)
 
-    CALL EQUATIONS_SET_ANALYTIC_TIME_SET(equationsSet%equationsSet,time,err,error,*999)
+    CALL EquationsSet_AnalyticTimeSet(equationsSet%equationsSet,time,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticTimeSetObj")
     RETURN
@@ -47444,7 +47970,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL INTERFACE_CONDITION_METHOD_GET(interfaceCondition,interfaceConditionMethod,err,error,*999)
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
 
     EXITS("cmfe_InterfaceCondition_MethodGetNumber")
     RETURN
@@ -47470,7 +47996,7 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceCondition_MethodGetObj",err,error,*999)
 
-    CALL INTERFACE_CONDITION_METHOD_GET(interfaceCondition%interfaceCondition,interfaceConditionMethod,err,error,*999)
+    CALL InterfaceCondition_MethodGet(interfaceCondition%interfaceCondition,interfaceConditionMethod,err,error,*999)
 
     EXITS("cmfe_InterfaceCondition_MethodGetObj")
     RETURN
@@ -47586,7 +48112,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL INTERFACE_CONDITION_OPERATOR_GET(interfaceCondition,interfaceConditionOperator,err,error,*999)
+    CALL InterfaceCondition_OperatorGet(interfaceCondition,interfaceConditionOperator,err,error,*999)
 
     EXITS("cmfe_InterfaceCondition_OperatorGetNumber")
     RETURN
@@ -47612,8 +48138,7 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceCondition_OperatorGetObj",err,error,*999)
 
-    CALL INTERFACE_CONDITION_OPERATOR_GET(interfaceCondition%interfaceCondition,interfaceConditionOperator, &
-      & err,error,*999)
+    CALL InterfaceCondition_OperatorGet(interfaceCondition%interfaceCondition,interfaceConditionOperator,err,error,*999)
 
     EXITS("cmfe_InterfaceCondition_OperatorGetObj")
     RETURN
@@ -56719,7 +57244,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_EULER_SOLVER_TYPE_GET(solver,DAEEulerSolverType,err,error,*999)
+    CALL Solver_DAEEulerSolverTypeGet(solver,DAEEulerSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAEEulerSolverTypeGetNumber0")
     RETURN
@@ -56761,7 +57286,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_EULER_SOLVER_TYPE_GET(solver,DAEEulerSolverType,err,error,*999)
+    CALL Solver_DAEEulerSolverTypeGet(solver,DAEEulerSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAEEulerSolverTypeGetNumber1")
     RETURN
@@ -56787,7 +57312,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DAEEulerSolverTypeGetObj",err,error,*999)
 
-    CALL SOLVER_DAE_EULER_SOLVER_TYPE_GET(solver%solver,DAEEulerSolverType,err,error,*999)
+    CALL Solver_DAEEulerSolverTypeGet(solver%solver,DAEEulerSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAEEulerSolverTypeGetObj")
     RETURN
@@ -56829,7 +57354,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_EULER_SOLVER_TYPE_SET(solver,DAEEulerSolverType,err,error,*999)
+    CALL Solver_DAEEulerSolverTypeSet(solver,DAEEulerSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAEEulerSolverTypeSetNumber0")
     RETURN
@@ -56871,7 +57396,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_EULER_SOLVER_TYPE_SET(solver,DAEEulerSolverType,err,error,*999)
+    CALL Solver_DAEEulerSolverTypeSet(solver,DAEEulerSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAEEulerSolverTypeSetNumber1")
     RETURN
@@ -56897,7 +57422,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DAEEulerSolverTypeSetObj",err,error,*999)
 
-    CALL SOLVER_DAE_EULER_SOLVER_TYPE_SET(solver%solver,DAEEulerSolverType,err,error,*999)
+    CALL Solver_DAEEulerSolverTypeSet(solver%solver,DAEEulerSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAEEulerSolverTypeSetObj")
     RETURN
@@ -56939,7 +57464,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_SOLVER_TYPE_GET(solver,DAESolverType,err,error,*999)
+    CALL Solver_DAESolverTypeGet(solver,DAESolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAESolverTypeGetNumber0")
     RETURN
@@ -56981,7 +57506,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_SOLVER_TYPE_GET(solver,DAESolverType,err,error,*999)
+    CALL Solver_DAESolverTypeGet(solver,DAESolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAESolverTypeGetNumber1")
     RETURN
@@ -57007,7 +57532,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DAESolverTypeGetObj",err,error,*999)
 
-    CALL SOLVER_DAE_SOLVER_TYPE_GET(solver%solver,DAESolverType,err,error,*999)
+    CALL Solver_DAESolverTypeGet(solver%solver,DAESolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAESolverTypeGetObj")
     RETURN
@@ -57049,7 +57574,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_SOLVER_TYPE_SET(solver,DAESolverType,err,error,*999)
+    CALL Solver_DAESolverTypeSet(solver,DAESolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAESolverTypeSetNumber0")
     RETURN
@@ -57091,7 +57616,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_SOLVER_TYPE_SET(solver,DAESolverType,err,error,*999)
+    CALL Solver_DAESolverTypeSet(solver,DAESolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAESolverTypeSetNumber1")
     RETURN
@@ -57117,7 +57642,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DAESolverTypeSetObj",err,error,*999)
 
-    CALL SOLVER_DAE_SOLVER_TYPE_SET(solver%solver,DAESolverType,err,error,*999)
+    CALL Solver_DAESolverTypeSet(solver%solver,DAESolverType,err,error,*999)
 
     EXITS("cmfe_Solver_DAESolverTypeSetObj")
     RETURN
@@ -57160,7 +57685,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_TIMES_SET(solver,startTime,endTime,err,error,*999)
+    CALL Solver_DAETimesSet(solver,startTime,endTime,err,error,*999)
 
     EXITS("cmfe_Solver_DAETimesSetNumber0")
     RETURN
@@ -57203,7 +57728,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_TIMES_SET(solver,startTime,endTime,err,error,*999)
+    CALL Solver_DAETimesSet(solver,startTime,endTime,err,error,*999)
 
     EXITS("cmfe_Solver_DAETimesSetNumber1")
     RETURN
@@ -57230,7 +57755,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DAETimesSetObj",err,error,*999)
 
-    CALL SOLVER_DAE_TIMES_SET(solver%solver,startTime,endTime,err,error,*999)
+    CALL Solver_DAETimesSet(solver%solver,startTime,endTime,err,error,*999)
 
     EXITS("cmfe_Solver_DAETimesSetObj")
     RETURN
@@ -57272,7 +57797,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_TIME_STEP_SET(solver,timeStep,err,error,*999)
+    CALL Solver_DAETimeStepSet(solver,timeStep,err,error,*999)
 
     EXITS("cmfe_Solver_DAETimeStepSetNumber0")
     RETURN
@@ -57314,7 +57839,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DAE_TIME_STEP_SET(solver,timeStep,err,error,*999)
+    CALL Solver_DAETimeStepSet(solver,timeStep,err,error,*999)
 
     EXITS("cmfe_Solver_DAETimeStepSetNumber1")
     RETURN
@@ -57340,7 +57865,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DAETimeStepSetObj",err,error,*999)
 
-    CALL SOLVER_DAE_TIME_STEP_SET(solver%solver,timeStep,err,error,*999)
+    CALL Solver_DAETimeStepSet(solver%solver,timeStep,err,error,*999)
 
     EXITS("cmfe_Solver_DAETimeStepSetObj")
     RETURN
@@ -57381,7 +57906,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_DEGREE_GET(solver,degree,err,error,*999)
+    CALL Solver_DynamicDegreeGet(solver,degree,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicDegreeGetNumber0")
     RETURN
@@ -57422,7 +57947,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_DEGREE_GET(solver,degree,err,error,*999)
+    CALL Solver_DynamicDegreeGet(solver,degree,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicDegreeGetNumber1")
     RETURN
@@ -57448,7 +57973,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DynamicDegreeGetObj",err,error,*999)
 
-    CALL SOLVER_DYNAMIC_DEGREE_GET(solver%solver,degree,err,error,*999)
+    CALL Solver_DynamicDegreeGet(solver%solver,degree,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicDegreeGetObj")
     RETURN
@@ -57489,7 +58014,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_DEGREE_SET(solver,degree,err,error,*999)
+    CALL Solver_DynamicDegreeSet(solver,degree,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicDegreeSetNumber0")
     RETURN
@@ -57530,7 +58055,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_DEGREE_SET(solver,degree,err,error,*999)
+    CALL Solver_DynamicDegreeSet(solver,degree,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicDegreeSetNumber1")
     RETURN
@@ -57556,7 +58081,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DynamicDegreeSetObj",err,error,*999)
 
-    CALL SOLVER_DYNAMIC_DEGREE_SET(solver%solver,degree,err,error,*999)
+    CALL Solver_DynamicDegreeSet(solver%solver,degree,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicDegreeSetObj")
     RETURN
@@ -57598,7 +58123,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_LINEARITY_TYPE_GET(solver,linearityType,err,error,*999)
+    CALL Solver_DynamicLinearityTypeGet(solver,linearityType,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicLinearityTypeGetNumber0")
     RETURN
@@ -57640,7 +58165,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_LINEARITY_TYPE_GET(solver,linearityType,err,error,*999)
+    CALL Solver_DynamicLinearityTypeGet(solver,linearityType,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicLinearityTypeGetNumber1")
     RETURN
@@ -57666,7 +58191,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DynamicLinearityTypeGetObj",err,error,*999)
 
-    CALL SOLVER_DYNAMIC_LINEARITY_TYPE_GET(solver%solver,linearityType,err,error,*999)
+    CALL Solver_DynamicLinearityTypeGet(solver%solver,linearityType,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicLinearityTypeGetObj")
     RETURN
@@ -57944,7 +58469,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_SCHEME_SET(solver,scheme,err,error,*999)
+    CALL Solver_DynamicSchemeSet(solver,scheme,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicSchemeSetNumber0")
     RETURN
@@ -57985,7 +58510,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_SCHEME_SET(solver,scheme,err,error,*999)
+    CALL Solver_DynamicSchemeSet(solver,scheme,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicSchemeSetNumber1")
     RETURN
@@ -58010,7 +58535,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DynamicSchemeSetObj",err,error,*999)
 
-    CALL SOLVER_DYNAMIC_SCHEME_SET(solver%solver,scheme,err,error,*999)
+    CALL Solver_DynamicSchemeSet(solver%solver,scheme,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicSchemeSetObj")
     RETURN
@@ -58051,7 +58576,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_THETA_SET(solver,theta,err,error,*999)
+    CALL Solver_DynamicThetaSet(solver,theta,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicThetaSetNumber00")
     RETURN
@@ -58092,7 +58617,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_THETA_SET(solver,thetas,err,error,*999)
+    CALL Solver_DynamicThetaSet(solver,thetas,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicThetaSetNumber01")
     RETURN
@@ -58133,7 +58658,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_THETA_SET(solver,theta,err,error,*999)
+    CALL Solver_DynamicThetaSet(solver,theta,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicThetaSetNumber10")
     RETURN
@@ -58174,7 +58699,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_THETA_SET(solver,thetas,err,error,*999)
+    CALL Solver_DynamicThetaSet(solver,thetas,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicThetaSetNumber11")
     RETURN
@@ -58200,7 +58725,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DynamicThetaSetObj0",err,error,*999)
 
-    CALL SOLVER_DYNAMIC_THETA_SET(solver%solver,theta,err,error,*999)
+    CALL Solver_DynamicThetaSet(solver%solver,theta,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicThetaSetObj0")
     RETURN
@@ -58226,7 +58751,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DynamicThetaSetObj1",err,error,*999)
 
-    CALL SOLVER_DYNAMIC_THETA_SET(solver%solver,thetas,err,error,*999)
+    CALL Solver_DynamicThetaSet(solver%solver,thetas,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicThetaSetObj1")
     RETURN
@@ -58269,7 +58794,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_TIMES_SET(solver,currentTime,timeIncrement,err,error,*999)
+    CALL Solver_DynamicTimesSet(solver,currentTime,timeIncrement,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicTimesSetNumber0")
     RETURN
@@ -58312,7 +58837,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_TIMES_SET(solver,currentTime,timeIncrement,err,error,*999)
+    CALL Solver_DynamicTimesSet(solver,currentTime,timeIncrement,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicTimesSetNumber1")
     RETURN
@@ -58339,7 +58864,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DynamicTimesSetObj",err,error,*999)
 
-    CALL SOLVER_DYNAMIC_TIMES_SET(solver%solver,currentTime,timeIncrement,err,error,*999)
+    CALL Solver_DynamicTimesSet(solver%solver,currentTime,timeIncrement,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicTimesSetObj")
     RETURN
@@ -59173,7 +59698,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LABEL_GET(solver,label,err,error,*999)
+    CALL Solver_LabelGet(solver,label,err,error,*999)
 
     EXITS("cmfe_Solver_LabelGetCNumber0")
     RETURN
@@ -59214,7 +59739,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LABEL_GET(solver,label,err,error,*999)
+    CALL Solver_LabelGet(solver,label,err,error,*999)
 
     EXITS("cmfe_Solver_LabelGetCNumber1")
     RETURN
@@ -59240,7 +59765,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_LabelGetCObj",err,error,*999)
 
-    CALL SOLVER_LABEL_GET(solver%solver,label,err,error,*999)
+    CALL Solver_LabelGet(solver%solver,label,err,error,*999)
 
     EXITS("cmfe_Solver_LabelGetCObj")
     RETURN
@@ -59281,7 +59806,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LABEL_GET(solver,label,err,error,*999)
+    CALL Solver_LabelGet(solver,label,err,error,*999)
 
     EXITS("cmfe_Solver_LabelGetVSNumber0")
     RETURN
@@ -59322,7 +59847,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LABEL_GET(solver,label,err,error,*999)
+    CALL Solver_LabelGet(solver,label,err,error,*999)
 
     EXITS("cmfe_Solver_LabelGetVSNumber1")
     RETURN
@@ -59348,7 +59873,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_LabelGetVSObj",err,error,*999)
 
-    CALL SOLVER_LABEL_GET(solver%solver,label,err,error,*999)
+    CALL Solver_LabelGet(solver%solver,label,err,error,*999)
 
     EXITS("cmfe_Solver_LabelGetVSObj")
     RETURN
@@ -59389,7 +59914,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LABEL_SET(solver,label,err,error,*999)
+    CALL Solver_LabelSet(solver,label,err,error,*999)
 
     EXITS("cmfe_Solver_LabelSetCNumber0")
     RETURN
@@ -59430,7 +59955,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LABEL_SET(solver,label,err,error,*999)
+    CALL Solver_LabelSet(solver,label,err,error,*999)
 
     EXITS("cmfe_Solver_LabelSetCNumber1")
     RETURN
@@ -59456,7 +59981,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_LabelSetCObj",err,error,*999)
 
-    CALL SOLVER_LABEL_SET(solver%solver,label,err,error,*999)
+    CALL Solver_LabelSet(solver%solver,label,err,error,*999)
 
     EXITS("cmfe_Solver_LabelSetCObj")
     RETURN
@@ -59497,7 +60022,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LABEL_SET(solver,CHAR(label),err,error,*999)
+    CALL Solver_LabelSet(solver,CHAR(label),err,error,*999)
 
     EXITS("cmfe_Solver_LabelSetVSNumber0")
     RETURN
@@ -59538,7 +60063,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LABEL_SET(solver,CHAR(label),err,error,*999)
+    CALL Solver_LabelSet(solver,CHAR(label),err,error,*999)
 
     EXITS("cmfe_Solver_LabelSetVSNumber1")
     RETURN
@@ -59564,7 +60089,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_LabelSetVSObj",err,error,*999)
 
-    CALL SOLVER_LABEL_SET(solver%solver,CHAR(label),err,error,*999)
+    CALL Solver_LabelSet(solver%solver,CHAR(label),err,error,*999)
 
     EXITS("cmfe_Solver_LabelSetVSObj")
     RETURN
@@ -59606,7 +60131,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LIBRARY_TYPE_GET(solver,libraryType,err,error,*999)
+    CALL Solver_LibraryTypeGet(solver,libraryType,err,error,*999)
 
     EXITS("cmfe_Solver_LibraryTypeGetNumber0")
     RETURN
@@ -59648,7 +60173,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LIBRARY_TYPE_GET(solver,libraryType,err,error,*999)
+    CALL Solver_LibraryTypeGet(solver,libraryType,err,error,*999)
 
     EXITS("cmfe_Solver_LibraryTypeGetNumber1")
     RETURN
@@ -59673,7 +60198,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_LibraryTypeGetObj",err,error,*999)
 
-    CALL SOLVER_LIBRARY_TYPE_GET(solver%solver,libraryType,err,error,*999)
+    CALL Solver_LibraryTypeGet(solver%solver,libraryType,err,error,*999)
 
     EXITS("cmfe_Solver_LibraryTypeGetObj")
     RETURN
@@ -59715,7 +60240,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LIBRARY_TYPE_SET(solver,libraryType,err,error,*999)
+    CALL Solver_LibraryTypeSet(solver,libraryType,err,error,*999)
 
     EXITS("cmfe_Solver_LibraryTypeSetNumber0")
     RETURN
@@ -59757,7 +60282,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LIBRARY_TYPE_SET(solver,libraryType,err,error,*999)
+    CALL Solver_LibraryTypeSet(solver,libraryType,err,error,*999)
 
     EXITS("cmfe_Solver_LibraryTypeSetNumber1")
     RETURN
@@ -59782,7 +60307,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_LibraryTypeSetObj",err,error,*999)
 
-    CALL SOLVER_LIBRARY_TYPE_SET(solver%solver,libraryType,err,error,*999)
+    CALL Solver_LibraryTypeSet(solver%solver,libraryType,err,error,*999)
 
     EXITS("cmfe_Solver_LibraryTypeSetObj")
     RETURN
@@ -60659,7 +61184,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LINEAR_ITERATIVE_TYPE_SET(solver,iterativeSolverType,err,error,*999)
+    CALL Solver_LinearIterativeTypeSet(solver,iterativeSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_LinearIterativeTypeSetNumber0")
     RETURN
@@ -60701,7 +61226,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LINEAR_ITERATIVE_TYPE_SET(solver,iterativeSolverType,err,error,*999)
+    CALL Solver_LinearIterativeTypeSet(solver,iterativeSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_LinearIterativeTypeSetNumber1")
     RETURN
@@ -60726,7 +61251,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_LinearIterativeTypeSetObj",err,error,*999)
 
-    CALL SOLVER_LINEAR_ITERATIVE_TYPE_SET(solver%solver,iterativeSolverType,err,error,*999)
+    CALL Solver_LinearIterativeTypeSet(solver%solver,iterativeSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_LinearIterativeTypeSetObj")
     RETURN
@@ -60768,7 +61293,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LINEAR_TYPE_SET(solver,linearSolverType,err,error,*999)
+    CALL Solver_LinearTypeSet(solver,linearSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_LinearTypeSetNumber0")
     RETURN
@@ -60810,7 +61335,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LINEAR_TYPE_SET(solver,linearSolverType,err,error,*999)
+    CALL Solver_LinearTypeSet(solver,linearSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_LinearTypeSetNumber1")
     RETURN
@@ -60835,7 +61360,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_LinearTypeSetObj",err,error,*999)
 
-    CALL SOLVER_LINEAR_TYPE_SET(solver%solver,linearSolverType,err,error,*999)
+    CALL Solver_LinearTypeSet(solver%solver,linearSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_LinearTypeSetObj")
     RETURN
@@ -61213,7 +61738,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
+    CALL Solver_NewtonLinkedLinearSolverGet(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
     linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -61259,7 +61784,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
+    CALL Solver_NewtonLinkedLinearSolverGet(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
     linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -61287,7 +61812,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonLinearSolverGetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_LINEAR_SOLVER_GET(solver%solver,linearSolver%solver,err,error,*999)
+    CALL Solver_NewtonLinkedLinearSolverGet(solver%solver,linearSolver%solver,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLinearSolverGetObj")
     RETURN
@@ -61997,7 +62522,7 @@ CONTAINS
     NULLIFY(solver)
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
-     NULLIFY(problem)
+    NULLIFY(problem)
     NULLIFY(solver)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
@@ -62847,7 +63372,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonAbsoluteToleranceSetObj",err,error,*999)
 
-    CALL Solver_QuasiNewtonAbsoluteToleranceSetx(solver%solver,absoluteTolerance,err,error,*999)
+    CALL Solver_QuasiNewtonAbsoluteToleranceSet(solver%solver,absoluteTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonAbsoluteToleranceSetObj")
     RETURN
@@ -65361,7 +65886,7 @@ CONTAINS
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL SOLVER_EQUATIONS_EQUATIONS_SET_ADD(solverEquations,equationsSet,equationsSetIndex,err,error,*999)
+    CALL SolverEquations_EquationsSetAdd(solverEquations,equationsSet,equationsSetIndex,err,error,*999)
 
     EXITS("cmfe_SolverEquations_EquationsSetAddNumber0")
     RETURN
@@ -65417,7 +65942,7 @@ CONTAINS
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL SOLVER_EQUATIONS_EQUATIONS_SET_ADD(solverEquations,equationsSet,equationsSetIndex,err,error,*999)
+    CALL SolverEquations_EquationsSetAdd(solverEquations,equationsSet,equationsSetIndex,err,error,*999)
 
     EXITS("cmfe_SolverEquations_EquationsSetAddNumber1")
     RETURN
@@ -65443,7 +65968,7 @@ CONTAINS
 
     ENTERS("cmfe_SolverEquations_EquationsSetAddObj",err,error,*999)
 
-    CALL SOLVER_EQUATIONS_EQUATIONS_SET_ADD(solverEquations%solverEquations,equationsSet%equationsSet,equationsSetIndex, &
+    CALL SolverEquations_EquationsSetAdd(solverEquations%solverEquations,equationsSet%equationsSet,equationsSetIndex, &
       & err,error,*999)
 
     EXITS("cmfe_SolverEquations_EquationsSetAddObj")
@@ -65504,8 +66029,7 @@ CONTAINS
     CALL Region_Get(regions,interfaceRegionUserNumber,interfaceRegion,err,error,*999)
     CALL Region_InterfaceGet(interfaceRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL SOLVER_EQUATIONS_INTERFACE_CONDITION_ADD(solverEquations,interfaceCondition,interfaceConditionIndex, &
-      & err,error,*999)
+    CALL SolverEquations_InterfaceConditionAdd(solverEquations,interfaceCondition,interfaceConditionIndex,err,error,*999)
 
     EXITS("cmfe_SolverEquations_InterfaceConditionAddNumber0")
     RETURN
@@ -65566,8 +66090,7 @@ CONTAINS
     CALL Region_Get(regions,interfaceRegionUserNumber,interfaceRegion,err,error,*999)
     CALL Region_InterfaceGet(interfaceRegion,interfaceUserNumber,INTERFACE,err,error,*999)
     CALL Interface_InterfaceConditionGet(INTERFACE,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL SOLVER_EQUATIONS_INTERFACE_CONDITION_ADD(solverEquations,interfaceCondition,interfaceConditionIndex, &
-      & err,error,*999)
+    CALL SolverEquations_InterfaceConditionAdd(solverEquations,interfaceCondition,interfaceConditionIndex,err,error,*999)
 
     EXITS("cmfe_SolverEquations_InterfaceConditionAddNumber1")
     RETURN
@@ -65594,7 +66117,7 @@ CONTAINS
 
     ENTERS("cmfe_SolverEquations_InterfaceConditionAddObj",err,error,*999)
 
-    CALL SOLVER_EQUATIONS_INTERFACE_CONDITION_ADD(solverEquations%solverEquations,interfaceCondition%interfaceCondition, &
+    CALL SolverEquations_InterfaceConditionAdd(solverEquations%solverEquations,interfaceCondition%interfaceCondition, &
       & interfaceConditionIndex,err,error,*999)
 
     EXITS("cmfe_SolverEquations_InterfaceConditionAddObj")
@@ -65605,6 +66128,122 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_SolverEquations_InterfaceConditionAddObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the sparsity type for solver equations identified by an user number.
+  SUBROUTINE cmfe_SolverEquations_SparsityTypeGetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier,solverIndex, &
+    & sparsityType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SparsityTypeGetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the sparsity type for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the sparsity type for.
+    INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the sparsity type for.
+    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the sparsity type for the solver equations. \see OpenCMISS_SolverEquationsSparsityTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+
+    ENTERS("cmfe_SolverEquations_SparsityTypeGetNumber0",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(solver)
+    NULLIFY(solverEquations)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
+    CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+    CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+
+    EXITS("cmfe_SolverEquations_SparsityTypeGetNumber0")
+    RETURN
+999 ERRORSEXITS("cmfe_SolverEquations_SparsityTypeGetNumber0",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_SolverEquations_SparsityTypeGetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the sparsity type for solver equations identified by an user number.
+  SUBROUTINE cmfe_SolverEquations_SparsityTypeGetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
+    & sparsityType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SparsityTypeGetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the sparsity type for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the sparsity type for.
+    INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the sparsity type for.
+    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the sparsity type of the solver equations. \see OpenCMISS_SolverEquationsSparsityTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+
+    ENTERS("cmfe_SolverEquations_SparsityTypeGetNumber1",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(solver)
+    NULLIFY(solverEquations)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
+    CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+    CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+
+    EXITS("cmfe_SolverEquations_SparsityTypeGetNumber1")
+    RETURN
+999 ERRORSEXITS("cmfe_SolverEquations_SparsityTypeGetNumber1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_SolverEquations_SparsityTypeGetNumber1
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the sparsity type for solver equations identified by an object.
+  SUBROUTINE cmfe_SolverEquations_SparsityTypeGetObj(solverEquations,sparsityType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SparsityTypeGetObj)
+
+    !Argument variables
+    TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to set the sparsity type for.
+    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the sparsity type for the solver equtaions. \see OpenCMISS_SolverEquationsSparsityTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_SolverEquations_SparsityTypeGetObj",err,error,*999)
+
+    CALL SolverEquations_SparsityTypeGet(solverEquations%solverEquations,sparsityType,err,error,*999)
+
+    EXITS("cmfe_SolverEquations_SparsityTypeGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_SolverEquations_SparsityTypeGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_SolverEquations_SparsityTypeGetObj
 
   !
   !================================================================================================================================
@@ -65641,7 +66280,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-    CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(solverEquations,sparsityType,err,error,*999)
+    CALL SolverEquations_SparsityTypeSet(solverEquations,sparsityType,err,error,*999)
 
     EXITS("cmfe_SolverEquations_SparsityTypeSetNumber0")
     RETURN
@@ -65686,7 +66325,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-    CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(solverEquations,sparsityType,err,error,*999)
+    CALL SolverEquations_SparsityTypeSet(solverEquations,sparsityType,err,error,*999)
 
     EXITS("cmfe_SolverEquations_SparsityTypeSetNumber1")
     RETURN
@@ -65711,7 +66350,7 @@ CONTAINS
 
     ENTERS("cmfe_SolverEquations_SparsityTypeSetObj",err,error,*999)
 
-    CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(solverEquations%solverEquations,sparsityType,err,error,*999)
+    CALL SolverEquations_SparsityTypeSet(solverEquations%solverEquations,sparsityType,err,error,*999)
 
     EXITS("cmfe_SolverEquations_SparsityTypeSetObj")
     RETURN
@@ -65743,7 +66382,6 @@ CONTAINS
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
-    TYPE(SolverMatricesType), POINTER :: solverMatrices
 
     ENTERS("cmfe_SolverEquations_SymmetryTypeGetNumber0",err,error,*999)
 
@@ -65752,14 +66390,12 @@ CONTAINS
     NULLIFY(problem)
     NULLIFY(solver)
     NULLIFY(solverEquations)
-    NULLIFY(solverMatrices)
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-    CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-    CALL SolverMatrices_SymmetryTypeGet(solverMatrices,symmetryType,err,error,*999)
+    CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
 
     EXITS("cmfe_SolverEquations_SymmetryTypeGetNumber0")
     RETURN
@@ -65783,7 +66419,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the symmetry type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the symmetry type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the symmetry type for.
-    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type. \see OpenCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type for the solver equations. \see OpenCMISS_SolverEquationsSymmetryTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -65806,8 +66442,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-    CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-    CALL SolverMatrices_SymmetryTypeGet(solverMatrices,symmetryType,err,error,*999)
+    CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
 
     EXITS("cmfe_SolverEquations_SymmetryTypeGetNumber1")
     RETURN
@@ -65816,26 +66451,24 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_SolverEquations_SymmetryTypeGetNumber1
-
+  
+  !
   !================================================================================================================================
   !
 
   !>Gets the symmetry type for solver equations identified by an object.
   SUBROUTINE cmfe_SolverEquations_SymmetryTypeGetObj(solverEquations,symmetryType,err)
-    !DLLEXPORT(cmfe_SolverEquations_SymmetryTypeGetObj)
+    !DLLEXPORT(cmfe_SolverEquations_SymmetryTypesGetObj1)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the symmetry type for.
-    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type. \see OpenCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type for the solver equations. \see OpenCMISS_SolverEquationsSymmetryTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(SolverMatricesType), POINTER :: solverMatrices
 
     ENTERS("cmfe_SolverEquations_SymmetryTypeGetObj",err,error,*999)
 
-    NULLIFY(solverMatrices)
-    CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
-    CALL SolverMatrices_SymmetryTypeGet(solverMatrices,symmetryType,err,error,*999)
+    CALL SolverEquations_SymmetryTypeGet(solverEquations%solverEquations,symmetryType,err,error,*999)
 
     EXITS("cmfe_SolverEquations_SymmetryTypeGetObj")
     RETURN
@@ -65913,7 +66546,7 @@ CONTAINS
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
 
-    ENTERS("cmfe_SolverEquations_SymmetryTypeSetNumber1",err,error,*999)
+    ENTERS("cmfe_SolverEquations_SymmetryTypesSetNumber1",err,error,*999)
 
     NULLIFY(context)
     NULLIFY(problems)
@@ -65934,17 +66567,18 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_SolverEquations_SymmetryTypeSetNumber1
-
+  
+  !
   !================================================================================================================================
   !
 
-  !>Sets/changes the symmetry type for solver equations identified by an object.
+  !>Sets/changes the symmetry types for solver equations identified by an object.
   SUBROUTINE cmfe_SolverEquations_SymmetryTypeSetObj(solverEquations,symmetryType,err)
     !DLLEXPORT(cmfe_SolverEquations_SymmetryTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to set the symmetry type for.
-    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see OpenCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set for the solver equations \see OpenCMISS_SolverEquationsSymmetryTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -66318,7 +66952,7 @@ CONTAINS
 
     NULLIFY(solverMatrices)
     CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
-    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+    CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
 
     EXITS("cmfe_SolverEquations_NumberOfMatricesGet")
     RETURN
@@ -66343,12 +66977,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
 
     ENTERS("cmfe_SolverEquations_MatrixGet",err,error,*999)
 
     NULLIFY(solverMatrices)
+    NULLIFY(solverMatrix)
     CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
-    CALL SolverMatrices_SolverDistributedMatrixGet(solverMatrices,matrixIndex,distributedMatrix%distributedMatrix,err,error,*999)
+    CALL SolverMatrices_SolverMatrixGet(solverMatrices,matrixIndex,solverMatrix,err,error,*999)
+    CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,distributedMatrix%distributedMatrix,err,error,*999)
 
     EXITS("cmfe_SolverEquations_MatrixGet")
     RETURN
@@ -66372,12 +67009,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
 
     ENTERS("cmfe_SolverEquations_JacobianMatrixGet",err,error,*999)
 
     NULLIFY(solverMatrices)
+    NULLIFY(solverMatrix)
     CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
-    CALL SolverMatrices_SolverMatrixGet(solverMatrices,1,distributedMatrix%distributedMatrix,err,error,*999)
+    CALL SolverMatrices_SolverMatrixGet(solverMatrices,1,solverMatrix,err,error,*999)
+    CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,distributedMatrix%distributedMatrix,err,error,*999)
 
     EXITS("cmfe_SolverEquations_JacobianMatrixGet")
     RETURN
@@ -66402,12 +67042,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
 
     ENTERS("cmfe_SolverEquations_VectorGet",err,error,*999)
 
     NULLIFY(solverMatrices)
+    NULLIFY(solverMatrix)    
     CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
-    CALL SolverMatrices_SolverDistributedVectorGet(solverMatrices,matrixIndex,distributedVector%distributedVector,err,error,*999)
+    CALL SolverMatrices_SolverMatrixGet(solverMatrices,matrixIndex,solverMatrix,err,error,*999)
+    CALL SolverMatrix_SolverDistributedVectorGet(solverMatrix,distributedVector%distributedVector,err,error,*999)
 
     EXITS("cmfe_SolverEquations_VectorGet")
     RETURN

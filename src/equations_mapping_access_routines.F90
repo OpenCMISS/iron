@@ -59,11 +59,21 @@ MODULE EquationsMappingAccessRoutines
 
   !Module parameters
 
+  !> \addtogroup EquationsMappingRoutines_DynamicMatrixTypes EquationsMapping::Constants::DynamicMatrixTypes
+  !> \brief Type of matrix in a dynamic equations
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_STIFFNESS=1 !<A stiffness matrix (multiplies displacement values) \see EquationsMappingRoutines_DynamicMatrixTypes
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_DAMPING=2 !<A damping matrix (multiplies velocity values) \see EquationsMappingRoutines_DynamicMatrixTypes
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_MASS=3 !<A mass matrix (multiplies acceleration values) \see EquationsMappingRoutines_DynamicMatrixTypes
+  !>@}
+  
   !Module types
 
   !Module variables
 
   !Interfaces
+
+  PUBLIC EQUATIONS_MATRIX_STIFFNESS,EQUATIONS_MATRIX_DAMPING,EQUATIONS_MATRIX_MASS
 
   PUBLIC EquationsMappingDynamic_DampingMatrixNumberGet
 
@@ -74,6 +84,10 @@ MODULE EquationsMappingAccessRoutines
   PUBLIC EquationsMappingDynamic_EquationsMatrixToVarMapGet
 
   PUBLIC EquationsMappingDynamic_MassMatrixNumberGet
+
+  PUBLIC EquationsMappingDynamic_MatrixTypeNumberGet
+
+  PUBLIC EquationsMappingDynamic_MatrixTypeGet
 
   PUBLIC EquationsMappingDynamic_NumberOfDynamicMatricesGet
 
@@ -90,9 +104,15 @@ MODULE EquationsMappingAccessRoutines
   PUBLIC EquationsMappingLHS_LHSVariableGet
 
   PUBLIC EquationsMappingLHS_LHSVariableTypeGet
+
+  PUBLIC EquationsMappingLHS_NumberOfRowsGet
+  
+  PUBLIC EquationsMappingLHS_NumberOfGlobalRowsGet
   
   PUBLIC EquationsMappingLHS_RowDOFsMappingGet
 
+  PUBLIC EquationsMappingLHS_TotalNumberOfRowsGet
+  
   PUBLIC EquationsMappingLHS_VectorMappingGet
 
   PUBLIC EquationsMappingLinear_EquationsMatrixToVarMapGet
@@ -157,6 +177,8 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingSource_SourceVariableGet
 
+  PUBLIC EquationsMappingSource_SourceVariableTypeGet
+
   PUBLIC EquationsMappingSource_VectorCoefficientGet
 
   PUBLIC EquationsMappingSources_NumberOfSourcesGet
@@ -213,6 +235,8 @@ MODULE EquationsMappingAccessRoutines
   
   PUBLIC EquationsMappingVectorCVC_SourceVariableTypeGet
 
+  PUBLIC EquationsMappingVectorEMToVMap_ColumnDOFsMappingGet
+
   PUBLIC EquationsMappingVectorEMToVMap_EquationsMatrixGet
 
   PUBLIC EquationsMappingVectorEMToVMap_MatrixCoefficientGet
@@ -221,14 +245,16 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingVectorEMToVMap_VariableGet
 
-  PUBLIC EquationsMappingVectorJMToVMap_VariableGet
-  
+  PUBLIC EquationsMappingVectorJMToVMap_ColumnDOFsMappingGet
+
   PUBLIC EquationsMappingVectorJMToVMap_JacobianMatrixGet
 
   PUBLIC EquationsMappingVectorJMToVMap_MatrixCoefficientGet
 
   PUBLIC EquationsMappingVectorJMToVMap_NumberOfColumnsGet
-
+  
+  PUBLIC EquationsMappingVectorJMToVMap_VariableGet
+   
   PUBLIC EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet
 
   PUBLIC EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet
@@ -422,6 +448,100 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingDynamic_MassMatrixNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the dynamic matrix number for a dynamic matrix type in a dynamic mapping. If there is no matrix of the specified type 0 is returned.
+  SUBROUTINE EquationsMappingDynamic_MatrixTypeNumberGet(dynamicMapping,matrixType,matrixNumber,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the dynamic mapping to get the matrix type number for
+    INTEGER(INTG), INTENT(IN) :: matrixType !<The matrix type to get the matrix number for \see EquationsMappingRoutines_DynamicMatrixTypes
+    INTEGER(INTG), INTENT(OUT) :: matrixNumber !<On exit, the matrix number corresponding to the specified dynamic matrix type. If there is no matrix of the specified type in the dynamic mapping then 0 is returned.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsMappingDynamic_MatrixTypeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicMapping)) CALL FlagError("Dynamic mapping is not associated.",err,error,*999)
+#endif    
+
+    SELECT CASE(matrixType)
+    CASE(EQUATIONS_MATRIX_STIFFNESS)
+      matrixNumber=dynamicMapping%stiffnessMatrixNumber 
+    CASE(EQUATIONS_MATRIX_DAMPING)
+      matrixNumber=dynamicMapping%dampingMatrixNumber 
+    CASE(EQUATIONS_MATRIX_MASS)
+      matrixNumber=dynamicMapping%massMatrixNumber 
+    CASE DEFAULT
+      localError="The specified dynamic matrix type of "//TRIM(NumberToVString(matrixType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+          
+    EXITS("EquationsMappingDynamic_MatrixTypeNumberGet")
+    RETURN
+999 ERRORS("EquationsMappingDynamic_MatrixTypeNumberGet",err,error)
+    EXITS("EquationsMappingDynamic_MatrixTypeNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingDynamic_MatrixTypeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the dynamic matrix type for a dynamic matrix in a dynamic mapping.
+  SUBROUTINE EquationsMappingDynamic_MatrixTypeGet(dynamicMapping,matrixNumber,matrixType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the dynamic mapping to get the matrix type number for
+    INTEGER(INTG), INTENT(IN) :: matrixNumber !<The dynamic matrix number to get the matrix type for
+    INTEGER(INTG), INTENT(OUT) :: matrixType !<On exit, the dynamic matrix type of the specified dynamic matrix \see EquationsMappingRoutines_DynamicMatrixTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsMappingDynamic_MatrixTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicMapping)) CALL FlagError("Dynamic mapping is not associated.",err,error,*999)
+    IF(matrixNumber<1.OR.matrixNumber>dynamicMapping%numberOfDynamicMatrices) THEN
+      localError="The specified dynamic matrix number of "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is invalid. The dynamic matrix number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(dynamicMapping%numberOfDynamicMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    IF(matrixNumber==dynamicMapping%stiffnessMatrixNumber) THEN
+      matrixType=EQUATIONS_MATRIX_STIFFNESS
+    ELSE
+      IF(matrixNumber==dynamicMapping%dampingMatrixNumber) THEN
+        matrixType=EQUATIONS_MATRIX_DAMPING
+      ELSE
+        IF(matrixNumber==dynamicMapping%massMatrixNumber) THEN
+          matrixType=EQUATIONS_MATRIX_MASS
+        ELSE
+          localError="The dynamic matrix number of "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+            & " does not match any dynamic matrix type."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDIF
+    ENDIF
+         
+    EXITS("EquationsMappingDynamic_MatrixTypeGet")
+    RETURN
+999 ERRORS("EquationsMappingDynamic_MatrixTypeGet",err,error)
+    EXITS("EquationsMappingDynamic_MatrixTypeGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingDynamic_MatrixTypeGet
 
   !
   !================================================================================================================================
@@ -699,6 +819,66 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the number of rows a LHS mapping.
+  SUBROUTINE EquationsMappingLHS_NumberOfRowsGet(lhsMapping,numberOfRows,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping !<A pointer to the LHS mapping to get the number of rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfRows !<On exit, the number of rows in the LHS mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingLHS_NumberOfRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(lhsMapping)) CALL FlagError("LHS mapping is not associated.",err,error,*999)
+#endif    
+   
+    numberOfRows=lhsMapping%numberOfRows
+    
+    EXITS("EquationsMappingLHS_NumberOfRowsGet")
+    RETURN
+999 ERRORS("EquationsMappingLHS_NumberOfRowsGet",err,error)
+    EXITS("EquationsMappingLHS_NumberOfRowsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingLHS_NumberOfRowsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of global rows a LHS mapping.
+  SUBROUTINE EquationsMappingLHS_NumberOfGLobalRowsGet(lhsMapping,numberOfGlobalRows,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping !<A pointer to the LHS mapping to get the number of global rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfGlobalRows !<On exit, the number of globalrows in the LHS mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingLHS_NumberOfGlobalRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(lhsMapping)) CALL FlagError("LHS mapping is not associated.",err,error,*999)
+#endif    
+   
+    numberOfGlobalRows=lhsMapping%numberOfGlobalRows
+    
+    EXITS("EquationsMappingLHS_NumberOfGlobalRowsGet")
+    RETURN
+999 ERRORS("EquationsMappingLHS_NumberOfGlobalRowsGet",err,error)
+    EXITS("EquationsMappingLHS_NumberOfGlobalRowsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingLHS_NumberOfGlobalRowsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the row DOFs mapping for a LHS mapping.
   SUBROUTINE EquationsMappingLHS_RowDOFsMappingGet(lhsMapping,rowDOFsMapping,err,error,*)
 
@@ -730,6 +910,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingLHS_RowDOFsMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the total number of rows a LHS mapping.
+  SUBROUTINE EquationsMappingLHS_TotalNumberOfRowsGet(lhsMapping,totalNumberOfRows,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping !<A pointer to the LHS mapping to get the total number of rows for
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfRows !<On exit, the total number of rows in the LHS mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingLHS_TotalNumberOfRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(lhsMapping)) CALL FlagError("LHS mapping is not associated.",err,error,*999)
+#endif    
+   
+    totalNumberOfRows=lhsMapping%totalNumberOfRows
+    
+    EXITS("EquationsMappingLHS_TotalNumberOfRowsGet")
+    RETURN
+999 ERRORS("EquationsMappingLHS_TotalNumberOfRowsGet",err,error)
+    EXITS("EquationsMappingLHS_TotalNumberOfRowsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingLHS_TotalNumberOfRowsGet
 
   !
   !================================================================================================================================
@@ -2049,6 +2259,36 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the specified source variable type for a source mapping.
+  SUBROUTINE EquationsMappingSource_SourceVariableTypeGet(sourceMapping,sourceVariableType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping !<A pointer to the source mapping to get the source variable type for
+    INTEGER(INTG), INTENT(OUT) :: sourceVariableType !<On exit, the requested source variable type \see FieldRoutines_VariableTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingSource_SourceVariableTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(sourceMapping)) CALL FlagError("Source mapping is not associated.",err,error,*999)
+#endif    
+    
+    sourceVariableType=sourceMapping%sourceVariableType
+    
+    EXITS("EquationsMappingSource_SourceVariableTypeGet")
+    RETURN
+999 ERRORS("EquationsMappingSource_SourceVariableTypeGet",err,error)
+    EXITS("EquationsMappingSource_SourceVariableTypeGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingSource_SourceVariableTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the specified source coefficient for a source mapping.
   SUBROUTINE EquationsMappingSource_VectorCoefficientGet(sourceMapping,sourceCoefficient,err,error,*)
 
@@ -3120,6 +3360,44 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the column DOFs mapping for a equations matrix to variable map.
+  SUBROUTINE EquationsMappingVectorEMToVMap_ColumnDOFsMappingGet(equationsMatrixToVarMap,columnDOFsMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap !<A pointer to the equations matrix to variable map to get the column DOFs mapping for
+    TYPE(DomainMappingType), POINTER :: columnDOFsMapping !<On exit, a pointer to the column DOFs mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVectorEMToVMap_ColumnDOFsMappingGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(columnDOFsMapping)) CALL FlagError("Column DOFs mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatrixToVarMap)) &
+      & CALL FlagError("Equations matrix to variable map is not associated.",err,error,*999)
+#endif    
+    
+    columnDOFsMapping=>equationsMatrixToVarMap%columnDOFsMapping
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(columnDOFsMapping)) &
+      & CALL FlagError("The column DOFs mapping is not associated for the equations matrix to variable map.",err,error,*999)
+#endif    
+    
+    EXITS("EquationsMappingVectorEMToVMap_ColumnDOFsMappingGet")
+    RETURN
+999 NULLIFY(columnDOFsMapping)
+998 ERRORS("EquationsMappingVectorEMToVMap_ColumnDOFsMappingGet",err,error)
+    EXITS("EquationsMappingVectorEMToVMap_ColumnDOFsMappingGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVectorEMToVMap_ColumnDOFsMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the equations matrix for a equations matrix to variable map.
   SUBROUTINE EquationsMappingVectorEMToVMap_EquationsMatrixGet(equationsMatrixToVarMap,equationsMatrix,err,error,*)
 
@@ -3253,6 +3531,44 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingVectorEMToVMap_VariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the column DOFs mapping for a Jacobian matrix to variable map.
+  SUBROUTINE EquationsMappingVectorJMToVMap_ColumnDOFsMappingGet(jacobianMatrixToVarMap,columnDOFsMapping,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVarMap !<A pointer to the Jacobian matrix to variable map to get the column DOFs mapping for
+    TYPE(DomainMappingType), POINTER :: columnDOFsMapping !<On exit, a pointer to the column DOFs mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVectorJMToVMap_ColumnDOFsMappingGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(columnDOFsMapping)) CALL FlagError("Column DOFs mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(jacobianMatrixToVarMap)) &
+      & CALL FlagError("Jacobian matrix to variable map is not associated.",err,error,*999)
+#endif    
+    
+    columnDOFsMapping=>jacobianMatrixToVarMap%columnDOFsMapping
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(columnDOFsMapping)) &
+      & CALL FlagError("The column DOFs mapping is not associated for the Jacobian matrix to variable map.",err,error,*999)
+#endif    
+    
+    EXITS("EquationsMappingVectorJMToVMap_ColumnDOFsMappingGet")
+    RETURN
+999 NULLIFY(columnDOFsMapping)
+998 ERRORS("EquationsMappingVectorJMToVMap_ColumnDOFsMappingGet",err,error)
+    EXITS("EquationsMappingVectorJMToVMap_ColumnDOFsMappingGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVectorJMToVMap_ColumnDOFsMappingGet
 
   !
   !================================================================================================================================

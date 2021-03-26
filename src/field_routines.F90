@@ -2980,7 +2980,7 @@ CONTAINS
       CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
       field%geometricFieldParameters%numberOfVolumes=decompositionElements%numberOfElements
       ALLOCATE(field%geometricFieldParameters%volumes(field%geometricFieldParameters%numberOfVolumes),STAT=err)
-      IF(err/=0) CALL FLAG_ERROR("Could not allocate volumes.",err,error,*999)
+      IF(err/=0) CALL FlagError("Could not allocate volumes.",err,error,*999)
       field%geometricFieldParameters%volumes=0.0_DP            
       !The field is a geometric field so it must use itself initiallly
       ALLOCATE(field%geometricFieldParameters%fieldsUsing(1),STAT=err)
@@ -6767,7 +6767,7 @@ CONTAINS
             maxNumberOfGauss=MAX(maxNumberOfGauss,numberOfGauss)
           ENDDO !elementIdx
           CALL MPI_ALLREDUCE(MPI_IN_PLACE,maxNumberOfGauss,1,MPI_INTEGER,MPI_MAX,groupCommunicator,mpiIError)
-          CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIError,err,error,*999)             
+          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)             
           numberOfGaussPointDOFs=numberOfGaussPointDOFs+domainElements%totalNumberOfElements*maxNumberOfGauss
           numberOfLocalVariableDOFS=numberOfLocalVariableDOFS+domainElements%numberOfElements*maxNumberOfGauss
           totalNumberOfVariableDOFS=totalNumberOfVariableDOFS+domainElements%totalNumberOfElements*maxNumberOfGauss

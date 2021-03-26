@@ -63,6 +63,7 @@ MODULE BoundaryConditionsRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
+  USE InterfaceAccessRoutines
   USE InterfaceConditionAccessRoutines
   USE InterfaceEquationsAccessRoutines
   USE InterfaceMappingAccessRoutines
@@ -76,7 +77,9 @@ MODULE BoundaryConditionsRoutines
   USE MPI
 #endif
   USE NodeRoutines
+  USE RegionAccessRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Strings
   USE Timer
   USE Types
@@ -157,8 +160,6 @@ MODULE BoundaryConditionsRoutines
 
   PUBLIC BoundaryConditions_Destroy
 
-  PUBLIC BoundaryConditions_NeumannIntegrate
-
   PUBLIC BoundaryConditions_NeumannSparsityTypeSet
 
   PUBLIC BoundaryConditions_RHSVariableExists
@@ -182,6 +183,8 @@ MODULE BoundaryConditionsRoutines
   PUBLIC BoundaryConditions_VariableGet
 
   PUBLIC BoundaryConditionsRowVariable_RowConditionSet
+
+  PUBLIC BoundaryConditionsVariable_NeumannIntegrate
 
  CONTAINS
 
@@ -242,7 +245,7 @@ MODULE BoundaryConditionsRoutines
 
     !Note: This routine is for constant interpolation
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
-    CALL FieldVariable_ComponentDOFGetConstant(fieldVariable,componentNumber,localDOF,globalDOF,err,error,*999)
+    CALL FieldVariable_ConstantDOFGet(fieldVariable,componentNumber,localDOF,err,error,*999)
     NULLIFY(boundaryConditionsVariable)
     CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
@@ -309,7 +312,8 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: localDOF,globalDOF
+    INTEGER(INTG) :: localDOF
+    LOGICAL :: ghostDOF
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(VARYING_STRING) :: localError
 
@@ -317,7 +321,7 @@ MODULE BoundaryConditionsRoutines
 
     !Note: this routine is for element based interpolation
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
-    CALL FieldVariable_ComponentDOFGetUserElement(fieldVariable,userElementNumber,componentNumber,localDOF,globalDOF,err,error,*999)
+    CALL FieldVariable_UserElementDOFGet(fieldVariable,userElementNumber,componentNumber,localDOF,ghostDOF,err,error,*999)
     NULLIFY(boundaryConditionsVariable)        
     CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
@@ -525,7 +529,7 @@ MODULE BoundaryConditionsRoutines
 
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-    CALL BoundaryConditions_AddNodeFieldVariable(boundaryConditions,fieldVariable,versionNumber,derivativeNumber, &
+    CALL BoundaryConditions_AddNodeVariable(boundaryConditions,fieldVariable,versionNumber,derivativeNumber, &
       & userNodeNumber,componentNumber,condition,bcValue,err,error,*999)
     
     EXITS("BoundaryConditions_AddNodeField")
@@ -555,14 +559,15 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: localDOF,globalDOF
+    INTEGER(INTG) :: localDOF
+    LOGICAL :: ghostDOF
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
 
     ENTERS("BoundaryConditions_AddNode",err,error,*999)
 
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
-    CALL FieldVariable_ComponentDOFGetUserNode(fieldVariable,versionNumber,derivativeNumber,userNodeNumber,componentNumber, &
-      & localDOF,globalDOF,err,error,*999)
+    CALL FieldVariable_UserNodeDOFGet(fieldVariable,versionNumber,derivativeNumber,userNodeNumber,componentNumber, &
+      & localDOF,ghostDOF,err,error,*999)
     NULLIFY(boundaryConditionsVariable)
     CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
@@ -728,7 +733,7 @@ MODULE BoundaryConditionsRoutines
     IF(err/=0) CALL FlagError("Could not allocate equal global DOFs array.",err,error,*998)
     !Get field DOFs for nodes
     DO nodeIdx=1,numberOfNodes
-      CALL FieldVariable_ComponentDOFGetUserNode(fieldVariable,versionNumber,derivativeNumber,nodes(nodeIdx), &
+      CALL Field_ComponentDOFGetUserNode(field,variableType,versionNumber,derivativeNumber,nodes(nodeIdx), &
         & component,dof,globalDofs(nodeIdx),err,error,*999)
     ENDDO !nodeIdx
 
@@ -826,19 +831,19 @@ MODULE BoundaryConditionsRoutines
           !\todo the data from each rank into all ranks. We will see how this goes for now.
           CALL MPI_ALLREDUCE(MPI_IN_PLACE,boundaryConditionsVariable%DOFTypes,sendCount,MPI_INTEGER,MPI_SUM, &
             & groupCommunicator,mpiIError)
-          CALL MPIErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
+          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
           CALL MPI_ALLREDUCE(MPI_IN_PLACE,boundaryConditionsVariable%conditionTypes,sendCount,MPI_INTEGER,MPI_SUM, &
             & groupCommunicator,mpiIError)
-          CALL MPIErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
+          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
         ENDIF !mpi_in_place bug workaround - only do this when num comp nodes > 1
         IF(numberOfGroupComputationNodes>1) THEN
           ! Update the total number of boundary condition types by summing across all nodes
           CALL MPI_ALLREDUCE(MPI_IN_PLACE,boundaryConditionsVariable%dofCounts,MAX_BOUNDARY_CONDITION_NUMBER,MPI_INTEGER, &
             & MPI_SUM,groupCommunicator,mpiIError)
-          CALL MPIErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
+          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
           CALL MPI_ALLREDUCE(MPI_IN_PLACE,boundaryConditionsVariable%numberOfDirichletConditions,1,MPI_INTEGER,MPI_SUM, &
             & groupCommunicator,mpiIError)
-          CALL MPIErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
+          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
         ENDIF !mpi_in_place bug workaround - only do this when num comp nodes > 1
         
         !Check that the boundary conditions set are appropriate for equations sets
@@ -848,7 +853,7 @@ MODULE BoundaryConditionsRoutines
           !Make sure the required parameter sets are created on all computational nodes and begin updating them
           CALL MPI_ALLREDUCE(MPI_IN_PLACE,boundaryConditionsVariable%parameterSetRequired,FIELD_NUMBER_OF_SET_TYPES,MPI_LOGICAL, &
             & MPI_LOR,groupCommunicator,mpiIError)
-          CALL MPIErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
+          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
           DO parameterSetIdx=1,FIELD_NUMBER_OF_SET_TYPES
             IF(boundaryConditionsVariable%parameterSetRequired(parameterSetIdx)) THEN
               CALL FieldVariable_ParameterSetEnsureCreated(fieldVariable,parameterSetIdx,err,error,*999)
@@ -1000,7 +1005,7 @@ MODULE BoundaryConditionsRoutines
                     NULLIFY(list)
                     CALL DistributedMatrix_LinkListGet(distributedMatrix,list,err,error,*999)
                     !Initialise sparsity indices arrays
-                    CALL BoundaryConditions_SparsityIndicesInitialise(boundaryConditionsDirichlet% &
+                    CALL BoundaryConditionsSparsityIndices_Initialise(boundaryConditionsDirichlet% &
                       & linearSparsityIndices(equationsSetIdx,equationsMatrixIdx)%ptr, &
                       & boundaryConditionsVariable%numberOfDirichletConditions,err,error,*999)
                     !Find dirichlet columns and store the non zero indices (with respect to the 1D storage array)
@@ -1049,13 +1054,12 @@ MODULE BoundaryConditionsRoutines
               NULLIFY(dynamicMatrices)
               CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
               !Iterate through equations matrices
-              CALL EquationsMatricesDynamic_NumberOfMatricesGet(dynamicMatrices,numberOfDynamicMatrices,err,error,*999)
+              CALL EquationsMatricesDynamic_NumberOfDynamicMatricesGet(dynamicMatrices,numberOfDynamicMatrices,err,error,*999)
               DO equationsMatrixIdx=1,numberOfDynamicMatrices
                 NULLIFY(equationsMatrix)
                 CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,equationsMatrixIdx,equationsMatrix,err,error,*999)
                 NULLIFY(matrixVariable)
-                CALL EquationsMappingLinear_DynamicMatrixVariableGet(dynamicMapping,equationsMatrixIdx,matrixVariable, &
-                  & err,error,*999)
+                CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,matrixVariable,err,error,*999)
                 NULLIFY(distributedMatrix)
                 CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,distributedMatrix,err,error,*999)
                 IF(ASSOCIATED(matrixVariable,fieldVariable)) THEN
@@ -1080,7 +1084,7 @@ MODULE BoundaryConditionsRoutines
                     !Sparse matrix in a list
                     CALL DistributedMatrix_LinkListGet(distributedMatrix,list,err,error,*999)
                     !Intialise sparsity indices arrays
-                    CALL BoundaryConditions_SparsityIndicesInitialise(boundaryConditionsDirichlet% &
+                    CALL BoundaryConditionsSparsityIndices_Initialise(boundaryConditionsDirichlet% &
                       & dynamicSparsityIndices(equationsSetIdx,equationsMatrixIdx)%ptr, &
                       & boundaryConditionsVariable%numberOfDirichletConditions,err,error,*999)
                     !Find dirichlet columns and store the non zero indices (with respect to the 1D storage array)
@@ -1230,7 +1234,7 @@ MODULE BoundaryConditionsRoutines
         NULLIFY(lhsVariable)
         CALL BoundaryConditionsRowVariable_LHSVariableGet(boundaryConditionsRowVariable,lhsVariable,err,error,*999)
         CALL FieldVariable_VariableTypeGet(lhsVariable,lhsVariableType,err,error,*999)
-        CALL FieldVariable_TotalNumberOfLocalGet(lhsVariable,totalNumberOfLocal,err,error,*999)
+        CALL FieldVariable_TotalNumberOfDOFsGet(lhsVariable,totalNumberOfLocal,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Variable type = ",lhsVariableType,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of local DOFs = ",totalNumberOfLocal,err,error,*999)
         CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,totalNumberOfLocal,8,8,boundaryConditionsRowVariable%rowConditionTypes, &
@@ -1242,7 +1246,7 @@ MODULE BoundaryConditionsRoutines
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Variable index : ",variableIdx,err,error,*999)
         NULLIFY(boundaryConditionsVariable)
         CALL BoundaryConditions_VariableIndexGet(boundaryConditions,variableIdx,boundaryConditionsVariable,err,error,*999)
-        CALL BoundaryConditionsVariable_VariableTypeGet(boundaryConditionsVariable,boundaryConditionsVarType,err,error,*999)
+        CALL BoundaryConditionsVariable_FieldVariableTypeGet(boundaryConditionsVariable,boundaryConditionsVarType,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Variable type = ",boundaryConditionsVarType,err,error,*999)
         NULLIFY(fieldVariable)
         CALL BoundaryConditionsVariable_FieldVariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
@@ -1447,14 +1451,14 @@ MODULE BoundaryConditionsRoutines
     IF(ASSOCIATED(boundaryConditions)) THEN
       IF(ALLOCATED(boundaryConditions%boundaryConditionsRowVariables)) THEN
         DO variableIdx=1,SIZE(boundaryConditions%boundaryConditionsRowVariables,1)
-          CALL BoundaryConditionRowVariable_Finalise(boundaryConditions%boundaryConditionsRowVariables(variableIdx)%ptr, &
+          CALL BoundaryConditionsRowVariable_Finalise(boundaryConditions%boundaryConditionsRowVariables(variableIdx)%ptr, &
             & err,error,*999)
         ENDDO !variableIdx
         DEALLOCATE(boundaryConditions%boundaryConditionsRowVariables)
       ENDIF
       IF(ALLOCATED(boundaryConditions%boundaryConditionsVariables)) THEN
         DO variableIdx=1,SIZE(boundaryConditions%boundaryConditionsVariables,1)
-          CALL BoundaryConditionVariable_Finalise(boundaryConditions%boundaryConditionsVariables(variableIdx)%ptr,err,error,*999)
+          CALL BoundaryConditionsVariable_Finalise(boundaryConditions%boundaryConditionsVariables(variableIdx)%ptr,err,error,*999)
         ENDDO !variableIdx        
         DEALLOCATE(boundaryConditions%boundaryConditionsVariables)
       ENDIF
@@ -1522,7 +1526,7 @@ MODULE BoundaryConditionsRoutines
     solverEquations%boundaryConditions%neumannMatrixSparsity=BOUNDARY_CONDITION_SPARSE_MATRICES
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-    CALL SolverMapping_NumberOfEquationsSetGet(solverMapping,numberOfEquationsSets,err,error,*999)
+    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
     DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -1558,7 +1562,7 @@ MODULE BoundaryConditionsRoutines
           NULLIFY(rhsVariable)
           CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
           IF(ASSOCIATED(rhsMapping)) THEN
-            CALL EquationsMappingRHS_VariableGet(rhsMapping,rhsVariable,err,error,*999)
+            CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
             CALL BoundaryConditions_VariableAdd(solverEquations%boundaryConditions,rhsVariable,err,error,*999)
           ENDIF
         CASE(EQUATIONS_NONLINEAR)
@@ -1568,7 +1572,7 @@ MODULE BoundaryConditionsRoutines
           DO residualIdx=1,numberOfResiduals
             NULLIFY(residualMapping)
             CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
-            CALL EquationsMappingResidual_NumberOfVariablesGet(residualMapping,numberOfVariables,err,error,*999)          
+            CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfVariables,err,error,*999)          
             DO variableIdx=1,numberOfResidualVariables
               NULLIFY(residualVariable)
               CALL EquationsMappingResidual_VariableGet(residualMapping,variableIdx,residualVariable,err,error,*999)
@@ -1593,7 +1597,7 @@ MODULE BoundaryConditionsRoutines
           NULLIFY(rhsVariable)
           CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
           IF(ASSOCIATED(rhsMapping)) THEN
-            CALL EquationsMappingRHS_VariableGet(rhsMapping,rhsVariable,err,error,*999)
+            CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
             CALL BoundaryConditions_VariableAdd(solverEquations%boundaryConditions,rhsVariable,err,error,*999)
           ENDIF
         CASE DEFAULT
@@ -1641,7 +1645,7 @@ MODULE BoundaryConditionsRoutines
           DO residualIdx=1,numberOfResiduals
             NULLIFY(residualMapping)
             CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
-            CALL EquationsMappingResidual_NumberOfVariablesGet(residualMapping,numberOfResidualVariables,err,error,*999)          
+            CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfResidualVariables,err,error,*999)
             DO variableIdx=1,numberOfResidualVariables
               NULLIFY(residualVariable)
               CALL EquationsMappingResidual_VariableGet(residualMapping,variableIdx,residualVariable,err,error,*999)
@@ -1680,7 +1684,7 @@ MODULE BoundaryConditionsRoutines
       END SELECT
       !Add the row variable
       NULLIFY(lhsMapping)
-      CALL EquationsMaappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+      CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
       NULLIFY(lhsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
       CALL BoundaryConditions_RowVariableAdd(solverEquations%boundaryConditions,lhsVariable,rhsVariable,err,error,*999)      
@@ -1741,387 +1745,11 @@ MODULE BoundaryConditionsRoutines
   !================================================================================================================================
   !
 
-  !>Calculates integrated Neumann condition values from point values for a boundary conditions variable and
-  !>updates the FIELD_INTEGRATED_NEUMANN_SET_TYPE parameter set for the field variable.
-  SUBROUTINE BoundaryConditions_NeumannIntegrate(rhsBoundaryConditions,err,error,*)
-
-    !Argument variables
-    TYPE(BoundaryConditionsVariableType), POINTER, INTENT(IN) :: rhsBoundaryConditions !<The boundary conditions for the right hand side field variable
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    INTEGER(INTG) :: columnElementParameterIdx,componentNumber,derivIdx,derivativeNumber,dofType,dofTypeIdx,domainNumber, &
-      & faceIdx,faceNumber,gaussIdx,globalDOF,interpolationType,lineIdx,localDOF,lineNumber,myGroupNodeNumber,neumannDOFIdx, &
-      & neumannGlobalDOF,neumannLocalDerivNumber,neumannLocalNodeNumber,neumannLocalDOF,neumannNodeNumber,nodeIdx,nodeNumber, &
-      & numberOfDimensions,numberOfGauss,numberOfNeumann,numberOfNodes,numberOfNodeDerivatives,numberOfNodeFaces, &
-      & numberOfNodeLines,rhsScalingType,rowElementParameterIdx,versionNumber
-    REAL(DP) :: columnPhi,gaussWeight,integratedValue,jacobian,rowPhi
-    LOGICAL :: boundaryFace,boundaryLine,calculateFaces,calculateLines,dependentGeometry
-    TYPE(BoundaryConditionsNeumannType), POINTER :: neumannConditions
-    TYPE(BasisType), POINTER :: basis
-    TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(DistributedVectorType), POINTER :: integratedValues
-    TYPE(DomainType), POINTER :: domain
-    TYPE(DomainFacesType), POINTER :: domainFaces
-    TYPE(DomainLinesType), POINTER :: domainLines
-    TYPE(DomainMappingType), POINTER :: rhsDomainMapping
-    TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FieldType), POINTER :: geometricField,rhsField
-    TYPE(FieldVariableType), POINTER :: geometricVariable,rhsVariable
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: interpolatedPointMetrics
-    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
-    TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters,scalingParameters
-    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
-    TYPE(VARYING_STRING) :: localError
-    TYPE(WorkGroupType), POINTER :: workGroup
-
-    ENTERS("BoundaryConditions_NeumannIntegrate",err,error,*999)
-
-    !Check that Neumann conditions are associated, otherwise do nothing
-    NULLIFY(neumannConditions)
-    CALL BoundaryConditionsVariable_NeumannConditionsExist(rhsBoundaryConditions,neumannConditions,err,error,*999)
-    IF(ASSOCIATED(neumannConditions)) THEN
-      NULLIFY(rhsVariable)
-      CALL BoundaryConditionsVariable_FieldVariableGet(rhsBoundaryConditions,rhsVariable,err,error,*999)
-      NULLIFY(rhsField)
-      CALL FieldVariable_FieldGet(rhsVariable,rhsField,err,error,*999)
-      CALL Field_ScalingTypeGet(rhsField,rhsScalingType,err,error,*999)
-      NULLIFY(geometricField)
-      CALL Field_GeometricGeneralFieldGet(rhsField,geometricField,dependentGeometry,err,error,*999)
-      NULLIFY(geometricVariable)
-      CALL Field_FieldVariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
-
-      CALL DistributedMatrix_AllValuesSet(neumannConditions%integrationMatrix,0.0_DP,err,error,*999)
-
-      numberOfNeumann=rhsBoundaryConditions%dofCounts(BOUNDARY_CONDITION_NEUMANN_POINT) + &
-        & rhsBoundaryConditions%dofCounts(BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED)
-
-      NULLIFY(decomposition)
-      CALL Field_DecompositionGet(rhsField,decomposition,err,error,*999)
-      NULLIFY(workGroup)
-      CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
-      CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupNodeNumber,err,error,*999)
-
-      ! Initialise field interpolation parameters for the geometric field, which are required for the
-      ! face/line Jacobian and scale factors
-      NULLIFY(interpolationParameters)
-      CALL FieldVariable_InterpolationParametersInitialise(geometricVariable,interpolationParameters,err,error,*999)
-      NULLIFY(scalingParameters)
-      CALL FieldVariable_InterpolationParametersInitialise(rhsVariable,scalingParameters,err,error,*999)
-      NULLIFY(interpolatedPoint)
-      CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
-      NULLIFY(interpolatedPointMetrics)
-      CALL Field_InterpolatedPointMetricsInitialise(interpolatedPoint,interpolatedPointMetrics,err,error,*999)
-
-      ! Loop over all Neumann point DOFs, finding the boundary lines or faces they are on
-      ! and integrating over them
-      NULLIFY(rhsDomainMapping)
-      CALL FieldVariable_DomainMappingGet(rhsVariable,rhsDomainMapping,err,error,*999)
-      DO neumannDOFIdx=1,numberOfNeumann
-        neumannGlobalDOF=neumannConditions%setDofs(neumannDOFIdx)
-        CALL DomainMapping_DomainNumberFromGlobalGet(rhsDomainMapping,neumannGlobalDOF,1,domainNumber,err,error,*999)
-        IF(domainNumber==myGroupNodeNumber) THEN
-          CALL DomainMapping_LocalNumberFromGlobalGet(rhsDomainMapping,neumannGlobalDOF,1,neumannLocalDOF,err,error,*999)
-          !Get Neumann DOF component and topology for that component
-          CALL FieldVariable_DOFTypeGet(rhsVariable,neumannLocalDOF,dofType,dofTypeIdx,err,error,*999)
-          SELECT CASE(dofType)
-          CASE(FIELD_CONSTANT_INTERPOLATION)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(FIELD_NODE_BASED_INTERPOLATION)
-            CALL FieldVariable_DOFParametersGetNode(rhsVariable,dofTypeIdx,versionNumber,derivativeNumber,neumannNodeNumber, &
-              & componentNumber,err,error,*999)
-          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The DOF type of "//TRIM(NumberToVString(dofType,"*",err,error))// &
-              & " for local DOF "//TRIM(NumberToVString(localDOF,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-          NULLIFY(domain)
-          CALL FieldVariable_ComponentDomainGet(rhsVariable,componentNumber,domain,err,error,*999)
-          CALL Domain_NumberOfDimensionsGet(domain,numberOfDimensions,err,error,*999)
-          NULLIFY(domainTopology)
-          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-          CALL FieldVariable_ComponentInterpolationTypeGet(rhsVariable,componentNumber,interpolationType,err,error,*999)
-          NULLIFY(decomposition)
-          CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
-          SELECT CASE(interpolationType)
-          CASE(FIELD_CONSTANT_INTERPOLATION)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(FIELD_NODE_BASED_INTERPOLATION)
-            NULLIFY(domainNodes)
-            CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-            SELECT CASE(numberOfDimensions)
-            CASE(1)
-              CALL DistributedMatrix_ValuesSet(neumannConditions%integrationMatrix,neumannLocalDof,neumannDofIdx,1.0_DP, &
-                & err,error,*999)
-            CASE(2)
-              CALL Decomposition_CalculateLinesGet(decomposition,calculateLines,err,error,*999)
-              IF(.NOT.calculateLines) CALL FlagError("Decomposition does not have lines calculated.",err,error,*999)
-              NULLIFY(domainLines)
-              CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
-              CALL DomainNodes_NodeNumberOfLinesGet(domainNodes,neumannNodeNumber,numberOfNodeLines,err,error,*999)
-              linesLoop: DO lineIdx=1,numberOfNodeLines
-                CALL DomainNodes_NodeLineNumberGet(domainNodes,lineIdx,nodeNumber,lineNumber,err,error,*999)
-                CALL DomainLines_LineBoundaryLineGet(domainLines,lineNumber,boundaryLine,err,error,*999)
-               IF(.NOT.boundaryLine) CYCLE linesLoop
-                CALL DomainLines_LineBasisGet(domainLines,lineNumber,basis,err,error,*999)
-                CALL Basis_NumberOfNodesGet(basis,numberOfNodes,err,error,*999)
-                neumannLocalNodeNumber=0
-                neumannLocalDerivNumber=0
-                ! Check all nodes in line to find the local numbers for the Neumann DOF, and
-                ! make sure we don't have an integrated_only condition set on the line
-                DO nodeIdx=1,numberOfNodes
-                  CALL DomainLines_LineNodeNumberGet(domainLines,nodeIdx,lineNumber,nodeNumber,err,error,*999)
-                  CALL Basis_NumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-                  DO derivIdx=1,numberOfNodeDerivatives
-                    CALL DomainLines_DerivativeGlobalIndexGet(domainLines,derivIdx,nodeIdx,lineNumber,derivativeNumber, &
-                      & err,error,*999)
-                    CALL DomainLines_DerivativeVersionNumberGet(domainLines,derivIdx,nodeIdx,lineNumber,versionNumber, &
-                      & err,error,*999)
-                    CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
-                      & componentNumber,localDOF,err,error,*999)
-                    CALL DomainMappings_LocalToGlobalGet(rhsDomainMapping,localDOF,globalDOF,err,error,*999)
-                    IF(globalDOF==neumannGlobalDOF) THEN
-                      neumannLocalNodeNumber=nodeIdx
-                      neumannLocalDerivNumber=derivIdx
-                    ELSE IF(rhsBoundaryConditions%conditionTypes(globalDof)==BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY) THEN
-                      CYCLE linesLoop
-                    ENDIF
-                  ENDDO !derivIdx
-                ENDDO !nodeIdx
-                IF(neumannLocalNodeNumber==0) THEN
-                  CALL FlagError("Could not find local Neumann node and derivative numbers in line.",err,error,*999)
-                END IF
-
-                ! Now perform actual integration
-                NULLIFY(quadratureScheme)
-                CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
-                CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
-                CALL Field_InterpolationParametersLineGet(FIELD_VALUES_SET_TYPE,lineNumber,interpolationParameters, &
-                  & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                IF(rhsScalingType/=FIELD_NO_SCALING) &
-                  & CALL Field_InterpolationParametersScaleFactorsLineGet(lineNumber,scalingParameters,err,error,*999)
- 
-                DO nodeIdx=1,numberOfNodes
-                  CALL DomainLines_LineNodeNumberGet(domainLines,nodeIdx,lineNumber,nodeNumber,err,error,*999)
-                  CALL Basis_NumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-                  DO derivIdx=1,numberOfNodeDerivatives
-                    CALL DomainLines_DerivativeGlobalIndexGet(domainLines,derivIdx,nodeIdx,lineNumber,derivativeNumber, &
-                      & err,error,*999)
-                    CALL DomainLines_DerivativeVersionNumberGet(domainLines,derivIdx,nodeIdx,lineNumber,versionNumber, &
-                      & err,error,*999)
-                    CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
-                      & componentNumber,localDOF,err,error,*999)
-                    CALL Basis_ElementParameterGet(basis,derivIdx,nodeIdx,rowElementParameterIdx,err,error,*999)
-                    CALL Basis_ElementParameterGet(basis,neumannLocalDerivNumber,neumannLocalNodeNumber, &
-                      & columnElementParameterIdx,err,error,*999)
-
-                    integratedValue=0.0_DP
-                    
-                    ! Loop over line gauss points, adding gauss weighted terms to the integral
-                    DO gaussIdx=1,numberOfGauss
-                      CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx,interpolatedPoint, &
-                        & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                      CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_LINE_TYPE,interpolatedPointMetrics, &
-                        & err,error,*999)
-
-                      CALL BasisQuadratureScheme_GaussWeightGet(quadratureScheme,gaussIdx,gaussWeight,err,error,*999)
-                      CALL FieldInterpolatedPointMetrics_JacobianGet(interpolatedPointMetrics,jacobian,err,error,*999)
-
-                      !Get basis function values at guass points
-                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-                        & gaussIdx,rowPhi,err,error,*999)
-                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
-                        & gaussIdx,columnPhi,err,error,*999)
-                      
-                      !Add gauss point value to total line integral
-                      integratedValue=integratedValue+rowPhi*columnPhi*gaussWeight*jacobian
-                      
-                    ENDDO !gaussIdx
-
-                    !Multiply by scale factors for dependent variable
-                    IF(rhsScalingType/=FIELD_NO_SCALING) THEN
-                      integratedValue=integratedValue* &
-                        & scalingParameters%scaleFactors(rowElementParameterIdx,componentNumber)* &
-                        & scalingParameters%scaleFactors(columnElementParameterIdx,componentNumber)
-                    ENDIF
-
-                    !Add integral term to N matrix
-                    CALL DistributedMatrix_ValuesAdd(neumannConditions%integrationMatrix,localDOF,neumannDOFIdx, &
-                      & integratedValue,err,error,*999)
-                    
-                  ENDDO !derivIdx
-                ENDDO !nodeIdx
-              ENDDO linesLoop
-            CASE(3)
-              CALL Decomposition_CalculateFacesGet(decomposition,calculateFaces,err,error,*999)
-              IF(.NOT.calculateFaces) CALL FlagError("Decomposition does not have faces calculated.",err,error,*999)
-              NULLIFY(domainFaces)
-              CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
-              CALL DomainNodes_NodeNumberOfFacesGet(domainNodes,neumannNodeNumber,numberOfNodeFaces,err,error,*999)
-              facesLoop: DO faceIdx=1,numberOfNodeFaces
-                CALL DomainNodes_NodeFaceNumberGet(domainNodes,faceIdx,neumannNodeNumber,faceNumber,err,error,*999)
-                CALL DomainFaces_FaceBoundaryFaceGet(domainFaces,faceNumber,boundaryface,err,error,*999)
-                IF(.NOT.boundaryFace) CYCLE
-                NULLIFY(basis)
-                CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,basis,err,error,*999)
-                CALL Basis_NumberOfNodesGet(basis,numberOfNodes,err,error,*999)
-                neumannLocalNodeNumber=0
-                neumannLocalDerivNumber=0
-                ! Check all nodes in the face to find the local numbers for the Neumann DOF, and
-                ! make sure we don't have an integrated_only condition set on the face
-                DO nodeIdx=1,numberOfNodes
-                  CALL DomainFaces_FaceNodeNumberGet(domainFaces,nodeIdx,faceNumber,nodeNumber,err,error,*999)
-                  CALL Basis_NumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-                  DO derivIdx=1,numberOfNodeDerivatives
-                    CALL DomainFaces_DerivativeGlobalIndexGet(domainFaces,derivIdx,nodeIdx,faceNumber,derivativeNumber, &
-                      & err,error,*999)
-                    CALL DomainFaces_DerivativeVersionNumberGet(domainFaces,derivIdx,nodeIdx,lineNumber,versionNumber, &
-                      & err,error,*999)
-                    CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
-                      & componentNumber,localDOF,err,error,*999)
-                    CALL DomainMappings_LocalToGlobalGet(rhsDomainMapping,localDOF,globalDOF,err,error,*999)
-                   IF(globalDOF==neumannGlobalDOF) THEN
-                      neumannLocalNodeNumber=nodeIdx
-                      neumannLocalDerivNumber=derivIdx
-                    ELSE IF(rhsBoundaryConditions%conditionTypes(globalDOF)==BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY) THEN
-                      CYCLE facesLoop
-                    ENDIF
-                  ENDDO !derivIdx
-                ENDDO !nodeIdx
-                IF(neumannLocalNodeNumber==0) &
-                  & CALL FlagError("Could not find local Neumann node and derivative numbers in line.",err,error,*999)
-
-                ! Now perform actual integration
-                NULLIFY(quadratureScheme)
-                CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
-                CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
-                CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,faceNumber,interpolationParameters, &
-                  & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                IF(rhsScalingType/=FIELD_NO_SCALING) &
-                  & CALL Field_InterpolationParametersScaleFactorsFaceGet(faceNumber,scalingParameters,err,error,*999)
-
-                DO nodeIdx=1,numberOfNodes
-                  CALL DomainFaces_FaceNodeNumberGet(domainFaces,nodeIdx,faceNumber,nodeNumber,err,error,*999)
-                  CALL Basis_NumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-                  DO derivIdx=1,numberOfNodeDerivatives
-                    CALL DomainFaces_DerivativeGlobalIndexGet(domainFaces,derivIdx,nodeIdx,faceNumber,derivativeNumber, &
-                      & err,error,*999)
-                    CALL DomainFaces_DerivativeVersionNumberGet(domainFaces,derivIdx,nodeIdx,lineNumber,versionNumber, &
-                      & err,error,*999)
-                    CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
-                      & componentNumber,localDOF,err,error,*999)
- 
-                    CALL Basis_ElementParameterGet(basis,derivIdx,nodeIdx,rowElementParameterIdx,err,error,*999)
-                    CALL Basis_ElementParameterGet(basis,neumannLocalDerivNumber,neumannLocalNodeNumber, &
-                      & columnElementParameterIdx,err,error,*999)
- 
-                    integratedValue=0.0_DP
-                    ! Loop over line gauss points, adding gauss weighted terms to the integral
-                    DO gaussIdx=1,numberOfGauss
-                      CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx,interpolatedPoint, &
-                        & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                      CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_AREA_TYPE,interpolatedPointMetrics, &
-                        & err,error,*999)
-
-                      CALL BasisQuadratureScheme_GaussWeightGet(quadratureScheme,gaussIdx,gaussWeight,err,error,*999)
-                      CALL FieldInterpolatedPointMetrics_JacobianGet(interpolatedPointMetrics,jacobian,err,error,*999)
-
-                      !Get basis function values at guass points
-                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-                        & gaussIdx,rowPhi,err,error,*999)
-                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
-                        & gaussIdx,columnPhi,err,error,*999)
- 
-                      !Add gauss point value to total line integral
-                      integratedValue=integratedValue+rowPhi*columnPhi*gaussWeight*jacobian
-                      
-                    ENDDO !gaussIdx
-
-                    ! Multiply by scale factors
-                    IF(rhsScalingType/=FIELD_NO_SCALING) THEN
-                      integratedValue=integratedValue* &
-                        & scalingParameters%scaleFactors(rowElementParameterIdx,componentNumber)* &
-                        & scalingParameters%scaleFactors(columnElementParameterIdx,componentNumber)
-                    ENDIF
-
-                    ! Add integral term to N matrix
-                    CALL DistributedMatrix_ValuesAdd(neumannConditions%integrationMatrix,localDOF,neumannDOFIdx, &
-                      & integratedValue,err,error,*999)
-                  ENDDO !derivIdx
-                ENDDO !nodeIdx
-              ENDDO facesLoop
-            CASE DEFAULT
-              CALL FlagError("The dimension is invalid for point Neumann conditions.",err,error,*999)
-            END SELECT
-          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The interpolation type of "//TRIM(NumberToVString(interpolationType,"*",err,error))// &
-              & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))//"."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        ENDIF
-      ENDDO !neumannDOFIdx
-
-      CALL DistributedMatrix_UpdateStart(neumannConditions%integrationMatrix,err,error,*999)
-      CALL DistributedMatrix_UpdateFinish(neumannConditions%integrationMatrix,err,error,*999)
-      
-      CALL FieldVariable_ParameterSetVectorGet(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,integratedValues,err,error,*999)
-      CALL DistributedVector_AllValuesSet(integratedValues,0.0_DP,err,error,*999)
-      ! Perform matrix multiplication, f = N q, to calculate force vector from integration matrix and point values
-      CALL DistributedMatrix_MatrixByVectorAdd(neumannConditions%integrationMatrix,.FALSE.,neumannConditions%pointValues, &
-        & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP,integratedValues,err,error,*999)
-
-
-      CALL FieldVariable_ParameterSetUpdateStart(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,err,error,*999)
-      
-      IF(diagnostics1) THEN
-        IF(dependentGeometry) THEN
-          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Using dependent field geometry",err,error,*999)
-        ELSE
-          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Using undeformed geometry",err,error,*999)
-        END IF
-        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNeumann,6,6,neumannConditions%setDofs, &
-          & '("  setDofs:",6(X,I8))', '(10X,6(X,I8))',err,error,*999)
-        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Neumann point values",err,error,*999)
-        CALL DistributedVector_Output(DIAGNOSTIC_OUTPUT_TYPE,neumannConditions%pointValues,err,error,*999)
-        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Neumann integration matrix",err,error,*999)
-        CALL DistributedMatrix_Output(DIAGNOSTIC_OUTPUT_TYPE,neumannConditions%integrationMatrix,err,error,*999)
-        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Integrated values",err,error,*999)
-        CALL DistributedVector_Output(DIAGNOSTIC_OUTPUT_TYPE,integratedValues,err,error,*999)
-      END IF
-      
-      CALL FieldVariable_ParameterSetUpdateFinish(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,err,error,*999)
-
-    ENDIF !Neumann conditions associated
-
-    EXITS("BoundaryConditions_NeumannIntegrate")
-    RETURN
-999 ERRORSEXITS("BoundaryConditions_NeumannIntegrate",err,error)
-    RETURN 1
-    
-  END SUBROUTINE BoundaryConditions_NeumannIntegrate
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the sparsity type for the Neumann integration matrices
   SUBROUTINE BoundaryConditions_NeumannSparsityTypeSet(boundaryConditions,sparsityType,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: sparsityType !<The matrix sparsity type to be set \see SolverRoutines_SparsityTypes,SolverRoutines
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The matrix sparsity type to be set \see SolverRoutines_EquationsSparsityTypes,SolverRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2351,7 +1979,7 @@ MODULE BoundaryConditionsRoutines
       NULLIFY(boundaryConditionsRowVariable)
       CALL BoundaryConditions_RowVariableIndexGet(boundaryConditions,rowVariableIdx,boundaryConditionsRowVariable,err,error,*999)
       NULLIFY(matchVariable)
-      CALL BoundaryConditionsRowVariable_FieldVariableGet(boundaryConditionsRowVariable,matchVariable,err,error,*999)
+      CALL BoundaryConditionsRowVariable_LHSVariableGet(boundaryConditionsRowVariable,matchVariable,err,error,*999)
       CALL FieldVariable_VariableTypeGet(matchVariable,matchVariableType,err,error,*999)
       NULLIFY(matchVariableField)
       CALL FieldVariable_FieldGet(matchVariable,matchVariableField,err,error,*999)
@@ -2493,8 +2121,8 @@ MODULE BoundaryConditionsRoutines
       boundaryConditionsRowVariable%boundaryConditions=>boundaryConditions
       boundaryConditionsRowVariable%lhsVariable=>lhsVariable
       boundaryConditionsRowVariable%rhsVariable=>rhsVariable
-      CALL FieldVariable_NumberOfDofsGet(lhsVariable,numberOfDOFs,err,error,*999)
-      CALL FieldVariable_TotalNumberOfDofsGet(lhsVariable,totalNumberOfDOFs,err,error,*999)
+      CALL FieldVariable_NumberOfDOFsGet(lhsVariable,numberOfDOFs,err,error,*999)
+      CALL FieldVariable_TotalNumberOfDOFsGet(lhsVariable,totalNumberOfDOFs,err,error,*999)
       ALLOCATE(boundaryConditionsRowVariable%rowConditionTypes(totalNumberOfDOFs),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate row condition types.",err,error,*999)
       boundaryConditionsRowVariable%rowConditionTypes=BOUNDARY_CONDITION_FREE_ROW
@@ -2506,7 +2134,7 @@ MODULE BoundaryConditionsRoutines
 
     EXITS("BoundaryConditions_RowVariableAdd")
     RETURN
-999 CALL BoundaryConditionRowVariable_Finalise(boundaryConditionsRowVariable,dummyErr,dummyError,*998)
+999 CALL BoundaryConditionsRowVariable_Finalise(boundaryConditionsRowVariable,dummyErr,dummyError,*998)
     IF(ALLOCATED(newBoundaryConditionsRowVariables)) DEALLOCATE(newBoundaryConditionsRowVariables)
 998 ERRORSEXITS("BoundaryConditions_RowVariableAdd",err,error)
     RETURN 1
@@ -2569,7 +2197,7 @@ MODULE BoundaryConditionsRoutines
 
     !Note: This routine is for constant interpolation
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
-    CALL FieldVariable_ComponentDOFGetConstant(fieldVariable,componentNumber,localDOF,globalDOF,err,error,*999)
+    CALL FieldVariable_ConstantDOFGet(fieldVariable,componentNumber,localDOF,err,error,*999)
     NULLIFY(boundaryConditionsVariable)
     CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
@@ -2636,14 +2264,15 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: localDOF,globalDOF
+    INTEGER(INTG) :: localDOF
+    LOGICAL :: ghostDOF
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
 
     ENTERS("BoundaryConditions_SetElementVariable",err,error,*999)
 
     !Note: this routine is for element based interpolation
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
-    CALL FieldVariable_ComponentDOFGetUserElement(fieldVariable,userElementNumber,componentNumber,localDOF,globalDOF,err,error,*999)
+    CALL FieldVariable_UserElementDOFGet(fieldVariable,userElementNumber,componentNumber,localDOF,ghostDOF,err,error,*999)
     NULLIFY(boundaryConditionsVariable)
     CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
@@ -2889,38 +2518,6 @@ MODULE BoundaryConditionsRoutines
   !================================================================================================================================
   !
 
-  !>Initialise Sparsity Indices type
-  SUBROUTINE BoundaryConditions_SparsityIndicesInitialise(sparsityIndices,numberOfDirichlet,err,error,*)
-
-    !Argument variables
-    TYPE(BoundaryConditionsSparsityIndicesType), POINTER :: sparsityIndices !<A pointer to the Sparsity Indices type tp initialise
-    INTEGER(INTG), INTENT(IN) :: numberOfDirichlet !<The number of dirichlet conditions this sparsity indices type will hold
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("BoundaryConditions_SparsityIndicesInitialise",err,error,*999)
-
-    IF(ASSOCIATED(sparsityIndices)) CALL FlagError("Sparsity Indices are already associated.",err,error,*999)
-   
-    ALLOCATE(sparsityIndices,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate sparsity indicies.",err,error,*999)
-    ALLOCATE(sparsityIndices%sparseColumnIndices(numberOfDirichlet+1),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate sparsity column indices array",err,error,*999)
-
-    EXITS("BoundaryConditions_SparsityIndicesInitialise")
-    RETURN
-!!TODO \todo write BoundaryConditions_SparsityIndicesFinalise
-999 ERRORS("BoundaryConditions_SparsityIndicesInitialise",err,error)
-    EXITS("BoundaryConditions_SparsityIndicesInitialise")
-    RETURN 1
-
-  END SUBROUTINE BoundaryConditions_SparsityIndicesInitialise
-
-  !
-  !================================================================================================================================
-  !
-
   !>Finalise the boundary conditions variable and deallocate all memory.
   SUBROUTINE BoundaryCondition_VariableFinalise(boundaryConditionsVariable,err,error,*)
 
@@ -2929,7 +2526,6 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(BoundaryConditionsDirichletType), POINTER :: boundaryConditionsDirichlet
 
     ENTERS("BoundaryCondition_VariableFinalise",err,error,*999)
 
@@ -2937,17 +2533,19 @@ MODULE BoundaryConditionsRoutines
       IF(ALLOCATED(boundaryConditionsVariable%conditionTypes)) DEALLOCATE(boundaryConditionsVariable%conditionTypes)
       IF(ALLOCATED(boundaryConditionsVariable%DOFTypes)) DEALLOCATE(boundaryConditionsVariable%DOFTypes)
       IF(ASSOCIATED(boundaryConditionsVariable%dirichletBoundaryConditions)) THEN
-        boundaryConditionsDirichlet=>boundaryConditionsVariable%dirichletBoundaryConditions
-        CALL BoundaryConditions_SparsityIndicesArrayFinalise(boundaryConditionsDirichlet%linearSparsityIndices,err,error,*999)
-        CALL BoundaryConditions_SparsityIndicesArrayFinalise(boundaryConditionsDirichlet%dynamicSparsityIndices,err,error,*999)
-        IF(ALLOCATED(boundaryConditionsDirichlet%dirichletDOFIndices)) DEALLOCATE(boundaryConditionsDirichlet%dirichletDOFIndices)
-        DEALLOCATE(boundaryConditionsDirichlet)
+        CALL BoundaryConditionsSparsityIndices_ArrayFinalise(boundaryConditionsVariable%dirichletBoundaryConditions% &
+          & linearSparsityIndices,err,error,*999)
+        CALL BoundaryConditionsSparsityIndices_ArrayFinalise(boundaryConditionsVariable%dirichletBoundaryConditions% &
+          & dynamicSparsityIndices,err,error,*999)
+        IF(ALLOCATED(boundaryConditionsVariable%dirichletBoundaryConditions%dirichletDOFIndices)) &
+          & DEALLOCATE(boundaryConditionsVariable%dirichletBoundaryConditions%dirichletDOFIndices)
+        DEALLOCATE(boundaryConditionsVariable%dirichletBoundaryConditions)
       ENDIF
-      CALL BoundaryConditions_NeumannFinalise(boundaryConditionsVariable%neumannBoundaryConditions,err,error,*999)
+      CALL BoundaryConditionsVariable_NeumannFinalise(boundaryConditionsVariable%neumannBoundaryConditions,err,error,*999)
       IF(ASSOCIATED(boundaryConditionsVariable%pressureIncrementedBoundaryConditions)) &
         & DEALLOCATE(boundaryConditionsVariable%pressureIncrementedBoundaryConditions)
       IF(ASSOCIATED(boundaryConditionsVariable%dofConstraints)) THEN
-        CALL BoundaryConditions_DofConstraintsFinalise(boundaryConditionsVariable%dofConstraints,err,error,*999)
+        CALL BoundaryConditionsDOFConstraints_Finalise(boundaryConditionsVariable%dofConstraints,err,error,*999)
         DEALLOCATE(boundaryConditionsVariable%dofConstraints)
       END IF
       DEALLOCATE(boundaryConditionsVariable)
@@ -3036,7 +2634,7 @@ MODULE BoundaryConditionsRoutines
 
     EXITS("BoundaryConditions_VariableAdd")
     RETURN
-999 CALL BoundaryConditionVariable_Finalise(boundaryConditionsVariable,dummyErr,dummyError,*998)
+999 CALL BoundaryCondition_VariableFinalise(boundaryConditionsVariable,dummyErr,dummyError,*998)
     IF(ALLOCATED(newBoundaryConditionsVariables)) DEALLOCATE(newBoundaryConditionsVariables)
 998 ERRORSEXITS("BoundaryConditions_VariableAdd",err,error)
     RETURN 1
@@ -3463,8 +3061,8 @@ MODULE BoundaryConditionsRoutines
     ENTERS("BoundaryConditionsRowVariable_RowConditionSet",err,error,*999)
 
     NULLIFY(rowVariable)
-    CALL BoundaryConditionsRowVariable_VariableGet(boundaryConditionsRowVariable,rowVariable,err,error,*999)
-    CALL BoundaryConditionsRowVariable_RowConditionGet(boundaryConditionsRowVariable,dofIdx,currentRowCondition,err,error,*999)
+    CALL BoundaryConditionsRowVariable_LHSVariableGet(boundaryConditionsRowVariable,rowVariable,err,error,*999)
+    CALL BoundaryConditionsRowVariable_RowConditionTypeGet(boundaryConditionsRowVariable,dofIdx,currentRowCondition,err,error,*999)
 
     IF(rowCondition/=currentRowCondition) THEN
       !Check that the row boundary condition has not already been set.
@@ -3539,21 +3137,16 @@ MODULE BoundaryConditionsRoutines
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx, equationsMatrixIdx
-    TYPE(BoundaryConditionsSparsityIndicesType), POINTER :: sparsityIndices
 
     ENTERS("BoundaryConditionsSparsityIndices_ArrayFinalise",err,error,*999)
 
     IF(ALLOCATED(sparsityIndicesArray)) THEN
       DO equationsSetIdx=1,SIZE(sparsityIndicesArray,1)
         DO equationsMatrixIdx=1,SIZE(sparsityIndicesArray,2)
-          sparsityIndices=>sparsityIndicesArray(equationsSetIdx,equationsMatrixIdx)%ptr
-          IF(ASSOCIATED(sparsityIndices)) THEN
-            IF(ALLOCATED(sparsityIndices%sparseRowIndices)) DEALLOCATE(sparsityIndices%sparseRowIndices)
-            IF(ALLOCATED(sparsityIndices%sparseColumnIndices)) DEALLOCATE(sparsityIndices%sparseColumnIndices)
-            DEALLOCATE(sparsityIndices)
-          ENDIF
-        ENDDO
-      ENDDO
+          CALL BoundaryConditionsSparsityIndices_Finalise(sparsityIndicesArray(equationsSetIdx,equationsMatrixIdx)%ptr, &
+            & err,error,*999)
+        ENDDO !equationsMatrixIdx
+      ENDDO !equtionsSetIdx
       DEALLOCATE(sparsityIndicesArray)
     ENDIF
 
@@ -3565,6 +3158,69 @@ MODULE BoundaryConditionsRoutines
 
   END SUBROUTINE BoundaryConditionsSparsityIndices_ArrayFinalise
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the boundary condition sparsity indices and deallocates all memory
+  SUBROUTINE BoundaryConditionsSparsityIndices_Finalise(sparsityIndices,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsSparsityIndicesType), POINTER :: sparsityIndices !<A pointer to the sparsity indices to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("BoundaryConditionsSparsityIndices_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(sparsityIndices)) THEN
+      IF(ALLOCATED(sparsityIndices%sparseRowIndices)) DEALLOCATE(sparsityIndices%sparseRowIndices)
+      IF(ALLOCATED(sparsityIndices%sparseColumnIndices)) DEALLOCATE(sparsityIndices%sparseColumnIndices)
+      DEALLOCATE(sparsityIndices)
+    ENDIF
+    
+    EXITS("BoundaryConditionsSparsityIndices_Finalise")
+    RETURN
+999 ERRORS("BoundaryConditionsSparsityIndices_Finalise",err,error)
+    EXITS("BoundaryConditionsSparsityIndices_Finalise")
+    RETURN 1
+
+  END SUBROUTINE BoundaryConditionsSparsityIndices_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialise Sparsity Indices type
+  SUBROUTINE BoundaryConditionsSparsityIndices_Initialise(sparsityIndices,numberOfDirichlet,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsSparsityIndicesType), POINTER :: sparsityIndices !<A pointer to the Sparsity Indices type tp initialise
+    INTEGER(INTG), INTENT(IN) :: numberOfDirichlet !<The number of dirichlet conditions this sparsity indices type will hold
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("BoundaryConditionsSparsityIndices_Initialise",err,error,*998)
+
+    IF(ASSOCIATED(sparsityIndices)) CALL FlagError("Sparsity Indices are already associated.",err,error,*998)
+   
+    ALLOCATE(sparsityIndices,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate sparsity indicies.",err,error,*999)
+    ALLOCATE(sparsityIndices%sparseColumnIndices(numberOfDirichlet+1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate sparsity column indices array",err,error,*999)
+
+    EXITS("BoundaryConditionsSparsityIndices_Initialise")
+    RETURN
+999 CALL BoundaryConditionsSparsityIndices_Finalise(sparsityIndices,dummyErr,dummyError,*998)
+998 ERRORS("BoundaryConditionsSparsityIndices_Initialise",err,error)
+    EXITS("BoundaryConditionsSparsityIndices_Initialise")
+    RETURN 1
+
+  END SUBROUTINE BoundaryConditionsSparsityIndices_Initialise
+
   !
   !================================================================================================================================
   !
@@ -3711,8 +3367,8 @@ MODULE BoundaryConditionsRoutines
     ENTERS("BoundaryConditionsVariable_ConditionTypeSet",err,error,*999)
 
     NULLIFY(fieldVariable)
-    CALL BoundaryConditionsVariable_VariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
-    CALL FieldVariable_NumberOfGlobalGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
+    CALL BoundaryConditionsVariable_FieldVariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
+    CALL FieldVariable_NumberOfGlobalDOFsGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
     IF(globalDOF<1.OR.globalDOF>numberOfGlobalDOFs) THEN
       localError="The specified global DOF number of "//TRIM(NumberToVString(globalDOF,"*",err,error))// &
         & " is invalid. The global number should be >= 1 and <= "//TRIM(NumberToVString(numberOfGlobalDOFs,"*",err,error))//"."
@@ -3938,7 +3594,7 @@ MODULE BoundaryConditionsRoutines
       NULLIFY(dynamicMapping)
       CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
       IF(ASSOCIATED(dynamicMapping)) THEN
-        CALL EquationMappingDynamic_NumberOfDynamicMatricesGet(dynamicMapping,numberOfDynamicMatrices,err,error,*999)
+        CALL EquationsMappingDynamic_NumberOfDynamicMatricesGet(dynamicMapping,numberOfDynamicMatrices,err,error,*999)
         IF(numberOfDynamicMatrices>maxNumberOfDynamicMatrices) maxNumberOfDynamicMatrices=numberOfDynamicMatrices
       ENDIF
     ENDDO !equationsSetIdx
@@ -4001,7 +3657,7 @@ MODULE BoundaryConditionsRoutines
     NULLIFY(fieldVariable)
     CALL BoundaryConditionsVariable_FieldVariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
     NULLIFY(dofConstraints)
-    CALL BoundaryConditionsVariable_DOFContraintsGet(boundaryConditionsVariable,dofConstraints,err,error,*999)
+    CALL BoundaryConditionsVariable_DOFConstraintsGet(boundaryConditionsVariable,dofConstraints,err,error,*999)
 
     NULLIFY(variableDomainMapping)
     CALL FieldVariable_DomainMappingGet(fieldVariable,variableDomainMapping,err,error,*999)
@@ -4106,7 +3762,7 @@ MODULE BoundaryConditionsRoutines
 999 IF(ALLOCATED(newCoupledGlobalDofs)) DEALLOCATE(newCoupledGlobalDofs)
     IF(ALLOCATED(newCoupledLocalDofs)) DEALLOCATE(newCoupledLocalDofs)
     IF(ALLOCATED(newCoefficients)) DEALLOCATE(newCoefficients)
-    CALL BoundaryConditions_DofConstraintsFinalise(dofConstraints,err,error,*998)
+    CALL BoundaryConditionsDOFConstraints_Finalise(dofConstraints,err,error,*998)
 998 ERRORS("BoundaryConditionsVariable_DOFConstraintsCreateFinish",err,error)
     EXITS("BoundaryConditionsVariable_DOFConstraintsCreateFinish")
     RETURN 1
@@ -4134,8 +3790,8 @@ MODULE BoundaryConditionsRoutines
     ENTERS("BoundaryConditionsVariable_DOFTypeSet",err,error,*999)
 
     NULLIFY(fieldVariable)
-    CALL BoundaryConditionsVariable_VariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
-    CALL FieldVariable_NumberOfGlobalGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
+    CALL BoundaryConditionsVariable_FieldVariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
+    CALL FieldVariable_NumberOfGlobalDOFsGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
     IF(globalDOF<1.OR.globalDOF>numberOfGlobalDOFs) THEN
       localError="The specified global DOF number of "//TRIM(NumberToVString(globalDOF,"*",err,error))// &
         & " is invalid. The global number should be >= 1 and <= "//TRIM(NumberToVString(numberOfGlobalDOFs,"*",err,error))//"."
@@ -4200,10 +3856,10 @@ MODULE BoundaryConditionsRoutines
     IF(ASSOCIATED(boundaryConditionsVariable)) THEN
       IF(ALLOCATED(boundaryConditionsVariable%dofTypes)) DEALLOCATE(boundaryConditionsVariable%dofTypes)
       IF(ALLOCATED(boundaryConditionsVariable%conditionTypes)) DEALLOCATE(boundaryConditionsVariable%conditionTypes)
-      CALL BoundaryConditionsDirichlet_Finalise(boundaryConditionsVariable%dirichletBoundaryConditions,err,error,*999)
-      CALL BoundaryConditionsNeumann_Finalise(boundaryConditionsVariable%neumannBoundaryConditions,err,error,*999)
-      CALL BoundaryConditionsPressureIncremented_Finalise(boundaryConditionsVariable%pressureIncrementedBoundaryConditions, &
-        & err,error,*999)
+      CALL BoundaryConditionsVariable_DirichletFinalise(boundaryConditionsVariable%dirichletBoundaryConditions,err,error,*999)
+      CALL BoundaryConditionsVariable_NeumannFinalise(boundaryConditionsVariable%neumannBoundaryConditions,err,error,*999)
+      CALL BoundaryConditionsVariable_PressureIncrementedFinalise(boundaryConditionsVariable% &
+        & pressureIncrementedBoundaryConditions,err,error,*999)
       IF(ALLOCATED(boundaryConditionsVariable%dofCounts)) DEALLOCATE(boundaryConditionsVariable%dofCounts)
       IF(ALLOCATED(boundaryConditionsVariable%parameterSetRequired)) DEALLOCATE(boundaryConditionsVariable%parameterSetRequired)
       CALL BoundaryConditionsDOFConstraints_Finalise(boundaryConditionsVariable%dofConstraints,err,error,*999)
@@ -4274,7 +3930,7 @@ MODULE BoundaryConditionsRoutines
 
     IF(ASSOCIATED(boundaryConditionsNeumann)) THEN
       IF(ALLOCATED(boundaryConditionsNeumann%setDOFs)) DEALLOCATE(boundaryConditionsNeumann%setDOFs)
-      CALL BoundaryConditions_NeumannMatricesFinalise(boundaryConditionsNeumann,err,error,*999)
+      CALL BoundaryConditionsVariable_NeumannMatricesFinalise(boundaryConditionsNeumann,err,error,*999)
       DEALLOCATE(boundaryConditionsNeumann)
     ENDIF
 
@@ -4334,6 +3990,382 @@ MODULE BoundaryConditionsRoutines
     RETURN 1
     
   END SUBROUTINE BoundaryConditionsVariable_NeumannInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates integrated Neumann condition values from point values for a boundary conditions variable and
+  !>updates the FIELD_INTEGRATED_NEUMANN_SET_TYPE parameter set for the field variable.
+  SUBROUTINE BoundaryConditionsVariable_NeumannIntegrate(rhsBoundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsVariableType), POINTER, INTENT(IN) :: rhsBoundaryConditions !<The boundary conditions for the right hand side field variable
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: columnElementParameterIdx,componentNumber,derivIdx,derivativeNumber,dofType,dofTypeIdx,domainNumber, &
+      & faceIdx,faceNumber,gaussIdx,globalDOF,interpolationType,lineIdx,localDOF,lineNumber,myGroupNodeNumber,neumannDOFIdx, &
+      & neumannGlobalDOF,neumannLocalDerivNumber,neumannLocalNodeNumber,neumannLocalDOF,neumannNodeNumber,nodeIdx,nodeNumber, &
+      & numberOfDimensions,numberOfGauss,numberOfNeumann,numberOfNodes,numberOfNodeDerivatives,numberOfNodeFaces, &
+      & numberOfNodeLines,rhsScalingType,rowElementParameterIdx,versionNumber
+    REAL(DP) :: columnPhi,gaussWeight,integratedValue,jacobian,rowPhi
+    LOGICAL :: boundaryFace,boundaryLine,calculateFaces,calculateLines,dependentGeometry
+    TYPE(BoundaryConditionsNeumannType), POINTER :: neumannConditions
+    TYPE(BasisType), POINTER :: basis
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DistributedVectorType), POINTER :: integratedValues
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainFacesType), POINTER :: domainFaces
+    TYPE(DomainLinesType), POINTER :: domainLines
+    TYPE(DomainMappingType), POINTER :: rhsDomainMapping
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(FieldType), POINTER :: geometricField,rhsField
+    TYPE(FieldVariableType), POINTER :: geometricVariable,rhsVariable
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: interpolatedPointMetrics
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
+    TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters,scalingParameters
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
+    TYPE(VARYING_STRING) :: localError
+    TYPE(WorkGroupType), POINTER :: workGroup
+
+    ENTERS("BoundaryConditionsVariable_NeumannIntegrate",err,error,*999)
+
+    !Check that Neumann conditions are associated, otherwise do nothing
+    NULLIFY(neumannConditions)
+    CALL BoundaryConditionsVariable_NeumannConditionsExists(rhsBoundaryConditions,neumannConditions,err,error,*999)
+    IF(ASSOCIATED(neumannConditions)) THEN
+      NULLIFY(rhsVariable)
+      CALL BoundaryConditionsVariable_FieldVariableGet(rhsBoundaryConditions,rhsVariable,err,error,*999)
+      NULLIFY(rhsField)
+      CALL FieldVariable_FieldGet(rhsVariable,rhsField,err,error,*999)
+      CALL Field_ScalingTypeGet(rhsField,rhsScalingType,err,error,*999)
+      NULLIFY(geometricField)
+      CALL Field_GeometricGeneralFieldGet(rhsField,geometricField,dependentGeometry,err,error,*999)
+      NULLIFY(geometricVariable)
+      CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+
+      CALL DistributedMatrix_AllValuesSet(neumannConditions%integrationMatrix,0.0_DP,err,error,*999)
+
+      numberOfNeumann=rhsBoundaryConditions%dofCounts(BOUNDARY_CONDITION_NEUMANN_POINT) + &
+        & rhsBoundaryConditions%dofCounts(BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED)
+
+      NULLIFY(decomposition)
+      CALL Field_DecompositionGet(rhsField,decomposition,err,error,*999)
+      NULLIFY(workGroup)
+      CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+      CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupNodeNumber,err,error,*999)
+
+      ! Initialise field interpolation parameters for the geometric field, which are required for the
+      ! face/line Jacobian and scale factors
+      NULLIFY(interpolationParameters)
+      CALL FieldVariable_InterpolationParameterInitialise(geometricVariable,interpolationParameters,err,error,*999)
+      NULLIFY(scalingParameters)
+      CALL FieldVariable_InterpolationParameterInitialise(rhsVariable,scalingParameters,err,error,*999)
+      NULLIFY(interpolatedPoint)
+      CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
+      NULLIFY(interpolatedPointMetrics)
+      CALL Field_InterpolatedPointMetricsInitialise(interpolatedPoint,interpolatedPointMetrics,err,error,*999)
+
+      ! Loop over all Neumann point DOFs, finding the boundary lines or faces they are on
+      ! and integrating over them
+      NULLIFY(rhsDomainMapping)
+      CALL FieldVariable_DomainMappingGet(rhsVariable,rhsDomainMapping,err,error,*999)
+      DO neumannDOFIdx=1,numberOfNeumann
+        neumannGlobalDOF=neumannConditions%setDofs(neumannDOFIdx)
+        CALL DomainMapping_DomainNumberFromGlobalGet(rhsDomainMapping,neumannGlobalDOF,1,domainNumber,err,error,*999)
+        IF(domainNumber==myGroupNodeNumber) THEN
+          CALL DomainMapping_LocalNumberFromGlobalGet(rhsDomainMapping,neumannGlobalDOF,1,neumannLocalDOF,err,error,*999)
+          !Get Neumann DOF component and topology for that component
+          CALL FieldVariable_DOFTypeGet(rhsVariable,neumannLocalDOF,dofType,dofTypeIdx,err,error,*999)
+          SELECT CASE(dofType)
+          CASE(FIELD_CONSTANT_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(FIELD_NODE_BASED_INTERPOLATION)
+            CALL FieldVariable_DOFParametersGetNode(rhsVariable,dofTypeIdx,versionNumber,derivativeNumber,neumannNodeNumber, &
+              & componentNumber,err,error,*999)
+          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The DOF type of "//TRIM(NumberToVString(dofType,"*",err,error))// &
+              & " for local DOF "//TRIM(NumberToVString(localDOF,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          NULLIFY(domain)
+          CALL FieldVariable_ComponentDomainGet(rhsVariable,componentNumber,domain,err,error,*999)
+          CALL Domain_NumberOfDimensionsGet(domain,numberOfDimensions,err,error,*999)
+          NULLIFY(domainTopology)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+          CALL FieldVariable_ComponentInterpolationGet(rhsVariable,componentNumber,interpolationType,err,error,*999)
+          NULLIFY(decomposition)
+          CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
+          SELECT CASE(interpolationType)
+          CASE(FIELD_CONSTANT_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(FIELD_NODE_BASED_INTERPOLATION)
+            NULLIFY(domainNodes)
+            CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+            SELECT CASE(numberOfDimensions)
+            CASE(1)
+              CALL DistributedMatrix_ValuesSet(neumannConditions%integrationMatrix,neumannLocalDof,neumannDofIdx,1.0_DP, &
+                & err,error,*999)
+            CASE(2)
+              CALL Decomposition_CalculateLinesGet(decomposition,calculateLines,err,error,*999)
+              IF(.NOT.calculateLines) CALL FlagError("Decomposition does not have lines calculated.",err,error,*999)
+              NULLIFY(domainLines)
+              CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
+              CALL DomainNodes_NodeNumberOfLinesGet(domainNodes,neumannNodeNumber,numberOfNodeLines,err,error,*999)
+              linesLoop: DO lineIdx=1,numberOfNodeLines
+                CALL DomainNodes_NodeLineNumberGet(domainNodes,lineIdx,nodeNumber,lineNumber,err,error,*999)
+                CALL DomainLines_LineBoundaryLineGet(domainLines,lineNumber,boundaryLine,err,error,*999)
+               IF(.NOT.boundaryLine) CYCLE linesLoop
+                CALL DomainLines_LineBasisGet(domainLines,lineNumber,basis,err,error,*999)
+                CALL Basis_NumberOfLocalNodesGet(basis,numberOfNodes,err,error,*999)
+                neumannLocalNodeNumber=0
+                neumannLocalDerivNumber=0
+                ! Check all nodes in line to find the local numbers for the Neumann DOF, and
+                ! make sure we don't have an integrated_only condition set on the line
+                DO nodeIdx=1,numberOfNodes
+                  CALL DomainLines_LineNodeNumberGet(domainLines,nodeIdx,lineNumber,nodeNumber,err,error,*999)
+                  CALL Basis_NodeNumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+                  DO derivIdx=1,numberOfNodeDerivatives
+                    CALL DomainLines_DerivativeGlobalIndexGet(domainLines,derivIdx,nodeIdx,lineNumber,derivativeNumber, &
+                      & err,error,*999)
+                    CALL DomainLines_DerivativeVersionNumberGet(domainLines,derivIdx,nodeIdx,lineNumber,versionNumber, &
+                      & err,error,*999)
+                    CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
+                      & componentNumber,localDOF,err,error,*999)
+                    CALL DomainMapping_LocalToGlobalGet(rhsDomainMapping,localDOF,globalDOF,err,error,*999)
+                    IF(globalDOF==neumannGlobalDOF) THEN
+                      neumannLocalNodeNumber=nodeIdx
+                      neumannLocalDerivNumber=derivIdx
+                    ELSE IF(rhsBoundaryConditions%conditionTypes(globalDof)==BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY) THEN
+                      CYCLE linesLoop
+                    ENDIF
+                  ENDDO !derivIdx
+                ENDDO !nodeIdx
+                IF(neumannLocalNodeNumber==0) THEN
+                  CALL FlagError("Could not find local Neumann node and derivative numbers in line.",err,error,*999)
+                END IF
+
+                ! Now perform actual integration
+                NULLIFY(quadratureScheme)
+                CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
+                CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
+                CALL Field_InterpolationParametersLineGet(FIELD_VALUES_SET_TYPE,lineNumber,interpolationParameters, &
+                  & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+                IF(rhsScalingType/=FIELD_NO_SCALING) &
+                  & CALL Field_InterpolationParametersScaleFactorsLineGet(lineNumber,scalingParameters,err,error,*999)
+ 
+                DO nodeIdx=1,numberOfNodes
+                  CALL DomainLines_LineNodeNumberGet(domainLines,nodeIdx,lineNumber,nodeNumber,err,error,*999)
+                  CALL Basis_NodeNumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+                  DO derivIdx=1,numberOfNodeDerivatives
+                    CALL DomainLines_DerivativeGlobalIndexGet(domainLines,derivIdx,nodeIdx,lineNumber,derivativeNumber, &
+                      & err,error,*999)
+                    CALL DomainLines_DerivativeVersionNumberGet(domainLines,derivIdx,nodeIdx,lineNumber,versionNumber, &
+                      & err,error,*999)
+                    CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
+                      & componentNumber,localDOF,err,error,*999)
+                    CALL Basis_ElementParameterGet(basis,derivIdx,nodeIdx,rowElementParameterIdx,err,error,*999)
+                    CALL Basis_ElementParameterGet(basis,neumannLocalDerivNumber,neumannLocalNodeNumber, &
+                      & columnElementParameterIdx,err,error,*999)
+
+                    integratedValue=0.0_DP
+                    
+                    ! Loop over line gauss points, adding gauss weighted terms to the integral
+                    DO gaussIdx=1,numberOfGauss
+                      CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx,interpolatedPoint, &
+                        & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+                      CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_LINE_TYPE,interpolatedPointMetrics, &
+                        & err,error,*999)
+
+                      CALL BasisQuadratureScheme_GaussWeightGet(quadratureScheme,gaussIdx,gaussWeight,err,error,*999)
+                      CALL FieldInterpolatedPointMetrics_JacobianGet(interpolatedPointMetrics,jacobian,err,error,*999)
+
+                      !Get basis function values at guass points
+                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
+                        & gaussIdx,rowPhi,err,error,*999)
+                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
+                        & gaussIdx,columnPhi,err,error,*999)
+                      
+                      !Add gauss point value to total line integral
+                      integratedValue=integratedValue+rowPhi*columnPhi*gaussWeight*jacobian
+                      
+                    ENDDO !gaussIdx
+
+                    !Multiply by scale factors for dependent variable
+                    IF(rhsScalingType/=FIELD_NO_SCALING) THEN
+                      integratedValue=integratedValue* &
+                        & scalingParameters%scaleFactors(rowElementParameterIdx,componentNumber)* &
+                        & scalingParameters%scaleFactors(columnElementParameterIdx,componentNumber)
+                    ENDIF
+
+                    !Add integral term to N matrix
+                    CALL DistributedMatrix_ValuesAdd(neumannConditions%integrationMatrix,localDOF,neumannDOFIdx, &
+                      & integratedValue,err,error,*999)
+                    
+                  ENDDO !derivIdx
+                ENDDO !nodeIdx
+              ENDDO linesLoop
+            CASE(3)
+              CALL Decomposition_CalculateFacesGet(decomposition,calculateFaces,err,error,*999)
+              IF(.NOT.calculateFaces) CALL FlagError("Decomposition does not have faces calculated.",err,error,*999)
+              NULLIFY(domainFaces)
+              CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
+              CALL DomainNodes_NodeNumberOfFacesGet(domainNodes,neumannNodeNumber,numberOfNodeFaces,err,error,*999)
+              facesLoop: DO faceIdx=1,numberOfNodeFaces
+                CALL DomainNodes_NodeFaceNumberGet(domainNodes,faceIdx,neumannNodeNumber,faceNumber,err,error,*999)
+                CALL DomainFaces_FaceBoundaryFaceGet(domainFaces,faceNumber,boundaryface,err,error,*999)
+                IF(.NOT.boundaryFace) CYCLE
+                NULLIFY(basis)
+                CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,basis,err,error,*999)
+                CALL Basis_NumberOfLocalNodesGet(basis,numberOfNodes,err,error,*999)
+                neumannLocalNodeNumber=0
+                neumannLocalDerivNumber=0
+                ! Check all nodes in the face to find the local numbers for the Neumann DOF, and
+                ! make sure we don't have an integrated_only condition set on the face
+                DO nodeIdx=1,numberOfNodes
+                  CALL DomainFaces_FaceNodeNumberGet(domainFaces,nodeIdx,faceNumber,nodeNumber,err,error,*999)
+                  CALL Basis_NodeNumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+                  DO derivIdx=1,numberOfNodeDerivatives
+                    CALL DomainFaces_DerivativeGlobalIndexGet(domainFaces,derivIdx,nodeIdx,faceNumber,derivativeNumber, &
+                      & err,error,*999)
+                    CALL DomainFaces_DerivativeVersionNumberGet(domainFaces,derivIdx,nodeIdx,lineNumber,versionNumber, &
+                      & err,error,*999)
+                    CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
+                      & componentNumber,localDOF,err,error,*999)
+                    CALL DomainMapping_LocalToGlobalGet(rhsDomainMapping,localDOF,globalDOF,err,error,*999)
+                   IF(globalDOF==neumannGlobalDOF) THEN
+                      neumannLocalNodeNumber=nodeIdx
+                      neumannLocalDerivNumber=derivIdx
+                    ELSE IF(rhsBoundaryConditions%conditionTypes(globalDOF)==BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY) THEN
+                      CYCLE facesLoop
+                    ENDIF
+                  ENDDO !derivIdx
+                ENDDO !nodeIdx
+                IF(neumannLocalNodeNumber==0) &
+                  & CALL FlagError("Could not find local Neumann node and derivative numbers in line.",err,error,*999)
+
+                ! Now perform actual integration
+                NULLIFY(quadratureScheme)
+                CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
+                CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
+                CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,faceNumber,interpolationParameters, &
+                  & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+                IF(rhsScalingType/=FIELD_NO_SCALING) &
+                  & CALL Field_InterpolationParametersScaleFactorsFaceGet(faceNumber,scalingParameters,err,error,*999)
+
+                DO nodeIdx=1,numberOfNodes
+                  CALL DomainFaces_FaceNodeNumberGet(domainFaces,nodeIdx,faceNumber,nodeNumber,err,error,*999)
+                  CALL Basis_NodeNumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+                  DO derivIdx=1,numberOfNodeDerivatives
+                    CALL DomainFaces_DerivativeGlobalIndexGet(domainFaces,derivIdx,nodeIdx,faceNumber,derivativeNumber, &
+                      & err,error,*999)
+                    CALL DomainFaces_DerivativeVersionNumberGet(domainFaces,derivIdx,nodeIdx,lineNumber,versionNumber, &
+                      & err,error,*999)
+                    CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
+                      & componentNumber,localDOF,err,error,*999)
+ 
+                    CALL Basis_ElementParameterGet(basis,derivIdx,nodeIdx,rowElementParameterIdx,err,error,*999)
+                    CALL Basis_ElementParameterGet(basis,neumannLocalDerivNumber,neumannLocalNodeNumber, &
+                      & columnElementParameterIdx,err,error,*999)
+ 
+                    integratedValue=0.0_DP
+                    ! Loop over line gauss points, adding gauss weighted terms to the integral
+                    DO gaussIdx=1,numberOfGauss
+                      CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx,interpolatedPoint, &
+                        & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+                      CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_AREA_TYPE,interpolatedPointMetrics, &
+                        & err,error,*999)
+
+                      CALL BasisQuadratureScheme_GaussWeightGet(quadratureScheme,gaussIdx,gaussWeight,err,error,*999)
+                      CALL FieldInterpolatedPointMetrics_JacobianGet(interpolatedPointMetrics,jacobian,err,error,*999)
+
+                      !Get basis function values at guass points
+                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
+                        & gaussIdx,rowPhi,err,error,*999)
+                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
+                        & gaussIdx,columnPhi,err,error,*999)
+ 
+                      !Add gauss point value to total line integral
+                      integratedValue=integratedValue+rowPhi*columnPhi*gaussWeight*jacobian
+                      
+                    ENDDO !gaussIdx
+
+                    ! Multiply by scale factors
+                    IF(rhsScalingType/=FIELD_NO_SCALING) THEN
+                      integratedValue=integratedValue* &
+                        & scalingParameters%scaleFactors(rowElementParameterIdx,componentNumber)* &
+                        & scalingParameters%scaleFactors(columnElementParameterIdx,componentNumber)
+                    ENDIF
+
+                    ! Add integral term to N matrix
+                    CALL DistributedMatrix_ValuesAdd(neumannConditions%integrationMatrix,localDOF,neumannDOFIdx, &
+                      & integratedValue,err,error,*999)
+                  ENDDO !derivIdx
+                ENDDO !nodeIdx
+              ENDDO facesLoop
+            CASE DEFAULT
+              CALL FlagError("The dimension is invalid for point Neumann conditions.",err,error,*999)
+            END SELECT
+          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The interpolation type of "//TRIM(NumberToVString(interpolationType,"*",err,error))// &
+              & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        ENDIF
+      ENDDO !neumannDOFIdx
+
+      CALL DistributedMatrix_UpdateStart(neumannConditions%integrationMatrix,err,error,*999)
+      CALL DistributedMatrix_UpdateFinish(neumannConditions%integrationMatrix,err,error,*999)
+      
+      CALL FieldVariable_ParameterSetVectorGet(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,integratedValues,err,error,*999)
+      CALL DistributedVector_AllValuesSet(integratedValues,0.0_DP,err,error,*999)
+      ! Perform matrix multiplication, f = N q, to calculate force vector from integration matrix and point values
+      CALL DistributedMatrix_MatrixByVectorAdd(neumannConditions%integrationMatrix,.FALSE.,neumannConditions%pointValues, &
+        & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP,integratedValues,err,error,*999)
+
+
+      CALL FieldVariable_ParameterSetUpdateStart(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,err,error,*999)
+      
+      IF(diagnostics1) THEN
+        IF(dependentGeometry) THEN
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Using dependent field geometry",err,error,*999)
+        ELSE
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Using undeformed geometry",err,error,*999)
+        END IF
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNeumann,6,6,neumannConditions%setDofs, &
+          & '("  setDofs:",6(X,I8))', '(10X,6(X,I8))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Neumann point values",err,error,*999)
+        CALL DistributedVector_Output(DIAGNOSTIC_OUTPUT_TYPE,neumannConditions%pointValues,err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Neumann integration matrix",err,error,*999)
+        CALL DistributedMatrix_Output(DIAGNOSTIC_OUTPUT_TYPE,neumannConditions%integrationMatrix,err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Integrated values",err,error,*999)
+        CALL DistributedVector_Output(DIAGNOSTIC_OUTPUT_TYPE,integratedValues,err,error,*999)
+      END IF
+      
+      CALL FieldVariable_ParameterSetUpdateFinish(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,err,error,*999)
+
+    ENDIF !Neumann conditions associated
+
+    EXITS("BoundaryConditionsVariable_NeumannIntegrate")
+    RETURN
+999 ERRORSEXITS("BoundaryConditionsVariable_NeumannIntegrate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_NeumannIntegrate
 
   !
   !================================================================================================================================
@@ -4538,7 +4570,7 @@ MODULE BoundaryConditionsRoutines
         CALL FieldVariable_ComponentDomainGet(fieldVariable,componentNumber,domain,err,error,*999)
         NULLIFY(domainTopology)
         CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-        CALL FieldVariable_ComponentInterpolationTypeGet(fieldVariable,componentNumber,interpolationType,err,error,*999)
+        CALL FieldVariable_ComponentInterpolationGet(fieldVariable,componentNumber,interpolationType,err,error,*999)
         SELECT CASE(interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
@@ -4579,10 +4611,10 @@ MODULE BoundaryConditionsRoutines
                 IF(.NOT.boundaryLine) CYCLE
                 NULLIFY(basis)
                 CALL DomainLines_LineBasisGet(domainLines,lineNumber,basis,err,error,*999)
-                CALL Basis_NumberOfNodesGet(basis,numberOfNodes,err,error,*999)
+                CALL Basis_NumberOfLocalNodesGet(basis,numberOfNodes,err,error,*999)
                 DO localNodeIdx=1,numberOfNodes
                   CALL DomainLines_LineNodeNumberGet(domainLines,nodeIdx,lineNumber,columnNodeNumber,err,error,*999)
-                  CALL Basis_NumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+                  CALL Basis_NodeNumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
                   DO derivIdx=1,numberOfNodeDerivatives
                     CALL DomainLines_DerivativeGlobalIndexGet(domainLines,derivIdx,nodeIdx,lineNumber,derivativeNumber, &
                       & err,error,*999)
@@ -4590,7 +4622,7 @@ MODULE BoundaryConditionsRoutines
                       & err,error,*999)
                     CALL FieldVariable_LocalNodeDOFGet(fieldVariable,versionNumber,derivativeNumber,columnNodeNumber, &
                       & componentNumber,columnDOF,err,error,*999)
-                    CALL DomainMappings_LocalToGlobalGet(rowsMapping,columnDOF,globalDOF,err,error,*999)
+                    CALL DomainMapping_LocalToGlobalGet(rowsMapping,columnDOF,globalDOF,err,error,*999)
                     IF(boundaryConditionsVariable%conditionTypes(globalDof)==BOUNDARY_CONDITION_NEUMANN_POINT.OR. &
                       & boundaryConditionsVariable%conditionTypes(globalDof)==BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) THEN
                       neumannConditionNumber=0
@@ -4618,10 +4650,10 @@ MODULE BoundaryConditionsRoutines
                 IF(.NOT.boundaryFace) CYCLE
                 NULLIFY(basis)
                 CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,basis,err,error,*999)
-                CALL Basis_NumberOfNodesGet(basis,numberOfNodes,err,error,*999)
+                CALL Basis_NumberOfLocalNodesGet(basis,numberOfNodes,err,error,*999)
                 DO nodeIdx=1,numberOfNodes
                   CALL DomainFaces_FaceNodeNumberGet(domainFaces,nodeIdx,faceNumber,columnNodeNumber,err,error,*999)
-                  CALL Basis_NumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+                  CALL Basis_NodeNumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
                   DO derivIdx=1,numberOfNodeDerivatives
                     CALL DomainFaces_DerivativeGlobalIndexGet(domainFaces,derivIdx,nodeIdx,faceNumber,derivativeNumber, &
                       & err,error,*999)
@@ -4629,7 +4661,7 @@ MODULE BoundaryConditionsRoutines
                       & err,error,*999)
                     CALL FieldVariable_LocalNodeDOFGet(fieldVariable,versionNumber,derivativeNumber,columnNodeNumber, &
                       & componentNumber,columnDOF,err,error,*999)
-                    CALL DomainMappings_LocalToGlobalGet(rowsMapping,columnDOF,globalDOF,err,error,*999)
+                    CALL DomainMapping_LocalToGlobalGet(rowsMapping,columnDOF,globalDOF,err,error,*999)
                     IF(boundaryConditionsVariable%conditionTypes(globalDOF)==BOUNDARY_CONDITION_NEUMANN_POINT.OR. &
                       & boundaryConditionsVariable%conditionTypes(globalDOF)==BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) THEN
                       neumannConditionNumber=0

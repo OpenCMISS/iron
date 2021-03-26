@@ -1155,7 +1155,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(domainMapping%domainList)) &
-      & CALL FlagEror("The domain list is not allocated for the domain mapping.",err,error,*999)
+      & CALL FlagError("The domain list is not allocated for the domain mapping.",err,error,*999)
 #endif    
 
     mappingNumber=domainMapping%domainList(mappingIdx)

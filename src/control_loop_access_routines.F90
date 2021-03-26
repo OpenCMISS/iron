@@ -149,9 +149,9 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC ControlLoop_ContinueLoopSet
 
-  PUBLIC ControlLoop_CurrentTimesGet
-
   PUBLIC ControlLoop_CurrentLoadIncrementInfoGet
+
+  PUBLIC ControlLoop_CurrentTimesGet
 
   PUBLIC ControlLoop_CurrentTimeInformationGet
 

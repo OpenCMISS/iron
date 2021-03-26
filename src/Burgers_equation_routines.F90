@@ -53,12 +53,14 @@ MODULE BurgersEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -70,9 +72,11 @@ MODULE BurgersEquationsRoutines
   USE Kinds
   USE MatrixVector
   USE ProblemAccessRoutines
+  USE RegionAccessRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Timer
   USE Types
 
@@ -161,7 +165,7 @@ CONTAINS
     CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
     CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
     NULLIFY(geometricParameters)
-    CALL FieldVarible_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
     NULLIFY(analyticVariable)
     NULLIFY(analyticParameters)
     IF(ASSOCIATED(analyticField)) THEN
@@ -191,7 +195,7 @@ CONTAINS
         NULLIFY(domainNodes)
         CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
         !Loop over the local nodes excluding the ghosts.
-        CALL DomainNode_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         DO nodeIdx=1,numberOfNodes
 !!TODO \todo We should interpolate the geometric field here and the node position.
           DO dimensionIdx=1,numberOfDimensions
@@ -1917,7 +1921,7 @@ CONTAINS
     END SELECT
     
     NULLIFY(equations)
-    CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
@@ -1989,7 +1993,7 @@ CONTAINS
       CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
       NULLIFY(colsQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(colsQuadratureScheme,numberOfGauss,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(colsQuadratureScheme,numberOfGauss,err,error,*999)
       
       NULLIFY(geometricInterpParameters)
       CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -2046,7 +2050,7 @@ CONTAINS
         ENDDO !componentIdx
         
         !Calculate jacobianGaussWeight.
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         
@@ -2236,7 +2240,7 @@ CONTAINS
     END SELECT
 
     NULLIFY(equations)
-    CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
@@ -2265,24 +2269,24 @@ CONTAINS
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_BURGERS_SUBTYPE, &
       & EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE)
-      CALL EquationsMapping_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
-      CALL EquationsMatrices_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
       CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffnessMatrix,err,error,*999)
       CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,2,dampingMatrix,err,error,*999)
-      updateStiffness=stiffnessMatrix%updateMatrix
-      updateDamping=dampingMatrix%updateMatrix
+      CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)
+      CALL EquationsMatrix_UpdateMatrixGet(dampingMatrix,updateDamping,err,error,*999)
     CASE(EQUATIONS_SET_STATIC_BURGERS_SUBTYPE)
       CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
-      CALL EquationsMappingVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+      CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
       CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)
-      updateStiffness=stiffnessMatrix%updateMatrix
+      CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)
       updateDamping=.FALSE.
     CASE(EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE)
-      CALL EquationsMapping_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
-      CALL EquationsMatrices_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
       CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,dampingMatrix,err,error,*999)
       updateStiffness=.FALSE.
-      updateDamping=dampingMatrix%updateMatrix
+      CALL EquationsMatrix_UpdateMatrixGet(dampingMatrix,updateDamping,err,error,*999)
     CASE DEFAULT
       localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
         & " is not valid for a BURGERS equation type of a fluid mechanics equations set class."
@@ -2290,7 +2294,7 @@ CONTAINS
     END SELECT
     NULLIFY(rhsVector)
     CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-    updateRHS=rhsVector%updateVector
+    CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
 
     updateMatrices=(updateStiffness.OR.updateDamping)
     update=(updateMatrices.OR.updateResidual.OR.updateRHS)
@@ -2343,7 +2347,7 @@ CONTAINS
       CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
       NULLIFY(colsQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(colsQuadratureScheme,numberOfGauss,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(colsQuadratureScheme,numberOfGauss,err,error,*999)
       
       NULLIFY(geometricInterpParameters)
       CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -2414,7 +2418,7 @@ CONTAINS
         
         !Calculate jacobianGaussWeight.      
 !!TODO: Think about symmetric problems.
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
          

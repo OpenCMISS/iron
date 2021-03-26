@@ -52,11 +52,13 @@ MODULE PoiseuilleEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -1024,7 +1026,7 @@ CONTAINS
       CASE(PROBLEM_SETUP_FINISH_ACTION)
         !Get the control loop
         NULLIFY(controlLoopRoot)
-        CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
         NULLIFY(controlLoop)
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
         !Get the solver equations

@@ -61,10 +61,11 @@ MODULE FluidMechanicsRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
-  USE StokesEquationsRoutines
   USE NavierStokesEquationsRoutines
   USE PoiseuilleEquationsRoutines
   USE ProblemAccessRoutines
+  USE StokesEquationsRoutines
+  USE SolverAccessRoutines
   USE Strings
   USE StreeEquationsRoutines
   USE Types

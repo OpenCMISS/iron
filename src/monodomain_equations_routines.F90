@@ -51,6 +51,7 @@ MODULE MonodomainEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
@@ -58,6 +59,7 @@ MODULE MonodomainEquationsRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -69,9 +71,11 @@ MODULE MonodomainEquationsRoutines
   USE Kinds
   USE MatrixVector
   USE ProblemAccessRoutines
+  USE RegionAccessRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Timer
   USE Types
 
@@ -523,7 +527,7 @@ CONTAINS
         ENDDO !componentIdx
             
         !Calculate weight = det J * gauss pt weight
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
 
@@ -984,7 +988,7 @@ CONTAINS
       ! M a t e r i a l s   f i e l d
       !-----------------------------------------------------------------
       NULLIFY(equationsMaterials)
-      CALL EquationsSet_EquationsMaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+      CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
@@ -1502,7 +1506,7 @@ CONTAINS
       CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,2,dampingMatrix,err,error,*999)
       CALL EquationsMatrix_UpdateMatrixGet(dampingMatrix,updateStiffness,err,error,*999)
       NULLIFY(rhsVector)
-      CALL EquationsMatrices_RHSVectorExists(vectorMatrices,rhsVector,err,error,*999)
+      CALL EquationsMatricesVector_RHSVectorExists(vectorMatrices,rhsVector,err,error,*999)
       updateRHS=.FALSE.
       IF(ASSOCIATED(rhsVector)) CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
 

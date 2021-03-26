@@ -58,6 +58,7 @@ MODULE HamiltonJacobiRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -146,7 +147,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
 
     NULLIFY(equationsAnalytic)
-    CALL EquationsSet_EquationsAnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
+    CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
     CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
     NULLIFY(geometricField)
     CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
@@ -393,7 +394,7 @@ CONTAINS
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
       CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
     ENDDO !variableIdx
-    CALL FieldVarible_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
     
     EXITS("HamiltonJacobi_BoundaryConditionsAnalyticCalculate")
     RETURN
@@ -525,7 +526,7 @@ CONTAINS
       CALL Basis_NumberOfXiGet(dependentBasis,numberOfDependentXi,err,error,*999)
       NULLIFY(dependentQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
      
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
@@ -561,7 +562,7 @@ CONTAINS
         CALL Field_InterpolatedPointMetricsCalculate(numberOfDependentXi,geometricInterpPointMetrics,err,error,*999)
         !Calculate jacobianGaussWeight.
 
-        CALL FieldInterpPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         
 !!TODO: Think about symmetric problems. 
         jacobianGaussWeight=jacobian*gaussWeight

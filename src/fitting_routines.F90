@@ -51,11 +51,14 @@ MODULE FittingRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE DataProjectionAccessRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -71,6 +74,7 @@ MODULE FittingRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Timer
   USE Types
 
@@ -136,7 +140,7 @@ CONTAINS
 
     ENTERS("Fitting_EquationsSetSetup",err,error,*999)
 
-    CALL EquationSet_SpecificationGet(equationsSet,4,esSpecification,err,error,999)
+    CALL EquationsSet_SpecificationGet(equationsSet,4,esSpecification,err,error,*999)
     
     SELECT CASE(esSpecification(2))
     CASE(EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE)
@@ -377,7 +381,7 @@ CONTAINS
         ! M a t e r i a l s   S e t u p
         !-----------------------------------------------------------------
         NULLIFY(equationsMaterials)
-        CALL EquationsSet_EquationsMaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+        CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
         SELECT CASE(equationsSetSetup%actionType)
         CASE(EQUATIONS_SET_SETUP_START_ACTION)
           IF(equationsMaterials%materialsFieldAutoCreated) THEN
@@ -451,7 +455,7 @@ CONTAINS
         ! (this field holds the data point based field of vectors to map to the dependent field)
         !-----------------------------------------------------------------
         NULLIFY(equationsIndependent)
-        CALL EquationsSet_EquationsIndependentGet(equationsSet,equationsIndependent,err,error,*999)
+        CALL EquationsSet_IndependentGet(equationsSet,equationsIndependent,err,error,*999)
         NULLIFY(geometricField)
         CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
         NULLIFY(dependentField)
@@ -610,7 +614,7 @@ CONTAINS
         ! S o u r c e   S e t u p
         !-----------------------------------------------------------------
         NULLIFY(equationsSource)
-        CALL EquationsSet_EquationsSourceGet(equationsSet,equationsSource,err,error,*999)
+        CALL EquationsSet_SourceGet(equationsSet,equationsSource,err,error,*999)
         SELECT CASE(equationsSetSetup%actionType)
         CASE(EQUATIONS_SET_SETUP_START_ACTION)
           NULLIFY(geometricField)
@@ -1122,15 +1126,15 @@ CONTAINS
       NULLIFY(lhsMapping)
       CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
       NULLIFY(rowsVariable)
-      CALL EquationsMappingLHS_VariableGet(lhsMapping,rowsVariable,err,error,*999)
-      CALL FieldVariable_TypeGet(rowsVariable,rowsVariableType,err,error,*999)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
       
       NULLIFY(linearMapping)
       CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
       NULLIFY(colsVariable)
       CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
-      CALL FieldVariable_TypeGet(colsVariable,colsVariableType,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
       
       NULLIFY(equationsInterpolation)
@@ -1264,7 +1268,7 @@ CONTAINS
           NULLIFY(independentDecompositionTopology)
           CALL Decomposition_DecompositionTopologyGet(independentDecomposition,independentDecompositionTopology,err,error,*999)
           NULLIFY(decompositionDataPoints)
-          CALL DecompsoitionTopology_DecompositionDataPointsGet(independentDecompositionTopology,decompositionDataPoints, &
+          CALL DecompositionTopology_DecompositionDataPointsGet(independentDecompositionTopology,decompositionDataPoints, &
             & err,error,*999)
           !Loop over data points
           CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(decompositionDataPoints,elementNumber, &
@@ -1369,7 +1373,7 @@ CONTAINS
                 
                 !Calculate Jacobian and Gauss weight.
                 CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
-                CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+                CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
                 jacobianGaussWeight=jacobian*gaussWeight
                 
                 !Loop over field components
@@ -1563,7 +1567,7 @@ CONTAINS
             
             !Calculate Jacobian and Gauss weight.
             CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
-            CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
             jacobianGaussWeight=jacobian*gaussWeight
             
             rowElementDOFIdx=0
@@ -1759,7 +1763,7 @@ CONTAINS
             
             !Calculate Jacobian and Gauss weight.
             CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
-            CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
             jacobianGaussWeight=jacobian*gaussWeight
             
             IF(diagnostics2) THEN
@@ -1881,7 +1885,7 @@ CONTAINS
             
             !Calculate Jacobian and Gauss weight.
             CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
-            CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+            CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
             jacobianGaussWeight=jacobian*gaussWeight
             
             !Loop over field components
@@ -2488,7 +2492,7 @@ CONTAINS
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-      CALL SolverMapping_NumberOfEquationsSets(solverMapping,numberOfEquationsSets,err,error,*999)
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
       DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)

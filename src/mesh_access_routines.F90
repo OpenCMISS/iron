@@ -80,11 +80,6 @@ MODULE MeshAccessRoutines
     MODULE PROCEDURE Mesh_UserNumberFindRegion
   END INTERFACE Mesh_UserNumberFind
 
-  INTERFACE MESH_USER_NUMBER_FIND
-    MODULE PROCEDURE Mesh_UserNumberFindInterface
-    MODULE PROCEDURE Mesh_UserNumberFindRegion
-  END INTERFACE MESH_USER_NUMBER_FIND
-
   PUBLIC MESH_ON_DOMAIN_BOUNDARY,MESH_OFF_DOMAIN_BOUNDARY
 
   PUBLIC Mesh_AssertIsFinished,Mesh_AssertNotFinished
@@ -92,6 +87,10 @@ MODULE MeshAccessRoutines
   PUBLIC Mesh_DecompositionGet
 
   PUBLIC Mesh_DecompositionsGet
+
+  PUBLIC Mesh_GeneratedMeshExists
+
+  PUBLIC Mesh_GeneratedMeshGet
 
   PUBLIC Mesh_InterfaceGet
 
@@ -116,8 +115,6 @@ MODULE MeshAccessRoutines
   PUBLIC Mesh_MeshTopologyGet
 
   PUBLIC Mesh_UserNumberFind
-
-  PUBLIC MESH_USER_NUMBER_FIND
 
   PUBLIC Mesh_UserNumberGet
 
@@ -187,7 +184,9 @@ CONTAINS
  
     ENTERS("Mesh_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.mesh%meshFinished) THEN
       region=>mesh%region
@@ -242,7 +241,9 @@ CONTAINS
  
     ENTERS("Mesh_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+#endif    
 
     IF(mesh%meshFinished) THEN
       region=>mesh%region
@@ -283,7 +284,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the decomposition for a given user number in a mesh. \see OPENCMISS::Iron::cmfe_Mesh_DecompositionGet
+  !>Returns a pointer to the decomposition for a given user number in a mesh. \see OpenCMISS::Iron::cmfe_Mesh_DecompositionGet
   SUBROUTINE Mesh_DecompositionGet(mesh,userNumber,decomposition,err,error,*)
 
     !Argument variables
@@ -293,21 +294,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Mesh_DecompositionGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*998)
-    IF(.NOT.mesh%meshFinished) CALL FlagError("Mesh has not been finished.",err,error,*998)
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
+    CALL Mesh_AssertIsFinished(mesh,err,error,*999)
+#endif    
     
     NULLIFY(decomposition)
     CALL Decomposition_UserNumberFind(userNumber,mesh,decomposition,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(decomposition)) THEN
       localError="A decomposition with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " do not exist on mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Mesh_DecompositionGet")
     RETURN
@@ -330,19 +337,25 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Mesh_DecompositionsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS
     IF(ASSOCIATED(decompositions)) CALL FlagError("Decompositions is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+#endif    
 
     decompositions=>mesh%decompositions
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(decompositions)) THEN      
-      localError="The decompositions is not associated for mesh number "// &
-        & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
+      localError="The decompositions is not associated for mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Mesh_DecompositionsGet")
     RETURN
@@ -356,6 +369,78 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the generated mesh for a given mesh to check if the generated mesh eists 
+  SUBROUTINE Mesh_GeneratedMeshExists(mesh,generatedMesh,err,error,*)
+
+    !Argument variables
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to get the generated mesh for
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh !<On exit, a pointer to the generated mesh for the mesh if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Mesh_GeneratedMeshExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+#endif    
+
+    generatedMesh=>mesh%generatedMesh
+    
+    EXITS("Mesh_GeneratedMeshExists")
+    RETURN
+999 NULLIFY(generatedMesh)
+998 ERRORSEXITS("Mesh_GeneratedMeshExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Mesh_GeneratedMeshExists
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the generated mesh for a given mesh. 
+  SUBROUTINE Mesh_GeneratedMeshGet(mesh,generatedMesh,err,error,*)
+
+    !Argument variables
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to get the generated mesh for
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh !<On exit, a pointer to the generated mesh for the mesh. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Mesh_GeneratedMeshGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+#endif    
+
+    generatedMesh=>mesh%generatedMesh
+
+#ifdef WITH_POSTCHECKS      
+    IF(.NOT.ASSOCIATED(generatedMesh)) THEN      
+      localError="The generated mesh is not associated for mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    EXITS("Mesh_GeneratedMeshGet")
+    RETURN
+999 NULLIFY(generatedMesh)
+998 ERRORSEXITS("Mesh_GeneratedMeshGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Mesh_GeneratedMeshGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the interface for a given mesh. 
   SUBROUTINE Mesh_InterfaceGet(mesh,interface,err,error,*)
 
@@ -365,18 +450,25 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Mesh_InterfaceGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+#endif    
 
     INTERFACE=>mesh%INTERFACE
-    IF(.NOT.ASSOCIATED(interface)) THEN      
+
+#ifdef WITH_POSTCHECKS      
+    IF(.NOT.ASSOCIATED(INTERFACE)) THEN      
       localError="The interface is not associated for mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Mesh_InterfaceGet")
     RETURN
@@ -402,7 +494,9 @@ CONTAINS
  
     ENTERS("Mesh_IsInterfaceMesh",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+#endif    
 
     interfaceMesh = ASSOCIATED(mesh%interface)
     
@@ -429,8 +523,10 @@ CONTAINS
  
     ENTERS("Mesh_IsRegionMesh",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
-
+#endif
+    
     regionMesh = ASSOCIATED(mesh%region)
     
     EXITS("Mesh_IsRegionMesh")
@@ -453,18 +549,25 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
- 
+#endif
+    
     ENTERS("Mesh_MeshesGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(meshes)) CALL FlagError("Meshes is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
-
+#endif
+    
     meshes=>mesh%meshes
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshes)) THEN      
       localError="The meshes is not associated for mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Mesh_MeshesGet")
     RETURN
@@ -488,10 +591,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("Mesh_MeshElementsGet",err,error,*998)
+#endif
     
+    ENTERS("Mesh_MeshElementsGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated",err,error,*998)
     IF(ASSOCIATED(meshElements)) CALL FlagError("Elements is already associated.",err,error,*998)
     IF(meshComponentNumber<=0.OR.meshComponentNumber>mesh%numberOfComponents) THEN
@@ -506,14 +612,18 @@ CONTAINS
         & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     meshElements=>mesh%topology(meshComponentNumber)%ptr%elements
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshElements)) THEN
       localError="The mesh topology elements is not associated for mesh component number "// &
         & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//" of mesh number "// &
         & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("Mesh_MeshElementsGet")
     RETURN
@@ -537,10 +647,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Mesh_MeshNodesGet",err,error,*998)
-    
+
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated",err,error,*998)
     IF(ASSOCIATED(meshNodes)) CALL FlagError("Nodes is already associated.",err,error,*998)    
     IF(meshComponentNumber<=0.OR.meshComponentNumber>mesh%numberOfComponents) THEN
@@ -555,14 +668,18 @@ CONTAINS
         & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-
+#endif
+    
     meshNodes=>mesh%topology(meshComponentNumber)%ptr%nodes
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshNodes)) THEN
       localError="The mesh topology nodes is not associated for mesh component number "// &
         & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//" of mesh number "// &
         & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("Mesh_MeshNodesGet")
     RETURN
@@ -590,15 +707,17 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Mesh_NodesGet",err,error,*999)
-    
+
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(nodes)) CALL FlagError("Nodes is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+#endif
     
     region=>mesh%region
     IF(ASSOCIATED(region)) THEN
       nodes=>region%nodes
     ELSE
-      interface=>mesh%interface
+      INTERFACE=>mesh%INTERFACE
       IF(ASSOCIATED(interface)) THEN
         nodes=>interface%nodes
       ELSE
@@ -607,6 +726,8 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       ENDIF
     ENDIF
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(nodes)) THEN
       IF(ASSOCIATED(region)) THEN
         localError="Mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))// &
@@ -617,6 +738,7 @@ CONTAINS
       ENDIF
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("Mesh_NodesGet")
     RETURN
@@ -698,9 +820,11 @@ CONTAINS
 
     ENTERS("Mesh_RegionGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
     IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*999)
+#endif    
     
     NULLIFY(region)
     NULLIFY(interface)
@@ -745,10 +869,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Mesh_MeshTopologyGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*998)
@@ -762,14 +889,18 @@ CONTAINS
       localError="Topology is not allocated for mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     meshTopology=>mesh%topology(meshComponentNumber)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshTopology)) THEN    
       localError="The mesh topology is not associated for mesh component number "// &
         & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//" of mesh number "// &
         & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("Mesh_MeshTopologyGet")
     RETURN
@@ -798,9 +929,11 @@ CONTAINS
 
     ENTERS("Mesh_UserNumberFindGeneric",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
-    IF(.NOT.ASSOCIATED(meshes)) CALL FlagError("Meshes is not associated",err,error,*999)
+    IF(.NOT.ASSOCIATED(meshes)) CALL FlagError("Meshes is not associated.",err,error,*999)
     IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*999)
+#endif    
     
     !Get the mesh from the user number
     NULLIFY(mesh)
@@ -843,8 +976,10 @@ CONTAINS
   
     ENTERS("Mesh_UserNumberFindInterface",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated",err,error,*999)
+    IF(.NOT.ASSOCIATED(INTERFACE)) CALL FlagError("Interface is not associated",err,error,*999)
+#endif    
     
     CALL Mesh_UserNumberFindGeneric(userNumber,interface%meshes,mesh,err,error,*999)
      
@@ -872,8 +1007,10 @@ CONTAINS
     
     ENTERS("Mesh_UserNumberFindRegion",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated",err,error,*999)
+#endif
     
     CALL Mesh_UserNumberFindGeneric(userNumber,region%meshes,mesh,err,error,*999)
      
@@ -900,8 +1037,10 @@ CONTAINS
 
     ENTERS("Mesh_UserNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
-
+#endif
+    
     userNumber=mesh%userNumber
   
     EXITS("Mesh_UserNumberGet")
@@ -930,7 +1069,9 @@ CONTAINS
  
     ENTERS("Mesh_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.meshElements%elementsFinished) THEN
       meshTopology=>meshElements%meshTopology
@@ -977,8 +1118,10 @@ CONTAINS
  
     ENTERS("MeshElements_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
-
+#endif
+    
     IF(meshElements%elementsFinished) THEN
       meshTopology=>meshElements%meshTopology
       IF(ASSOCIATED(meshTopology)) THEN
@@ -1019,10 +1162,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
-
+#endif
+    
     ENTERS("MeshElements_BasisGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
     IF(globalElementNumber<=0.OR.globalElementNumber>meshElements%numberOfElements) THEN
@@ -1032,13 +1178,17 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(meshElements%elements)) CALL FlagError("Mesh elements elements has not been allocated.",err,error,*999)
+#endif
     
     basis=>meshElements%elements(globalElementNumber)%basis
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basis)) THEN
       localError="The basis for global element number "//TRIM(NumberToVString(globalElementNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("MeshElements_BasisGet")
     RETURN
@@ -1067,9 +1217,12 @@ CONTAINS
     
     ENTERS("MeshElements_ElementCheckExists",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
+#endif
+    
     elementExists=.FALSE.
     globalElementNumber=0
-    IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
     NULLIFY(treeNode)
     CALL Tree_Search(meshElements%elementsTree,userElementNumber,treeNode,err,error,*999)
     IF(ASSOCIATED(treeNode)) THEN
@@ -1105,7 +1258,9 @@ CONTAINS
 
     ENTERS("MeshElements_GlobalElementNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
+#endif    
     
     CALL MeshElements_ElementCheckExists(meshElements,userElementNumber,elementExists,globalElementNumber,err,error,*999)
     IF(.NOT.elementExists) THEN
@@ -1145,10 +1300,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
-
+#endif
+    
     ENTERS("MeshElements_MeshElementGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(meshElement)) CALL FlagError("Mesh element is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
     IF(globalElementNumber<=0.OR.globalElementNumber>meshElements%numberOfElements) THEN
@@ -1158,13 +1316,17 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(meshElements%elements)) CALL FlagError("Mesh elements elements has not been allocated.",err,error,*999)
+#endif
     
     meshElement=>meshElements%elements(globalElementNumber)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshElement)) THEN
       localError="The mesh element for global element number "//TRIM(NumberToVString(globalElementNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("MeshElements_MeshElementGet")
     RETURN
@@ -1190,11 +1352,16 @@ CONTAINS
 
     ENTERS("MeshElements_MeshTopologyGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
+#endif    
     
     meshTopology=>meshElements%meshTopology
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated for the mesh elements.",err,error,*999)
+#endif
     
     EXITS("MeshElements_MeshTopologyGet")
     RETURN
@@ -1218,12 +1385,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("MeshElements_UserElementNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
-
     IF(elementNumber<1.OR.elementNumber>meshElements%numberOfElements) THEN
       localError="The specified mesh element number of "//TRIM(NumberToVString(elementNumber,"*",err,error))// &
         & " is invalid. The element number must be >= 1 and <= "// &
@@ -1231,6 +1400,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(meshElements%elements)) CALL FlagError("Mesh elements elements is not allocated.",err,error,*999)
+#endif
     
     userElementNumber=meshElements%elements(elementNumber)%userNumber
         
@@ -1255,10 +1425,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("MeshNodes_MeshNodeGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(meshNode)) CALL FlagError("Mesh node is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
     IF(meshNodeNumber<=0.OR.meshNodeNumber>meshNodes%numberOfNodes) THEN
@@ -1268,13 +1441,17 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(meshNodes%nodes)) CALL FlagError("Mesh nodes nodes has not been allocated.",err,error,*999)
+#endif
     
     meshNode=>meshNodes%nodes(meshNodeNumber)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshNode)) THEN
       localError="The mesh node for mesh node number "//TRIM(NumberToVString(meshNodeNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif
     
     EXITS("MeshNodes_MeshNodeGet")
     RETURN
@@ -1306,7 +1483,9 @@ CONTAINS
 
     ENTERS("MeshNodes_GlobalNodeNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+#endif
     
     CALL MeshNodes_NodeCheckExists(meshNodes,userNodeNumber,nodeExists,globalNodeNumber,meshNodeNumber,err,error,*999)
     IF(.NOT.nodeExists) THEN
@@ -1357,7 +1536,9 @@ CONTAINS
 
     ENTERS("MeshNodes_MeshNodeNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+#endif
     
     CALL MeshNodes_NodeCheckExists(meshNodes,userNodeNumber,nodeExists,globalNodeNumber,meshNodeNumber,err,error,*999)
     IF(.NOT.nodeExists) THEN
@@ -1402,11 +1583,16 @@ CONTAINS
 
     ENTERS("MeshNodes_MeshTopologyGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+#endif
     
     meshTopology=>meshNodes%meshTopology
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated for the mesh nodes.",err,error,*999)
+#endif
     
     EXITS("MeshNodes_MeshTopologyGet")
     RETURN
@@ -1434,8 +1620,10 @@ CONTAINS
  
     ENTERS("MeshNodes_NodeOnBoundaryGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(meshNodes%nodes)) CALL FlagError("Mesh nodes nodes is not allocated.",err,error,*999)
+#endif
     
     CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
     IF(meshNodes%nodes(meshNodeNumber)%boundaryNode) THEN
@@ -1474,9 +1662,12 @@ CONTAINS
     
     ENTERS("MeshNodes_NodeCheckExists",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+#endif
+    
     nodeExists=.FALSE.
     meshNodeNumber=0
-    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
 
     NULLIFY(meshTopology)
     CALL MeshNodes_MeshTopologyGet(meshNodes,meshTopology,err,error,*999)
@@ -1521,7 +1712,9 @@ CONTAINS
 
     ENTERS("MeshNodes_NodeNumberOfDerivativesGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+#endif
     
     CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
     
@@ -1549,14 +1742,19 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: derivativeIdx,meshNodeNumber,numberOfDerivatives
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("MeshNodes_NodeDerivativesGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+#endif
     
     CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
     numberOfDerivatives=meshNodes%nodes(meshNodeNumber)%numberOfDerivatives
+#ifdef WITH_PRECHECKS    
     IF(SIZE(derivatives,1)<numberOfDerivatives) THEN
       localError="The size of the supplied derivatives array of "// &
         & TRIM(NumberToVString(SIZE(derivatives,1),"*",err,error))// &
@@ -1564,6 +1762,7 @@ CONTAINS
         & TRIM(NumberToVString(numberOfDerivatives,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif
     
     DO derivativeIdx=1,numberOfDerivatives
       derivatives(derivativeIdx)=meshNodes%nodes(meshNodeNumber)%derivatives(derivativeIdx)%globalDerivativeIndex
@@ -1592,12 +1791,17 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: meshNodeNumber
-   TYPE(VARYING_STRING) :: localError
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("MeshNodes_NodeNumberOfVersionsGet",err,error,*999)
 
+#ifdef WITH_PRECECKS    
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+#endif    
     CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
+#ifdef WITH_PRECHECKS    
      IF(derivativeNumber<1.OR.derivativeNumber>meshNodes%nodes(meshNodeNumber)%numberOfDerivatives) THEN
       localError="The specified derivative index of "// &
         & TRIM(NumberToVString(derivativeNumber,"*",err,error))// &
@@ -1606,6 +1810,7 @@ CONTAINS
         & " for user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     numberOfVersions=meshNodes%nodes(meshNodeNumber)%derivatives(derivativeNumber)%numberOfVersions
     
@@ -1632,7 +1837,9 @@ CONTAINS
   
     ENTERS("MeshNodes_NumberOfNodesGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+#endif
     
     numberOfNodes=meshNodes%numberOfNodes
     
@@ -1657,12 +1864,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
-
+#endif
     ENTERS("MeshNodes_UserNodeNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
-
     IF(meshNodeNumber<1.OR.meshNodeNumber>meshNodes%numberOfNodes) THEN
       localError="The specified mesh node number of "//TRIM(NumberToVString(meshNodeNumber,"*",err,error))// &
         & " is invalid. The mesh node number must be >= 1 and <= "// &
@@ -1670,6 +1878,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(meshNodes%nodes)) CALL FlagError("Mesh nodes nodes is not allocated.",err,error,*999)
+#endif    
     
     userNodeNumber=meshNodes%nodes(meshNodeNumber)%userNumber
         
@@ -1696,12 +1905,17 @@ CONTAINS
 
     ENTERS("MeshTopology_MeshDataPointsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(meshDataPoints)) CALL FlagError("Mesh data points is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*999)
-
+#endif
+    
     meshDataPoints=>meshTopology%dataPoints
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshDataPoints)) CALL FlagError("Mesh data points is not associated for the mesh topology.",err,error,*999)
+#endif    
 
     EXITS("MeshTopology_MeshDataPointsGet")
     RETURN
@@ -1727,12 +1941,17 @@ CONTAINS
 
     ENTERS("MeshTopology_MeshDofsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(meshDofs)) CALL FlagError("Mesh dofs is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*999)
-
+#endif
+    
     meshDofs=>meshTopology%dofs
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshDofs)) CALL FlagError("Mesh dofs is not associated for the mesh topology.",err,error,*999)
+#endif    
 
     EXITS("MeshTopology_MeshDofsGet")
     RETURN
@@ -1758,13 +1977,18 @@ CONTAINS
 
     ENTERS("MeshTopology_MeshElementsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*998)
-
+#endif
+    
     meshElements=>meshTopology%elements
-    IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elments is not associated for the mesh topology.",err,error,*999)
 
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elments is not associated for the mesh topology.",err,error,*999)
+#endif
+    
     EXITS("MeshTopology_MeshElementsGet")
     RETURN
 999 NULLIFY(meshElements)
@@ -1789,13 +2013,18 @@ CONTAINS
 
     ENTERS("MeshTopology_MeshGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*998)
-
+#endif
+    
     mesh=>meshTopology%mesh
-    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated for the mesh topology.",err,error,*999)
 
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated for the mesh topology.",err,error,*999)
+#endif
+    
     EXITS("MeshTopology_MeshGet")
     RETURN
 999 NULLIFY(mesh)
@@ -1820,13 +2049,18 @@ CONTAINS
 
     ENTERS("MeshTopology_MeshNodesGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*998)
-
+#endif
+    
     meshNodes=>meshTopology%nodes
-    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated for the mesh topology.",err,error,*999)
 
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated for the mesh topology.",err,error,*999)
+#endif
+    
     EXITS("MeshTopology_MeshNodesGet")
     RETURN
 999 NULLIFY(meshNodes)

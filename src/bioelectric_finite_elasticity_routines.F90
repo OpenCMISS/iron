@@ -53,6 +53,8 @@ MODULE BioelectricFiniteElasticityRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE DecompositionAccessRoutines
+  USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
@@ -68,9 +70,11 @@ MODULE BioelectricFiniteElasticityRoutines
   USE Kinds
   USE Maths
   USE ProblemAccessRoutines
+  USE RegionAccessRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Types
 
 #include "macros.h"
@@ -644,9 +648,9 @@ CONTAINS
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
-    CALL Solver_TypeGet(solver,solveType,err,error,*999)
+    CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
     
-    SELECT CASE(controlLoop%problem%SPECIFICATION(3))
+    SELECT CASE(pSpecification(3))
     CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
       & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
       & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
@@ -816,7 +820,7 @@ CONTAINS
         CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
         !Loop over the equations sets associated with the solver
 !!TODO: Why do we loop over the equations sets and get all the points if we do not actually do anything with those objects????
-        CALL SolverMapping_NumberOfEquationsSetGet(solverMapping,numberOfEquationsSets,err,error,*999)
+        CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
         DO equationsSetIdx=1,numberOfEquationsSets
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -902,7 +906,7 @@ CONTAINS
           CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
           
           !Initialise tensors and matrices
-          CALL Identity(dZdNu,err,error,*999)
+          CALL IdentityMatrix(dZdNu,err,error,*999)
   
           CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,geometricInterpParameters,err,error,*999)
           CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,fibreInterpParameters,err,error,*999)
@@ -1054,7 +1058,7 @@ CONTAINS
         timeStep=timeIncrement
 
         NULLIFY(decomposition)
-        CALL DependentField_DecompositionGet(dependentField,decomposition,err,error,*999)
+        CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
         NULLIFY(decompositionTopology)
         CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
         NULLIFY(decompositionElements)
@@ -1463,7 +1467,7 @@ CONTAINS
         NULLIFY(solverMapping)
         CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
         !Loop over the equations sets associated with the solver
-        CALL SolverMapping_NumberOfEquationsSetGet(solverMapping,numberOfEquationsSets,err,error,*999)
+        CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
         DO equationsSetIdx=1,numberOfEquationsSets
 !!TODO: Why are we looping over equations sets to get pointers if we don't use them???
           NULLIFY(equationsSet)
@@ -1479,7 +1483,7 @@ CONTAINS
           NULLIFY(domain)
           CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
           NULLIFY(domainTopology)
-          CALL Domain_DomanTopologyGet(domain,domainTopology,err,error,*999)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
           NULLIFY(domainNodes)
           CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
           CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
@@ -1707,7 +1711,7 @@ CONTAINS
           CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
             & interpolationParameters,err,error,*999)
           NULLIFY(interpolatedPoint)
-          CALL EquationInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,interpolatedPoint, &
+          CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,interpolatedPoint, &
             & err,error,*999)
 
           nodeIdx=0
@@ -2056,7 +2060,7 @@ CONTAINS
                   !find the elementIdx that corresponds to elementNumber
                   myElementIdx=0
                   DO elementIdx2=1,numberOfElements
-                    CALL DecompositionElements_ElementsAdjacentNumberGet(decompositionElements,1,0,elementIdx2, &
+                    CALL DecompositionElements_ElementAdjacentNumberGet(decompositionElements,1,0,elementIdx2, &
                       & elementNumber2,err,error,*999)
                     IF(elementNumber==elementNumber2) THEN
                       myElementIdx=elementIdx2
@@ -2139,7 +2143,7 @@ CONTAINS
           CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
             & interpolationParameters,err,error,*999)
           NULLIFY(interpolatedPoint)
-          CALL EquationInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,interpolatedPoint, &
+          CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,interpolatedPoint, &
             & err,error,*999)
 
           nodeIdx=0
@@ -2164,7 +2168,6 @@ CONTAINS
 
           !loop over the elements of the finite elasticity mesh (internal and boundary elements)
           !no need to consider ghost elements here since only bioelectrical fields are changed
-          CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
           DO elementIdx=1,numberOfElements
 
 !!TODO: IS ELEMENTNUMBER NOT JUST THE SAME AS ELEMENTIDX???
@@ -2315,8 +2318,9 @@ CONTAINS
 
                   !find the elementIdx that corresponds to elementNumber
                   myElementIdx=0
-                  DO elementIdx2=1,decompositionElements%numberOfElements
-                    CALL DecompositionElements_ElementsAdjacentNumberGet(decompositionElements,1,0,elementIdx2, &
+                  CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
+                  DO elementIdx2=1,numberOfElements
+                    CALL DecompositionElements_ElementAdjacentNumberGet(decompositionElements,1,0,elementIdx2, &
                       & elementNumber2,err,error,*999)
                     IF(elementNumber==elementNumber2) THEN
                       myElementIdx=elementIdx2
@@ -2438,7 +2442,7 @@ CONTAINS
         NULLIFY(solver)
         CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
         NULLIFY(solverEquations)
-        CALL Solver_SolverEquations(solver,solverEquations,err,error,*999)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMapping)
         CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
         NULLIFY(equationsSet)
@@ -2470,7 +2474,7 @@ CONTAINS
         NULLIFY(domainMappings)
         CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
         NULLIFY(elementsMapping)
-        CALL DomainMappings_ElementMappingGet(domainMappings,elementsMapping,err,error,*999)
+        CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
         NULLIFY(domainTopology)
         CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
         NULLIFY(domainElements)
@@ -2478,7 +2482,7 @@ CONTAINS
         NULLIFY(decomposition)
         CALL Field_DecompositionGet(monodomainIndependentField,decomposition,err,error,*999)
         NULLIFY(domain)
-        CALL Decomposition_DomainGet(decomposition,domain,err,error,*999)
+        CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
         NULLIFY(domainMappings)
         CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
         NULLIFY(nodesMapping)
@@ -2804,7 +2808,7 @@ CONTAINS
       CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
       IF(numberOfSubLoops==0) THEN
         NULLIFY(controlLoopRoot)
-        CALL Problem_ControlLoopRoot(problem,controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
         NULLIFY(controlLoopParent)
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoopParent,err,error,*999)
         !The first control_loop is the one for monodomain
@@ -2818,9 +2822,9 @@ CONTAINS
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMapping)
-        CALL SolverEquations_SolverMappingGt(solverEquations,solverMapping,err,error,*999)
+        CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
         NULLIFY(equationsSet)
-        CALL SolverMapping_EquationsetGet(solverMapping,1,equationsSet,err,error,*999)
+        CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
         NULLIFY(monodomainIndependentField)
         CALL EquationsSet_IndependentFieldGet(equationsSet,monodomainIndependentField,err,error,*999)
 
@@ -2834,7 +2838,7 @@ CONTAINS
         NULLIFY(domain)
         CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
         NULLIFY(domainMappings)
-        CALL Domain_MappingsGet(domain,domainMappings,err,error,*999)
+        CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
         NULLIFY(nodesMapping)
         CALL DomainMappings_NodesMappingGet(domainMappings,nodesMapping,err,error,*999)
         

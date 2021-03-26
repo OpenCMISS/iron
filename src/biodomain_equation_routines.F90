@@ -51,6 +51,8 @@ MODULE BiodomainEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE CoordinateSystemRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
@@ -58,6 +60,7 @@ MODULE BiodomainEquationsRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -69,9 +72,11 @@ MODULE BiodomainEquationsRoutines
   USE Kinds
   USE MatrixVector
   USE ProblemAccessRoutines
+  USE RegionAccessRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Timer
   USE Types
 
@@ -136,7 +141,7 @@ CONTAINS
 
     ENTERS("Biodomain_PostLoop",err,error,*999)
 
-    CALL ControlLoop_LoopTypeGet(controlLoop,loopType,err,error,*999)
+    CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
     SELECT CASE(loopType)
     CASE(CONTROL_SIMPLE_TYPE)
       !do nothing
@@ -151,7 +156,7 @@ CONTAINS
           NULLIFY(parentLoop)
           CALL ControlLoop_ParentLoopExists(controlLoop,parentLoop,err,error,*999)
           IF(ASSOCIATED(parentLoop)) THEN
-            CALL ControlLoop_CurrentIterationGet(parentLoop,parentIteration,err,error,*999)
+            CALL ControlLoop_IterationNumberGet(parentLoop,parentIteration,err,error,*999)
           ELSE
             parentIteration=0
           ENDIF
@@ -1809,7 +1814,7 @@ CONTAINS
         NULLIFY(independentField)
         CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
 
-        CALL EquationsSet_SpecficationGet(equationsSet,3,esSpecification,err,error,*999)
+        CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
         SELECT CASE(esSpecification(2))
         CASE(EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE)
           SELECT CASE(esSpecification(3))
@@ -2499,7 +2504,7 @@ CONTAINS
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,4,solver,err,error,*999)
             NULLIFY(cellMLEquations)
-            CALL Solver_CellMLEquationsGetx(solver,cellMLEquations,err,error,*999)
+            CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
             !Finish the CellML equations creation
             CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
           ENDIF
@@ -2745,7 +2750,7 @@ CONTAINS
         CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
         CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
         CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,linearMatrix,err,error,*999)
-        CALL EqautionsMatrix_UpdateMatrixGet(linearMatrix,updateMatrix,err,error,*999)
+        CALL EquationsMatrix_UpdateMatrixGet(linearMatrix,updateMatrix,err,error,*999)
         updateMatrices=updateMatrix
       CASE DEFAULT
         localError="The equations set subtype of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
@@ -2943,7 +2948,7 @@ CONTAINS
         ENDIF
                 
         !Calculate jacobianGaussWeight.
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
 

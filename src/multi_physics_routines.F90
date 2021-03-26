@@ -58,6 +58,7 @@ MODULE MultiPhysicsRoutines
   USE MultiCompartmentTransportRoutines
   USE NavierStokesEquationsRoutines
   USE ProblemAccessRoutines
+  USE SolverAccessRoutines
   USE Strings
   USE Types
 

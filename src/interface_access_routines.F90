@@ -78,6 +78,8 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC Interface_FieldGet
 
+  PUBLIC Interface_FieldsGet
+
   PUBLIC Interface_InterfaceConditionGet
 
   PUBLIC Interface_InterfacesGet
@@ -90,11 +92,15 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC Interface_NodesGet
 
+  PUBLIC Interface_NumberOfCoupledMeshesGet
+
   PUBLIC Interface_ParentRegionGet
 
   PUBLIC Interface_PointsConnectivityGet
 
   PUBLIC Interface_UserNumberFind
+
+  PUBLIC Interface_UserNumberGet
 
   PUBLIC InterfaceMeshConnectivity_AssertIsFinished,InterfaceMeshConnectivity_AssertNotFinished
 
@@ -351,6 +357,51 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Interface_DataPointsGet    
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the fields for an interface.
+  SUBROUTINE Interface_FieldsGet(interface,fields,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface to get the fields for
+    TYPE(FieldsType), POINTER :: fields !<On exit, a pointer to the fields for the interface. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Interface_FieldsGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(fields)) CALL FlagError("Fields is already associated.",err,error,*998)
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
+#endif    
+
+    fields=>interface%fields
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(fields)) THEN
+      localError="The interface fields are not associated on interface number "// &
+        & TRIM(NumberToVString(interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+       
+    EXITS("Interface_FieldsGet")
+    RETURN
+999 NULLIFY(fields)
+998 ERRORSEXITS("Interface_FieldsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_FieldsGet
 
   !
   !================================================================================================================================
@@ -675,6 +726,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !Gets the number of coupled meshes in a interface.
+  SUBROUTINE Interface_NumberOfCoupledMeshesGet(INTERFACE,numberOfCoupledMeshes,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the number of coupled meshes for
+    INTEGER(INTG), INTENT(OUT) :: numberOfCoupledMeshes !<On exit, the number of coupled meshes for the interface.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Interface_NumberOfCoupledMeshesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
+#endif    
+
+    numberOfCoupledMeshes=INTERFACE%numberOfCoupledMeshes
+      
+    EXITS("Interface_NumberOfCoupledMeshesGet")
+    RETURN
+999 ERRORSEXITS("Interface_NumberOfCoupledMeshesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_NumberOfCoupledMeshesGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the parent region for an interface. 
   SUBROUTINE Interface_ParentRegionGet(INTERFACE,parentRegion,err,error,*)
 
@@ -811,6 +891,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Interface_UserNumberFind
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the user number for a given interface.
+  SUBROUTINE Interface_UserNumberGet(INTERFACE,userNumber,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the user number for
+    INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, the user number for the interface.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Interface_UserNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
+#endif    
+     
+    userNumber=interface%userNumber
+    
+    EXITS("Interface_UserNumberGet")
+    RETURN
+999 ERRORSEXITS("Interface_UserNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_UserNumberGet
 
   !
   !=================================================================================================================================

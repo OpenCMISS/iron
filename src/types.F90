@@ -1824,7 +1824,7 @@ END TYPE GeneratedMeshEllipsoidType
   TYPE EquationsMatricesDynamicType
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer back to the vector equations matrices.
     INTEGER(INTG) :: numberOfDynamicMatrices !<The number of dynamic equations matrices defined for the equations set.
-    TYPE(EquationsMatrixPtrType), ALLOCATABLE :: matrices(:) !<matrix(matrixIdx)%ptr contains the information on the matrixIdx'th dynamic equations matrix.
+    TYPE(EquationsMatrixPtrType), ALLOCATABLE :: matrices(:) !<matrices(matrixIdx)%ptr contains the information on the matrixIdx'th dynamic equations matrix.
     TYPE(DistributedVectorType), POINTER :: tempVector !<Temporary vector used for assembly. 
   END TYPE EquationsMatricesDynamicType
 
@@ -2467,7 +2467,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(BoundaryConditionsRowVariablePtrType), ALLOCATABLE :: boundaryConditionsRowVariables(:) !<boundaryConditionsRowVariables(variableIdx). boundaryConditionsRowVariables(variableIdx)%ptr is the pointer to the variableIdx'th boundary conditions row variable. variableIdx ranges from 1 to numberOfBoundaryConditionsRowVariables    
     INTEGER(INTG) :: numberOfBoundaryConditionsVariables !<The number of boundary conditions variables
     TYPE(BoundaryConditionsVariablePtrType), ALLOCATABLE :: boundaryConditionsVariables(:) !<boundaryConditionsVariables(variableIdx). boundaryConditionsVariables(variableIdx)%ptr is the pointer to the variableIdx'th boundary conditions variable. variableIdx ranges from 1 to numberOfBoundaryConditionsVariables
-    INTEGER(INTG) :: neumannMatrixSparsity !<The sparsity type of the Neumann integration matrices. \see SolverRoutines_SparsityTypes,SolverRoutines
+    INTEGER(INTG) :: neumannMatrixSparsity !<The sparsity type of the Neumann integration matrices. \see SolverRoutines_EquationsSparsityTypes,SolverRoutines
   END TYPE BoundaryConditionsType
 
   !>A buffer type to allow for an array of pointers to a BoundaryConditionsSparsityIndicesType \see Types::BoundaryConditionsSparsityIndicesType
@@ -3283,7 +3283,7 @@ END TYPE GeneratedMeshEllipsoidType
     LOGICAL :: solverEquationsFinished !<Is .TRUE. if the solver equations have finished being created, .FALSE. if not.
     INTEGER(INTG) :: linearity !<The linearity type of the solver equations
     INTEGER(INTG) :: timeDependence !<The time dependence type of the solver equations
-    INTEGER(INTG) :: sparsityType !<The type of sparsity to use in the solver matrices \see SolverRoutines_SparsityTypes,SolverRoutines
+    INTEGER(INTG) :: sparsityType !<The type of sparsity to use in the solver matrices \see SolverRoutines_EquationsSparsityTypes,SolverRoutines
     INTEGER(INTG) :: symmetryType !<The type of symmetry to use in the solver matrices \see SolverRoutines_SymmetryTypes,SolverRoutines
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices !<A pointer to the solver matrices for the problem
@@ -3701,8 +3701,9 @@ END TYPE GeneratedMeshEllipsoidType
   END TYPE InterfaceMatrixToSolverMatrixMapPtrType
   
   TYPE JacobianMatrixToSolverMatrixMapType
-    INTEGER(INTG) :: solverMatrixNumber !<The solver matrix number being mapped.
+    INTEGER(INTG) :: jacobianMatrixNumber !<The Jacobian matrix number being mapped.
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the Jacobian matrix being mapped.
+    INTEGER(INTG) :: solverMatrixNumber !<The solver matrix number being mapped.
     TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix being mapped.
     TYPE(MatrixRowColCouplingType), POINTER :: jacobianColToSolverColsMap(:) !<jacobianColToSolverColsMap(columnIdx). The mapping from the columnIdx'th column of the Jacobian matrix to the solver matrix columns.
   END TYPE JacobianMatrixToSolverMatrixMapType

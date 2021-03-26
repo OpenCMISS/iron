@@ -52,6 +52,7 @@ MODULE BioelectricRoutines
   USE Kinds
   USE MonodomainEquationsRoutines
   USE ProblemAccessRoutines
+  USE SolverAccessRoutines
   USE Strings
   USE Types
 
@@ -105,7 +106,7 @@ CONTAINS
 
     ENTERS("Bioelectric_PostLoop",err,error,*999)
 
-    CALL ControlLoop_LoopTypeGet(controlLoop,loopType,err,error,*999)
+    CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
     SELECT CASE(loopType)
     CASE(CONTROL_TIME_LOOP_TYPE)
       NULLIFY(problem)

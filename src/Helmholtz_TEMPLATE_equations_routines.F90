@@ -116,13 +116,13 @@ CONTAINS
         CASE DEFAULT
           LOCAL_ERROR="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
             & " is not valid for a Helmholtz equation type of a classical field equations set class."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Equations set equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE")
@@ -155,10 +155,10 @@ CONTAINS
       CASE DEFAULT
         LOCAL_ERROR="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
           & " is not valid for a Helmholtz equation type of a classical field equation set class."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP")
@@ -191,26 +191,26 @@ CONTAINS
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           EQUATIONS_SET%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       CASE DEFAULT
         LOCAL_ERROR="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
           & " is not valid for a Helmholtz equation type of an classical field equations set class."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("HELMHOLTZ_EQUATION_EQUATIONS_SET_SOLUTION_METHOD_SET")
@@ -301,15 +301,15 @@ CONTAINS
         CASE DEFAULT
           LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a standard Helmholtz equation."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
         LOCAL_ERROR="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
           & " does not equal a linear Helmholtz equation subtype."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("HELMHOLTZ_EQUATION_EQUATIONS_SET_LINEAR_SETUP")
@@ -342,10 +342,10 @@ CONTAINS
       CASE DEFAULT
         LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
           & " is not valid for a Helmholtz equation type of a classical field problem class."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
     ELSE
-      CALL FLAG_ERROR("Problem is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("HELMHOLTZ_EQUATION_PROBLEM_SETUP")
@@ -380,10 +380,10 @@ CONTAINS
       CASE DEFAULT
         LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(PROBLEM_SUBTYPE,"*",ERR,ERROR))// &
           & " is not valid for a Helmholtz equation type of a classical field problem class."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
     ELSE
-      CALL FLAG_ERROR("Problem is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("HELMHOLTZ_EQUATION_PROBLEM_SUBTYPE_SET")
@@ -419,15 +419,15 @@ CONTAINS
         CASE DEFAULT
           LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a linear Helmholtz equation."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
         LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
           & " does not equal a linear Helmholtz equation subtype."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Problem is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("HELMHOLTZ_EQUATION_PROBLEM_LINEAR_SETUP")

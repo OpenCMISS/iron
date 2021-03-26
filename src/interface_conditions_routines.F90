@@ -47,6 +47,8 @@ MODULE InterfaceConditionRoutines
   USE BaseRoutines
   USE BasisRoutines
   USE CoordinateSystemAccessRoutines
+  USE DomainMappings
+  USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE InputOutput
@@ -56,11 +58,13 @@ MODULE InterfaceConditionRoutines
   USE InterfaceEquationsAccessRoutines
   USE InterfaceMappingRoutines
   USE InterfaceMatricesRoutines
+  USE InterfaceMatricesAccessRoutines
   USE InterfaceOperatorsRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
   USE ProfilingRoutines
+  USE RegionAccessRoutines
   USE Strings
   USE Timer
   USE Types
@@ -316,7 +320,7 @@ CONTAINS
       NULLIFY(interfaceDependent)
       CALL InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*999)
       !Check the dependent field variables have been set.
-      CALL InterfaceConditionDependent_NumberOfVariablesGet(interfaceDependent,numberOfDependentVariables,err,error,*999)
+      CALL InterfaceDependent_NumberOfDependentVariablesGet(interfaceDependent,numberOfDependentVariables,err,error,*999)
       IF(numberOfDependentVariables<2) THEN
         localError="The number of added dependent variables of "// &
           & TRIM(NumberToVString(numberOfDependentVariables,"*",err,error))//" is invalid. The number must be >= 2."
@@ -333,11 +337,11 @@ CONTAINS
         & INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR,INTERFACE_CONDITION_SOLID_FLUID_OPERATOR)
         !Check that the dependent variables have the same number of components
         NULLIFY(fieldVariable)
-        CALL InterfaceConditionDependent_DependentVariableGet(interfaceDependent,1,fieldVariable,err,error,*999)
+        CALL InterfaceDependent_DependentVariableGet(interfaceDependent,1,fieldVariable,err,error,*999)
         CALL FieldVariable_NumberOfComponentsGet(fieldVariable,numberOfComponents,err,error,*999)
         DO variableIdx=2,numberOfDependentVariables
           NULLIFY(fieldVariable)
-          CALL InterfaceConditionDependent_DependentVariableGet(interfaceDependent,variableIdx,fieldVariable,err,error,*999)
+          CALL InterfaceDependent_DependentVariableGet(interfaceDependent,variableIdx,fieldVariable,err,error,*999)
         ENDDO !variableIdx 
       CASE(INTERFACE_CONDITION_FIELD_NORMAL_CONTINUITY_OPERATOR)
         CALL FlagError("Not implemented.",err,error,*999)
@@ -359,11 +363,11 @@ CONTAINS
       CALL Interface_NumberOfCoupledMeshesGet(INTERFACE,numberOfCoupledMeshes,err,error,*999)
       DO meshIdx=1,numberOfCoupledMeshes
         DO variableIdx=1,numberOfDependentVariables
-          CALL InterfaceConditionDependent_VariableMeshIndexGet(interfaceDependent,variableIdx,variableMeshIdx,err,error,*999)
+          CALL InterfaceDependent_VariableMeshIndexGet(interfaceDependent,variableIdx,variableMeshIdx,err,error,*999)
           IF(variableMeshIdx==meshIdx) THEN
             meshIdxCount=meshIdxCount+1
             NULLIFY(fieldVariable)
-            CALL InterfaceConditionDependent_DependentVariableGet(interfaceDependent,variableIdx,fieldVariable,err,error,*999)
+            CALL InterfaceDependent_DependentVariableGet(interfaceDependent,variableIdx,fieldVariable,err,error,*999)
             newFieldVariables(meshIdxCount)%ptr=>fieldVariable
             newVariableMeshIndices(meshIdxCount)=meshIdx
           ENDIF
@@ -689,8 +693,6 @@ CONTAINS
 
     IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*998)
 
-    NULLIFY(interfaceConditions)
-    CALL Interface_InterfaceConditionsGet(interfaceCondition,interfaceConditions,err,error,*998)
     interfaceConditionPosition=interfaceCondition%globalNumber
 
     !Destroy all the interface condition components
@@ -754,7 +756,7 @@ CONTAINS
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       !Finish the interface equations creation
       NULLIFY(interfaceEquations)
-      CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+      CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
       CALL InterfaceEquations_AssertNotFinished(interfaceEquations,err,error,*999)
       CALL InterfaceEquations_CreateFinish(interfaceEquations,err,error,*999)
       NULLIFY(interfaceDependent)
@@ -1401,7 +1403,7 @@ CONTAINS
     NULLIFY(interfacePenalty)
     CALL InterfaceCondition_InterfacePenaltyGet(interfaceCondition,interfacePenalty,err,error,*999)
     NULLIFY(interfaceDependent)
-    CALL InterfaceConditions_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*999)
+    CALL InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*999)
     NULLIFY(INTERFACE)
     CALL InterfaceCondition_InterfaceGet(interfaceCondition,INTERFACE,err,error,*999)
     CALL Interface_UserNumberGet(INTERFACE,interfaceUserNumber,err,error,*999)
@@ -1708,7 +1710,7 @@ CONTAINS
     CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
     SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
-      CALL InterfaceCondition_ResidualEvaluate_FEM(interfaceCondition,err,error,*999)
+      CALL InterfaceCondition_ResidualEvaluateFEM(interfaceCondition,err,error,*999)
     CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
@@ -1912,7 +1914,7 @@ CONTAINS
     IF(outputType>=INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT) THEN
       NULLIFY(interfaceMatrices)
       CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
-      CALL InterfaceMatrices_NumberOfMatricesGet(interfaceMatrices,numberOfInterfaceMatrices,err,error,*999)
+      CALL InterfaceMatrices_NumberOfInterfaceMatricesGet(interfaceMatrices,numberOfInterfaceMatrices,err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"Finite element interface matrices:",err,error,*999)          
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Element number = ",interfaceElementNumber,err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of interface matrices = ",numberOfInterfaceMatrices,err,error,*999)

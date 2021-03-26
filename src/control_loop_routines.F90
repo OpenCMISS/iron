@@ -56,6 +56,7 @@ MODULE ControlLoopRoutines
   USE ProblemAccessRoutines
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE SolverMatricesAccessRoutines  
   USE Strings
   USE Types
@@ -121,7 +122,7 @@ MODULE ControlLoopRoutines
   
   PUBLIC ControlLoop_TimeInputSet
 
- PUBLIC ControlLoop_TimeOutputSet
+  PUBLIC ControlLoop_TimeOutputSet
 
 CONTAINS
 
@@ -455,7 +456,7 @@ CONTAINS
           CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
           NULLIFY(solverMapping)
           CALL SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*999)
-          CALL SolverMapping_NumberOfMatricesGet(solverMapping,numberOfSolverMatrices,err,error,*999)
+          CALL SolverMapping_NumberOfSolverMatricesGet(solverMapping,numberOfSolverMatrices,err,error,*999)
           !Loop over the solver matrices
           DO solverMatrixIdx=1,numberOfSolverMatrices
             NULLIFY(solverMatrixToEquationsMap)
@@ -477,7 +478,7 @@ CONTAINS
           !Add in the RHS
           NULLIFY(solverMappingVariables)
           CALL SolverMapping_RHSVariablesListGet(solverMapping,solverMappingVariables,err,error,*999)
-          CALL SolverMappingVariables_NumberOfVariablesList(solverMappingVariables,numberOfVariables,err,error,*999)
+          CALL SolverMappingVariables_NumberOfVariablesGet(solverMappingVariables,numberOfVariables,err,error,*999)
           DO variableIdx=1,numberOfVariables
             NULLIFY(solverMappingVariable)
             CALL SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*999)

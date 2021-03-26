@@ -71,7 +71,7 @@ MODULE CmissMPI
 
   !Interfaces
 
-  PUBLIC MPIErrorCheck
+  PUBLIC MPI_ErrorCheck
 
 CONTAINS
 
@@ -80,7 +80,7 @@ CONTAINS
   !
 
   !>Checks to see if an MPI error has occured during an MPI call and flags a OpenCMISS error it if it has.
-  SUBROUTINE MPIErrorCheck(routine,MPIErrCode,err,error,*)
+  SUBROUTINE MPI_ErrorCheck(routine,MPIErrCode,err,error,*)
   
     !Argument Variables
     CHARACTER(LEN=*) :: routine !<The name of the MPI routine that has just been called.
@@ -92,7 +92,7 @@ CONTAINS
     CHARACTER(LEN=MAXSTRLEN) :: MPIErrStr
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MPIErrorCheck",err,error,*999)
+    ENTERS("MPI_ErrorCheck",err,error,*999)
 
     IF(MPIErrCode/=MPI_SUCCESS) THEN
       CALL MPI_ERROR_STRING(MPIErrCode,MPIErrStr,MPIErrStrLength,MPIIerror)
@@ -101,12 +101,12 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    EXITS("MPIErrorCheck")
+    EXITS("MPI_ErrorCheck")
     RETURN
-999 ERRORSEXITS("MPIErrorCheck",err,error)
+999 ERRORSEXITS("MPI_ErrorCheck",err,error)
     RETURN 1
     
-  END SUBROUTINE MPIErrorCheck
+  END SUBROUTINE MPI_ErrorCheck
 
   !
   !================================================================================================================================

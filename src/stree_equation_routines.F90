@@ -59,11 +59,13 @@ MODULE StreeEquationsRoutines
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE CoordinateSystemRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -80,6 +82,8 @@ MODULE StreeEquationsRoutines
   USE ProblemAccessRoutines
   USE Strings
   USE SolverRoutines
+  USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Timer
   USE Types
 
@@ -438,7 +442,7 @@ CONTAINS
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         NULLIFY(equationsMaterials)
-        CALL EquationsSet_EquationsMaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+        CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
         IF(equationsMaterials%materialsFieldAutoCreated) THEN
           !Create the auto created materials field
           !start field creation with name 'Materials Field'
@@ -502,7 +506,7 @@ CONTAINS
         ENDIF
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
         NULLIFY(equationsMaterials)
-        CALL EquationsSet_EquationsMaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+        CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
         IF(equationsMaterials%materialsFieldAutoCreated) THEN
           CALL Field_CreateFinish(equationsMaterials%materialsField,err,error,*999)
 !!TODO: INITIALISE MATERIALS FIELD WITH DEFAULT VALUES
@@ -738,11 +742,11 @@ CONTAINS
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       NULLIFY(navierStokesSolverMapping)
-      CALL SolverEquations_SolverMappingGet(navierStokesSolverMapping,navierStokesSolverMapping,err,error,*999)
+      CALL SolverEquations_SolverMappingGet(navierStokesSolverEquations,navierStokesSolverMapping,err,error,*999)
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
       NULLIFY(navierStokesEquationsSet)
-      CALL SolverMapping_EquationsSetGet(navierStokesSolverMapping,navierStokesEquationsSet,err,error,*999)
+      CALL SolverMapping_EquationsSetGet(navierStokesSolverMapping,1,navierStokesEquationsSet,err,error,*999)
       NULLIFY(materialsField)
       CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
       NULLIFY(navierStokesDependentField)
@@ -769,13 +773,13 @@ CONTAINS
         NULLIFY(domain)
         CALL FieldVariable_ComponentDomainGet(dependentFieldVariable,componentIdx,domain,err,error,*999)
         NULLIFY(domainTopology)
-        CALL Domain_DomainTopology(domain,domainTopology,err,error,*999)
+        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
         NULLIFY(domainNodes)
-        CALL DomainTopology_DomainNodes(domainTopology,domainNodes,err,error,*999)
+        CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
         !Loop over the local nodes excluding the ghosts.
         CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         DO nodeIdx=1,numberOfNodes
-          CALL DomainNodes_NodeUserNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
+          CALL DomainNodes_UserNodeNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
           CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
           DO derivativeIdx=1,numberOfNodeDerivatives
             CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)

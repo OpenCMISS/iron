@@ -53,12 +53,15 @@ MODULE AdvectionDiffusionEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE CoordinateSystemRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -72,6 +75,7 @@ MODULE AdvectionDiffusionEquationsRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Timer
   USE Types
 ! temporary input for setting velocity field
@@ -891,7 +895,7 @@ CONTAINS
       ! M a t e r i a l s   f i e l d
       !-----------------------------------------------------------------
       NULLIFY(equationsMaterials)
-      CALL EquationsSet_EquationsMaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+      CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       NULLIFY(geometricVariable)
@@ -1121,7 +1125,7 @@ CONTAINS
       ! S o u r c e   f i e l d
       !-----------------------------------------------------------------
       NULLIFY(equationsSource)
-      CALL EquationsSet_EquationsSourceGet(equationsSet,equationsSource,err,error,*999)
+      CALL EquationsSet_SourceGet(equationsSet,equationsSource,err,error,*999)
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       NULLIFY(geometricVariable)
@@ -1211,7 +1215,7 @@ CONTAINS
       ! I n d e p e n d e n t   f i e l d
       !-----------------------------------------------------------------
       NULLIFY(equationsIndependent)
-      CALL EquationsSet_EquationsIndependentGet(equationsSet,equationsIndependent,err,error,*999)
+      CALL EquationsSet_IndependentGet(equationsSet,equationsIndependent,err,error,*999)
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       NULLIFY(geometricVariable)
@@ -1378,7 +1382,7 @@ CONTAINS
       ! A n a l y t i c   f i e l d
       !-----------------------------------------------------------------
       NULLIFY(equationsAnalytic)
-      CALL EquationsSet_EquationsAnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
+      CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       NULLIFY(geometricVariable)
@@ -1486,7 +1490,7 @@ CONTAINS
                 & equationsSetSubtype==EQUATIONS_SET_LINEAR_SOURCE_ADVEC_DIFF_SUPG_SUBTYPE .OR. &
                 & equationsSetSubtype==EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE) THEN
                 CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-                CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               ENDIF
             CASE(EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE, &
               & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE)
@@ -1520,7 +1524,7 @@ CONTAINS
               CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,variableUTypes,err,error,*999)
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,variableTypes(2*myMatrixIdx),err,error,*999)
               CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
             END SELECT
             CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
             !Create the equations matrices
@@ -1537,7 +1541,7 @@ CONTAINS
               CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE, &
                 & EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
             ELSE
-              CALL Equations_SparityTypeGet(equations,sparsityType,err,error,*999)
+              CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
               SELECT CASE(sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
                 CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE, &
@@ -1586,7 +1590,7 @@ CONTAINS
             IF(equationsSetSubtype==EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE .OR. &
               & equationsSetSubtype==EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE) THEN
               CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
             ENDIF
             CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
             !Create the equations matrices
@@ -1926,7 +1930,7 @@ CONTAINS
         IF(matrixIdx/=myCompartment) THEN
           numberOfVariablesCount=numberOfVariablesCount+1
           NULLIFY(couplingMatrices(numberOfVariablesCount)%ptr)
-          CALL EquationsMatricesLinear_LinearMatrixGet(linearMatrices,matrixIdx,couplingMatrices(numberOfVariablesCount)%ptr, &
+          CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,couplingMatrices(numberOfVariablesCount)%ptr, &
             & err,error,*999)
           CALL EquationsMatrix_UpdateMatrixGet(couplingMatrices(numberOfVariablesCount)%ptr, &
             & updateCouplingMatrices(numberOfVariablesCount),err,error,*999)
@@ -1940,7 +1944,7 @@ CONTAINS
       CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
       CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
       CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-      CALL EquationsMatricesLinear_LinearMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)
+      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)
       CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)      
     CASE(EQUATIONS_SET_QUADRATIC_SOURCE_ADVEC_DIFF_SUBTYPE, &
       & EQUATIONS_SET_EXP_SOURCE_ADVEC_DIFF_SUBTYPE, &
@@ -1993,9 +1997,9 @@ CONTAINS
           IF(matrixIdx/=myCompartment)THEN
             numberOfVariablesCount=numberOfVariablesCount+1
             NULLIFY(couplingVariables(numberOfVariablesCount)%ptr)
-            CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMatrices,matrixIdx, &
+            CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,matrixIdx, &
               & couplingVariables(numberOfVariablesCount)%ptr,err,error,*999)
-            CALL EquationsMappingLinear_LinearMatrixVariableTypeGet(linearMatrices,matrixIdx, &
+            CALL EquationsMappingLinear_LinearMatrixVariableTypeGet(linearMapping,matrixIdx, &
               & couplingVariableTypes(numberOfVariablesCount),err,error,*999)
             couplingMatrices(numberOfVariablesCount)%ptr%elementMatrix%matrix=0.0_DP
           ENDIF
@@ -2105,7 +2109,7 @@ CONTAINS
       NULLIFY(sourceInterpPoint)
       IF(ASSOCIATED(sourceVariable)) THEN
         CALL EquationsSet_SourceFieldGet(equationsSet,sourceField,err,error,*999)
-        CALL FieldVariable_TypeGet(sourceVariable,sourceVariableType,err,error,*999)
+        CALL FieldVariable_VariableTypeGet(sourceVariable,sourceVariableType,err,error,*999)
         NULLIFY(sourceInterpParameters)
         CALL EquationsInterpolation_SourceParametersGet(equationsInterpolation,sourceVariableType,sourceInterpParameters, &
           & err,error,*999)
@@ -2188,7 +2192,7 @@ CONTAINS
 
         !Calculate Jacobian and Gauss weight.
 !!TODO: Think about symmetric problems. 
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
 
@@ -2800,7 +2804,7 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
-    CALL ControlLoop_Problem(controlLoop,problem,err,error,*999)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     SELECT CASE(pSpecification(3))
@@ -2820,7 +2824,7 @@ CONTAINS
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       NULLIFY(equationsSet)
-      CALL SolverMapping_EquationSetGet(solverMapping,1,equationsSet,err,error,*999)
+      CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
       CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
       SELECT CASE(esSpecification(3))
       CASE(EQUATIONS_SET_GENERALISED_ADVEC_DIFF_SUBTYPE, &
@@ -2928,7 +2932,7 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
-    CALL ControlLoop_Problem(controlLoop,problem,err,error,*999)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
 
     SELECT CASE(pSpecification(3))
@@ -2962,7 +2966,7 @@ CONTAINS
         NULLIFY(advectionDiffusionDependentField)
         CALL EquationsSet_DependentFieldGet(advectionDiffusionEquationsSet,advectionDiffusionDependentField,err,error,*999)
         NULLIFY(advectionDiffusionDependentVariable)
-        CALL Field_VariableTypeGet(advectionDiffusionDependentField,FIELD_U_VARIABLE_TYPE,advectionDiffusionDependentVariable, &
+        CALL Field_VariableGet(advectionDiffusionDependentField,FIELD_U_VARIABLE_TYPE,advectionDiffusionDependentVariable, &
           & err,error,*999)
         CALL FieldVariable_NumberOfComponentsGet(advectionDiffusionDependentVariable,numberOfComponents,err,error,*999)
 
@@ -3029,7 +3033,7 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
-    CALL ControlLoop_Problem(controlLoop,problem,err,error,*999)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     SELECT CASE(pSpecification(3))
@@ -3151,7 +3155,7 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
-    CALL ControlLoop_Problem(controlLoop,problem,err,error,*999)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     SELECT CASE(pSpecification(3))
@@ -3221,11 +3225,12 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 !\todo: Reduce number of variable used
-    INTEGER(INTG) :: boundaryConditionCheckVariable,currentIteration,globalDOFIdx,inputIteration,localDOFIdx,nodeIdx, &
+    INTEGER(INTG) :: boundaryConditionCheckVariable,currentIteration,inputIteration,globalDOFIdx,localDOFIdx,nodeIdx, &
       & numberOfComponents,outputIteration,pSpecification(3)
-    INTEGER(INTG), POINTER :: boundaryNodes(:)
+    INTEGER(INTG), POINTER :: boundaryNodes(:)    
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     REAL(DP), POINTER :: boundaryValues(:)
+    LOGICAL :: ghostDOF
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
@@ -3242,7 +3247,7 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
-    CALL ControlLoop_Problem(controlLoop,problem,err,error,*999)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     SELECT CASE(pSpecification(3))

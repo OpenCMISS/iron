@@ -45,9 +45,11 @@
 MODULE InterfaceMatricesRoutines
 
   USE BaseRoutines
+  USE BasisAccessRoutines
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
+  USE DomainMappings
   USE EquationsMatricesRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -218,7 +220,7 @@ CONTAINS
         NULLIFY(interfaceMatrix)
         CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
         NULLIFY(interfaceMatrixToVarMap)
-        CALL InterfaceMapping_MatrixRowsToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixToVarMap,err,error,*999)
+        CALL InterfaceMapping_InterfaceMatrixToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixToVarMap,err,error,*999)
         CALL InterfaceMappingIMToVMap_MeshIndexGet(interfaceMatrixToVarMap,rowsMeshIdx,err,error,*999)
         IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
           !If the rows and column variables are both the Lagrange variable (this is the diagonal matrix)
@@ -272,7 +274,7 @@ CONTAINS
     CALL InterfaceMapping_RHSMappingGet(interfaceMapping,rhsMapping,err,error,*999)
     !Calculate the rows for the equations RHS
     NULLIFY(rowsFieldVariable)
-    CALL InterfaceMappingRHS_VariableGet(rhsMapping,rowsFieldVariable,err,error,*999)
+    CALL InterfaceMappingRHS_RHSVariableGet(rhsMapping,rowsFieldVariable,err,error,*999)
     CALL EquationsMatrices_ElementVectorCalculate(rhsVector%elementVector,rhsVector%updateVector, &
       & interfaceElementNumber,rowsFieldVariable,err,error,*999)
     
@@ -391,7 +393,8 @@ CONTAINS
         CALL InterfaceMappingIMToVMap_MeshIndexGet(interfaceMatrixToVarMap,rowsMeshIdx,err,error,*999)
         NULLIFY(colsFieldVariable)
         CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,colsFieldVariable,err,error,*999)
-        CALL InterfacePointsConnectivity(pointsConnectivity,rowsMeshIdx,rowsNumberOfElements,err,error,*999)
+        CALL InterfacePointsConnectivity_MaximumCoupledElementsGet(pointsConnectivity,rowsMeshIdx,rowsNumberOfElements, &
+          & err,error,*999)
         colsNumberOfElements=1        
         CALL EquationsMatrices_ElementMatrixSetup(interfaceMatrix%elementMatrix,rowsFieldVariable, &
           & colsFieldVariable,rowsNumberOfElements,colsNumberOfElements,err,error,*999)
@@ -973,9 +976,9 @@ CONTAINS
       CALL InterfaceMatrix_Initialise(interfaceEquations%interfaceMatrices,matrixIdx,err,error,*999)
       NULLIFY(interfaceMatrixToVarMap)
       CALL InterfaceMapping_InterfaceMatrixToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixToVarMap,err,error,*999)
-      CALL InterfaMappingIMToVMap_MatrixCoefficientGet(interfaceMatrixToVarMap,interfaceEquations%interfaceMatrices% &
+      CALL InterfaceMappingIMToVMap_MatrixCoefficientGet(interfaceMatrixToVarMap,interfaceEquations%interfaceMatrices% &
         & matrices(matrixIdx)%ptr%matrixCoefficient,err,error,*999)
-      CALL InterfaMappingIMToVMap_TransposeMatrixCoefficientGet(interfaceMatrixToVarMap,interfaceEquations%interfaceMatrices% &
+      CALL InterfaceMappingIMToVMap_TransposeMatrixCoefficientGet(interfaceMatrixToVarMap,interfaceEquations%interfaceMatrices% &
         & matrices(matrixIdx)%ptr%transposeMatrixCoefficient,err,error,*999)
     ENDDO !matrixIdx
     CALL InterfaceMatrices_RHSInitialise(interfaceEquations%interfaceMatrices,err,error,*999)
@@ -1390,9 +1393,9 @@ CONTAINS
     interfaceMatrix%structureType=INTERFACE_MATRIX_NO_STRUCTURE
     interfaceMatrix%updateMatrix=.TRUE.
     interfaceMatrix%firstAssembly=.TRUE.
-    CALL InterfaceMappingIMToVarMap_HasTransposeGet(interfaceMatrixToVarMap,interfaceMatrix%hasTranspose,err,error,*999)
-    CALL InterfaceMappingIMToVarMap_NumberOfRowsGet(interfaceMatrixToVarMap,interfaceMatrix%numberOfRows,err,error,*999)
-    CALL InterfaceMappingIMToVarMap_TotalNumberOfRowsGet(interfaceMatrixToVarMap,interfaceMatrix%totalNumberOfRows,err,error,*999)
+    CALL InterfaceMappingIMToVMap_HasTransposeGet(interfaceMatrixToVarMap,interfaceMatrix%hasTranspose,err,error,*999)
+    CALL InterfaceMappingIMToVMap_NumberOfRowsGet(interfaceMatrixToVarMap,interfaceMatrix%numberOfRows,err,error,*999)
+    CALL InterfaceMappingIMToVMap_TotalNumberOfRowsGet(interfaceMatrixToVarMap,interfaceMatrix%totalNumberOfRows,err,error,*999)
     interfaceMatrixToVarMap%interfaceMatrix=>interfaceMatrix
     NULLIFY(interfaceMatrix%matrix)
     NULLIFY(interfaceMatrix%matrixTranspose)

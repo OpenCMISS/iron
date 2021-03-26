@@ -46,6 +46,7 @@
 MODULE BoundaryConditionAccessRoutines
   
   USE BaseRoutines
+  USE FieldAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE Strings
@@ -193,6 +194,8 @@ MODULE BoundaryConditionAccessRoutines
 
   PUBLIC BoundaryConditionsRowVariable_TotalNumberOfDOFsGet
 
+  PUBLIC BoundaryConditionsVariable_BoundaryConditionsGet
+
   PUBLIC BoundaryConditionsVariable_ConditionTypeGet
 
   PUBLIC BoundaryConditionsVariable_DirichletConditionsExists
@@ -208,6 +211,8 @@ MODULE BoundaryConditionAccessRoutines
   PUBLIC BoundaryConditionsVariable_DOFTypeGet
 
   PUBLIC BoundaryConditionsVariable_FieldVariableGet
+
+  PUBLIC BoundaryConditionsVariable_FieldVariableTypeGet
 
   PUBLIC BoundaryConditionsVariable_NeumannConditionsExists
 
@@ -1037,6 +1042,45 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the boundary conditions for a boundary condition variable.
+  SUBROUTINE BoundaryConditionsVariable_BoundaryConditionsGet(boundaryConditionsVariable,boundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the boundary conditions for
+    TYPE(BoundaryConditionsType), POINTER :: boundaryCOnditions !<On exit, a pointer to the boundary conditions in the specified boundary conditions variable. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsVariable_BoundaryConditionsGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(boundaryConditions)) &
+      & CALL FlagError("Boundary conditions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
+      & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+#endif    
+
+    boundaryConditions=>boundaryConditionsVariable%boundaryConditions
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditions)) &
+      & CALL FlagError("Boundary conditions is not associated for the boundary conditions variable.",err,error,*999)
+#endif    
+       
+    EXITS("BoundaryConditionsVariable_BoundaryConditionsGet")
+    RETURN
+999 NULLIFY(boundaryConditions)
+998 ERRORS("BoundaryConditionsVariable_BoundaryConditionsGet",err,error)
+    EXITS("BoundaryConditionsVariable_BoundaryConditionsGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_BoundaryConditionsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the condition type for a DOF in a boundary condition variable.
   SUBROUTINE BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,dofIdx,conditionType,err,error,*)
 
@@ -1059,8 +1103,8 @@ CONTAINS
     IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
       & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
     NULLIFY(fieldVariable)
-    CALL BoundaryConditionsVariable_VariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
-    CALL FieldVariable_NumberOfGlobalGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
+    CALL BoundaryConditionsVariable_FieldVariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
+    CALL FieldVariable_NumberOfGlobalDOFsGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
     IF(dofIdx<1.OR.dofIdx>numberOfGlobalDOFs) THEN
       localError="The specified DOF index of "//TRIM(NumberToVString(dofIdx,"*",err,error))// &
         & " is invalid. The DOF index should be >= 1 and <= "//TRIM(NumberToVString(numberOfGlobalDOFs,"*",err,error))//"."
@@ -1207,7 +1251,7 @@ CONTAINS
     IF(ASSOCIATED(dofConstraints)) CALL FlagError("DOF constraints is already associated.",err,error,*998)
 #endif    
     
-    CALL BoundaryConditionsVariable_DOFConstraintsExist(boundaryConditionsVariable,dofConstraints,err,error,*999)
+    CALL BoundaryConditionsVariable_DOFConstraintsExists(boundaryConditionsVariable,dofConstraints,err,error,*999)
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dofConstraints)) &
@@ -1291,8 +1335,8 @@ CONTAINS
     IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
       & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
     NULLIFY(fieldVariable)
-    CALL BoundaryConditionsVariable_VariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
-    CALL FieldVariable_NumberOfGlobalGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
+    CALL BoundaryConditionsVariable_FieldVariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
+    CALL FieldVariable_NumberOfGlobalDOFsGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
     IF(dofIdx<1.OR.dofIdx>numberOfGlobalDOFs) THEN
       localError="The specified DOF index of "//TRIM(NumberToVString(dofIdx,"*",err,error))// &
         & " is invalid. The DOF index should be >= 1 and <= "//TRIM(NumberToVString(numberOfGlobalDOFs,"*",err,error))//"."
@@ -1348,6 +1392,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE BoundaryConditionsVariable_FieldVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the field variable type associated with a boundary condition variable.
+  SUBROUTINE BoundaryConditionsVariable_FieldVariableTypeGet(boundaryConditionsVariable,fieldVariableType,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the field variable type for
+    INTEGER(INTG), INTENT(OUT) :: fieldVariableType !<On exit, the field variable type associated with the specified boundary conditions variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsVariable_FieldVariableTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+#endif    
+
+    fieldVariableType=boundaryConditionsVariable%variableType
+      
+    EXITS("BoundaryConditionsVariable_FieldVariableTypeGet")
+    RETURN
+999 ERRORS("BoundaryConditionsVariable_FieldVariableTypeGet",err,error)
+    EXITS("BoundaryConditionsVariable_FieldVariableTypeGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_FieldVariableTypeGet
 
   !
   !================================================================================================================================

@@ -52,12 +52,14 @@ MODULE PoissonEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
-  USE CoordinateSystemRoutines  
+  USE CoordinateSystemRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
@@ -72,6 +74,7 @@ MODULE PoissonEquationsRoutines
   USE Strings
   USE SolverRoutines
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE Timer
   USE Types
 ! temporary input for vector-source
@@ -736,7 +739,7 @@ CONTAINS
       ! S o u r c e   f i e l d 
       !-----------------------------------------------------------------
       NULLIFY(geometricField)
-      CALL Equationset_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         !Set start action
@@ -1148,11 +1151,11 @@ CONTAINS
           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
           !Create the equations mapping.
           CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
-          CALL EquationsMapping_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+          CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
           CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
           CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
           CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-          CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
           CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
           !Create the equations matrices
           CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
@@ -1524,7 +1527,7 @@ CONTAINS
       CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
       NULLIFY(dependentQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
       
       NULLIFY(geometricInterpParameters)
       CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -1621,7 +1624,7 @@ CONTAINS
         ENDIF
         NULLIFY(sourceVariable)
         CALL Field_VariableGet(sourceField,FIELD_U_VARIABLE_TYPE,sourceVariable,err,error,*999)
-        CALL FieldVariable_InterpolationParametersInitialise(sourceVariable,oldSourceInterpParameters,err,error,*999)
+        CALL FieldVariable_InterpolationParameterInitialise(sourceVariable,oldSourceInterpParameters,err,error,*999)
         NULLIFY(oldSourceInterpPoint)
         CALL Field_InterpolatedPointInitialise(oldSourceInterpParameters,oldSourceInterpPoint,err,error,*999)
         CALL Field_InterpolationParametersElementGet(FIELD_INPUT_DATA2_SET_TYPE,elementNumber,oldSourceInterpParameters, &
@@ -1728,7 +1731,7 @@ CONTAINS
         
         !Calculate Jacobian and Gauss weight.
 !!TODO: Think about symmetric problems. 
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         
@@ -2099,7 +2102,7 @@ CONTAINS
     END SELECT
 
     NULLIFY(equations)
-    CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
@@ -2160,7 +2163,7 @@ CONTAINS
       CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
       NULLIFY(dependentQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)     
+      CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)     
       
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
@@ -2220,7 +2223,7 @@ CONTAINS
         END SELECT
               
         !Calculate jacobianGaussWeight.
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
               
@@ -2416,7 +2419,7 @@ CONTAINS
     END SELECT
     
     NULLIFY(equations)
-    CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
@@ -2461,7 +2464,7 @@ CONTAINS
     updateRHS=.FALSE.
     IF(ASSOCIATED(rhsMapping)) THEN
       CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-      CALL EquationMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
+      CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
     ENDIF
 
     update=(updateMatrix.OR.updateSource.OR.updateResidual.OR.updateRHS)
@@ -2587,7 +2590,7 @@ CONTAINS
         
         !Calculate jacobianGaussWeight.      
 !!TODO: Think about symmetric problems.
-        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
         CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         
@@ -2809,13 +2812,13 @@ CONTAINS
       ! do nothing
     CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE)
       CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
-      CALL ControlLoop_WhileInformationGet(controlLoop,currentIteration,maximumNumberOfIterations,absoluteTolerance, &
+      CALL ControlLoop_CurrentWhileInformationGet(controlLoop,currentIteration,maximumNumberOfIterations,absoluteTolerance, &
         & relativeTolerance,continueLoop,err,error,*999)
       IF(currentIteration==1)THEN
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMapping)
-        CALL SolverEquation_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+        CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
         IF(ASSOCIATED(equationsSet%analytic)) THEN
@@ -2875,13 +2878,13 @@ CONTAINS
       ENDIF
     CASE(PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
       CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
-      CALL ControlLoop_WhileInformationGet(controlLoop,currentIteration,maximumNumberOfIterations,absoluteTolerance, &
+      CALL ControlLoop_CurrentWhileInformationGet(controlLoop,currentIteration,maximumNumberOfIterations,absoluteTolerance, &
         & relativeTolerance,continueLoop,err,error,*999)
       IF(currentIteration==1)THEN
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMapping)
-        CALL SolverEquation_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+        CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
         IF(ASSOCIATED(equationsSet%analytic)) THEN
@@ -3168,7 +3171,7 @@ CONTAINS
       ! do nothing ???
     CASE(PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
       !Update mesh within the dynamic solver
-      CALL Solver_TypeGet(solver,solveType,err,error,*999)
+      CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
       IF(solveType/=SOLVER_LINEAR_TYPE) CALL FlagError("Mesh motion calculation not successful for ALE problem.",err,error,*999)
       !Get the independent field for the ALE PPE problem
       NULLIFY(solvers)
@@ -3176,7 +3179,7 @@ CONTAINS
       NULLIFY(solverALEPPE)
       CALL Solvers_SolverGet(solvers,1,solverALEPPE,err,error,*999)
       NULLIFY(solverEquations)
-      CALL Solver_SolverEquations(solverALEPPE,solverEquations,err,error,*999)
+      CALL Solver_SolverEquationsGet(solverALEPPE,solverEquations,err,error,*999)
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       NULLIFY(equationsSet)
@@ -3211,7 +3214,7 @@ CONTAINS
       NULLIFY(vectorEquations)
       CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
       NULLIFY(vectorMapping)
-      CALL VectorEquations_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+      CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
       CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
       DO variableIdx=1,numberOfVariables
         NULLIFY(dependentVariable)
@@ -3288,7 +3291,7 @@ CONTAINS
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
-    CALL Problem_ProblemSpecificationGet(problem,pSpecification,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
       & outputIteration,inputIteration,err,error,*999)
@@ -3490,7 +3493,7 @@ CONTAINS
     CASE(PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE)
       ! do nothing
     CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
-      CALL ControlLoop_WhileInformationGet(controlLoop,currentIteration,maximumNumberOfIterations,absoluteTolerance, &
+      CALL ControlLoop_CurrentWhileInformationGet(controlLoop,currentIteration,maximumNumberOfIterations,absoluteTolerance, &
         & relativeTolerance,continueLoop,err,error,*999)
       IF(currentIteration==maximumNumberOfIterations)THEN
         CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)

@@ -662,13 +662,13 @@ CONTAINS
       SELECT CASE(FILEID%FILE_INFORMATION%BINARY_FILE_REVISION)
       CASE(0)
         !Identity format 0 - has 2 extra dummy bytes. Skip them.
-        CALL FLAG_WARNING("Old binary file identity format&
+        CALL FlagWarning("Old binary file identity format&
           & found. Please update file.",ERR,ERROR,*999)
         CALL SKIP_BINARY_FILE(FILEID,2*CHARACTER_SIZE,ERR,&
           & ERROR,*999)
       CASE(1)
         !Identity format 1 - has machine header section.
-        CALL FLAG_WARNING("Old binary file identity format&
+        CALL FlagWarning("Old binary file identity format&
           & found. Please update file.",ERR,ERROR,*999)
         CALL READ_BINARY_FILE(FILEID,1,CHARDATA,ERR,ERROR,*999)
         NUMMACHHEADERBYTES=ICHAR(CHARDATA(1:1))
@@ -742,7 +742,7 @@ CONTAINS
             & "   Expected file version is ",I2,".",I2,".",I2)') &
             & FILEVERSION(1),FILEVERSION(2),FILEVERSION(3),&
             & VERSION(1),VERSION(2),VERSION(3)
-          CALL FLAG_WARNING(WARNING_STRING,ERR,ERROR,*999)
+          CALL FlagWarning(WARNING_STRING,ERR,ERROR,*999)
         ENDIF
       CASE(2)
         CALL READ_BINARY_FILE(FILEID,3,FILEVERSION,ERR,ERROR,*999)
@@ -754,7 +754,7 @@ CONTAINS
             & "   Expected file version is ",I2,".",I2,".",I2)') &
             & FILEVERSION(1),FILEVERSION(2),FILEVERSION(3),&
             & VERSION(1),VERSION(2),VERSION(3)
-          CALL FLAG_WARNING(WARNING_STRING,ERR,ERROR,*999)
+          CALL FlagWarning(WARNING_STRING,ERR,ERROR,*999)
         ENDIF
       CASE DEFAULT
         CALL FlagError("Invalid binary file identity format",ERR,ERROR,*999)

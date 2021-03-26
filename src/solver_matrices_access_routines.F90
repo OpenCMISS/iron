@@ -80,6 +80,16 @@ MODULE SolverMatricesAccessRoutines
 
   !Interfaces
 
+  INTERFACE SolverMatrices_StorageTypesGet
+    MODULE PROCEDURE SolverMatrices_StorageTypesGet0
+    MODULE PROCEDURE SolverMatrices_StorageTypesGet1
+  END INTERFACE SolverMatrices_StorageTypesGet
+
+  INTERFACE SolverMatrices_SymmetryTypesGet
+    MODULE PROCEDURE SolverMatrices_SymmetryTypesGet0
+    MODULE PROCEDURE SolverMatrices_SymmetryTypesGet1
+  END INTERFACE SolverMatrices_SymmetryTypesGet
+
   PUBLIC SOLVER_MATRICES_ALL,SOLVER_MATRICES_LINEAR_ONLY,SOLVER_MATRICES_NONLINEAR_ONLY, &
     & SOLVER_MATRICES_JACOBIAN_ONLY,SOLVER_MATRICES_RESIDUAL_ONLY,SOLVER_MATRICES_RHS_ONLY, & 
     & SOLVER_MATRICES_RHS_RESIDUAL_ONLY,SOLVER_MATRICES_LINEAR_RESIDUAL_ONLY !,SOLVER_MATRICES_DYNAMIC_ONLY
@@ -88,7 +98,7 @@ MODULE SolverMatricesAccessRoutines
   
   PUBLIC SolverMatrices_LibraryTypeGet
 
-  PUBLIC SolverMatrices_NumberOfMatricesGet
+  PUBLIC SolverMatrices_NumberOfSolverMatricesGet
 
   PUBLIC SolverMatrices_NumberOfRowsGet
 
@@ -98,13 +108,15 @@ MODULE SolverMatricesAccessRoutines
 
   PUBLIC SolverMatrices_ResidualDistributedVectorGet
 
+  PUBLIC SolverMatrices_SolverEquationsGet
+
   PUBLIC SolverMatrices_SolverMappingGet
 
   PUBLIC SolverMatrices_SolverMatrixGet
 
-  PUBLIC SolverMatrices_StorageTypeGet
+  PUBLIC SolverMatrices_StorageTypesGet
 
-  PUBLIC SolverMatrices_SymmetryTypeGet
+  PUBLIC SolverMatrices_SymmetryTypesGet
 
   PUBLIC SolverMatrices_UpdateResidualGet
 
@@ -216,7 +228,7 @@ CONTAINS
   !
 
   !>Get the number of solver matrices for the solver matrices
-  SUBROUTINE SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*)
+  SUBROUTINE SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*)
 
     !Argument variables
     TYPE(SolverMatricesType), POINTER, INTENT(IN) :: solverMatrices !<The solver matrices to get the number of matrices for
@@ -225,7 +237,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    ENTERS("SolverMatrices_NumberOfMatricesGet",err,error,*999)
+    ENTERS("SolverMatrices_NumberOfSolverMatricesGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices are not associated.",err,error,*999)
@@ -233,12 +245,12 @@ CONTAINS
      
     numberOfMatrices=solverMatrices%numberOfMatrices
 
-    EXITS("SolverMatrices_NumberOfMatricesGet")
+    EXITS("SolverMatrices_NumberOfSolverMatricesGet")
     RETURN
-999 ERRORSEXITS("SolverMatrices_NumberOfMatricesGet",err,error)
+999 ERRORSEXITS("SolverMatrices_NumberOfSolverMatricesGet",err,error)
     RETURN 1
 
-  END SUBROUTINE SolverMatrices_NumberOfMatricesGet
+  END SUBROUTINE SolverMatrices_NumberOfSolverMatricesGet
 
   !
   !================================================================================================================================
@@ -374,6 +386,41 @@ CONTAINS
   !================================================================================================================================
   !
   
+  !>Returns a pointer to the solver equations for solver matrices.
+  SUBROUTINE SolverMatrices_SolverEquationsGet(solverMatrices,solverEquations,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices !<A pointer to the solver matrices to get the solver equations for
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<On exit, a pointer to the solver equations. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMatrices_SolverEquationsGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+#endif    
+
+    solverEquations=>solverMatrices%solverEquations
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver matrices solver equations is not associated.",err,error,*999)
+#endif    
+      
+    EXITS("SolverMatrices_SolverEquationsGet")
+    RETURN
+999 NULLIFY(solverEquations)
+998 ERRORSEXITS("SolverMatrices_SolverEquationsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrices_SolverEquationsGet
+
+  !
+  !================================================================================================================================
+  !
+  
   !>Returns a pointer to the solver mapping for solver matrices.
   SUBROUTINE SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*)
 
@@ -459,11 +506,42 @@ CONTAINS
   !
   
   !>Gets the storage type (sparsity) of the solver matrices
-  SUBROUTINE SolverMatrices_StorageTypeGet(solverMatrices,storageType,err,error,*)
+  SUBROUTINE SolverMatrices_StorageTypesGet0(solverMatrices,storageType,err,error,*)
 
     !Argument variables
     TYPE(SolverMatricesType), POINTER :: solverMatrices !<A pointer to the solver matrices
-    INTEGER(INTG), INTENT(OUT) :: storageType(:) !<storageType(matrixIdx). On return, the storage type for the matrixIdx'th solver matrix
+    INTEGER(INTG), INTENT(OUT) :: storageType !<On return, the storage type for the solver matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx,storageTypes(1)
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("SolverMatrices_StorageTypesGet0",err,error,*999)
+
+    CALL SolverMatrices_StorageTypesGet1(solverMatrices,storageTypes,err,error,*999)
+    storageType=storageTypes(1)
+    
+    EXITS("SolverMatrices_StorageTypesGet0")
+    RETURN
+999 ERRORSEXITS("SolverMatrices_StorageTypesGet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrices_StorageTypesGet0
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the storage type (sparsity) of the solver matrices
+  SUBROUTINE SolverMatrices_StorageTypesGet1(solverMatrices,storageTypes,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices !<A pointer to the solver matrices
+    INTEGER(INTG), INTENT(OUT) :: storageTypes(:) !<storageTypes(matrixIdx). On return, the storage type for the matrixIdx'th solver matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -473,13 +551,13 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
     
-    ENTERS("SolverMatrices_StorageTypeGet",err,error,*999)
+    ENTERS("SolverMatrices_StorageTypesGet1",err,error,*999)
 
     CALL SolverMatrices_AssertIsFinished(solverMatrices,err,error,*999)
 #ifdef WITH_PRECHECKS    
-    IF(SIZE(storageType,1)<solverMatrices%numberOfMatrices) THEN
-      localError="The size of storage type array is too small. The supplied size is "// &
-        & TRIM(NumberToVString(SIZE(storageType,1),"*",err,error))//" and it needs to be >= "// &
+    IF(SIZE(storageTypes,1)<solverMatrices%numberOfMatrices) THEN
+      localError="The size of storage types array is too small. The supplied size is "// &
+        & TRIM(NumberToVString(SIZE(storageTypes,1),"*",err,error))//" and it needs to be >= "// &
         & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -488,22 +566,53 @@ CONTAINS
     DO matrixIdx=1,solverMatrices%numberOfMatrices
       NULLIFY(solverMatrix)
       CALL SolverMatrices_SolverMatrixGet(solverMatrices,matrixIdx,solverMatrix,err,error,*999)
-      storageType(matrixIdx)=solverMatrix%storageType
+      storageTypes(matrixIdx)=solverMatrix%storageType
     ENDDO !matrixIdx
     
-    EXITS("SolverMatrices_StorageTypeGet")
+    EXITS("SolverMatrices_StorageTypesGet1")
     RETURN
-999 ERRORSEXITS("SolverMatrices_StorageTypeGet",err,error)
+999 ERRORSEXITS("SolverMatrices_StorageTypesGet1",err,error)
     RETURN 1
     
-  END SUBROUTINE SolverMatrices_StorageTypeGet
+  END SUBROUTINE SolverMatrices_StorageTypesGet1
 
   !
   !================================================================================================================================
   !
   
   !>Gets the symmetry type of the solver matrices
-  SUBROUTINE SolverMatrices_SymmetryTypeGet(solverMatrices,symmetryTypes,err,error,*)
+  SUBROUTINE SolverMatrices_SymmetryTypesGet0(solverMatrices,symmetryType,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices !<A pointer to the solver matrices
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmtry type for the solver matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx,symmetryTypes(1)
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("SolverMatrices_SymmetryTypesGet0",err,error,*999)
+
+    CALL SolverMatrices_SymmetryTypesGet1(solverMatrices,symmetryTypes,err,error,*999)
+    symmetryType=symmetryTypes(1)
+
+    EXITS("SolverMatrices_SymmetryTypesGet0")
+    RETURN
+999 ERRORSEXITS("SolverMatrices_SymmetryTypesGet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrices_SymmetryTypesGet0
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the symmetry types of the solver matrices
+  SUBROUTINE SolverMatrices_SymmetryTypesGet1(solverMatrices,symmetryTypes,err,error,*)
 
     !Argument variables
     TYPE(SolverMatricesType), POINTER :: solverMatrices !<A pointer to the solver matrices
@@ -517,7 +626,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
     
-    ENTERS("SolverMatrices_SymmetryTypeGet",err,error,*999)
+    ENTERS("SolverMatrices_SymmetryTypesGet1",err,error,*999)
 
     CALL SolverMatrices_AssertIsFinished(solverMatrices,err,error,*999)
 #ifdef WITH_PRECHECKS    
@@ -535,12 +644,12 @@ CONTAINS
       symmetryTypes(matrixIdx)=solverMatrix%symmetryType
     ENDDO !matrixIdx
     
-    EXITS("SolverMatrices_SymmetryTypeGet")
+    EXITS("SolverMatrices_SymmetryTypesGet1")
     RETURN
-999 ERRORSEXITS("SolverMatrices_SymmetryTypeGet",err,error)
+999 ERRORSEXITS("SolverMatrices_SymmetryTypesGet1",err,error)
     RETURN 1
     
-  END SUBROUTINE SolverMatrices_SymmetryTypeGet
+  END SUBROUTINE SolverMatrices_SymmetryTypesGet1
 
   !
   !================================================================================================================================

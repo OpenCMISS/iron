@@ -47,6 +47,7 @@ MODULE ElectrophysiologyCellRoutines
   USE BaseRoutines
   USE Constants
   USE DecompositionAccessRoutines
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
   use Kinds
@@ -226,7 +227,7 @@ CONTAINS
     NULLIFY(domainTopology)
     CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainNodes)
-    CALL DomainTopoloy_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
     CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfCells,err,error,*999)
 
     NULLIFY(cellsVariable)
@@ -473,7 +474,7 @@ CONTAINS
     NULLIFY(domainTopology)
     CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainNodes)
-    CALL DomainTopoloy_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
     CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfCells,err,error,*999)
 
     NULLIFY(cellsVariable)
