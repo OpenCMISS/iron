@@ -2461,7 +2461,7 @@ CONTAINS
     
     valueInitialise=tree%valueInitialiseIntg
 
-    EXITS("Tree_ValueInitaliseGetIntg")
+    EXITS("Tree_ValueInitialiseGetIntg")
     RETURN
 999 ERRORSEXITS("Tree_ValueInitialiseGetIntg",err,error)
     RETURN 1
@@ -2489,9 +2489,9 @@ CONTAINS
     
     valueInitialise=tree%valueInitialiseDP
 
-    EXITS("Tree_ValueInitaliseSetGP")
+    EXITS("Tree_ValueInitialiseGetDP")
     RETURN
-999 ERRORSEXITS("Tree_ValueInitialiseSetGP",err,error)
+999 ERRORSEXITS("Tree_ValueInitialiseGetDP",err,error)
     RETURN 1
     
   END SUBROUTINE Tree_ValueInitialiseGetDP
@@ -2517,7 +2517,7 @@ CONTAINS
     
     tree%valueInitialiseIntg=valueInitialise
 
-    EXITS("Tree_ValueInitaliseSetIntg")
+    EXITS("Tree_ValueInitialiseSetIntg")
     RETURN
 999 ERRORSEXITS("Tree_ValueInitialiseSetIntg",err,error)
     RETURN 1
@@ -2545,7 +2545,7 @@ CONTAINS
     
     tree%valueInitialiseDP=valueInitialise
 
-    EXITS("Tree_ValueInitaliseSetDP")
+    EXITS("Tree_ValueInitialiseSetDP")
     RETURN
 999 ERRORSEXITS("Tree_ValueInitialiseSetDP",err,error)
     RETURN 1

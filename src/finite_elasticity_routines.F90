@@ -16097,9 +16097,9 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT    
 
-    EXITS("FiniteElasticity_ControlTimeLoopPreLoop")
+    EXITS("FiniteElasticity_PreLoop")
     RETURN
-999 ERRORSEXITS("FiniteElasticity_ControlTimeLoopPreLoop",err,error)
+999 ERRORSEXITS("FiniteElasticity_PreLoop",err,error)
     RETURN 1
 
   END SUBROUTINE FiniteElasticity_PreLoop

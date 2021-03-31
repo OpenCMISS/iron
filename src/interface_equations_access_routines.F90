@@ -188,7 +188,7 @@ CONTAINS
       & CALL FlagError("Interface domain interpolation dependent field is not associated.",err,error,*999)
 #endif    
        
-    EXITS("InterfaceDomainInterface_DependentFieldGet")
+    EXITS("InterfaceDomainInterpolation_DependentFieldGet")
     RETURN
 999 NULLIFY(dependentField)
 998 ERRORS("InterfaceDomainInterpolation_DependentFieldGet",err,error)
@@ -241,7 +241,7 @@ CONTAINS
     ENDIF
 #endif    
        
-    EXITS("InterfaceDomainInterface_DependentInterpSetGet")
+    EXITS("InterfaceDomainInterpolation_DependentInterpSetGet")
     RETURN
 999 NULLIFY(dependentInterpolationSet)
 998 ERRORS("InterfaceDomainInterpolation_DependentInterpSetGet",err,error)
@@ -278,7 +278,7 @@ CONTAINS
       & CALL FlagError("Interface domain interpolation geometric field is not associated.",err,error,*999)
 #endif    
        
-    EXITS("InterfaceDomainInterface_GeometricFieldGet")
+    EXITS("InterfaceDomainInterpolation_GeometricFieldGet")
     RETURN
 999 NULLIFY(geometricField)
 998 ERRORS("InterfaceDomainInterpolation_GeometricFieldGet",err,error)
@@ -331,7 +331,7 @@ CONTAINS
     ENDIF
 #endif    
        
-    EXITS("InterfaceDomainInterface_GeometricInterpSetGet")
+    EXITS("InterfaceDomainInterpolation_GeometricInterpSetGet")
     RETURN
 999 NULLIFY(geometricInterpolationSet)
 998 ERRORS("InterfaceDomainInterpolation_GeometricInterpSetGet",err,error)
@@ -368,7 +368,7 @@ CONTAINS
       & CALL FlagError("Interface domain interpolation penalty field is not associated.",err,error,*999)
 #endif    
        
-    EXITS("InterfaceDomainInterface_PenaltyFieldGet")
+    EXITS("InterfaceDomainInterpolation_PenaltyFieldGet")
     RETURN
 999 NULLIFY(penaltyField)
 998 ERRORS("InterfaceDomainInterpolation_PenaltyFieldGet",err,error)
@@ -421,7 +421,7 @@ CONTAINS
     ENDIF
 #endif    
        
-    EXITS("InterfaceDomainInterface_PenaltyInterpSetGet")
+    EXITS("InterfaceDomainInterpolation_PenaltyInterpSetGet")
     RETURN
 999 NULLIFY(penaltyInterpolationSet)
 998 ERRORS("InterfaceDomainInterpolation_PenaltyInterpSetGet",err,error)

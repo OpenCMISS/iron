@@ -11791,7 +11791,7 @@ CONTAINS
                 CALL DistributedVector_ValuesSet(currentRHSVector,equationsRowNumber,rhsParameters(rhsVariableDOF), &
                   & err,error,*999)
               ENDIF
-              CALL DistributedVector_ValuesGet(currentRHSVector,equationsRowNumber,currentRHSValue,err,error,*999)
+              CALL DistributedVector_ValuesGet(currentRHSVector,equationsRowNumber,rhsValue,err,error,*999)
             ELSE
               rhsValue=0.0_DP
             ENDIF
@@ -17018,7 +17018,7 @@ CONTAINS
             IF(solverDOFIdx/=0) THEN
               dofValue=variableData(variableDOFIdx)*couplingCoefficient+additiveConstant
               CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,solverDOFIdx,1,localDOFIdx,err,error,*999)
-              CALL DistributedVector_ValuesSet(solverVector,localNumber,dofValue,err,error,*999)
+              CALL DistributedVector_ValuesSet(solverVector,localDOFIdx,dofValue,err,error,*999)
             ENDIF
           ENDDO !variableDOFIdx
           CALL FieldVariable_ParameterSetDataRestore(dependentVariable,FIELD_VALUES_SET_TYPE,variableData,err,error,*999)
@@ -17049,7 +17049,7 @@ CONTAINS
           IF(solverDOFIdx/=0) THEN
             dofValue=variableData(variableDOFIdx)*couplingCoefficient+additiveConstant
             CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,solverDOFIdx,1,localDOFIdx,err,error,*999)
-            CALL DistributedVector_ValuesSet(solverVector,localNumber,dofValue,err,error,*999)
+            CALL DistributedVector_ValuesSet(solverVector,localDOFIdx,dofValue,err,error,*999)
           ENDIF
         ENDDO !variableDOFIdx
         CALL FieldVariable_ParameterSetDataRestore(lagrangeVariable,FIELD_VALUES_SET_TYPE,variableData,err,error,*999)
@@ -17861,6 +17861,7 @@ CONTAINS
           CASE(SOLVER_MAPPING_EQUATIONS_EQUATIONS_SET, &
             & SOLVER_MAPPING_EQUATIONS_INTERFACE_CONDITION)
             !Equations set DOF.
+            NULLIFY(fieldVariable)
             CALL SolverMappingSDOFToVDOFsMap_VariableGet(solverDOFToVariableDOFsMap,equationsDOFIdx,fieldVariable, &
               & err,error,*999)
             CALL FieldVariable_ParameterSetUpdateLocalDOF(fieldVariable,FIELD_VALUES_SET_TYPE,variableDOF,solverDOFValue, &

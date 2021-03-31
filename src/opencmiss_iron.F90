@@ -8192,7 +8192,7 @@ CONTAINS
 
  !>Finalises an OpenCMISS context specified by user number.
  SUBROUTINE cmfe_FinaliseNumber(contextUserNumber,err)
-   !DLLEXPORT(cmfe_Finalise)
+   !DLLEXPORT(cmfe_FinaliseNumber)
 
    !Argument variables
    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context to finalise.
@@ -8216,7 +8216,7 @@ CONTAINS
 
  !>Finalises an OpenCMISS context specified by an object.
  SUBROUTINE cmfe_FinaliseObj(context,err)
-   !DLLEXPORT(cmfe_Finalise)
+   !DLLEXPORT(cmfe_FinaliseObj)
 
    !Argument variables
    TYPE(cmfe_ContextType), INTENT(INOUT) :: context !<The context o finalise
@@ -8333,7 +8333,7 @@ CONTAINS
 
   !>Sets a PETSc option (so that they can be set from python when we don't have the command line.)
   SUBROUTINE cmfe_PetscOptionsSetValue(name,VALUE,err)
-    !DLLEXPORT(cmfe_WorkingRealPrecisionGet)
+    !DLLEXPORT(cmfe_PetscOptionsSetValue)
 
     !Argument variables
     CHARACTER(LEN=*), INTENT(IN) :: name !<The name of the PETSc option
@@ -12692,7 +12692,7 @@ CONTAINS
     CALL Basis_Get(basisFunctions,basisUserNumber,basis,err,error,*999)
     CALL Basis_QuadratureGaussXiGet(basis,quadratureScheme,gaussPoints,gaussXi,err,error,*999)
 
-    EXITS("cmfe_Basis_QuadratureGaussXiGetNumbe1r")
+    EXITS("cmfe_Basis_QuadratureGaussXiGetNumber1")
     RETURN
 999 ERRORS("cmfe_Basis_QuadratureGaussXiGetNumber1",err,error)
     EXITS("cmfe_Basis_QuadratureGaussXiGetNumber1")
@@ -17217,7 +17217,7 @@ CONTAINS
 
   !>Returns the group communicator for a work group specified by a user number.
   SUBROUTINE cmfe_WorkGroup_GroupCommunicatorGetNumber(contextUserNumber,workGroupUserNumber,groupCommunicator,err)
-    !DLLEXPORT(cmfe_WorkGroup_GroupCommunicatorNumber)
+    !DLLEXPORT(cmfe_WorkGroup_GroupCommunicatorGetNumber)
     
     !Argument Variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the computation environment.
@@ -17795,7 +17795,7 @@ CONTAINS
 
   !>Returns the random seeds for an OpenCMISS context specified by user number.
   SUBROUTINE cmfe_Context_RandomSeedsGetNumber1(contextUserNumber,randomSeeds,err)
-    !DLLEXPORT(cmfe_RandomSeedsGetNumber1)
+    !DLLEXPORT(cmfe_Context_RandomSeedsGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context to get the random seeds for.
@@ -17812,7 +17812,7 @@ CONTAINS
 
     EXITS("cmfe_Context_RandomSeedsGetNumber1")
     RETURN
-999 ERRORSEXITS("cmfe_RandomSeedsGetNumber1",err,error)
+999 ERRORSEXITS("cmfe_Context_RandomSeedsGetNumber1",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -17852,7 +17852,7 @@ CONTAINS
 
   !>Returns the random seeds for an OpenCMISS context specified by object.
   SUBROUTINE cmfe_Context_RandomSeedsGetObj1(context,randomSeeds,err)
-    !DLLEXPORT(cmfe_RandomSeedsGetObj1)
+    !DLLEXPORT(cmfe_Context_RandomSeedsGetObj1)
 
     !Argument variables
     TYPE(cmfe_ContextType), INTENT(IN) :: context !<The context to get the random seeds for.
@@ -17866,7 +17866,7 @@ CONTAINS
 
     EXITS("cmfe_Context_RandomSeedsGetObj1")
     RETURN
-999 ERRORSEXITS("cmfe_RandomSeedsGet1",err,error)
+999 ERRORSEXITS("cmfe_Context_RandomSeedsGetObj1",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -19747,7 +19747,7 @@ CONTAINS
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
     CALL ControlLoop_NumberOfIterationsGet(controlLoop,numberOfIterations,err,error,*999)
 
-    EXITS("cmfe_ControlLoop_NumberOfIteratonsGetNumber1")  
+    EXITS("cmfe_ControlLoop_NumberOfIterationsGetNumber1")  
     RETURN
 999 ERRORS("cmfe_ControlLoop_NumberOfIterationsGetNumber1",err,error)   
     EXITS("cmfe_ControlLoop_NumberOfIterationsGetNumber1")
@@ -19815,10 +19815,10 @@ CONTAINS
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
     CALL ControlLoop_NumberOfIterationsSet(controlLoop,numberOfIterations,err,error,*999)
    
-    EXITS("cmfe_ControlLoop_NumberOfItSetNumber0") 
+    EXITS("cmfe_ControlLoop_NumberOfIterationsSetNumber0") 
     RETURN
-999 ERRORS("cmfe_ControlLoop_NumberOfItSetNumber0",err,error) 
-    EXITS("cmfe_ControlLoop_NumberOfItSetNumber0")  
+999 ERRORS("cmfe_ControlLoop_NumberOfIterationsSetNumber0",err,error) 
+    EXITS("cmfe_ControlLoop_NumberOfIterationsSetNumber0")  
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -24771,7 +24771,7 @@ CONTAINS
   !>Set the data projection candidate face for a data point in a boundary faces projection type in a region specified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum000(contextUserNumber,regionUserNumber, &
     & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumber,candidateFaceNormal,err)
-    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetRegNum000)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum000)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
@@ -24805,7 +24805,7 @@ CONTAINS
   !>Set the data projection candidate faces for a data point in a boundary faces projection type in a region specified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum011(contextUserNumber,regionUserNumber, &
     & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumbers,candidateFaceNormals,err)
-    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetRegNum011)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum011)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
@@ -24839,7 +24839,7 @@ CONTAINS
   !>Set the data projection candidate face for data points in a boundary faces projection type in a region specified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum100(contextUserNumber,regionUserNumber, &
     & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumber,candidateFaceNormal,err)
-    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetRegNum100)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum100)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
@@ -24873,7 +24873,7 @@ CONTAINS
   !>Set the data projection candidate faces for data points in a boundary faces projection type in a region specified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111(contextUserNumber,regionUserNumber, &
     & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumbers,candidateFaceNormals,err)
-    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetRegNum111)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
@@ -25658,7 +25658,7 @@ CONTAINS
   !>Set the data projection candidate line for a data point for a boundary lines projection type in a region specified by object
   SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj000(dataProjection,dataPointUserNumber, &
     & candidateElementUserNumber,candidateLineNormals,err)
-    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLineSetObj000)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetObj000)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
@@ -25689,7 +25689,7 @@ CONTAINS
   !>Set the data projection candidate lines for a data point for a boundary lines projection type in a region specified by object
   SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj011(dataProjection,dataPointUserNumber, &
     & candidateElementUserNumbers,candidateLineNormals,err)
-    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLineSetObj011)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetObj011)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
@@ -25720,7 +25720,7 @@ CONTAINS
   !>Set the data projection candidate line for data points for a boundary lines projection type in a region specified by object
   SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj100(dataProjection,dataPointUserNumbers, &
     & candidateElementUserNumber,candidateLineNormals,err)
-    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLineSetObj100)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetObj100)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
@@ -26679,7 +26679,7 @@ CONTAINS
   !>Returns the RMS error for a data projection given by numbers.
   SUBROUTINE cmfe_DataProjection_ResultRMSErrorGetNumber(contextUserNumber,regionUserNumber,dataPointsUserNumber, &
     & dataProjectionUserNumber,rmsError,err)
-    !DLLEXPORT(cmfe_DataProjection_ResultRmsErrorGetNumber)
+    !DLLEXPORT(cmfe_DataProjection_ResultRMSErrorGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
@@ -26723,7 +26723,7 @@ CONTAINS
 
   !>Returns the RMS error for a data projection given by an object.
   SUBROUTINE cmfe_DataProjection_ResultRMSErrorGetObj(dataProjection,rmsError,err)
-    !DLLEXPORT(cmfe_DataProjection_ResultRmsErrorGetObj)
+    !DLLEXPORT(cmfe_DataProjection_ResultRMSErrorGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get the RMS error for.
@@ -28709,9 +28709,9 @@ CONTAINS
       CALL FlagError("The specified equations do not contain any nonlinear matrices.",err,error,*999)
     ENDIF
 
-    EXITS("cmfe_Equations_JacobianMatrixGetByObj")
+    EXITS("cmfe_Equations_JacobianMatrixGetByTypeObj")
     RETURN
-999 ERRORSEXITS("cmfe_Equations_JacobianMatrixGetByObj",err,error)
+999 ERRORSEXITS("cmfe_Equations_JacobianMatrixGetByTypeObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -28973,7 +28973,7 @@ CONTAINS
 
   !>Get the number of dynamic matrices in the equations
   SUBROUTINE cmfe_Equations_NumberOfDynamicMatricesGetObj(equations,numberOfMatrices,err)
-    !DLLEXPORT(cmfe_Equations_NumberOfDynamicMatricesGet)
+    !DLLEXPORT(cmfe_Equations_NumberOfDynamicMatricesGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of dynamic matrices for
@@ -29499,7 +29499,7 @@ CONTAINS
 
   !>Get the right hand side distributed vector for equations
   SUBROUTINE cmfe_Equations_RHSVectorGetObj(equations,vector,err)
-    !DLLEXPORT(cmfe_Equations_RhsVectorGetObj)
+    !DLLEXPORT(cmfe_Equations_RHSVectorGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the right hand side vector for
@@ -49158,7 +49158,7 @@ CONTAINS
 
   !>Adds a decomposition to a decomposer identified by an object.
   SUBROUTINE cmfe_Decomposer_DecompositionAddObj(decomposer,decomposition,decompositionIndex,err)
-    !DLLEXPORT(cmfe_Decomposition_DecompositionAddObj)
+    !DLLEXPORT(cmfe_Decomposer_DecompositionAddObj)
 
     !Argument variables
     TYPE(cmfe_DecomposerType), INTENT(IN) :: decomposer !<The decomposer to add the decomposition to.
@@ -49224,7 +49224,7 @@ CONTAINS
 
   !>Destroys a decomposer identified by an object.
   SUBROUTINE cmfe_Decomposer_DestroyObj(decomposer,err)
-    !DLLEXPORT(cmfe_Decomposition_DestroyObj)
+    !DLLEXPORT(cmfe_Decomposer_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_DecomposerType), INTENT(IN) :: decomposer !<The decomposer to destroy.
@@ -49289,7 +49289,7 @@ CONTAINS
 
   !>Returns the output type for a decomposer identified by an object.
   SUBROUTINE cmfe_Decomposer_OutputTypeGetObj(decomposer,outputType,err)
-    !DLLEXPORT(cmfe_Decomposition_OutputTypeGetObj)
+    !DLLEXPORT(cmfe_Decomposer_OutputTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_DecomposerType), INTENT(IN) :: decomposer !<The decomposer to get the output type for.
@@ -49355,7 +49355,7 @@ CONTAINS
 
   !>Sets/changes the output type for a decomposer identified by an object.
   SUBROUTINE cmfe_Decomposer_OutputTypeSetObj(decomposer,outputType,err)
-    !DLLEXPORT(cmfe_Decomposition_OutputTYpeSetObj)
+    !DLLEXPORT(cmfe_Decomposer_OutputTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_DecomposerType), INTENT(IN) :: decomposer !<The decomposer to set the output type for.
@@ -49530,7 +49530,7 @@ CONTAINS
     CALL Decomposition_ElementDataPointUserNumberGet(decomposition%decomposition,elementUserNumber, &
      & dataPointIndex,dataPointUserNumber,err,error,*999)
 
-    EXITS("cmfe_Decomposition_lementDataPointUserNumberGetObj")
+    EXITS("cmfe_Decomposition_ElementDataPointUserNumberGetObj")
     RETURN
 999 ERRORS("cmfe_Decomposition_ElementDataPointUserNumberGetObj",err,error)
     EXITS("cmfe_Decomposition_ElementDataPointUserNumberGetObj")
@@ -66458,7 +66458,7 @@ CONTAINS
 
   !>Gets the symmetry type for solver equations identified by an object.
   SUBROUTINE cmfe_SolverEquations_SymmetryTypeGetObj(solverEquations,symmetryType,err)
-    !DLLEXPORT(cmfe_SolverEquations_SymmetryTypesGetObj1)
+    !DLLEXPORT(cmfe_SolverEquations_SymmetryTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the symmetry type for.
@@ -67095,7 +67095,7 @@ CONTAINS
 
   !>Get the right hand side distributed vector from the solver equations
   SUBROUTINE cmfe_SolverEquations_RHSVectorGet(solverEquations,rhsVector,err)
-    !DLLEXPORT(cmfe_SolverEquations_RhsVectorGet)
+    !DLLEXPORT(cmfe_SolverEquations_RHSVectorGet)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the right hand side distributed vector for

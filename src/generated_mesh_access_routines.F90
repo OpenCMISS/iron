@@ -652,7 +652,7 @@ CONTAINS
     mesh=>generatedMesh%mesh
 
 #ifdef WITH_POSTCHECKS    
-    IF(ASSOCIATED(mesh)) THEN
+    IF(.NOT.ASSOCIATED(mesh)) THEN
       localError="The mesh is not associated for generated mesh number "// &
         & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)

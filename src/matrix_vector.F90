@@ -2306,7 +2306,7 @@ CONTAINS
           & CALL List_Destroy(rowColumnLists(rowColumnIdx)%ptr,dummyErr,dummyError,*998)
       ENDDO !rowColumnIdx
     ENDIF
-998 ERRORSEXITS("Matrix_TranposeLocationsCalculate",err,error)
+998 ERRORSEXITS("Matrix_TransposeLocationsCalculate",err,error)
     RETURN 1
     
   END SUBROUTINE Matrix_TransposeLocationsCalculate
@@ -2447,7 +2447,7 @@ CONTAINS
     
     EXITS("Matrix_TransposeTypeSet")
     RETURN
-999 ERRORSEXITS("Matrix_TranposeTypeSet",err,error)
+999 ERRORSEXITS("Matrix_TransposeTypeSet",err,error)
     RETURN 1
     
   END SUBROUTINE Matrix_TransposeTypeSet
@@ -2472,7 +2472,7 @@ CONTAINS
     
     EXITS("Matrix_TransposeRowsColumnsSet0")
     RETURN
-999 ERRORSEXITS("Matrix_TranposeRowsColumnsSet0",err,error)
+999 ERRORSEXITS("Matrix_TransposeRowsColumnsSet0",err,error)
     RETURN 1
     
   END SUBROUTINE Matrix_TransposeRowsColumnsSet0
@@ -2546,7 +2546,7 @@ CONTAINS
     
     EXITS("Matrix_TransposeRowsColumnsSet1")
     RETURN
-999 ERRORSEXITS("Matrix_TranposeRowsColumnsSet1",err,error)
+999 ERRORSEXITS("Matrix_TransposeRowsColumnsSet1",err,error)
     RETURN 1
     
   END SUBROUTINE Matrix_TransposeRowsColumnsSet1

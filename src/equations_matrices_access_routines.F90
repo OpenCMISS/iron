@@ -2567,7 +2567,7 @@ CONTAINS
     RETURN
 999 NULLIFY(previous3RHSDistributedVector)
 998 ERRORS("EquationsMatricesRHS_Previous3DistributedVectorGet",err,error)
-    EXITS("EquationsMatricesRHS_Previous2DistributedVectorGet")
+    EXITS("EquationsMatricesRHS_Previous3DistributedVectorGet")
     RETURN 1
     
   END SUBROUTINE EquationsMatricesRHS_Previous3DistributedVectorGet
@@ -3383,7 +3383,7 @@ CONTAINS
 
     EXITS("EquationsMatricesSources_NumberOfSourcesGet")
     RETURN
-999 ERRORSEXITS("EquationsMatricesSorurces_NumberOfSourcesGet",err,error)
+999 ERRORSEXITS("EquationsMatricesSources_NumberOfSourcesGet",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMatricesSources_NumberOfSourcesGet

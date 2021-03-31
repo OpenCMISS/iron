@@ -152,6 +152,7 @@ contains
     
     if (.not.associated(list%root)) then
       CALL FlagWarning("linked list is empty and cannot remove last item.",err,error,*999)
+      EXITS("LinkedList_Remove_Last")
       return
     endif
     current => list%root
@@ -251,6 +252,7 @@ contains
     ! return zero-size array if list is empty
     if (LinkedList_is_Empty(list)) then
       allocate(array(0))
+      EXITS("LinkedList_to_Array")
       return
     endif
 

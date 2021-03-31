@@ -1077,7 +1077,7 @@ CONTAINS
     NULLIFY(quadraticMapping%quadraticVariables(2)%ptr)
     quadraticMapping%quadraticCoefficient=1.0_DP
     
-    EXITS("EquationsMapping_QauadraticMappingInitialise")
+    EXITS("EquationsMappingQuadratic_Initialise")
     RETURN
 999 ERRORSEXITS("EquationsMappingQuadratic_Initialise",err,error)
     RETURN 1
@@ -1495,13 +1495,14 @@ CONTAINS
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
 
     !Get the number of rows in the equations set from the LHS mapping
-    CALL EquationsMappingVector_LHSMappingInitialise(vectorMapping,err,error,*999)
     NULLIFY(lhsMapping)
     CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
     NULLIFY(lhsVariable)
     CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
     CALL FieldVariable_NumberOfDOFsGet(lhsVariable,numberOfLHSDOFs,err,error,*999)
+    numberOfRows=numberOfLHSDOFs
     CALL FieldVariable_TotalNumberOfDOFsGet(lhsVariable,totalNumberOfLHSDOFs,err,error,*999)
+    totalNumberOfRows=totalNumberOfLHSDOFs
     NULLIFY(rowDomainMapping)
     CALL EquationsMappingLHS_RowDOFsMappingGet(lhsMapping,rowDomainMapping,err,error,*999)
 
@@ -1659,7 +1660,6 @@ CONTAINS
         linearMapping%varToEquationsMatricesMaps(variableIdx)%ptr%numberOfEquationsMatrices= &
           & linearMapping%varToEquationsMatricesMaps(variableIdx)%ptr%numberOfEquationsMatrices+1
       ENDDO !matrixIdx
-      linearMapping%numberOfLinearVariables=0
       !Allocate and initialise the variable to equations matrices maps
       DO variableIdx=1,numberOfVariables      
         NULLIFY(dependentVariable)
@@ -1708,6 +1708,7 @@ CONTAINS
         variableIdx=linearMapping%linearVariableTypesMap(variableType)
         NULLIFY(dependentVariable)
         CALL EquationsMappingLinear_LinearVariableGet(linearMapping,variableIdx,dependentVariable,err,error,*999)
+        NULLIFY(columnDomainMapping)
         CALL FieldVariable_DomainMappingGet(dependentVariable,columnDomainMapping,err,error,*999)
         CALL DomainMapping_NumberOfGlobalGet(columnDomainMapping,numberOfGlobal,err,error,*999)
         NULLIFY(linearMapping%equationsMatrixToVarMaps(matrixIdx)%ptr)
@@ -1730,29 +1731,37 @@ CONTAINS
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%ptr%columnDOFSMapping=>columnDomainMapping
       ENDDO !matrixIdx
       !Set up row <-> DOF mappings. For now just have 1-1 so check the variable against the LHS variable
-      IF(numberOfDependentDOFs/=numberOfLHSDOFs) THEN
-        localError="The linear dependent variable number "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-          & "is not compatible with the LHS variable for 1-1 mapping. The number of DOFs for the linear depdendent "// &
-          & "variable is "//TRIM(NumberToVString(numberOfDependentDOFs,"*",err,error))// &
-          & " and the number of DOFs for the LHS variable is "// &
-          & TRIM(NumberToVString(numberOfLHSDOFs,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      IF(totalNumberOfDependentDOFs/=totalNumberOfLHSDOFs) THEN
-        localError="The linear dependent variable number "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-          & "is not compatible with the LHS variable for 1-1 mapping. The total number of DOFs for the linear depdendent "// &
-          & "variable is "//TRIM(NumberToVString(totalNumberOfDependentDOFs,"*",err,error))// &
-          & " and the total number of DOFs for the LHS variable is "// &
-          & TRIM(NumberToVString(totalNumberOfLHSDOFs,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
+      DO variableIdx=1,numberOfVariables      
+        NULLIFY(dependentVariable)
+        CALL EquationsMappingLinear_LinearVariableGet(linearMapping,variableIdx,dependentVariable,err,error,*999)
+        NULLIFY(columnDomainMapping)
+        CALL FieldVariable_DomainMappingGet(dependentVariable,columnDomainMapping,err,error,*999)
+        CALL FieldVariable_NumberOfDOFsGet(dependentVariable,numberOfDependentDOFs,err,error,*999)
+        CALL FieldVariable_TotalNumberOfDOFsGet(dependentVariable,totalNumberOfDependentDOFs,err,error,*999)
+        IF(numberOfDependentDOFs/=numberOfLHSDOFs) THEN
+          localError="The linear dependent variable number "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+            & "is not compatible with the LHS variable for 1-1 mapping. The number of DOFs for the linear depdendent "// &
+            & "variable is "//TRIM(NumberToVString(numberOfDependentDOFs,"*",err,error))// &
+            & " and the number of DOFs for the LHS variable is "// &
+            & TRIM(NumberToVString(numberOfLHSDOFs,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(totalNumberOfDependentDOFs/=totalNumberOfLHSDOFs) THEN
+          localError="The linear dependent variable number "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+            & "is not compatible with the LHS variable for 1-1 mapping. The total number of DOFs for the linear depdendent "// &
+            & "variable is "//TRIM(NumberToVString(totalNumberOfDependentDOFs,"*",err,error))// &
+            & " and the total number of DOFs for the LHS variable is "// &
+            & TRIM(NumberToVString(totalNumberOfLHSDOFs,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDDO !variableIdx
       !Allocate the row mappings
-      ALLOCATE(linearMapping%equationsRowToVariableDOFMaps(lhsMapping%totalNumberOfRows,linearMapping%numberOfLinearVariables), &
+      ALLOCATE(linearMapping%equationsRowToVariableDOFMaps(totalNumberOfRows,linearMapping%numberOfLinearVariables), &
         & STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate equations row to variable DOF maps.",err,error,*999)
       !Set up the row mappings
       DO variableIdx=1,linearMapping%numberOfLinearVariables
-        DO rowIdx=1,lhsMapping%totalNumberOfRows
+        DO rowIdx=1,totalNumberOfRows
           !1-1 mapping for now
           linearMapping%equationsRowToVariableDOFMaps(rowIdx,variableIdx)=rowIdx
         ENDDO !rowIdx
@@ -4132,7 +4141,7 @@ CONTAINS
     EXITS("EquationsMappingVector_SourcesMappingInitialise")
     RETURN
 999 CALL EquationsMappingVector_SourcesMappingFinalise(vectorMapping%sourcesMapping,dummyErr,dummyError,*998)
-998 ERRORSEXITS("EquationsMappingVector_SourceMappingInitialise",err,error)
+998 ERRORSEXITS("EquationsMappingVector_SourcesMappingInitialise",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMappingVector_SourcesMappingInitialise

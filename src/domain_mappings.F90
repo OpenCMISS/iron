@@ -1404,10 +1404,10 @@ CONTAINS
     workGroup=>domainMapping%workGroup
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("The work group for the domain mapping is not associated.",err,error,*999)
     
-    EXITS("DomainMapping_WorkGroupget")
+    EXITS("DomainMapping_WorkGroupGet")
     RETURN
 999 NULLIFY(workGroup)
-998 ERRORSEXITS("DomainMapping_WorkGroupget",err,error)
+998 ERRORSEXITS("DomainMapping_WorkGroupGet",err,error)
     RETURN 1
     
   END SUBROUTINE DomainMapping_WorkGroupGet

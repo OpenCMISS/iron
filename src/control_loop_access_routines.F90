@@ -548,7 +548,7 @@ CONTAINS
     
     EXITS("ControlLoop_ContinueLoopGet")
     RETURN
-999 ERRORSEXITS("ControlLoop_ControlLoopGet",err,error)
+999 ERRORSEXITS("ControlLoop_ContinueLoopGet",err,error)
     RETURN 1
     
   END SUBROUTINE ControlLoop_ContinueLoopGet
@@ -578,7 +578,7 @@ CONTAINS
     
     EXITS("ControlLoop_ContinueLoopSet")
     RETURN
-999 ERRORSEXITS("ControlLoop_ControlLoopSet",err,error)
+999 ERRORSEXITS("ControlLoop_ContinueLoopSet",err,error)
     RETURN 1
     
   END SUBROUTINE ControlLoop_ContinueLoopSet

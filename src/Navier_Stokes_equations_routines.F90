@@ -8352,7 +8352,7 @@ CONTAINS
   !
 
   !>Update mesh velocity and move mesh for ALE Navier-Stokes problem
-  SUBROUTINE NavierStokes_PreSolveAleUpdateMesh(solver,err,error,*)
+  SUBROUTINE NavierStokes_PreSolveALEUpdateMesh(solver,err,error,*)
 
     !Argument variables
     TYPE(SolverType), POINTER :: solver
@@ -8387,7 +8387,7 @@ CONTAINS
     TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("NavierStokes_PreSolveAleUpdateMesh",err,error,*999)
+    ENTERS("NavierStokes_PreSolveALEUpdateMesh",err,error,*999)
 
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
 

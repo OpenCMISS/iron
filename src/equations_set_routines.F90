@@ -1620,7 +1620,7 @@ CONTAINS
         IF(ASSOCIATED(linearMapping)) THEN
           NULLIFY(linearMatrices)
           CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-          CALL EquationsMatricesDynamic_NumberOfDynamicMatricesGet(dynamicMatrices,numberOfDynamicMatrices,err,error,*999)
+          CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
         ENDIF
         NULLIFY(nonlinearMapping)
         CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
@@ -1992,8 +1992,6 @@ CONTAINS
         & TRIM(NumberToVString(equationsSetRegionUserNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    CALL EquationsSet_FieldRegionSetupCheck(equationsSet,"equations set",equationsSetFieldUserNumber,equationsSetField, &
-      & err,error,*999)
     IF(ASSOCIATED(equationsSetField)) THEN
       !Check the specified equations set field has the same decomposition as the geometric field
       NULLIFY(geometricFibreFieldDecomposition)
@@ -2015,6 +2013,9 @@ CONTAINS
     newEquationsSet%equationsSets=>equationsSetRegion%equationsSets
     newEquationsSet%label="Equations Set "//TRIM(NumberToVString(userNumber,"*",err,error))
     newEquationsSet%region=>equationsSetRegion
+    !Check field
+    CALL EquationsSet_FieldRegionSetupCheck(newEquationsSet,"equations set",equationsSetFieldUserNumber,equationsSetField, &
+      & err,error,*999)
     !Set the equations set class, type and subtype
     CALL EquationsSet_SpecificationSet(newEquationsSet,equationsSetSpecification,err,error,*999)
     newEquationsSet%equationsSetFinished=.FALSE.

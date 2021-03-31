@@ -154,11 +154,15 @@ MODULE BoundaryConditionsRoutines
 
   PUBLIC BoundaryConditions_AddNode
 
-  PUBLIC BoundaryConditions_ConstrainNodeDofsEqual
+  PUBLIC BoundaryConditions_ConstrainNodeDOFsEqual
 
   PUBLIC BoundaryConditions_CreateFinish,BoundaryConditions_CreateStart
 
   PUBLIC BoundaryConditions_Destroy
+
+  PUBLIC BoundaryConditions_LHSVariableExists
+
+  PUBLIC BoundaryConditions_LHSVariableGet
 
   PUBLIC BoundaryConditions_NeumannSparsityTypeSet
 
@@ -742,13 +746,13 @@ MODULE BoundaryConditionsRoutines
 
     IF(ALLOCATED(globalDOFs)) DEALLOCATE(globalDOFs)
 
-    EXITS("BoundaryConditions_ConstrainNodeDofsEqual")
+    EXITS("BoundaryConditions_ConstrainNodeDOFsEqual")
     RETURN
 999 IF(ALLOCATED(globalDOFs)) DEALLOCATE(globalDOFs)
-998 ERRORSEXITS("BoundaryConditions_ConstrainNodeDofsEqual",err,error)
+998 ERRORSEXITS("BoundaryConditions_ConstrainNodeDOFsEqual",err,error)
     RETURN 1
     
-  END SUBROUTINE BoundaryConditions_ConstrainNodeDofsEqual
+  END SUBROUTINE BoundaryConditions_ConstrainNodeDOFsEqual
 
   !
   !================================================================================================================================
@@ -878,11 +882,14 @@ MODULE BoundaryConditionsRoutines
           CALL BoundaryConditionsVariable_NeumannConditionsGet(boundaryConditionsVariable,boundaryConditionsNeumann,err,error,*999)
         ENDIF
 
+        NULLIFY(boundaryConditionsRowVariable)
         NULLIFY(boundaryConditionsRHSRowVariable)
         IF(boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)>0.OR. &
           & boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_NEUMANN_POINT)>0.OR. &
           & boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED)>0) THEN
           CALL BoundaryConditions_RHSVariableExists(boundaryConditions,fieldVariable,boundaryConditionsRHSRowVariable, &
+            & err,error,*999)
+          CALL BoundaryConditions_LHSVariableExists(boundaryConditions,fieldVariable,boundaryConditionsRowVariable, &
             & err,error,*999)
         ENDIF
         
@@ -902,6 +909,15 @@ MODULE BoundaryConditionsRoutines
                   & BOUNDARY_CONDITION_NEUMANN_ROW,err,error,*999)
               ENDIF
             ENDIF
+            IF(ASSOCIATED(boundaryConditionsRowVariable)) THEN
+              CALL DomainMapping_DomainNumberFromGlobalGet(domainMapping,dofIdx,1,domainNumber,err,error,*999)
+              IF(domainNumber==myGroupComputationNodeNumber) THEN
+                !On my rank
+                CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,dofIdx,1,localDOFIdx,err,error,*999)
+                CALL BoundaryConditionsRowVariable_RowConditionSet(boundaryConditionsRowVariable,localDOFIdx, &
+                  & BOUNDARY_CONDITION_NEUMANN_ROW,err,error,*999)
+              ENDIF
+            ENDIF
           ELSE IF(boundaryConditionsVariable%conditionTypes(dofIdx)==BOUNDARY_CONDITION_NEUMANN_POINT.OR. &
             & boundaryConditionsVariable%conditionTypes(dofIdx)==BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) THEN
             boundaryConditionsNeumann%setDofs(neumannIdx)=dofIdx
@@ -912,6 +928,15 @@ MODULE BoundaryConditionsRoutines
                 !On my rank
                 CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,dofIdx,1,localDOFIdx,err,error,*999)
                 CALL BoundaryConditionsRowVariable_RowConditionSet(boundaryConditionsRHSRowVariable,localDOFIdx, &
+                  & BOUNDARY_CONDITION_NEUMANN_ROW,err,error,*999)
+              ENDIF
+            ENDIF
+            IF(ASSOCIATED(boundaryConditionsRowVariable)) THEN
+              CALL DomainMapping_DomainNumberFromGlobalGet(domainMapping,dofIdx,1,domainNumber,err,error,*999)
+              IF(domainNumber==myGroupComputationNodeNumber) THEN
+                !On my rank
+                CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,dofIdx,1,localDOFIdx,err,error,*999)
+                CALL BoundaryConditionsRowVariable_RowConditionSet(boundaryConditionsRowVariable,localDOFIdx, &
                   & BOUNDARY_CONDITION_NEUMANN_ROW,err,error,*999)
               ENDIF
             ENDIF
@@ -943,7 +968,7 @@ MODULE BoundaryConditionsRoutines
                 IF(domainNumber==myGroupComputationNodeNumber) THEN
                   !On my rank
                   CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,dofIdx,1,localDOFIdx,err,error,*999)
-                  CALL BoundaryConditionsRowVariable_RowConditionSet(boundaryConditionsRHSRowVariable,localDOFIdx, &
+                  CALL BoundaryConditionsRowVariable_RowConditionSet(boundaryConditionsRowVariable,localDOFIdx, &
                     & BOUNDARY_CONDITION_DIRICHLET_ROW,err,error,*999)
                 ENDIF
               ENDIF
@@ -1745,6 +1770,155 @@ MODULE BoundaryConditionsRoutines
   !================================================================================================================================
   !
 
+  !>Find the boundary conditions row variable for a given field LHS variable if it exists
+  SUBROUTINE BoundaryConditions_LHSVariableExists(boundaryConditions,lhsVariable,boundaryConditionsRowVariable,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to see if the boundary conditions LHS variable exists for
+    TYPE(FieldVariableType), POINTER :: lhsVariable !<A pointer to the LHS variable to check the boundary conditions row variable for.
+    TYPE(BoundaryConditionsRowVariableType), POINTER, INTENT(OUT) :: boundaryConditionsRowVariable !<On return, a pointer to the boundary conditions row variable, or NULL if it wasn't found. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: lhsInterfaceUserNumber,lhsVarType,lhsVariableFieldUserNumber,lhsVariableRegionUserNumber, &
+      & matchInterfaceUserNumber,matchVariableType,matchVariableFieldUserNumber,matchVariableRegionUserNumber, &
+      & numberOfBoundaryConditionsRowVariables,rowVariableIdx
+    LOGICAL :: lhsVariableIsRegion,matchVariableIsInterface,matchVariableIsRegion,rowVariableFound
+    TYPE(FieldType), POINTER :: lhsVariableField,matchVariableField
+    TYPE(FieldVariableType), POINTER :: matchVariable
+    TYPE(InterfaceType), POINTER :: lhsVariableInterface,matchVariableInterface
+    TYPE(RegionType), POINTER :: lhsInterfaceParentRegion,lhsVariableRegion,matchInterfaceParentRegion,matchVariableRegion
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("BoundaryConditions_LHSVariableExists",err,error,*998)
+
+    IF(ASSOCIATED(boundaryConditionsRowVariable)) &
+      & CALL FlagError("Boundary conditions row variable is already associated.",err,error,*998)
+
+    CALL FieldVariable_VariableTypeGet(lhsVariable,lhsVarType,err,error,*999)
+    NULLIFY(lhsVariableField)
+    CALL FieldVariable_FieldGet(lhsVariable,lhsVariableField,err,error,*999)
+    CALL Field_UserNumberGet(lhsVariableField,lhsVariableFieldUserNumber,err,error,*999)
+    CALL Field_IsRegionField(lhsVariableField,lhsVariableIsRegion,err,error,*999)
+    NULLIFY(lhsVariableRegion)
+    NULLIFY(lhsVariableInterface)
+    IF(lhsVariableIsRegion) THEN
+      CALL Field_RegionGet(lhsVariableField,lhsVariableRegion,err,error,*999)
+      CALL Region_UserNumberGet(lhsVariableRegion,lhsVariableRegionUserNumber,err,error,*999)
+    ELSE
+      CALL Field_InterfaceGet(lhsVariableField,lhsVariableInterface,err,error,*999)
+      CALL Interface_UserNumberGet(lhsVariableInterface,lhsInterfaceUserNumber,err,error,*999)
+      NULLIFY(lhsInterfaceParentRegion)
+      CALL Interface_ParentRegionGet(lhsVariableInterface,lhsInterfaceParentRegion,err,error,*999)
+      CALL Region_UserNumberGet(lhsInterfaceParentRegion,lhsVariableRegionUserNumber,err,error,*999)      
+    ENDIF
+        
+    CALL BoundaryConditions_NumberOfRowVariablesGet(boundaryConditions,numberOfBoundaryConditionsRowVariables,err,error,*999)
+    rowVariableFound=.FALSE.
+    rowVariableIdx=1
+    DO WHILE(rowVariableIdx<=numberOfBoundaryConditionsRowVariables.AND..NOT.rowVariableFound)
+      NULLIFY(boundaryConditionsRowVariable)
+      CALL BoundaryConditions_RowVariableIndexGet(boundaryConditions,rowVariableIdx,boundaryConditionsRowVariable,err,error,*999)
+      NULLIFY(matchVariable)
+      CALL BoundaryConditionsRowVariable_LHSVariableExists(boundaryConditionsRowVariable,matchVariable,err,error,*999)
+      IF(ASSOCIATED(matchVariable)) THEN
+        CALL FieldVariable_VariableTypeGet(matchVariable,matchVariableType,err,error,*999)
+        NULLIFY(matchVariableField)
+        CALL FieldVariable_FieldGet(matchVariable,matchVariableField,err,error,*999)
+        CALL Field_UserNumberGet(matchVariableField,matchVariableFieldUserNumber,err,error,*999)
+        CALL Field_IsRegionField(matchVariableField,matchVariableIsRegion,err,error,*999)
+        IF(lhsVariableIsRegion) THEN
+          IF(matchVariableIsRegion) THEN
+            NULLIFY(matchVariableRegion)
+            CALL Field_RegionGet(matchVariableField,matchVariableRegion,err,error,*999)
+            CALL Region_UserNumberGet(matchVariableRegion,matchVariableRegionUserNumber,err,error,*999)
+            IF(lhsVariableRegionUserNumber==matchVariableRegionUserNumber.AND. &
+              & lhsVariableFieldUserNumber==matchVariableFieldUserNumber.AND. &
+              & lhsVarType==matchVariableType) rowVariableFound=.TRUE.
+          ENDIF
+        ELSE
+          CALL Field_IsInterfaceField(matchVariableField,matchVariableIsInterface,err,error,*999)
+          IF(matchVariableIsInterface) THEN
+            NULLIFY(matchVariableInterface)
+            CALL Field_InterfaceGet(matchVariableField,matchVariableInterface,err,error,*999)
+            CALL Interface_UserNumberGet(matchVariableInterface,matchInterfaceUserNumber,err,error,*999)
+            NULLIFY(matchInterfaceParentRegion)
+            CALL Interface_ParentRegionGet(matchVariableInterface,matchInterfaceParentRegion,err,error,*999)
+            CALL Region_UserNumberGet(matchInterfaceParentRegion,matchVariableRegionUserNumber,err,error,*999)
+            IF(lhsInterfaceUserNumber==matchInterfaceUserNumber.AND. &
+              & lhsVariableRegionUserNumber==matchVariableRegionUserNumber.AND. &
+              & lhsVariableFieldUserNumber==matchVariableFieldUserNumber.AND. &
+              & lhsVarType==matchVariableType) rowVariableFound=.TRUE.
+          ENDIF
+        ENDIF
+      ENDIF
+      rowVariableIdx=rowVariableIdx+1
+    ENDDO
+
+    EXITS("BoundaryConditions_LHSVariableExists")
+    RETURN
+999 NULLIFY(boundaryConditionsRowVariable)
+998 ERRORSEXITS("BoundaryConditions_LHSVariableExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditions_LHSVariableExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Find the boundary conditions row variable for a given LHS variable
+  SUBROUTINE BoundaryConditions_LHSVariableGet(boundaryConditions,lhsVariable,boundaryConditionsRowVariable,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to get the boundary conditions row variable for.
+    TYPE(FieldVariableType), POINTER :: lhsVariable !<A pointer to the field variable to get the boundary conditions row variable for.
+    TYPE(BoundaryConditionsRowVariableType), POINTER, INTENT(OUT) :: boundaryConditionsRowVariable !<On return, a pointer to the boundary conditions row variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("BoundaryConditions_LHSVariableGet",err,error,*998)
+
+    IF(ASSOCIATED(boundaryConditionsRowVariable)) &
+      & CALL FlagError("Boundary conditions row variable is already associated.",err,error,*998)
+    
+    CALL BoundaryConditions_LHSVariableExists(boundaryConditions,lhsVariable,boundaryConditionsRowVariable,err,error,*999)    
+
+    IF(.NOT.ASSOCIATED(boundaryConditionsRowVariable)) THEN
+      localError="Boundary condition row variable is not associated"
+      IF(ASSOCIATED(lhsVariable)) THEN
+        localError=localError//" for LHS variable type "//TRIM(NumberToVString(lhsVariable%variableType,"*",err,error))
+        IF(ASSOCIATED(lhsVariable%field)) THEN
+          localError=localError//" of field number "//TRIM(NumberToVString(lhsVariable%field%userNumber,"*",err,error))
+          IF(ASSOCIATED(lhsVariable%field%region)) THEN
+            localError=localError//" of region number "//TRIM(NumberToVString(lhsVariable%field%region%userNumber,"*",err,error))
+          ELSE IF(ASSOCIATED(lhsVariable%field%interface)) THEN
+            localError=localError//" of interface number "// &
+              & TRIM(NumberToVString(lhsVariable%field%interface%userNumber,"*",err,error))
+            IF(ASSOCIATED(lhsVariable%field%interface%parentRegion)) &
+              & localError=localError//" of parent region number "// &
+              & TRIM(NumberToVString(lhsVariable%field%interface%parentRegion%userNumber,"*",err,error))
+          ENDIF
+        ENDIF
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("BoundaryConditions_LHSVariableGet")
+    RETURN
+999 NULLIFY(boundaryConditionsRowVariable)
+998 ERRORSEXITS("BoundaryConditions_LHSVariableGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditions_LHSVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Sets/changes the sparsity type for the Neumann integration matrices
   SUBROUTINE BoundaryConditions_NeumannSparsityTypeSet(boundaryConditions,sparsityType,err,error,*)
 
@@ -2121,9 +2295,12 @@ MODULE BoundaryConditionsRoutines
       boundaryConditionsRowVariable%boundaryConditions=>boundaryConditions
       boundaryConditionsRowVariable%lhsVariable=>lhsVariable
       boundaryConditionsRowVariable%rhsVariable=>rhsVariable
-      CALL FieldVariable_NumberOfDOFsGet(lhsVariable,numberOfDOFs,err,error,*999)
-      CALL FieldVariable_TotalNumberOfDOFsGet(lhsVariable,totalNumberOfDOFs,err,error,*999)
-      ALLOCATE(boundaryConditionsRowVariable%rowConditionTypes(totalNumberOfDOFs),STAT=err)
+      CALL FieldVariable_NumberOfDOFsGet(lhsVariable,boundaryConditionsRowVariable%numberOfDOFs,err,error,*999)
+      CALL FieldVariable_TotalNumberOfDOFsGet(lhsVariable,boundaryConditionsRowVariable%totalNumberOfDOFs,err,error,*999)
+      CALL FieldVariable_NumberOfGlobalDOFsGet(lhsVariable,boundaryConditionsRowVariable%numberOfGLobalDOFs,err,error,*999)
+      !TEMP WHILST WE SWITCH FROM GLOBAL DOFS
+      !ALLOCATE(boundaryConditionsRowVariable%rowConditionTypes(boundaryConditionsRowVariable%totalNumberOfDOFs),STAT=err)
+      ALLOCATE(boundaryConditionsRowVariable%rowConditionTypes(boundaryConditionsRowVariable%numberOfGlobalDOFs),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate row condition types.",err,error,*999)
       boundaryConditionsRowVariable%rowConditionTypes=BOUNDARY_CONDITION_FREE_ROW
       
@@ -2626,9 +2803,8 @@ MODULE BoundaryConditionsRoutines
       CALL MOVE_ALLOC(newBoundaryConditionsVariables,boundaryConditions%boundaryConditionsVariables)
       boundaryConditions%numberOfBoundaryConditionsVariables=boundaryConditions%numberOfBoundaryConditionsVariables+1
 
-      ALLOCATE(boundaryConditionsVariable%DofConstraints,STAT=err)
-      IF(err/=0) CALL FlagError("Could not allocate boundary conditions dof constraints.",err,error,*999)
-      CALL BoundaryConditionsDOFConstraints_Initialise(boundaryConditionsVariable%DofConstraints,err,error,*999)
+      NULLIFY(boundaryConditionsVariable%DOFConstraints)
+      CALL BoundaryConditionsDOFConstraints_Initialise(boundaryConditionsVariable%DOFconstraints,err,error,*999)
 
     ENDIF
 

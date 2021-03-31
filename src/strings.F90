@@ -1714,7 +1714,7 @@ CONTAINS
     RETURN
 999 CALL FlagError("Cannot convert '"//CHAR(string)//"' to a single real.",err,error,*998)
 !998 ERRORSEXITS("StringToSingleVS",err,error)
-998 ERRORSEXITS("StringToSingleVS",err,error)
+998 ERRORS("StringToSingleVS",err,error)
     RETURN
     
   END FUNCTION StringToSingleVS

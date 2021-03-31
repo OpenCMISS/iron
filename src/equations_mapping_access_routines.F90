@@ -410,7 +410,7 @@ CONTAINS
     ENDIF
 #endif
     
-    EXITS("EquationsMappingDynamic_EquationsMatrixToVarapGet")
+    EXITS("EquationsMappingDynamic_EquationsMatrixToVarMapGet")
     RETURN
 999 NULLIFY(equationsMatrixToVarMap)
 998 ERRORS("EquationsMappingDynamic_EquationsMatrixToVarMapGet",err,error)
@@ -703,7 +703,7 @@ CONTAINS
       & CALL FlagError("The equations row to LHS DOF map is not associated for the LHS mapping.",err,error,*999)
 #endif    
     
-    EXITS("EquationsMappingLHS_EquationRowToLHSDOFMapGet")
+    EXITS("EquationsMappingLHS_EquationsRowToLHSDOFMapGet")
     RETURN
 999 NULLIFY(equationsRowToLHSDOFMap)
 998 ERRORS("EquationsMappingLHS_EquationsRowToLHSDOFMapGet",err,error)
@@ -740,7 +740,7 @@ CONTAINS
       & CALL FlagError("The LHS DOF to equations row map is not associated for the LHS mapping.",err,error,*999)
 #endif    
     
-    EXITS("EquationsMappingLHS_LHSDOFToEquationRowMapGet")
+    EXITS("EquationsMappingLHS_LHSDOFToEquationsRowMapGet")
     RETURN
 999 NULLIFY(lhsDOFToEquationsRowMap)
 998 ERRORS("EquationsMappingLHS_LHSDOFToEquationsRowMapGet",err,error)
@@ -850,7 +850,7 @@ CONTAINS
   !
 
   !>Gets the number of global rows a LHS mapping.
-  SUBROUTINE EquationsMappingLHS_NumberOfGLobalRowsGet(lhsMapping,numberOfGlobalRows,err,error,*)
+  SUBROUTINE EquationsMappingLHS_NumberOfGlobalRowsGet(lhsMapping,numberOfGlobalRows,err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping !<A pointer to the LHS mapping to get the number of global rows for
@@ -1263,7 +1263,7 @@ CONTAINS
     
     EXITS("EquationsMappingLinear_NumberOfLinearVariablesGet")
     RETURN
-999 ERRORS("EquationsMappingLinear_NumberOfLinearVariblesGet",err,error)
+999 ERRORS("EquationsMappingLinear_NumberOfLinearVariablesGet",err,error)
     EXITS("EquationsMappingLinear_NumberOfLinearVariablesGet")
     RETURN 1
     
@@ -1585,7 +1585,7 @@ CONTAINS
     RETURN
 999 NULLIFY(jacobianMatrixVariable)
 998 ERRORS("EquationsMappingResidual_JacobianMatrixVariableGet",err,error)
-    EXITS("EquationsMappingResidual_JacoibanMatrixVariableGet")
+    EXITS("EquationsMappingResidual_JacobianMatrixVariableGet")
     RETURN 1
     
   END SUBROUTINE EquationsMappingResidual_JacobianMatrixVariableGet
@@ -1621,7 +1621,7 @@ CONTAINS
     EXITS("EquationsMappingResidual_JacobianMatrixVariableTypeGet")
     RETURN
 999 ERRORS("EquationsMappingResidual_JacobianMatrixVariableTypeGet",err,error)
-    EXITS("EquationsMappingResidual_JacoibanMatrixVariableGet")
+    EXITS("EquationsMappingResidual_JacobianMatrixVariableTypeGet")
     RETURN 1
     
   END SUBROUTINE EquationsMappingResidual_JacobianMatrixVariableTypeGet

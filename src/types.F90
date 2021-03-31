@@ -2430,6 +2430,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(FieldVariableType), POINTER :: rhsVariable !<A pointer to the RHS field variable for this LHS variable. Temporary for now until BC restructure.
     INTEGER(INTG) :: numberOfDOFs !<The number of DOFs in the row variable
     INTEGER(INTG) :: totalNumberOfDOFs !<The total number of DOFs in the row variable
+    INTEGER(INTG) :: numberOfGlobalDOFs !<The number of global DOFs in the row variable. TEMP WHILST WE SWITCH FROM GLOBAL DOFS.
     INTEGER(INTG), ALLOCATABLE :: rowConditionTypes(:) !<rowConditionTypes(dofIdx). The row DOF boundary condition type. \see BoundaryConditionsRoutines_RowConditionsTypes
   END TYPE BoundaryConditionsRowVariableType
 

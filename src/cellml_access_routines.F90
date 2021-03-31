@@ -1502,7 +1502,7 @@ CONTAINS
       & CALL FlagError("The CellML environment for the intermediate field information is not associated.",err,error,*999)
 #endif    
 
-    EXITS("CellMIntermediateField_CellMLGet")
+    EXITS("CellMLIntermediateField_CellMLGet")
     RETURN
 999 NULLIFY(cellML)
 998 ERRORSEXITS("CellMLIntermediateField_CellMLGet",err,error)
@@ -1551,7 +1551,7 @@ CONTAINS
     ENDIF
 #endif    
 
-    EXITS("CellMIntermediateField_IntermediateFieldGet")
+    EXITS("CellMLIntermediateField_IntermediateFieldGet")
     RETURN
 999 NULLIFY(intermediateField)
 998 ERRORS("CellMLIntermediateField_IntermediateFieldGet",err,error)
@@ -1588,7 +1588,7 @@ CONTAINS
       & CALL FlagError("The CellML environment for the CellML model is not associated.",err,error,*999)
 #endif    
 
-    EXITS("CellMModel_CellMLGet")
+    EXITS("CellMLModel_CellMLGet")
     RETURN
 999 NULLIFY(cellML)
 998 ERRORSEXITS("CellMLModel_CellMLGet",err,error)
@@ -1618,7 +1618,7 @@ CONTAINS
     
     numberOfIntermediate=cellMLModel%numberOfIntermediate
 
-    EXITS("CellMModel_NumberOfIntermediateGet")
+    EXITS("CellMLModel_NumberOfIntermediateGet")
     RETURN
 999 ERRORSEXITS("CellMLModel_NumberOfIntermediateGet",err,error)
     RETURN 1
@@ -1647,7 +1647,7 @@ CONTAINS
     
     numberOfParameters=cellMLModel%numberOfParameters
 
-    EXITS("CellMModel_NumberOfParametersGet")
+    EXITS("CellMLModel_NumberOfParametersGet")
     RETURN
 999 ERRORSEXITS("CellMLModel_NumberOfParametersGet",err,error)
     RETURN 1
@@ -1676,7 +1676,7 @@ CONTAINS
     
     numberOfState=cellMLModel%numberOfState
 
-    EXITS("CellMModel_NumberOfStateGet")
+    EXITS("CellMLModel_NumberOfStateGet")
     RETURN
 999 ERRORSEXITS("CellMLModel_NumberOfStateGet",err,error)
     RETURN 1
@@ -1955,7 +1955,7 @@ CONTAINS
       & CALL FlagError("The CellML environment for the models field information is not associated.",err,error,*999)
 #endif    
 
-    EXITS("CellMModelsField_CellMLGet")
+    EXITS("CellMLModelsField_CellMLGet")
     RETURN
 999 NULLIFY(cellML)
 998 ERRORSEXITS("CellMLModelsField_CellMLGet",err,error)
@@ -2003,7 +2003,7 @@ CONTAINS
     ENDIF
 #endif    
 
-    EXITS("CellMModelsField_ModelsFieldGet")
+    EXITS("CellMLModelsField_ModelsFieldGet")
     RETURN
 999 NULLIFY(modelsField)
 998 ERRORSEXITS("CellMLModelsField_ModelsFieldGet",err,error)
@@ -2036,7 +2036,7 @@ CONTAINS
     
     onlyOneModelIndex=cellMLModelsField%onlyOneModelIndex
 
-    EXITS("CellMModelsField_OnlyOneModelIndexGet")
+    EXITS("CellMLModelsField_OnlyOneModelIndexGet")
     RETURN
 999 ERRORSEXITS("CellMLModelsField_OnlyOneModelIndexGet",err,error)
     RETURN 1
@@ -2151,7 +2151,7 @@ CONTAINS
       & CALL FlagError("The CellML environment for the parameters field information is not associated.",err,error,*999)
 #endif    
 
-    EXITS("CellMParametersField_CellMLGet")
+    EXITS("CellMLParametersField_CellMLGet")
     RETURN
 999 NULLIFY(cellML)
 998 ERRORSEXITS("CellMLParametersField_CellMLGet",err,error)
@@ -2200,7 +2200,7 @@ CONTAINS
     ENDIF
 #endif    
 
-    EXITS("CellMParametersField_ParametersFieldGet")
+    EXITS("CellMLParametersField_ParametersFieldGet")
     RETURN
 999 NULLIFY(parametersField)
 998 ERRORSEXITS("CellMLParametersField_ParametersFieldGet",err,error)
@@ -2314,7 +2314,7 @@ CONTAINS
       & CALL FlagError("The CellML environment for the state field information is not associated.",err,error,*999)
 #endif    
 
-    EXITS("CellMStateField_CellMLGet")
+    EXITS("CellMLStateField_CellMLGet")
     RETURN
 999 NULLIFY(cellML)
 998 ERRORSEXITS("CellMLStateField_CellMLGet",err,error)
@@ -2362,7 +2362,7 @@ CONTAINS
     ENDIF
 #endif    
 
-    EXITS("CellMStateField_StateFieldGet")
+    EXITS("CellMLStateField_StateFieldGet")
     RETURN
 999 NULLIFY(stateField)
 998 ERRORSEXITS("CellMLStateField_StateFieldGet",err,error)

@@ -879,7 +879,7 @@ CONTAINS
     !Check input arguments
     IF(ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*998)
-    IF(meshComponentNumber<0.OR.meshComponentNumber>mesh%numberOfComponents) THEN
+    IF(meshComponentNumber<1.OR.meshComponentNumber>mesh%numberOfComponents) THEN
       localError="The specified mesh component number of "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
         & " is invalid. The mesh component number must be >= 1 and <= "// &
         & TRIM(NumberToVString(mesh%numberOfComponents,"*",err,error))//"."

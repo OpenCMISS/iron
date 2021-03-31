@@ -292,7 +292,15 @@ MODULE EquationsMatricesRoutines
           IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
         ENDIF
         CALL DistributedMatrix_CreateFinish(dynamicMatrix%matrix,err,error,*999)
-      ENDDO !matrixIdx                
+        !Create the temp vector
+        CALL DistributedVector_CreateStart(rowDomainMap,dynamicMatrix%tempVector,err,error,*999)
+        CALL DistributedVector_DataTypeSet(dynamicMatrix%tempVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(dynamicMatrix%tempVector,err,error,*999)
+      ENDDO !matrixIdx      
+      !Create the temp vector
+      CALL DistributedVector_CreateStart(rowDomainMap,dynamicMatrices%tempVector,err,error,*999)
+      CALL DistributedVector_DataTypeSet(dynamicMatrices%tempVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+      CALL DistributedVector_CreateFinish(dynamicMatrices%tempVector,err,error,*999)
     ENDIF
     NULLIFY(linearMatrices)
     CALL EquationsMatricesVector_LinearMatricesExists(vectorMatrices,linearMatrices,err,error,*999)
@@ -326,7 +334,15 @@ MODULE EquationsMatricesRoutines
           IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
         ENDIF
         CALL DistributedMatrix_CreateFinish(linearMatrix%matrix,err,error,*999)
+        !Create the temp vector
+        CALL DistributedVector_CreateStart(rowDomainMap,linearMatrix%tempVector,err,error,*999)
+        CALL DistributedVector_DataTypeSet(linearMatrix%tempVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(linearMatrix%tempVector,err,error,*999)
       ENDDO !matrixIdx
+      !Create the temp vector
+      CALL DistributedVector_CreateStart(rowDomainMap,linearMatrices%tempVector,err,error,*999)
+      CALL DistributedVector_DataTypeSet(linearMatrices%tempVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+      CALL DistributedVector_CreateFinish(linearMatrices%tempVector,err,error,*999)
     ENDIF
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesExists(vectorMatrices,nonlinearMatrices,err,error,*999)
@@ -374,6 +390,10 @@ MODULE EquationsMatricesRoutines
           CALL DistributedMatrix_CreateFinish(jacobianMatrix%jacobian,err,error,*999)
         ENDDO !matrixIdx
       ENDDO !residualIdx
+      !Create the temp vector
+      CALL DistributedVector_CreateStart(rowDomainMap,nonlinearMatrices%tempVector,err,error,*999)
+      CALL DistributedVector_DataTypeSet(nonlinearMatrices%tempVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+      CALL DistributedVector_CreateFinish(nonlinearMatrices%tempVector,err,error,*999)
     ENDIF
     NULLIFY(rhsVector)
     CALL EquationsMatricesVector_RHSVectorExists(vectorMatrices,rhsVector,err,error,*999)
@@ -396,6 +416,10 @@ MODULE EquationsMatricesRoutines
         CALL DistributedVector_DataTypeSet(sourceVector%vector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
         CALL DistributedVector_CreateFinish(sourceVector%vector,err,error,*999)
       ENDDO !sourceIdx
+      !Create the temp vector
+      CALL DistributedVector_CreateStart(rowDomainMap,sourceVectors%tempVector,err,error,*999)
+      CALL DistributedVector_DataTypeSet(sourceVectors%tempVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+      CALL DistributedVector_CreateFinish(sourceVectors%tempVector,err,error,*999)
     ENDIF
     !Finish up
     vectorMatrices%vectorMatricesFinished=.TRUE.
@@ -3476,6 +3500,7 @@ MODULE EquationsMatricesRoutines
     IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*998)
     IF(ASSOCIATED(vectorMatrices%linearMatrices)) &
       & CALL FlagError("Vector equations matrices linear matrices is already associated.",err,error,*998)
+    
     NULLIFY(vectorMapping)
     CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
     NULLIFY(linearMapping)
@@ -3494,7 +3519,7 @@ MODULE EquationsMatricesRoutines
         NULLIFY(equationsMatrixToVarMap)
         CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,matrixIdx,equationsMatrixToVarMap,err,error,*999)
         CALL EquationsMappingVectorEMToVMap_MatrixCoefficientGet(equationsMatrixToVarMap,matrixCoefficient,err,error,*999)
-        vectorMatrices%dynamicMatrices%matrices(matrixIdx)%ptr%matrixCoefficient=matrixCoefficient
+        vectorMatrices%linearMatrices%matrices(matrixIdx)%ptr%matrixCoefficient=matrixCoefficient
       ENDDO !matrixIdx
       NULLIFY(vectorMatrices%linearMatrices%tempVector)
     ENDIF
@@ -4367,7 +4392,7 @@ MODULE EquationsMatricesRoutines
     EXITS("EquationsMatricesVector_NonlinearStructureTypeSet1")
     RETURN
 999 ERRORS("EquationsMatricesVector_NonlinearStructureTypeSet1",err,error)
-    EXITS("EquationsMatricesVector_NonlinearStructureTypeSet0")
+    EXITS("EquationsMatricesVector_NonlinearStructureTypeSet1")
     RETURN 1
     
   END SUBROUTINE EquationsMatricesVector_NonlinearStructureTypeSet1

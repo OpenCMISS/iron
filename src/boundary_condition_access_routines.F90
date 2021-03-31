@@ -184,6 +184,8 @@ MODULE BoundaryConditionAccessRoutines
   
   PUBLIC BoundaryConditionsRowVariable_BoundaryConditionsGet
 
+  PUBLIC BoundaryConditionsRowVariable_LHSVariableExists
+
   PUBLIC BoundaryConditionsRowVariable_LHSVariableGet
 
   PUBLIC BoundaryConditionsRowVariable_NumberOfDOFsGet
@@ -866,6 +868,39 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks the LHS field variable associated with a boundary condition row variable.
+  SUBROUTINE BoundaryConditionsRowVariable_LHSVariableExists(boundaryConditionsRowVariable,lhsVariable,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable !<A pointer to the boundary conditions row variable to check the LHS field variable for
+    TYPE(FieldVariableType), POINTER :: lhsVariable !<On exit, a pointer to the LHS field variable associated with the specified boundary conditions row variable if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsRowVariable_LHSVariableExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(lhsVariable)) CALL FlagError("LHS field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsRowVariable)) &
+      & CALL FlagError("Boundary conditions row variable is not associated.",err,error,*999)
+#endif    
+
+    lhsVariable=>boundaryConditionsRowVariable%lhsVariable
+      
+    EXITS("BoundaryConditionsRowVariable_LHSVariableExists")
+    RETURN
+999 NULLIFY(lhsVariable)
+998 ERRORS("BoundaryConditionsRowVariable_LHSVariableExists",err,error)
+    EXITS("BoundaryConditionsRowVariable_LHSVariableExists")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsRowVariable_LHSVariableExists
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the LHS field variable associated with a boundary condition row variable.
   SUBROUTINE BoundaryConditionsRowVariable_LHSVariableGet(boundaryConditionsRowVariable,lhsVariable,err,error,*)
 
@@ -925,8 +960,8 @@ CONTAINS
       
     EXITS("BoundaryConditionsRowVariable_NumberOfDOFsGet")
     RETURN
-999 ERRORS("BoundaryConditionsRowVariable_NumberOfDOFs",err,error)
-    EXITS("BoundaryConditionsRowVariable_NumberOfDOFs")
+999 ERRORS("BoundaryConditionsRowVariable_NumberOfDOFsGet",err,error)
+    EXITS("BoundaryConditionsRowVariable_NumberOfDOFsGet")
     RETURN 1
     
   END SUBROUTINE BoundaryConditionsRowVariable_NumberOfDOFsGet
@@ -987,10 +1022,17 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(boundaryConditionsRowVariable)) &
       & CALL FlagError("Boundary conditions row variable is not associated.",err,error,*999)
-    IF(dofIdx<1.OR.dofIdx>boundaryConditionsRowVariable%totalNumberOfDOFs) THEN
+    !TEMP WHILST WE SWITCH FROM GLOBAL DOFS
+    !IF(dofIdx<1.OR.dofIdx>boundaryConditionsRowVariable%totalNumberOfDOFs) THEN
+    !  localError="The specified DOF index of "//TRIM(NumberToVString(dofIdx,"*",err,error))// &
+    !    & " is invalid. The specified DOF index should be >= 1 and <= "// &
+    !    & TRIM(NumberToVString(boundaryConditionsRowVariable%totalNumberOfDOFs,"*",err,error))//"."
+    !  CALL FlagError(localError,err,error,*999)
+    !ENDIF
+    IF(dofIdx<1.OR.dofIdx>boundaryConditionsRowVariable%numberOfGlobalDOFs) THEN
       localError="The specified DOF index of "//TRIM(NumberToVString(dofIdx,"*",err,error))// &
         & " is invalid. The specified DOF index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(boundaryConditionsRowVariable%totalNumberOfDOFs,"*",err,error))//"."
+        & TRIM(NumberToVString(boundaryConditionsRowVariable%numberOfGlobalDOFs,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(boundaryConditionsRowVariable%rowConditionTypes)) &
@@ -1032,8 +1074,8 @@ CONTAINS
       
     EXITS("BoundaryConditionsRowVariable_TotalNumberOfDOFsGet")
     RETURN
-999 ERRORS("BoundaryConditionsRowVariable_TotalNumberOfDOFs",err,error)
-    EXITS("BoundaryConditionsRowVariable_TotalNumberOfDOFs")
+999 ERRORS("BoundaryConditionsRowVariable_TotalNumberOfDOFsGet",err,error)
+    EXITS("BoundaryConditionsRowVariable_TotalNumberOfDOFsGet")
     RETURN 1
     
   END SUBROUTINE BoundaryConditionsRowVariable_TotalNumberOfDOFsGet

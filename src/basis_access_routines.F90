@@ -1841,7 +1841,7 @@ CONTAINS
    
     numberOfElementParameters=basis%numberOfElementParameters
     
-    EXITS("Basis_NumberOfElementsParametersGet")
+    EXITS("Basis_NumberOfElementParametersGet")
     RETURN
 999 ERRORSEXITS("Basis_NumberOfElementParametersGet",err,error)
     RETURN 1

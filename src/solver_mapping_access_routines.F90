@@ -451,7 +451,7 @@ CONTAINS
         & TRIM(NumberToVString(solverMapping%numberOfSolverMatrices,"*",err,error))//"."      
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(ALLOCATED(solverMapping%solverMatricesToEquationsMaps)) &
+    IF(.NOT.ALLOCATED(solverMapping%solverMatricesToEquationsMaps)) &
       & CALL FlagError("The solver matrices to equations map is not allocated for the solver mapping.",err,error,*999)
     IF(.NOT.ASSOCIATED(solverMapping%solverMatricesToEquationsMaps(matrixIdx)%ptr)) THEN
       localError="The solver matrices to equations maps is not associated for matrix index "// &
@@ -1149,7 +1149,7 @@ CONTAINS
     IF(ASSOCIATED(equationsSetToSolverMatricesMap)) &
       & CALL FlagError("Equations set to solver matrices map is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
-    IF(equationsSetIdx.OR.equationsSetIdx>solverMapping%numberOfEquationsSets) THEN
+    IF(equationsSetIdx<1.OR.equationsSetIdx>solverMapping%numberOfEquationsSets) THEN
       localError="The specified equations set index of "//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " is invalid for the solver mapping. The index must be >= 1 and <= "// &
         & TRIM(NumberToVString(solverMapping%numberOfEquationsSets,"*",err,error))//"."

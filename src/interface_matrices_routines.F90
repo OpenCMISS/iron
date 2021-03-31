@@ -810,7 +810,17 @@ CONTAINS
         IF(ASSOCIATED(transposeColumnIndices)) DEALLOCATE(transposeColumnIndices)
       ENDIF
       CALL DistributedMatrix_CreateFinish(interfaceMatrix%matrix,err,error,*999)
-      IF(interfaceMatrix%hasTranspose) CALL DistributedMatrix_CreateFinish(interfaceMatrix%matrixTranspose,err,error,*999)
+      !Create the temp vector
+      CALL DistributedVector_CreateStart(rowDomainMapping,interfaceMatrix%tempVector,err,error,*999)
+      CALL DistributedVector_DataTypeSet(interfaceMatrix%tempVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+      CALL DistributedVector_CreateFinish(interfaceMatrix%tempVector,err,error,*999)
+      IF(interfaceMatrix%hasTranspose) THEN
+        CALL DistributedMatrix_CreateFinish(interfaceMatrix%matrixTranspose,err,error,*999)
+        !Create the temp vector
+        CALL DistributedVector_CreateStart(columnDomainMapping,interfaceMatrix%tempTransposeVector,err,error,*999)
+        CALL DistributedVector_DataTypeSet(interfaceMatrix%tempTransposeVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(interfaceMatrix%tempTransposeVector,err,error,*999)
+      ENDIF
     ENDDO !matrixIdx
     rhsVector=>interfaceMatrices%rhsVector
     IF(ASSOCIATED(rhsVector)) THEN

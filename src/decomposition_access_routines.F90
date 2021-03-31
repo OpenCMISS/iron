@@ -67,6 +67,13 @@ MODULE DecompositionAccessRoutines
   INTEGER(INTG), PARAMETER :: DECOMPOSITION_CALCULATED_TYPE=2 !<The element decomposition is calculated by graph partitioning. \see DecompositionRoutines_DecompositionTypes,DecompositionRoutines
   INTEGER(INTG), PARAMETER :: DECOMPOSITION_USER_DEFINED_TYPE=3 !<The user will set the element decomposition. \see DecompositionRoutines_DecompositionTypes,DecompositionRoutines
   !>@}
+  !> \addtogroup DecompositionRoutines_DecompositionXiDirectionTypes DecompositionRoutines::DecompositionXiDirectionTypes
+  !> \brief The Decomposition xi direction parameters
+  !> \see DecompositionRoutines
+  !>@{
+  INTEGER(INTG), PARAMETER :: DECOMPOSITION_MINUS_XI_DIRECTION=0 !<The minus xi direction. \see DecompositionRoutines_DecompositionXiDirectionTypes,DecompositionRoutines
+  INTEGER(INTG), PARAMETER :: DECOMPOSITION_PLUS_XI_DIRECTION=1 !<The plus xi direction. \see DecompositionRoutines_DecompositionXiDirectionTypes,DecompositionRoutines
+  !>@}
   
   !> \addtogroup DecompositionRoutines_DecomposerOutputTypes DecompositionRoutines::DecomposerOutputTypes
   !> \brief The Decomposer output type parameters
@@ -84,6 +91,8 @@ MODULE DecompositionAccessRoutines
   !Interfaces
 
   PUBLIC DECOMPOSITION_ALL_TYPE,DECOMPOSITION_CALCULATED_TYPE,DECOMPOSITION_USER_DEFINED_TYPE
+
+  PUBLIC DECOMPOSITION_MINUS_XI_DIRECTION,DECOMPOSITION_PLUS_XI_DIRECTION
 
   PUBLIC DECOMPOSER_NO_OUTPUT,DECOMPOSER_TIMING_OUTPUT,DECOMPOSER_ALL_OUTPUT
 
@@ -195,7 +204,15 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DecompositionLines_LineGet
 
+  PUBLIC DecompositionLines_LineAdjacentLineNumberGet
+
   PUBLIC DecompositionLines_LineBoundaryLineGet
+
+  PUBLIC DecompositionLines_LineNumberSurroundingElementsGet
+
+  PUBLIC DecompositionLines_LineSurroundingElementNumberGet
+
+  PUBLIC DecompositionLines_LineSurroundingElementLineGet
 
   PUBLIC DecompositionLines_LineXiDirectionGet
 
@@ -677,7 +694,7 @@ CONTAINS
     EXITS("DecomposerGraph_DecomposerGet")
     RETURN
 999 NULLIFY(decomposer)
-998 ERRORSEXITS("DecomposerGraph_DecomposereGet",err,error)
+998 ERRORSEXITS("DecomposerGraph_DecomposerGet",err,error)
     RETURN 1
     
   END SUBROUTINE DecomposerGraph_DecomposerGet
@@ -871,10 +888,10 @@ CONTAINS
     ENDIF
 #endif    
  
-    EXITS("DecomposerGraphLink_DecomposerGraphGet")
+    EXITS("DecomposerGraphNode_DecomposerGraphGet")
     RETURN
 999 NULLIFY(decomposerGraph)
-998 ERRORSEXITS("DecomposerGraphLink_DecomposerGraphGet",err,error)
+998 ERRORSEXITS("DecomposerGraphNode_DecomposerGraphGet",err,error)
     RETURN 1
     
   END SUBROUTINE DecomposerGraphNode_DecomposerGraphGet
@@ -939,7 +956,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
 
-    ENTERS("DecomposerGraphNode_GraphLinkGet",err,error,*998)
+    ENTERS("DecomposerGraphNode_DecomposerGraphLinkGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     !Check input arguments
@@ -1005,7 +1022,7 @@ CONTAINS
     EXITS("DecomposerGraphNode_DecomposerGraphLinkGet")
     RETURN
 999 NULLIFY(graphLink)
-998 ERRORSEXITS("DecomposerGraph_DecomposerGraphLinkGet",err,error)
+998 ERRORSEXITS("DecomposerGraphNode_DecomposerGraphLinkGet",err,error)
     RETURN 1
     
   END SUBROUTINE DecomposerGraphNode_DecomposerGraphLinkGet
@@ -2947,6 +2964,52 @@ CONTAINS
   !
 
   !>Gets the boundary line status for a local line number from a decomposition. 
+  SUBROUTINE DecompositionLines_LineAdjacentLineNumberGet(decompositionLines,xiDirectionIndex,localLineNumber,adjacentLineNumber, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionLinesType), POINTER :: decompositionLines !<A pointer to the decomposition lines to get the adjacent line number for
+    INTEGER(INTG), INTENT(IN) :: xiDirectionIndex !<The xi direction to get the adjacent line number for \see DecompositionRoutines_DecompositionXiDirectionTypes,DecompositionRoutines
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the adjacent line number for
+    INTEGER(INTG), INTENT(OUT) :: adjacentLineNumber !<On exit, the adjacent line number in the specified xi direction. If there is no line in that xi direction then adjacentLineNumber will be zero.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionLineType), POINTER :: decompositionLine
+#endif
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DecompositionLines_LineAdjacentLineNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionLine)
+    CALL DecompositionLines_LineGet(decompositionLines,localLineNumber,decompositionLine,err,error,*999)    
+#endif
+
+    SELECT CASE(xiDirectionIndex)
+    CASE(DECOMPOSITION_MINUS_XI_DIRECTION)
+      adjacentLineNumber=decompositionLines%lines(localLineNumber)%adjacentLines(DECOMPOSITION_MINUS_XI_DIRECTION)
+    CASE(DECOMPOSITION_PLUS_XI_DIRECTION)
+      adjacentLineNumber=decompositionLines%lines(localLineNumber)%adjacentLines(DECOMPOSITION_PLUS_XI_DIRECTION)
+    CASE DEFAULT
+      localError="The specified xi direction index of "//TRIM(NumberToVString(xiDirectionIndex,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("DecompositionLines_LineAdjacentLineNumberGet")
+    RETURN
+999 ERRORS("DecompositionLines_LineAdjacentLineNumberGet",err,error)
+    EXITS("DecompositionLines_LineAdjacentLineNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionLines_LineAdjacentLineNumberGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary line status for a local line number from a decomposition. 
   SUBROUTINE DecompositionLines_LineBoundaryLineGet(decompositionLines,localLineNumber,boundaryLine,err,error,*)
 
     !Argument variables
@@ -2976,6 +3039,134 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DecompositionLines_LineBoundaryLineGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of surrounding elements for a local line number from a decomposition. 
+  SUBROUTINE DecompositionLines_LineNumberSurroundingElementsGet(decompositionLines,localLineNumber,numberOfSurroundingElements, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionLinesType), POINTER :: decompositionLines !<A pointer to the decomposition lines to get the number of surrounding elements for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the adjacent line number for
+    INTEGER(INTG), INTENT(OUT) :: numberOfSurroundingElements !<On exit, the number of elements surrounding the specified line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionLineType), POINTER :: decompositionLine
+#endif
+
+    ENTERS("DecompositionLines_LineNumberSurroundingElementsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionLine)
+    CALL DecompositionLines_LineGet(decompositionLines,localLineNumber,decompositionLine,err,error,*999)    
+#endif
+
+    numberOfSurroundingElements=decompositionLines%lines(localLineNumber)%numberOfSurroundingElements
+ 
+    EXITS("DecompositionLines_LineNumberSurroundingElementsGet")
+    RETURN
+999 ERRORS("DecompositionLines_LineNumberSurroundingElementsGet",err,error)
+    EXITS("DecompositionLines_LineNumberSurroundingElementsGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionLines_LineNumberSurroundingElementsGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the surrounding element number for a local line number from a decomposition. 
+  SUBROUTINE DecompositionLines_LineSurroundingElementNumberGet(decompositionLines,surroundingElementIdx,localLineNumber, &
+    & surroundingElementNumber, err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionLinesType), POINTER :: decompositionLines !<A pointer to the decomposition lines to get the surrounding element number for
+    INTEGER(INTG), INTENT(IN) :: surroundingElementIdx !<The surrounding element index to get the surrounding element number for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the surrounding element number for
+    INTEGER(INTG), INTENT(OUT) :: surroundingElementNumber !<On exit, the specified surrounding element number for the line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionLineType), POINTER :: decompositionLine
+    TYPE(VARYING_STRING) :: localError
+#endif
+
+    ENTERS("DecompositionLines_LineSurroundingElementNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionLine)
+    CALL DecompositionLines_LineGet(decompositionLines,localLineNumber,decompositionLine,err,error,*999)
+    IF(surroundingElementIdx<1.OR.surroundingElementIdx>decompositionLines%lines(localLineNumber)%numberOfSurroundingElements) THEN
+      localError="The specified surrounding element index of "//TRIM(NumberToVString(surroundingElementIdx,"*",err,error))// &
+        & " is invalid. The surrounding element index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(decompositionLines%lines(localLineNumber)%numberOfSurroundingElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(decompositionLines%lines(localLineNumber)%surroundingElements)) &
+      & CALL FlagError("The surrounding elements array is not allocated for the decomposition lines.",err,error,*999)
+#endif
+
+    surroundingElementNumber=decompositionLines%lines(localLineNumber)%surroundingElements(surroundingElementIdx)
+ 
+    EXITS("DecompositionLines_LineSurroundingElementNumberGet")
+    RETURN
+999 ERRORS("DecompositionLines_LineSurroundingElementNumberGet",err,error)
+    EXITS("DecompositionLines_LineSurroundingElementNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionLines_LineSurroundingElementNumberGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the surrounding element line for a local line number from a decomposition. 
+  SUBROUTINE DecompositionLines_LineSurroundingElementLineGet(decompositionLines,surroundingElementIdx,localLineNumber, &
+    & surroundingElementLine, err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionLinesType), POINTER :: decompositionLines !<A pointer to the decomposition lines to get the surrounding element line for
+    INTEGER(INTG), INTENT(IN) :: surroundingElementIdx !<The surrounding element index to get the surrounding line number for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the surrounding element number for
+    INTEGER(INTG), INTENT(OUT) :: surroundingElementLine !<On exit, the specified surrounding element line for the line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionLineType), POINTER :: decompositionLine
+    TYPE(VARYING_STRING) :: localError
+#endif
+
+    ENTERS("DecompositionLines_LineSurroundingElementLineGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionLine)
+    CALL DecompositionLines_LineGet(decompositionLines,localLineNumber,decompositionLine,err,error,*999)
+    IF(surroundingElementIdx<1.OR.surroundingElementIdx>decompositionLines%lines(localLineNumber)%numberOfSurroundingElements) THEN
+      localError="The specified surrounding element index of "//TRIM(NumberToVString(surroundingElementIdx,"*",err,error))// &
+        & " is invalid. The surrounding element index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(decompositionLines%lines(localLineNumber)%numberOfSurroundingElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(decompositionLines%lines(localLineNumber)%elementLines)) &
+      & CALL FlagError("The element lines array is not allocated for the decomposition lines.",err,error,*999)
+#endif
+
+    surroundingElementLine=decompositionLines%lines(localLineNumber)%elementLines(surroundingElementIdx)
+ 
+    EXITS("DecompositionLines_LineSurroundingElementLineGet")
+    RETURN
+999 ERRORS("DecompositionLines_LineSurroundingElementLineGet",err,error)
+    EXITS("DecompositionLines_LineSurroundingElementLineGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionLines_LineSurroundingElementLineGet
   
   !
   !================================================================================================================================
@@ -6229,12 +6420,12 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DomainTopology_DomainLinesGet",err,error,*999)
+    ENTERS("DomainTopology_DomainLinesGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     !Check input arguments
+    IF(ASSOCIATED(domainLines)) CALL FlagError("Domain lines is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain is not associated.",err,error,*999)
-    IF(ASSOCIATED(domainLines)) CALL FlagError("Domain lines is already associated.",err,error,*999)
 #endif    
 
     !Get the domain lines
@@ -6247,7 +6438,8 @@ CONTAINS
     
     EXITS("DomainTopology_DomainLinesGet")
     RETURN
-999 ERRORSEXITS("DomainTopology_DomainLinesGet",err,error)
+999 NULLIFY(domainLines)
+998 ERRORSEXITS("DomainTopology_DomainLinesGet",err,error)
     RETURN 1
     
   END SUBROUTINE DomainTopology_DomainLinesGet

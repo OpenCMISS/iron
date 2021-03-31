@@ -145,26 +145,41 @@ CONTAINS
     NULLIFY(coordinateSystem)
     CALL GeneratedMesh_CoordinateSystemGet(generatedMesh,coordinateSystem,err,error,*999)
     CALL CoordinateSystem_DimensionGet(coordinateSystem,coordinateDimension,err,error,*999)
-    NULLIFY(basis)
-    CALL GeneratedMeshRegular_BasisGet(regularMesh,1,basis,err,error,*999)
     numberOfBases=SIZE(bases)
+    IF(numberOfBases<1) THEN
+      localError="The size of the specified bases array of "//TRIM(NumberToVString(numberOfBases,"*",err,error))// &
+        & " is invalid. The size of the bases array should be >= 1."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    basis=>bases(1)%ptr
     CALL Basis_NumberOfXiGet(basis,firstNumberOfXi,err,error,*999)
     CALL Basis_TypeGet(basis,firstMeshBasisType,err,error,*999)
     DO basisIdx=2,numberOfBases
-      NULLIFY(basis)
-      CALL GeneratedMeshRegular_BasisGet(regularMesh,basisIdx,basis,err,error,*999)
+      basis=>bases(basisIdx)%ptr
       CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
       CALL Basis_TypeGet(basis,meshBasisType,err,error,*999)
       IF(numberOfXi>coordinateDimension) THEN
         localError="The basis number of xi dimensions of "// &
           & TRIM(NumberToVString(numberOfXi,"*",err,error))// &
-          & " is invalid. The number of xi dimensions must be <= the number of coordinate dimensions of "// &
+          & " is invalid for basis index "//TRIM(NumberToVString(basisIdx,"*",err,error))// &
+          & ". The number of xi dimensions must be <= the number of coordinate dimensions of "// &
           & TRIM(NumberToVString(coordinateDimension,"*",err,error))
         CALL FlagError(localError,err,error,*999)
       ENDIF      
-      IF(numberOfXi/=firstNumberOfXi) CALL FlagError("All bases must have the same number of xi.",err,error,*999)
-      IF(meshBasisType/=firstMeshBasisType) &
-        & CALL FlagError("Using different basis types is not supported for generated meshes.",err,error,*999)
+      IF(numberOfXi/=firstNumberOfXi) THEN
+        localError="The number of xi of "//TRIM(NumberToVString(numberOfXi,"*",err,error))// &
+          & " for basis index "//TRIM(NumberToVString(basisIdx,"*",err,error))// &
+          & " does not match the number of xi for the first basis of "//TRIM(NumberToVString(firstNumberOfXi,"*",err,error))// &
+          & ". All bases should have the same number of xi."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      IF(meshBasisType/=firstMeshBasisType) THEN
+        localError="The basis type of "//TRIM(NumberToVString(meshBasisType,"*",err,error))// &
+          & " for basis index "//TRIM(NumberToVString(basisIdx,"*",err,error))// &
+          & " does not match the basis type for the first basis of "//TRIM(NumberToVString(firstMeshBasisType,"*",err,error))// &
+          & ". All bases should have the same basis type."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
     ENDDO !basisIdx
     ALLOCATE(newBases(numberOfBases),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate bases.",err,error,*999)
@@ -350,7 +365,7 @@ CONTAINS
     ENTERS("GeneratedMesh_CreateStartGeneric",err,error,*997)
 
     IF(ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is already associated.",err,error,*997)
-    IF(ASSOCIATED(generatedMeshes)) CALL FlagError("Generated meshes is not associated.",err,error,*997)
+    IF(.NOT.ASSOCIATED(generatedMeshes)) CALL FlagError("Generated meshes is not associated.",err,error,*997)
     
     !Initialise generated mesh
     CALL GeneratedMesh_Initialise(newGeneratedMesh,err,error,*999)
@@ -438,7 +453,7 @@ CONTAINS
     ENTERS("GeneratedMesh_CreateStartRegion",err,error,*998)
 
     IF(ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is already associated.",err,error,*998)
-    IF(ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
     
     NULLIFY(generatedMesh)
     CALL GeneratedMesh_UserNumberFind(userNumber,region,generatedMesh,err,error,*999)
@@ -478,7 +493,7 @@ CONTAINS
 
     ENTERS("GeneratedMesh_Destroy",err,error,*998)
 
-    IF(ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*998)
 
     NULLIFY(generatedMeshes)
     CALL GeneratedMesh_GeneratedMeshesGet(generatedMesh,generatedMeshes,err,error,*999)    
@@ -2449,7 +2464,7 @@ CONTAINS
     CALL Field_VariableGet(field,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
     DO componentIdx=1,fieldVariable%numberOfComponents
       CALL FieldVariable_ComponentInterpolationGet(fieldVariable,componentIdx,interpolationType,err,error,*999)
-      IF(interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
+      IF(interpolationType/=FIELD_NODE_BASED_INTERPOLATION) THEN
         localError="Component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
           & " of field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
           & " does not have node based interpolation."
@@ -2766,7 +2781,7 @@ CONTAINS
     nodeNumber=0
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
-    IF(fieldVariable%numberOfComponents==3) CALL FlagError("Geometric field must be three dimensional.",err,error,*999)
+    IF(fieldVariable%numberOfComponents/=3) CALL FlagError("Geometric field must be three dimensional.",err,error,*999)
     CALL FieldVariable_ComponentMeshComponentGet(fieldVariable,1,meshComponent,err,error,*999)
     DO componentIdx=2,3
       CALL FieldVariable_ComponentMeshComponentGet(fieldVariable,componentIdx,meshComponent2,err,error,*999)
@@ -4147,10 +4162,6 @@ CONTAINS
     ENDIF
     NULLIFY(mesh)
     CALL GeneratedMesh_MeshGet(generatedMesh,mesh,err,error,*999)
-    NULLIFY(meshTopology)
-    CALL Mesh_MeshTopologyGet(mesh,sameBasis(1),meshTopology,err,error,*999)
-    NULLIFY(meshElements)
-    CALL MeshTopology_MeshElementsget(meshTopology,meshElements,err,error,*999)
     IF(basisIndex==1) THEN
       !If this is the first basis, don't do anything
       DO nodeIdx=1,SIZE(nodeComponentNumbers)
@@ -4158,6 +4169,10 @@ CONTAINS
       ENDDO !nodeIdx
     ELSE IF(basisAppeared) THEN
       !If the basis has appeared before, reuse node user numbers
+      NULLIFY(meshTopology)
+      CALL Mesh_MeshTopologyGet(mesh,sameBasis(1),meshTopology,err,error,*999)
+      NULLIFY(meshElements)
+      CALL MeshTopology_MeshElementsget(meshTopology,meshElements,err,error,*999)
       DO nodeIdx=1,SIZE(nodeComponentNumbers)
         nodeUserNumbers(nodeIdx)=meshElements%elements(elementNumber)%userElementNodes(nodeIdx)
       ENDDO !nodeIdx

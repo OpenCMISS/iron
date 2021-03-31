@@ -3988,7 +3988,7 @@ CONTAINS
       decompositionLine%numberOfSurroundingElements=0
       decompositionLine%adjacentLines=0
       !Loop over the nodes at each end of the line
-      DO lineEndNodeIdx=0,1
+      DO lineEndNodeIdx=DECOMPOSITION_MINUS_XI_DIRECTION,DECOMPOSITION_PLUS_XI_DIRECTION
         found=.FALSE.
         nodeIdx=domainLine%nodesInLine(lineEndNodeIdx*(basis%numberOfNodes-1)+1)
         !Loop over the elements surrounding the node.

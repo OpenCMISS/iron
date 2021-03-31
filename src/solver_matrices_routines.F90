@@ -1036,7 +1036,7 @@ CONTAINS
               maximumColumnIndices=maximumColumnIndices+maximumColumnsPerRow
             ENDDO !equationsMatrixIdx
             !Loop over Jacobian matrices mapped to the solver matrix
-            CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap,numberOfJacobianMatrices, &
+            CALL SolverMappingEMSToSMMap_NumberOfJacobianMatricesGet(equationsMatricesToSolverMatrixMap,numberOfJacobianMatrices, &
               & err,error,*999)
             DO equationsMatrixIdx=1,numberOfJacobianMatrices
               NULLIFY(jacobianMatrixToSolverMatrixMap)
@@ -1145,6 +1145,7 @@ CONTAINS
               NULLIFY(equationsMatrixToSolverMatrixMap)
               CALL SolverMappingEMSToSMMap_DynamicMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
                 & equationsMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)
+              NULLIFY(equationsMatrix)
               CALL SolverMappingEMToSMMap_EquationsMatrixGet(equationsMatrixToSolverMatrixMap,equationsMatrix,err,error,*999)
               NULLIFY(distributedMatrix)
               CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,distributedMatrix,err,error,*999)
@@ -1161,6 +1162,7 @@ CONTAINS
               NULLIFY(equationsMatrixToSolverMatrixMap)
               CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
                 & equationsMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)
+              NULLIFY(equationsMatrix)
               CALL SolverMappingEMToSMMap_EquationsMatrixGet(equationsMatrixToSolverMatrixMap,equationsMatrix,err,error,*999)
               NULLIFY(distributedMatrix)
               CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,distributedMatrix,err,error,*999)
@@ -1171,12 +1173,13 @@ CONTAINS
                 & equationsColToSolverColsMap,columnIndicesLists,err,error,*999)          
             ENDDO !equationsMatrixIdx
             !Loop over Jacobian matrices mapped to the solver matrix
-            CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap,numberOfJacobianMatrices, &
+            CALL SolverMappingEMSToSMMap_NumberOfJacobianMatricesGet(equationsMatricesToSolverMatrixMap,numberOfJacobianMatrices, &
               & err,error,*999)
             DO equationsMatrixIdx=1,numberOfJacobianMatrices
               NULLIFY(jacobianMatrixToSolverMatrixMap)
               CALL SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
                 & equationsMatrixIdx,jacobianMatrixToSolverMatrixMap,err,error,*999)
+              NULLIFY(jacobianMatrix)
               CALL SolverMappingJMToSMMap_JacobianMatrixGet(jacobianMatrixToSolverMatrixMap,jacobianMatrix,err,error,*999)
               NULLIFY(distributedMatrix)
               CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,distributedMatrix,err,error,*999)

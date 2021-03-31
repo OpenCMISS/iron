@@ -2406,7 +2406,7 @@ CONTAINS
               CALL FlagError("Not implemented.",err,error,*999)
             ELSE              
               sum=0.0_DP
-              DO columnIdx=matrix%rowIndices(row),matrix%rowIndices(row+1)-1
+              DO columnIdx=matrix%rowIndices(localRowNumber),matrix%rowIndices(localRowNumber+1)-1
                 globalColumn=matrix%columnIndices(columnIdx)
                 !This ranks global to local mappings are stored in the first position
                 CALL DomainMapping_LocalNumberFromGlobalGet(columnMapping,globalColumn,1,localColumn,err,error,*999)

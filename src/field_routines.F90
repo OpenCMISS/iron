@@ -2421,33 +2421,35 @@ CONTAINS
     CALL Field_FieldsGet(field,fields,err,error,*999)    
     fieldPosition=field%globalNumber
     NULLIFY(geometricField)
-    CALL Field_GeometricFieldGet(field,geometricField,err,error,*999)
-    IF(ASSOCIATED(geometricField%geometricFieldParameters)) THEN
-      !Delete this field from the list of fields using the geometric field.
-      fieldPosition2=0
-      DO fieldIdx=1,geometricField%geometricFieldParameters%numberOfFieldsUsing
-        field2=>geometricField%geometricFieldParameters%fieldsUsing(fieldIdx)%ptr
-        IF(field2%userNumber==field%userNumber) THEN
-          fieldPosition2=fieldIdx
-          EXIT
-        ENDIF
-      ENDDO !fieldIdx
-      IF(fieldPosition2/=0) THEN
-        ALLOCATE(newFieldsUsing(geometricField%geometricFieldParameters%numberOfFieldsUsing+1),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate new fields using.",err,error,*999)
+    CALL Field_GeometricFieldExists(field,geometricField,err,error,*999)
+    IF(ASSOCIATED(geometricField)) THEN
+      IF(ASSOCIATED(geometricField%geometricFieldParameters)) THEN
+        !Delete this field from the list of fields using the geometric field.
+        fieldPosition2=0
         DO fieldIdx=1,geometricField%geometricFieldParameters%numberOfFieldsUsing
-          IF(fieldIdx<fieldPosition2) THEN
-            newFieldsUsing(fieldIdx)%ptr=>geometricField%geometricFieldParameters%fieldsUsing(fieldIdx)%ptr
-          ELSE IF(fieldIdx>fieldPosition2) THEN
-            newFieldsUsing(fieldIdx-1)%ptr=>geometricField%geometricFieldParameters%fieldsUsing(fieldIdx)%ptr
+          field2=>geometricField%geometricFieldParameters%fieldsUsing(fieldIdx)%ptr
+          IF(field2%userNumber==field%userNumber) THEN
+            fieldPosition2=fieldIdx
+            EXIT
           ENDIF
         ENDDO !fieldIdx
-        geometricField%geometricFieldParameters%numberOfFieldsUsing=geometricField%geometricFieldParameters%numberOfFieldsUsing-1
-        IF(ASSOCIATED(geometricField%geometricFieldParameters%fieldsUsing)) &
-          & DEALLOCATE(geometricField%geometricFieldParameters%fieldsUsing)
-        geometricField%geometricFieldParameters%fieldsUsing=>newFieldsUsing
-      ELSE
-        !??? Error
+        IF(fieldPosition2/=0) THEN
+          ALLOCATE(newFieldsUsing(geometricField%geometricFieldParameters%numberOfFieldsUsing+1),STAT=err)
+          IF(err/=0) CALL FlagError("Could not allocate new fields using.",err,error,*999)
+          DO fieldIdx=1,geometricField%geometricFieldParameters%numberOfFieldsUsing
+            IF(fieldIdx<fieldPosition2) THEN
+              newFieldsUsing(fieldIdx)%ptr=>geometricField%geometricFieldParameters%fieldsUsing(fieldIdx)%ptr
+            ELSE IF(fieldIdx>fieldPosition2) THEN
+              newFieldsUsing(fieldIdx-1)%ptr=>geometricField%geometricFieldParameters%fieldsUsing(fieldIdx)%ptr
+            ENDIF
+          ENDDO !fieldIdx
+          geometricField%geometricFieldParameters%numberOfFieldsUsing=geometricField%geometricFieldParameters%numberOfFieldsUsing-1
+          IF(ASSOCIATED(geometricField%geometricFieldParameters%fieldsUsing)) &
+            & DEALLOCATE(geometricField%geometricFieldParameters%fieldsUsing)
+          geometricField%geometricFieldParameters%fieldsUsing=>newFieldsUsing
+        ELSE
+          !??? Error
+        ENDIF
       ENDIF
     ENDIF
     CALL Field_Finalise(field,err,error,*999)
@@ -3537,9 +3539,9 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
+    NULLIFY(geometricParameters)
+    CALL Field_GeometricParametersGet(field,geometricParameters,err,error,*999)
     IF(updateFieldsUsing) THEN
-      NULLIFY(geometricParameters)
-      CALL Field_GeometricParametersGet(field,geometricParameters,err,error,*999)
       lastFieldIdx=geometricParameters%numberOfFieldsUsing
     ELSE
       lastFieldIdx=1 !The first field using will be the current field
@@ -5195,7 +5197,7 @@ CONTAINS
     ENTERS("FieldVariable_InterpolationParameterInitialise",err,error,*998)
 
     IF(ASSOCIATED(interpolationParameters)) CALL FlagError("Interpolation parameters is already associated.",err,error,*998)
-    IF(ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*998)
 
     NULLIFY(field)
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
@@ -13966,9 +13968,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: meshComponentNumber,xiDirection,xiIdx1,xiIdx2,versionIdx,derivativeIdx,derivativeIdx2,localNodeLineIdx, &
-      & adjacentLocalNodeLineIdx,nodeLineIdx,nodeIdx,partialDerivativeIdx,partialDerivativeIdx1,partialDerivativeIdx2,dofIdx, &
-      & dofIdx1,dofIdx2,dofIdx3,scalingIdx
+    INTEGER(INTG) :: meshComponentNumber,xiDirection,xiIdx1,xiIdx2,versionIdx,derivativeIdx,derivativeIdx2,firstNodeIdx, &
+      & lineXiDirection,localNodeLineIdx,adjacentLocalNodeLineIdx,nodeLineIdx,nodeIdx,numberOfNodes,numberOfNodeDerivatives, &
+      & numberOfNodeLines,numberOfVersions,partialDerivativeIdx,partialDerivativeIdx1,partialDerivativeIdx2, &
+      & partialDerivativeIdx3,dofIdx,dofIdx1,dofIdx2,dofIdx3,scalingIdx
     REAL(DP) :: length1,length2,meanLength,temp,numberOfLineVersions1,numberOfLineVersions2,value
     REAL(DP), POINTER :: scaleFactors(:)
     LOGICAL :: found
@@ -14006,12 +14009,9 @@ CONTAINS
       CALL Field_DecompositionGet(field,decomposition,err,error,*999)
       NULLIFY(decompositionTopology)
       CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
-      IF(decomposition%calculateLines) THEN
-        NULLIFY(decompositionLines)
-        CALL DecompositionTopology_DecompositionLinesGet(decompositionTopology,decompositionLines,err,error,*999)
-        NULLIFY(domainLines)
-        CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
-      ENDIF 
+      NULLIFY(decompositionLines)
+      IF(decomposition%calculateLines) &
+        & CALL DecompositionTopology_DecompositionLinesGet(decompositionTopology,decompositionLines,err,error,*999)
       NULLIFY(geometricParameters)
       CALL Field_GeometricParametersGet(geometricField,geometricParameters,err,error,*999)
       DO scalingIdx=1,field%scalings%numberOfScalingIndices
@@ -14022,22 +14022,26 @@ CONTAINS
         CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
         NULLIFY(domainNodes)
         CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+        NULLIFY(decompositionTopology)
+        NULLIFY(decompositionLines)
+        NULLIFY(domainLines)
         IF(decomposition%calculateLines) THEN
-          NULLIFY(decompositionTopology)
           CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
-          NULLIFY(decompositionLines)
           CALL DecompositionTopology_DecompositionLinesGet(decompositionTopology,decompositionLines,err,error,*999)
-          NULLIFY(domainLines)
           CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
         ENDIF
         NULLIFY(scaleFactors)
         CALL DistributedVector_DataGet(field%scalings%scalings(scalingIdx)%scaleFactors,scaleFactors,err,error,*999)
-        DO nodeIdx=1,domainNodes%numberOfNodes
-          DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
-            partialDerivativeIdx=domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%partialDerivativeIndex
+        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+        DO nodeIdx=1,numberOfNodes
+          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+          DO derivativeIdx=1,numberOfNodeDerivatives
+            CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
+            CALL DomainNodes_DerivativePartialIndexGet(domainNodes,derivativeIdx,nodeIdx,partialDerivativeIdx,err,error,*999)
             SELECT CASE(partialDerivativeIdx)
             CASE(NO_PART_DERIV)
-              DO versionIdx=1,domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
+              DO versionIdx=1,numberOfVersions
+!!TODO: this needs to be fixed when dof indicies are removed.
                 dofIdx=domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%dofIndex(versionIdx)
                 CALL DistributedVector_ValuesSet(field%scalings%scalings(scalingIdx)%scaleFactors,dofIdx,1.0_DP,err,error,*999)
               ENDDO !verionsIdx
@@ -14054,12 +14058,14 @@ CONTAINS
                 length2 = 0.0_DP
                 numberOfLineVersions1 = 0.0_DP
                 numberOfLineVersions2 = 0.0_DP
-                DO versionIdx=1,domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
+                DO versionIdx=1,numberOfVersions
                   !Find a line of the correct Xi direction going through this node
-                  found=.FALSE.
-                  DO nodeLineIdx=1,domainNodes%nodes(nodeIdx)%numberOfNodeLines
-                    localNodeLineIdx=domainNodes%nodes(nodeIdx)%nodeLines(nodeLineIdx)
-                    IF(decompositionLines%lines(localNodeLineIdx)%xiDirection==xiDirection) THEN
+                  CALL DomainNodes_NodeNumberOfLinesGet(domainNodes,nodeIdx,numberOfNodeLines,err,error,*999)
+                  found=.FALSE.                  
+                  DO nodeLineIdx=1,numberOfNodeLines
+                    CALL DomainNodes_NodeLineNumberGet(domainNodes,nodeLineIdx,nodeIdx,localNodeLineIdx,err,error,*999)
+                    CALL DecompositionLines_LineXiDirectionGet(decompositionLines,localNodeLineIdx,lineXiDirection,err,error,*999)
+                    IF(lineXiDirection==xiDirection) THEN
                       found=.TRUE.
                       EXIT
                     ENDIF
@@ -14069,10 +14075,13 @@ CONTAINS
                       & " direction going through node number "//TRIM(NumberToVString(nodeIdx,"*",err,error))//"."
                     CALL FlagError(localError,err,error,*999)
                   ENDIF
-                  IF(domainLines%lines(localNodeLineIdx)%nodesInLine(1)==nodeIdx) THEN !Current node at the beginning of the line
-                    adjacentLocalNodeLineIdx=decompositionLines%lines(localNodeLineIdx)%adjacentLines(0)
+                  CALL DomainLines_LineNodeNumberGet(domainLines,1,localNodeLineIdx,firstNodeIdx,err,error,*999)
+                  IF(firstNodeIdx==nodeIdx) THEN !Current node at the beginning of the line
+                    CALL DecompositionLines_LineAdjacentLineNumberGet(decompositionLines,DECOMPOSITION_MINUS_XI_DIRECTION, &
+                      & localNodeLineIdx,adjacentLocalNodeLineIdx,err,error,*999)
                   ELSE !Current node at the end of the line
-                    adjacentLocalNodeLineIdx=decompositionLines%lines(localNodeLineIdx)%adjacentLines(1)
+                    CALL DecompositionLines_LineAdjacentLineNumberGet(decompositionLines,DECOMPOSITION_PLUS_XI_DIRECTION, &
+                      & localNodeLineIdx,adjacentLocalNodeLineIdx,err,error,*999)
                   ENDIF
                   !Average line lengths for the different versions (division by the number of lines is done after all the
                   !line lengths are added together)                    
@@ -14107,14 +14116,16 @@ CONTAINS
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
                 ENDIF
-                DO versionIdx=1,domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
-                  dofIdx=domainNodes%nodes(nodeIdx)%DERIVATIVES(derivativeIdx)%dofIndex(versionIdx)
+                DO versionIdx=1,numberOfVersions
+!!TODO: this needs to be fixed when dof indicies are removed.
+                 dofIdx=domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%dofIndex(versionIdx)
                   CALL DistributedVector_ValuesSet(field%scalings%scalings(scalingIdx)%scaleFactors,dofIdx,meanLength, &
                     & err,error,*999)
                 ENDDO !versionIdx
               ENDIF
             CASE(PART_DERIV_S1_S2,PART_DERIV_S1_S3,PART_DERIV_S2_S3,PART_DERIV_S1_S2_S3)
-              DO versionIdx=1,domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
+              DO versionIdx=1,numberOfVersions
+!!TODO: this needs to be fixed when dof indicies are removed.
                 dofIdx=domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%dofIndex(versionIdx)
                 IF(partialDerivativeIdx==PART_DERIV_S1_S2) THEN
                   xiIdx1=1
@@ -14140,8 +14151,11 @@ CONTAINS
 !!TODO: Shouldn't have to search for the derivativeIdx directions. Store them somewhere.
                 !Find the first direction derivativeIdx
                 found=.FALSE.
-                DO derivativeIdx2=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
-                  IF(domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx2)%partialDerivativeIndex==partialDerivativeIdx1) THEN
+                DO derivativeIdx2=1,numberOfNodeDerivatives
+                  CALL DomainNodes_DerivativePartialIndexGet(domainNodes,derivativeIdx2,nodeIdx,partialDerivativeIdx3, &
+                    & err,error,*999)
+                 IF(partialDerivativeIdx3==partialDerivativeIdx1) THEN
+!!TODO: this needs to be fixed when dof indicies are removed.
                     dofIdx1=domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx2)%dofIndex(versionIdx)
                     found=.TRUE.
                     EXIT
@@ -14155,9 +14169,12 @@ CONTAINS
                 ENDIF
                 !Find the second direction derivativeIdx
                 found=.FALSE.
-                DO derivativeIdx2=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
-                  IF(domainNodes%nodes(nodeIdx)%DERIVATIVES(derivativeIdx2)%partialDerivativeIndex==partialDerivativeIdx2) THEN
-                    dofIdx2=domainNodes%nodes(nodeIdx)%DERIVATIVES(derivativeIdx2)%dofIndex(versionIdx)
+                DO derivativeIdx2=1,numberOfNodeDerivatives
+                  CALL DomainNodes_DerivativePartialIndexGet(domainNodes,derivativeIdx2,nodeIdx,partialDerivativeIdx3, &
+                    & err,error,*999)
+                  IF(partialDerivativeIdx3==partialDerivativeIdx2) THEN
+!!TODO: this needs to be fixed when dof indicies are removed.
+                    dofIdx2=domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx2)%dofIndex(versionIdx)
                     found=.TRUE.
                     EXIT
                   ENDIF
@@ -14171,9 +14188,12 @@ CONTAINS
                 IF(partialDerivativeIdx==PART_DERIV_S1_S2_S3) THEN
                   !Find the third direction derivativeIdx
                   found=.FALSE.
-                  DO derivativeIdx2=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
-                    IF(domainNodes%nodes(nodeIdx)%DERIVATIVES(derivativeIdx2)%partialDerivativeIndex==PART_DERIV_S3) THEN
-                      dofIdx3=domainNodes%nodes(nodeIdx)%DERIVATIVES(derivativeIdx2)%dofIndex(versionIdx)
+                  DO derivativeIdx2=1,numberOfNodeDerivatives
+                   CALL DomainNodes_DerivativePartialIndexGet(domainNodes,derivativeIdx2,nodeIdx,partialDerivativeIdx3, &
+                    & err,error,*999)
+                   IF(partialDerivativeIdx3==PART_DERIV_S3) THEN
+!!TODO: this needs to be fixed when dof indicies are removed.
+                      dofIdx3=domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx2)%dofIndex(versionIdx)
                       found=.TRUE.
                       EXIT
                     ENDIF
@@ -14223,16 +14243,18 @@ CONTAINS
           NULLIFY(domainNodes)
           CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
           CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Scale Factors for nodes in the domain:",err,error,*999)
-          DO nodeIdx=1,domainNodes%numberOfNodes
+          CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+          DO nodeIdx=1,numberOfNodes
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Node : ",nodeIdx,err,error,*999)
-            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of Derivatives = ", &
-              & domainNodes%nodes(nodeIdx)%numberOfDerivatives,err,error,*999)
-            DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
+            CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of Derivatives = ",numberOfNodeDerivatives,err,error,*999)
+            DO derivativeIdx=1,numberOfNodeDerivatives
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative : ",derivativeIdx,err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of Versions = ", &
-                & domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions,err,error,*999)
-              DO versionIdx=1,domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
+              CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of Versions = ",numberOfVersions,err,error,*999)
+              DO versionIdx=1,numberOfVersions
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Version : ",versionIdx,err,error,*999)
+!!TODO: this needs to be fixed when dof indicies are removed.
                 dofIdx=domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%dofIndex(versionIdx)
                 CALL DistributedVector_ValuesGet(field%scalings%scalings(scalingIdx)%scaleFactors,dofIdx,value,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Scale Factor : ",value,err,error,*999)
@@ -14824,7 +14846,7 @@ CONTAINS
 
     CALL Field_VariableTypesSet1(field,[variableType],err,error,*999)
 
-    EXITS("Field_VariableTypesSet")
+    EXITS("Field_VariableTypesSet0")
     RETURN
 999 ERRORSEXITS("Field_VariableTypesSet0",err,error)
     RETURN 1
@@ -17803,7 +17825,7 @@ CONTAINS
     CALL FieldVariable_UserDataPointDOFGet(fieldVariable,userDataPointNumber,componentNumber,localDof,ghostDof,err,error,*999)
     CALL DistributedVector_ValuesGet(parameterSet%parameters,localDof,value,err,error,*999)
 
-    EXITS("FieldVarible_ParameterSetGetDataPointIntg")
+    EXITS("FieldVariable_ParameterSetGetDataPointIntg")
     RETURN
 999 ERRORSEXITS("FieldVariable_ParameterSetGetDataPointIntg",err,error)
     RETURN 1
@@ -17950,7 +17972,7 @@ CONTAINS
 
     EXITS("FieldVariable_ParameterSetGetElementIntg")
     RETURN
-999 ERRORSEXITS("FieldVaraible_ParameterSetGetElementIntg",err,error)
+999 ERRORSEXITS("FieldVariable_ParameterSetGetElementIntg",err,error)
     RETURN 1
 
   END SUBROUTINE FieldVariable_ParameterSetGetElementIntg
@@ -18466,7 +18488,7 @@ CONTAINS
 
     EXITS("FieldVariable_ParameterSetGetLocalElementSP")
     RETURN
-999 ERRORSEXITS("FieldVarialbe_ParameterSetGetLocalElementSP",err,error)
+999 ERRORSEXITS("FieldVariable_ParameterSetGetLocalElementSP",err,error)
     RETURN 1
 
   END SUBROUTINE FieldVariable_ParameterSetGetLocalElementSP
@@ -20770,9 +20792,9 @@ CONTAINS
     CALL FieldVariable_LocalElementDOFGet(fieldVariable,localNumberElement,componentNumber,localDof,err,error,*999)
     CALL DistributedVector_ValuesSet(parameterSet%parameters,localDof,value,err,error,*999)
 
-    EXITS("Field_ParameterSetUpdateLocalElementIntg")
+    EXITS("FieldVariable_ParameterSetUpdateLocalElementIntg")
     RETURN
-999 ERRORSEXITS("Field_ParameterSetUpdateLocalElementIntg",err,error)
+999 ERRORSEXITS("FieldVariable_ParameterSetUpdateLocalElementIntg",err,error)
     RETURN 1
 
   END SUBROUTINE FieldVariable_ParameterSetUpdateLocalElementIntg
@@ -20991,7 +21013,7 @@ CONTAINS
       & err,error,*999)
     CALL DistributedVector_ValuesSet(parameterSet%parameters,localDof,value,err,error,*999)    
 
-    EXITS("FieldVaraible_ParameterSetUpdateLocalGaussPointDP")
+    EXITS("FieldVariable_ParameterSetUpdateLocalGaussPointDP")
     RETURN
 999 ERRORS("FieldVariable_ParameterSetUpdateLocalGaussPointDP",err,error)
     EXITS("FieldVariable_ParameterSetUpdateLocalGaussPointDP")

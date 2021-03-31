@@ -3818,7 +3818,7 @@ CONTAINS
       
     numberOfSolvers=solvers%numberOfSolvers
        
-    EXITS("Solvers_NumberOfSolverspGet")
+    EXITS("Solvers_NumberOfSolversGet")
     RETURN
 999 ERRORSEXITS("Solvers_NumberOfSolversGet",err,error)
     RETURN 1
@@ -4443,7 +4443,7 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is already associated.",err,error,*998)
-    CALL SolverEquations_AssertIsFinished(solverEquations,err,error,*999)
+    IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
 #endif    
 
     solverMapping=>solverEquations%solverMapping

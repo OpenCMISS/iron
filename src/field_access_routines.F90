@@ -410,6 +410,8 @@ MODULE FieldAccessRoutines
 
   PUBLIC Field_FieldsGet
 
+  PUBLIC Field_GeometricFieldExists
+
   PUBLIC Field_GeometricFieldGet
 
   PUBLIC Field_GeometricGeneralFieldGet
@@ -1488,6 +1490,40 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Field_FieldsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks the geometric field exists for a field identified by a pointer.
+  SUBROUTINE Field_GeometricFieldExists(field,geometricField,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to check the geometric field for
+    TYPE(FieldType), POINTER :: geometricField !<On return, a pointer to the geometric field if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("Field_GeometricFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+#endif    
+     
+    geometricField=>field%geometricField
+
+    EXITS("Field_GeometricFieldExists")
+    RETURN
+999 NULLIFY(geometricField)
+998 ERRORSEXITS("Field_GeometricFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_GeometricFieldExists
 
   !
   !================================================================================================================================

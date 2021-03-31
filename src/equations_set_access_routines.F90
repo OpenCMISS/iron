@@ -1806,7 +1806,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    EXITS("EquationsSet_AsserEquationsFieldIsCreated")
+    EXITS("EquationsSet_AssertEquationsFieldIsCreated")
     RETURN
 999 ERRORSEXITS("EquationsSet_AssertEquationsFieldIsCreated",err,error)
     RETURN 1
@@ -2714,7 +2714,7 @@ CONTAINS
     ENDIF
 #endif
     
-    EXITS("EquationsSet_FieldGet")
+    EXITS("EquationsSet_EquationsFieldGet")
     RETURN
 999 NULLIFY(equationsField)
 998 ERRORSEXITS("EquationsSet_EquationsFieldGet",err,error)

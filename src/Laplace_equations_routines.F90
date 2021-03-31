@@ -624,6 +624,7 @@ CONTAINS
           CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
           NULLIFY(rowBasis)
           CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+          NULLIFY(rowQuadratureScheme)
           CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
           CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
           !Loop over element rows
@@ -645,6 +646,7 @@ CONTAINS
                 CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                 NULLIFY(columnBasis)
                 CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                NULLIFY(columnQuadratureScheme)
                 CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
                 CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
                 DO columnElementParameterIdx=1,numberOfColumnElementParameters
