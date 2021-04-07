@@ -11847,49 +11847,16 @@ CONTAINS
                         CALL EquationsMatrix_MatrixCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
                         dofValue=dofValue*matrixCoefficient
                         NULLIFY(linearDistributedMatrix)
-                        CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,linearDistributedMatrix,err,error,*999)
+                        CALL EquationsMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
 !!WHAT IS THIS TRYING TO DO?
                         DO dirichletIdx=1,numberOfDirichletConditions
-                          IF(dirichletBoundaryConditions%dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
+                          IF(dirichletBoundaryConditions%dirichletDOFIndices(dirichletIdx)==lhsGlobalDOF) EXIT
                         ENDDO !dirichletIdx
-                        CALL DistributedMatrix_MatrixColumnAdd(linearDistributedMatrix,.FALSE.,equationsColumnNumber, &
+                        CALL DistributedMatrix_MatrixColumnAdd(linearDistributedMatrix,.FALSE.,lhsGlobalDOF, &
                           & equationsRowToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
 
                       ENDIF
                     ENDDO !linearMatrixIdx
-                    CALL EquationsMappingLinear_NumberOfLinearVariablesGet(linearMapping,numberOfLinearVariables,err,error,*999)
-                    DO linearVariableIdx=1,numberOfLinearVariables
-                      NULLIFY(linearVariable)
-                      CALL EquationsMappingLinear_linearVariableGet(linearMapping,linearVariableIdx,linearVariable,err,error,*999)
-                      IF(ASSOCIATED(linearVariable,lhsVariable)) THEN
-                        NULLIFY(linearVarToEquationsMatricesMap)
-                        CALL EquationsMappingLinear_VariableToEquationsMatricesMapGet(linearMapping,linearVariableIdx, &
-                          & linearVarToEquationsMatricesMap,err,error,*999)
-                        CALL EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet(linearVarToEquationsMatricesMap, &
-                          & numberOfEquationsMatrices,err,error,*999)
-                        CALL FieldVariable_ParameterSetGetLocalDOF(linearVariable,FIELD_VALUES_SET_TYPE,lhsVariableDOF, &
-                          & dofValue,err,error,*999)
-                        DO equationsMatrixIdx=1,numberOfEquationsMatrices
-                          CALL EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet(linearVarToEquationsMatricesMap, &
-                            & equationsMatrixIdx,equationsMatrixNumber,err,error,*999)
-                          CALL EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet(linearVarToEquationsMatricesMap, &
-                            & equationsMatrixIdx,lhsVariableDOF,equationsColumnNumber,err,error,*999)
-                          NULLIFY(equationsMatrix)
-                          CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixNumber,equationsMatrix, &
-                            & err,error,*999)
-                          CALL EquationsMatrix_MatrixCoefficientGet(equationsMatrix,matrixCoefficient,err,error,*999)
-                          dofValue=dofValue*matrixCoefficient
-                          NULLIFY(linearDistributedMatrix)
-                          CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,linearDistributedMatrix,err,error,*999)
-!!WHAT IS THIS TRYING TO DO?
-                          DO dirichletIdx=1,numberOfDirichletConditions
-                            IF(dirichletBoundaryConditions%dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
-                          ENDDO !dirichletIdx
-                          CALL DistributedMatrix_MatrixColumnAdd(linearDistributedMatrix,.FALSE.,equationsColumnNumber, &
-                            & equationsRowToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
-                        ENDDO !matrixidx
-                      ENDIF !linear and lhs variable
-                    ENDDO !linearVariableIdx
                   ENDIF !linear mapping
                 ENDIF !solver mapping variable
               ENDDO !solverMatrixIdx

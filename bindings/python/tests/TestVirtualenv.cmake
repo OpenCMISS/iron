@@ -12,7 +12,7 @@ if (WIN32)
 endif()
 set(VENV_BIN "${WD}/test_venv/${VENV_BINDIR}")
 execute_process(
-    COMMAND ${VENV_BIN}/pip install --upgrade "${PACKAGE_DIR}"
+    COMMAND ${VENV_BIN}/python -m pip install --upgrade "${PACKAGE_DIR}"
     RESULT_VARIABLE RES
 )
 if (NOT RES EQUAL 0)

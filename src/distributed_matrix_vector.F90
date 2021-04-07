@@ -1926,11 +1926,6 @@ CONTAINS
         & " is invalid. The column number should be >=1 and <= "// TRIM(NumberToVString(numberOfMatrixColumns,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(numberOfMatrixRows/=numberOfVectorRows) THEN
-      localError="The number of rows in the matrix of "//TRIM(NumberToVString(numberOfMatrixRows,"*",err,error))// &
-        & " does not match the number of rows in the vector of "// &
-        & TRIM(NumberToVString(numberOfVectorRows,"*",err,error))//"."
-    ENDIF
     IF(numberOfMatrixRows/=SIZE(rowCoupling,1)) THEN
       localError="The size of the specified row coupling of "//TRIM(NumberToVString(SIZE(rowCoupling,1),"*",err,error))// &
         & " does not match the number of rows in the matrix of "//TRIM(NumberToVString(numberOfMatrixRows,"*",err,error))//"."

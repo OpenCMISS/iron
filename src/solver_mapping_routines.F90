@@ -4421,7 +4421,7 @@ MODULE SolverMappingRoutines
               IF(ASSOCIATED(lagrangeField,variableLagrangeField)) THEN
                 NULLIFY(variableLagrangeInterface)
                 CALL Field_InterfaceGet(variableLagrangeField,variableLagrangeInterface,err,error,*999)
-                IF(ASSOCIATED(lagrangeInterface,variableLagrangeField)) THEN
+                IF(ASSOCIATED(lagrangeInterface,variableLagrangeInterface)) THEN
                   variableFound=.TRUE.
                   EXIT
                 ENDIF

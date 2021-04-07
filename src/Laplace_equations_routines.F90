@@ -1306,10 +1306,9 @@ CONTAINS
           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
           !Create the equations mapping.
           NULLIFY(vectorMapping)
-          CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
+          CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
           CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
-          CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
-            & err,error,*999)
+          CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
           CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
           CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
           !Create the equations matrices
