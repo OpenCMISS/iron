@@ -1116,24 +1116,27 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Local Variables
-    INTEGER(INTG) :: FIELD_VAR_TYPE,ng,ni,xi,mi,ns,nhs,ms,mhs,TOTAL_DEPENDENT_BASIS_EP,MESH_COMPONENT
+    INTEGER(INTG) :: FIELD_VAR_TYPE,ng,ni,xi,mi,ns,nhs,ms,mhs,mh,nh,TOTAL_DEPENDENT_BASIS_EP,MESH_COMPONENT
     INTEGER(INTG) :: NUMBER_OF_DEPENDENT_COMPONENTS,NUMBER_OF_XI !,NUMBER_OF_GEOMETRIC_COMPONENTS
     INTEGER(INTG) :: OFF_DIAG_COMP(3),OFF_DIAG_DEP_VAR(2,2,3),DIAG_SUB_MAT_LOC(3),OFF_DIAG_SUB_MAT_LOC(2,3)
     INTEGER(INTG) :: DEPENDENT_BASES_EP(3) !,GEOMETRIC_BASES_EP(:)
     REAL(DP) :: JRWG,C(6,6),JRWG_DIAG_C(3,3),JRWG_OFF_DIAG_C(2,3)
-    REAL(DP):: SF(64*3)
+    REAL(DP) :: SF(64*3)
 
     !LOGICAL :: SAME_BASIS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatrixType), POINTER :: dampingMatrix,stiffnessMatrix
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField
     TYPE(BASIS_PTR_TYPE) :: DEPENDENT_BASES(3) !,GEOMETRIC_BASES(:)
     TYPE(QUADRATURE_SCHEME_PTR_TYPE) :: QUADRATURE_SCHEMES(3)
-    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: DEPENDENT_INTERPOLATION_PARAMETERS
     !TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: FIBRE_INTERPOLATION_PARAMETERS
@@ -1170,11 +1173,23 @@ CONTAINS
         geometricField=>equations%interpolation%geometricField
         !fibreField=>equations%interpolation%fibreField
         vectorMatrices=>vectorEquations%vectorMatrices
-        equationsMatrix=>vectorMatrices%linearMatrices%matrices(1)%ptr
         rhsVector=>vectorMatrices%rhsVector
         vectorMapping=>vectorEquations%vectorMapping
-        linearMapping=>vectorMapping%linearMapping
-        FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%variable
+        SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
+        CASE(EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE,EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
+             & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE,EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
+           linearMapping=>vectorMapping%linearMapping
+           equationsMatrix=>vectorMatrices%linearMatrices%matrices(1)%ptr
+           FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%variable
+        CASE(EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE, &
+             & EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE)
+           dynamicMatrices=>vectorMatrices%dynamicMatrices
+           dynamicMapping=>vectorMapping%dynamicMapping
+           stiffnessMatrix=>dynamicMatrices%matrices(1)%ptr
+           dampingMatrix=>dynamicMatrices%matrices(2)%ptr
+           FIELD_VARIABLE=>dynamicMapping%equationsMatrixToVarMaps(1)%variable
+        END SELECT
+
         FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
         !Note that the dimension/number of components for FIELD_U_VARIABLE_TYPE has to be the same as the FIELD_DELUDELN_VARIABLE_TYPE
         !& Number of Geometric field components = number of dependent field component
@@ -1378,7 +1393,175 @@ CONTAINS
                 equationsMatrix%elementMatrix%matrix(mhs,nhs) = equationsMatrix%elementMatrix%matrix(nhs,mhs)
               ENDDO !nhs
             ENDDO !mhs
+         ENDIF
+         
+      CASE(EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE, &
+           & EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE)
+         
+          !//
+          !Parameters for number of off diagonal stress/strain terms for a given number of xi directions and order of calculation for shear terms
+          !These parameters do not change for 1D,2D,3D Linear Elasticity
+          OFF_DIAG_COMP = [0,1,3]
+          OFF_DIAG_DEP_VAR(1,1,:) = [1,1,2]
+          OFF_DIAG_DEP_VAR(1,2,:) = [2,3,3]
+          OFF_DIAG_DEP_VAR(2,1,:) = OFF_DIAG_DEP_VAR(1,2,:)
+          OFF_DIAG_DEP_VAR(2,2,:) = OFF_DIAG_DEP_VAR(1,1,:)
+          !//
+          DIAG_SUB_MAT_LOC(:) = [0,DEPENDENT_BASES_EP(1),SUM(DEPENDENT_BASES_EP(1:2))]
+          OFF_DIAG_SUB_MAT_LOC(1,:) = [0,0,DEPENDENT_BASES_EP(1)]
+          OFF_DIAG_SUB_MAT_LOC(2,:) = [DEPENDENT_BASES_EP(1),DIAG_SUB_MAT_LOC(3),DIAG_SUB_MAT_LOC(3)]
+
+          
+          IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix.OR.rhsVector%updateVector) THEN
+            !Get the geometric, fibre & material field interpolation parameters
+            GEOMETRIC_INTERPOLATION_PARAMETERS=>equations%interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
+            !FIBRE_INTERPOLATION_PARAMETERS=>equations%interpolation%FIBRE_INTERP_PARAMETERS
+            MATERIALS_INTERPOLATION_PARAMETERS=>equations%interpolation%materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
+            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
+              & GEOMETRIC_INTERPOLATION_PARAMETERS,err,error,*999)
+            !CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
+            !  & FIBRE_INTERPOLATION_PARAMETERS,err,error,*999)
+            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
+              & MATERIALS_INTERPOLATION_PARAMETERS,err,error,*999)
+            geometricInterpPointMetrics=>equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr
+            materialsInterpPoint=>equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
+            !Loop over gauss points & integrate upper triangular portion of Stiffness matrix
+            DO ng=1,QUADRATURE_SCHEMES(1)%ptr%NUMBER_OF_GAUSS !Gauss point index
+              !Interpolate geometric, fibre and material fields at gauss points & calculate geometric field metrics
+              CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+                & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              !CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+              !  & FIBRE_INTERP_POINT,err,error,*999)
+              CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,materialsInterpPoint,err,error,*999)
+              !!TODO:: Add option to only evaluate required metrics
+              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(NUMBER_OF_XI,geometricInterpPointMetrics,err,error,*999)
+              !Calculate JRWG.
+              JRWG=QUADRATURE_SCHEMES(1)%ptr%GAUSS_WEIGHTS(ng)*geometricInterpPointMetrics%JACOBIAN
+              DO xi=1,NUMBER_OF_XI
+                DPHIDX_COMP(xi)%DPHIDX = 0.0_DP
+                DO ns=1,DEPENDENT_BASES_EP(xi)
+                  DO mi=1,NUMBER_OF_XI
+                    DO ni=1,NUMBER_OF_XI
+                      DPHIDX_COMP(xi)%DPHIDX(ns,mi) = DPHIDX_COMP(xi)%DPHIDX(ns,mi)+geometricInterpPointMetrics%DXI_DX(mi,ni)* &
+                        & QUADRATURE_SCHEMES(xi)%ptr%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
+                    ENDDO !ni
+                  ENDDO !mi
+                ENDDO !ns
+              ENDDO !xi
+              !CALL COORDINATE_MATERIAL_COORDINATE_SYSTEM_CALCULATE(equations%interpolation%geometricInterpPoint, &
+              !  equations%interpolation%FIBRE_INTERP_POINT,DXDNU,err,error,*999)
+              !Create Linear Elasticity Tensor C
+              CALL LINEAR_ELASTICITY_TENSOR(EQUATIONS_SET%SPECIFICATION(3),materialsInterpPoint,C,err,error,*999)
+              !Store Elasticity Tensor diagonal & off diagonal stress coefficients
+              JRWG_DIAG_C(3,:) = [JRWG*C(4,4),JRWG*C(5,5),JRWG*C(3,3)]
+              JRWG_DIAG_C(2,:) = [JRWG*C(6,6),JRWG*C(2,2),JRWG_DIAG_C(3,2)]
+              JRWG_DIAG_C(1,:) = [JRWG*C(1,1),JRWG_DIAG_C(2,1),JRWG_DIAG_C(3,1)]
+              JRWG_OFF_DIAG_C(1,:) = [JRWG*C(1,2),JRWG*C(1,3),JRWG*C(2,3)]
+              JRWG_OFF_DIAG_C(2,:) = [JRWG*C(6,6),JRWG*C(4,4),JRWG*C(5,5)]             
+
+              !Construct Stiffness Matrix 
+              IF(stiffnessMatrix%updateMatrix) THEN
+
+                 !Construct Stiffness Matrix Diagonal Terms
+                 DO xi=1,NUMBER_OF_XI
+                    DO ns=1,DEPENDENT_BASES_EP(xi)
+                       DO ms=ns,DEPENDENT_BASES_EP(xi)
+                          stiffnessMatrix%elementMatrix%matrix(DIAG_SUB_MAT_LOC(xi)+ns,DIAG_SUB_MAT_LOC(xi)+ms) = &
+                               & stiffnessMatrix%elementMatrix%matrix(DIAG_SUB_MAT_LOC(xi)+ns,DIAG_SUB_MAT_LOC(xi)+ms) + &
+                               & DOT_PRODUCT(DPHIDX_COMP(xi)%DPHIDX(ns,1:NUMBER_OF_XI)*DPHIDX_COMP(xi)%DPHIDX(ms,1:NUMBER_OF_XI), &
+                               & JRWG_DIAG_C(xi,1:NUMBER_OF_XI)) 
+                       ENDDO !ms
+                    ENDDO !ns
+                 ENDDO !xi
+                 
+                 !Construct Stiffness Matrix Off-Diagonal Terms
+                 DO xi=1,OFF_DIAG_COMP(NUMBER_OF_XI)
+                    DO ns=1,DEPENDENT_BASES_EP(OFF_DIAG_DEP_VAR(1,1,xi))
+                       DO ms=1,DEPENDENT_BASES_EP(OFF_DIAG_DEP_VAR(1,2,xi))
+                          stiffnessMatrix%elementMatrix%matrix(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms) = &
+                               & stiffnessMatrix%elementMatrix%matrix(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms)& 
+                               & +DOT_PRODUCT(DPHIDX_COMP(OFF_DIAG_DEP_VAR(1,1,xi))%DPHIDX(ns,OFF_DIAG_DEP_VAR(1,:,xi))* &
+                               &  DPHIDX_COMP(OFF_DIAG_DEP_VAR(1,2,xi))%DPHIDX(ms,OFF_DIAG_DEP_VAR(2,:,xi)),JRWG_OFF_DIAG_C(:,xi))
+                       ENDDO !ms
+                    ENDDO !ns
+                 ENDDO !xi
+              ENDIF            
+            
+              !Construct Damping Matrix
+              IF(dampingMatrix%updateMatrix) THEN
+                 !Construct Damping Matrix
+                 mhs=0          
+                 DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    !Loop over element rows
+                    DO ms=1,DEPENDENT_BASES_EP(mh)
+                       mhs=mhs+1
+                       nhs=0
+                       !Loop over element columsn
+                       DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                          DO ns=1,DEPENDENT_BASES_EP(nh)
+                             nhs=nhs+1
+                             dampingMatrix%elementMatrix%matrix(mhs,nhs)=dampingMatrix%elementMatrix%matrix(mhs,nhs)+ &
+                                  & QUADRATURE_SCHEMES(mh)%ptr%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)* &
+                                  & QUADRATURE_SCHEMES(nh)%ptr%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)* &
+                                  & materialsInterpPoint%values(2+FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)*JRWG
+                          ENDDO !ns
+                       ENDDO !nh
+                       !IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=0.0_DP
+                    ENDDO !ms
+                 ENDDO !mh
+                 !dampingMatrix%elementMatrix%matrix(:,:)=dampingMatrix%elementMatrix%matrix(:,:)* &
+                 !     & materialsInterpPoint%values(2+FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)
+              ENDIF
+                      
+            ENDDO !ng
+            !If Plane Stress/Strain problem multiply equation matrix by thickness
+
+            DO mhs=1,TOTAL_DEPENDENT_BASIS_EP
+               DO nhs=mhs,TOTAL_DEPENDENT_BASIS_EP
+                  !!TODO::Bring 2D plane stress/strain element thickness in through a field - element constant when it can be exported by field i/o. Currently brought in through material field (Temporary)
+                  stiffnessMatrix%elementMatrix%matrix(mhs,nhs)=stiffnessMatrix%elementMatrix%matrix(mhs,nhs)* &
+                       & materialsInterpPoint%values(1,1)
+               ENDDO !nhs
+            ENDDO !mhs
           ENDIF
+
+          IF(stiffnessMatrix%updateMatrix) THEN
+            !Transpose upper triangular portion of Stiffness matrix to give lower triangular portion. Has to be done after scale factors are applied
+            !!TODO:: Use symmetric linear equation solver or alternatively traspose to give full matrix when asemmbling or when creating solver matrices
+            !!TODO:: Better to use SIZE(equationsMatrix%elementMatrix%matrix,1) as apposed to TOTAL_DEPENDENT_BASIS_EP? Is the size re-calculated at end of every loop?
+            DO mhs=2,TOTAL_DEPENDENT_BASIS_EP
+              DO nhs=1,mhs-1
+                stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(nhs,mhs)
+              ENDDO !nhs
+            ENDDO !mhs
+         ENDIF
+         
+
+         !Construct Damping Matrix
+         IF(dampingMatrix%updateMatrix) THEN
+            !Construct Damping Matrix
+            mhs=0          
+            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+               !Loop over element rows
+               DO ms=1,DEPENDENT_BASES_EP(mh)
+                  mhs=mhs+1
+                  nhs=0
+                  !Loop over element columsn
+                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                     DO ns=1,DEPENDENT_BASES_EP(nh)
+                        nhs=nhs+1
+                        
+                        dampingMatrix%elementMatrix%matrix(mhs,nhs)=dampingMatrix%elementMatrix%matrix(mhs,nhs)+ &
+                             & materialsInterpPoint%values(3+FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)* &
+                             & stiffnessMatrix%elementMatrix%matrix(mhs,nhs)
+                     ENDDO !ns
+                  ENDDO !nh
+                  !IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=0.0_DP
+               ENDDO !ms
+            ENDDO !mh
+            !dampingMatrix%elementMatrix%matrix(:,:)=dampingMatrix%elementMatrix%matrix(:,:)* &
+            !     & materialsInterpPoint%values(2+FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)
+         ENDIF
 
         CASE(EQUATIONS_SET_PLATE_SUBTYPE)
           CALL FlagError("Not implemented.",err,error,*999)
@@ -1460,10 +1643,28 @@ CONTAINS
       E1 = MATERIALS_INTERPOLATED_POINT%values(2,1)
       v12 = MATERIALS_INTERPOLATED_POINT%values(3,1)
       v21 = v12
-      gama = 1.0_DP/(1.0_DP-v12*v21)
-      C11 = E1*gama
+      gama = 1.0_DP/(1.0_DP-v12-v21)
+      C11 = E1*gama*(1.0_DP-v12)/(1.0_DP+v12)
       C22 = C11
-      C12 = C11*v21
+      C12 = E1*v21/((1.0_DP+v21)*(1.0_DP-2.0_DP*v21))
+      !C12 = v12*C11
+      C21 = C12
+      C66 = E1/(2.0_DP*(1.0_DP+v12)) != G12
+      ELASTICITY_TENSOR(1,1)=C11
+      ELASTICITY_TENSOR(1,2)=C21
+      ELASTICITY_TENSOR(2,1)=C21
+      ELASTICITY_TENSOR(2,2)=C22
+      ELASTICITY_TENSOR(6,6)=C66
+    CASE(EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE)
+      !Plane Stress Isotropic Elasticity Tensor
+      E1 = MATERIALS_INTERPOLATED_POINT%values(2,1)
+      v12 = MATERIALS_INTERPOLATED_POINT%values(3,1)
+      v21 = v12
+      gama = 1.0_DP/(1.0_DP-v12-v21)
+      C11 = E1*gama*(1.0_DP-v12)/(1.0_DP+v12)
+      C22 = C11
+      C12 = E1*v21/((1.0_DP+v21)*(1.0_DP-2.0_DP*v21))
+      !C12 = v12*C11
       C21 = C12
       C66 = E1/(2.0_DP*(1.0_DP+v12)) != G12
       ELASTICITY_TENSOR(1,1)=C11
@@ -1489,6 +1690,11 @@ CONTAINS
       ELASTICITY_TENSOR(2,2)=C22
       ELASTICITY_TENSOR(6,6)=C66
     CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
+      !Plane Strain Isotropic Linear Elasticity Tensor
+      E1 = MATERIALS_INTERPOLATED_POINT%values(2,1)
+      C11 = E1
+      ELASTICITY_TENSOR(1,1)=C11
+   CASE(EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE)
       !Plane Strain Isotropic Linear Elasticity Tensor
       E1 = MATERIALS_INTERPOLATED_POINT%values(2,1)
       C11 = E1
@@ -1571,6 +1777,9 @@ CONTAINS
           END SELECT
         CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
           !Do nothing???
+        !-----------------------------------------------------------------
+        ! D e p e n d e n t   f i e l d
+        !-----------------------------------------------------------------
         CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1690,6 +1899,9 @@ CONTAINS
               & " is invalid for a linear elasticity equation"
             CALL FlagError(localError,err,error,*999)
           END SELECT
+        !-----------------------------------------------------------------
+        ! M a t e r i a l   f i e l d
+        !-----------------------------------------------------------------          
         CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1767,6 +1979,9 @@ CONTAINS
               & " is invalid for a linear elasticity equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
+        !-----------------------------------------------------------------
+        ! S o u r c e   f i e l d
+        !----------------------------------------------------------------- 
         CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1921,7 +2136,8 @@ CONTAINS
       !
       ! TWO DIMENSIONAL PLANE STRESS & PLANE STRAIN ELASTICITY
       !
-      CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE,EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE)
+     CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE,EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE, &
+        & EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE)
         SELECT CASE(EQUATIONS_SET_SETUP%SETUP_TYPE)
         CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
@@ -1939,6 +2155,9 @@ CONTAINS
           END SELECT
         CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
           !Do nothing???
+        !-----------------------------------------------------------------
+        ! D e p e n d e n t   f i e l d
+        !-----------------------------------------------------------------           
         CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -2058,6 +2277,9 @@ CONTAINS
               & " is invalid for a linear elasticity equation"
             CALL FlagError(localError,err,error,*999)
           END SELECT
+        !-----------------------------------------------------------------
+        ! M a t e r i a l   f i e l d
+        !-----------------------------------------------------------------          
         CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -2107,12 +2329,17 @@ CONTAINS
                 CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                 !2 Components for 2D Isotropic Linear Elasticity
                 !TODO:: Temporarily set to 3 to allow thickness to passed in. Remove once a thickness, element constant field is defined and can be exported/viewed by cmgui
-                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,3,err,error,*999) 
+                SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
+                CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE)
+                   CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,3,err,error,*999)
+                CASE(EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE)
+                   CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,5,err,error,*999)
+                END SELECT
               ENDIF
             ELSE
               CALL FlagError("Equations materials is not associated.",err,error,*999)
             ENDIF
-          CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+         CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
@@ -2120,9 +2347,17 @@ CONTAINS
                 CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
                 !Set the default values for the materials field
                 CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,1,30.0E6_DP,err,error,*999) !Young's Modulus
+                     & FIELD_VALUES_SET_TYPE,1,1.0_DP,err,error,*999) !Thickness
                 CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,2,0.25_DP,err,error,*999) !Poisson's Ratio
+                     & FIELD_VALUES_SET_TYPE,2,30.0E6_DP,err,error,*999) !Young's Modulus
+                CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                     & FIELD_VALUES_SET_TYPE,3,0.25_DP,err,error,*999) !Poisson's Ratio
+                IF(EQUATIONS_SET%SPECIFICATION(3) == EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE) THEN
+                   CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,4,30.0E6_DP,err,error,*999) !Stokes Damping Coefficient
+                   CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,5,1.0_DP,err,error,*999) !Viscoelastic (Rayleigh) Coefficient
+                ENDIF
               ENDIF
             ELSE
               CALL FlagError("Equations set materials is not associated.",err,error,*999)
@@ -2133,6 +2368,9 @@ CONTAINS
               & " is invalid for a linear elasticity equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
+        !-----------------------------------------------------------------
+        ! S o u r c e   f i e l d
+        !----------------------------------------------------------------- 
         CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -2213,7 +2451,12 @@ CONTAINS
               !Create the equations
               CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
               CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
-              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
+              SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
+              CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE,EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE)
+                 CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
+              CASE(EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE)
+                 CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+              END SELECT
             ELSE
               CALL FlagError("Equations set dependent field has not bee finished.",err,error,*999)
             ENDIF
@@ -2225,27 +2468,69 @@ CONTAINS
               CALL Equations_CreateFinish(equations,err,error,*999)
               NULLIFY(vectorEquations)
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-              !Create the equations mapping.
-              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
-                & err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-              CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
-              !Create the equations matrices
-              CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-              SELECT CASE(equations%sparsityType)
-              CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
-              CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
-              CASE DEFAULT
-                localError="The equations matrices sparsity type of "// &
-                  & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
-                CALL FlagError(localError,err,error,*999)
+              SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
+              CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE,EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE)
+                 !Create the equations mapping.
+                 CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
+                 CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
+                 CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+                      & err,error,*999)
+                 CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
+                 !Create the equations matrices
+                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+                 SELECT CASE(equations%sparsityType)
+                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
+                    CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
+                    CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                    CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                 CASE DEFAULT
+                    localError="The equations matrices sparsity type of "// &
+                         & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                 END SELECT
+                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+              CASE(EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE)
+                 !Create the equations mapping.
+                 CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
+                 CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
+                 CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                 CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+                 
+                 !CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
+                 !Create the equations matrices
+                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+                 !Set up matrix storage and structure
+                 IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
+                    !Set up lumping
+                    CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
+                         & [EQUATIONS_MATRIX_UNLUMPED,EQUATIONS_MATRIX_LUMPED],err,error,*999)
+                    CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                         & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
+                         & err,error,*999)
+                    CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                         [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
+                 ELSE
+                    SELECT CASE(EQUATIONS%sparsityType)
+                    CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
+                       CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                            & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                    CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
+                       CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                            & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                            & err,error,*999)
+                       CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                            [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)                  
+                    CASE DEFAULT
+                       localError="The equations matrices sparsity type of "// &
+                            & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
+                       CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                 ENDIF
+                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
               END SELECT
-              CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -2276,7 +2561,7 @@ CONTAINS
       !
       ! ONE DIMENSIONAL ELASTICITY
       !
-      CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
+      CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE,EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE)
         SELECT CASE(EQUATIONS_SET_SETUP%SETUP_TYPE)
         CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
@@ -2294,6 +2579,9 @@ CONTAINS
           END SELECT
         CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
           !Do nothing???
+        !-----------------------------------------------------------------
+        ! D e p e n d e n t   f i e l d
+        !-----------------------------------------------------------------           
         CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -2413,6 +2701,9 @@ CONTAINS
               & " is invalid for a linear elasticity equation"
             CALL FlagError(localError,err,error,*999)
           END SELECT
+        !-----------------------------------------------------------------
+        ! M a t e r i a l   f i e l d
+        !-----------------------------------------------------------------          
         CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -2461,7 +2752,12 @@ CONTAINS
                   & err,error,*999)
                 CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                 !2 Components for 2D Isotropic Linear Elasticity
-                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,2,err,error,*999) 
+                SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
+                CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
+                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,2,err,error,*999)
+                CASE(EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE)
+                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,4,err,error,*999)
+                END SELECT
               ENDIF
             ELSE
               CALL FlagError("Equations materials is not associated.",err,error,*999)
@@ -2477,6 +2773,12 @@ CONTAINS
                 & FIELD_VALUES_SET_TYPE,1,30.0E6_DP,err,error,*999) !Young's Modulus
                 CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_VALUES_SET_TYPE,2,0.25_DP,err,error,*999) !Poisson's Ratio
+                IF(EQUATIONS_SET%SPECIFICATION(3) == EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE) THEN
+                   CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,3,30.0E6_DP,err,error,*999) !Stokes Damping Coefficient
+                   CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,4,1.0_DP,err,error,*999) !Viscoelastic (Rayleigh) Coefficient
+                ENDIF                
               ENDIF
             ELSE
               CALL FlagError("Equations set materials is not associated.",err,error,*999)
@@ -2487,6 +2789,9 @@ CONTAINS
               & " is invalid for a linear elasticity equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
+        !-----------------------------------------------------------------
+        ! S o u r c e   f i e l d
+        !----------------------------------------------------------------- 
         CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -2565,11 +2870,16 @@ CONTAINS
               !Create the equations
               CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
               CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
-              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
+              SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
+              CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
+                 CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)                 
+              CASE(EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE)
+                 CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999) 
+              END SELECT
             ELSE
-              CALL FlagError("Equations set dependent field has not bee finished.",err,error,*999)
+              CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
             ENDIF
-          CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)         
             SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !Finish the equations creation
@@ -2577,27 +2887,70 @@ CONTAINS
               CALL Equations_CreateFinish(equations,err,error,*999)
               NULLIFY(vectorEquations)
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-              !Create the equations mapping.
-              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
-                & err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-              CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
-              !Create the equations matrices
-              CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-              SELECT CASE(equations%sparsityType)
-              CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
-              CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
-              CASE DEFAULT
-                localError="The equations matrices sparsity type of "// &
-                  & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
-                CALL FlagError(localError,err,error,*999)
+              SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))                 
+              CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
+                 !Create the equations mapping.
+                 CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
+                 CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
+                 CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+                      & err,error,*999)
+                 CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
+                 !Create the equations matrices
+                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+                 SELECT CASE(equations%sparsityType)
+                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
+                    CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
+                    CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                    CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                 CASE DEFAULT
+                    localError="The equations matrices sparsity type of "// &
+                         & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                 END SELECT
+                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+              CASE(EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE)
+                 !Finish the creation of the equations
+                 !Create the equations mapping.
+                 CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
+                 CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
+                 CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                 CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+                 
+                 !CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
+                 !Create the equations matrices
+                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+                 !Set up matrix storage and structure
+                 IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
+                    !Set up lumping
+                    CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
+                         & [EQUATIONS_MATRIX_UNLUMPED,EQUATIONS_MATRIX_LUMPED],err,error,*999)
+                    CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                         & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
+                         & err,error,*999)
+                    CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                         [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
+                 ELSE
+                    SELECT CASE(EQUATIONS%sparsityType)
+                    CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
+                       CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                            & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                    CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
+                       CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                            & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                            & err,error,*999)
+                       CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                            [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)                  
+                    CASE DEFAULT
+                       localError="The equations matrices sparsity type of "// &
+                            & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
+                       CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                 ENDIF
+                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)                 
               END SELECT
-              CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -2704,6 +3057,24 @@ CONTAINS
           localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
+      CASE(EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE)
+        SELECT CASE(SOLUTION_METHOD)
+        CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+          EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
+        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
       CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
@@ -2723,6 +3094,24 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
+        SELECT CASE(SOLUTION_METHOD)
+        CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+          EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
+        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
@@ -2787,6 +3176,8 @@ CONTAINS
       CASE(EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE, &
           & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
           & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE, &
+          & EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE, &
+          & EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE, &          
           & EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
         !ok
       CASE(EQUATIONS_SET_PLATE_SUBTYPE)
@@ -2849,77 +3240,110 @@ CONTAINS
       ELSE IF(SIZE(PROBLEM%SPECIFICATION,1)<3) THEN
         CALL FlagError("Problem specification must have three entries for a linear elasticity problem.",err,error,*999)
       END IF
-      SELECT CASE(PROBLEM%SPECIFICATION(3))
-      CASE(PROBLEM_NO_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%SETUP_TYPE)
-        CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
-          CASE(PROBLEM_SETUP_START_ACTION)
+      SELECT CASE(PROBLEM_SETUP%SETUP_TYPE)
+      CASE(PROBLEM_SETUP_INITIAL_TYPE)
+         SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+         CASE(PROBLEM_SETUP_START_ACTION)
             !Do nothing????
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
+         CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing????
-          CASE DEFAULT
+         CASE DEFAULT
             localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
               & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity problem."
             CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
-          CASE(PROBLEM_SETUP_START_ACTION)
+         END SELECT
+      CASE(PROBLEM_SETUP_CONTROL_TYPE)          
+         SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+         CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a simple control loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
+            IF(PROBLEM%SPECIFICATION(3) == PROBLEM_STOKES_DAMPING_LINEAR_ELASTICITY_SUBTYPE) THEN
+               CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+            ENDIF
+         CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
-          CASE DEFAULT
+         CASE DEFAULT
             localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
               & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity problem."
             CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVERS_TYPE)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
-          CASE(PROBLEM_SETUP_START_ACTION)
+         END SELECT
+      CASE(PROBLEM_SETUP_SOLVERS_TYPE)
+         !Get the control loop
+         CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+         CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
+         SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+         CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
-            !Set the solver to be a linear solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_LINEAR_TYPE,err,error,*999)
-            !Set solver defaults
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
+            SELECT CASE(PROBLEM%SPECIFICATION(3))
+            !Standard Linear Elasticity
+            CASE(PROBLEM_NO_SUBTYPE) 
+               CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
+               !Set the solver to be a linear solver
+               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
+               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_LINEAR_TYPE,err,error,*999)
+               !Set solver defaults
+               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
+            !Linear Elasticity with Stokes Damping
+            CASE(PROBLEM_STOKES_DAMPING_LINEAR_ELASTICITY_SUBTYPE)
+               CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
+               !Set the solver to be a linear solver
+               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
+               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,err,error,*999)
+               CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+               CALL SOLVER_DYNAMIC_DEGREE_SET(SOLVER,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+               CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
+               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
+            CASE DEFAULT
+               localError="Problem subtype "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+                    & " is not valid for a linear elasticity type of an elasticity problem class."
+               CALL FlagError(localError,err,error,*999)
+            END SELECT
+            
+         CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the solvers
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
-          CASE DEFAULT
+         CASE DEFAULT
             localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
               & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity problem."
             CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
-          CASE(PROBLEM_SETUP_START_ACTION)
+         END SELECT
+      CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
+         SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+         CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            !Create the solver equations
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_STATIC,err,error,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
+            SELECT CASE(PROBLEM%SPECIFICATION(3))
+            CASE(PROBLEM_NO_SUBTYPE)
+               !Create the solver equations
+               CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
+               CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+               CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_STATIC,err,error,*999)
+               CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
+            CASE(PROBLEM_STOKES_DAMPING_LINEAR_ELASTICITY_SUBTYPE)
+               !Create the solver equations
+               CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
+               CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+               CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+               CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
+            CASE DEFAULT
+               localError="Problem subtype "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+                    & " is not valid for a linear elasticity type of an elasticity problem class."
+               CALL FlagError(localError,err,error,*999)
+            END SELECT
+         CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
@@ -2929,24 +3353,19 @@ CONTAINS
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
-          CASE DEFAULT
+         CASE DEFAULT
             localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
               & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity problem."
             CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
-            & " is invalid for a linear elasticity problem."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+         END SELECT
       CASE DEFAULT
-        localError="Problem subtype "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
-          & " is not valid for a linear elasticity type of an elasticity problem class."
-        CALL FlagError(localError,err,error,*999)
+         localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            & " is invalid for a linear elasticity problem."
+         CALL FlagError(localError,err,error,*999)
       END SELECT
     ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
+       CALL FlagError("Problem is not associated.",err,error,*999)
     ENDIF
 
     EXITS("LINEAR_ELASTICITY_PROBLEM_SETUP")
@@ -2977,7 +3396,8 @@ CONTAINS
       IF(SIZE(problemSpecification,1)==3) THEN
         problemSubtype=problemSpecification(3)
         SELECT CASE(problemSubtype)
-        CASE(PROBLEM_NO_SUBTYPE)
+        CASE(PROBLEM_NO_SUBTYPE, &
+             & PROBLEM_STOKES_DAMPING_LINEAR_ELASTICITY_SUBTYPE)
           !ok
         CASE DEFAULT
           localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
