@@ -167,7 +167,7 @@ MODULE InterfaceConditionAccessRoutines
 
   PUBLIC InterfaceDependent_InterfaceConditionGet
 
-  PUBLIC interfaceDependent_NumberOfDependentVariablesGet
+  PUBLIC InterfaceDependent_NumberOfDependentVariablesGet
 
   PUBLIC InterfaceDependent_VariableMeshIndexGet
 
@@ -265,7 +265,7 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceDependent)) CALL FlagError("Interface dependent is already associated.",err,error,*998)
-    CALL InterfaceCondition_AssertIsFinished(interfaceCondition,err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
 #endif    
  
     interfaceDependent=>interfaceCondition%dependent
@@ -437,7 +437,7 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(INTERFACE)) CALL FlagError("Interface is already associated.",err,error,*998)
-    CALL InterfaceCondition_AssertIsFinished(interfaceCondition,err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
 #endif    
  
     INTERFACE=>interfaceCondition%INTERFACE
@@ -805,14 +805,13 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(penaltyField)) CALL FlagError("Penalty field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(interfaceCondition%penalty)) THEN
-      localError="Penalty is not associated for interface condition number "// &
-      & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
 #endif    
     
-    penaltyField=>interfaceCondition%penalty%penaltyField
+    IF(ASSOCIATED(interfaceCondition%penalty)) THEN
+      penaltyField=>interfaceCondition%penalty%penaltyField
+    ELSE
+      NULLIFY(penaltyField)
+    ENDIF
        
     EXITS("InterfaceCondition_PenaltyFieldExists")
     RETURN

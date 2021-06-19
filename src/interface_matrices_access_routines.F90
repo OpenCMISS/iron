@@ -115,11 +115,11 @@ MODULE InterfaceMatricesAccessRoutines
 
   PUBLIC InterfaceMatricesRHS_DistributedVectorGet
 
-  PUBLIC InterfaceMatricesRHS_FirstAssemblyGet
+  PUBLIC InterfaceMatricesRHS_FirstAssemblyGet,InterfaceMatricesRHS_FirstAssemblyset
 
   PUBLIC InterfaceMatricesRHS_InterfaceMatricesGet
 
-  PUBLIC InterfaceMatricesRHS_UpdateVectorGet
+  PUBLIC InterfaceMatricesRHS_UpdateVectorGet,InterfaceMatricesRHS_UpdateVectorSet
 
   PUBLIC InterfaceMatricesRHS_VectorCoefficientGet
 
@@ -127,7 +127,7 @@ MODULE InterfaceMatricesAccessRoutines
 
   PUBLIC InterfaceMatrix_ElementMatrixOutput
 
-  PUBLIC InterfaceMatrix_FirstAssemblyGet
+  PUBLIC InterfaceMatrix_FirstAssemblyGet,InterfaceMatrix_FirstAssemblySet
 
   PUBLIC InterfaceMatrix_HasTransposeGet
   
@@ -157,7 +157,7 @@ MODULE InterfaceMatricesAccessRoutines
 
   PUBLIC InterfaceMatrix_TransposeTimeDependenceTypeGet
 
-  PUBLIC InterfaceMatrix_UpdateMatrixGet
+  PUBLIC InterfaceMatrix_UpdateMatrixGet,InterfaceMatrix_UpdateMatrixSet
   
 CONTAINS
   
@@ -502,6 +502,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets/changes the first assembly flag for an interface RHS vector.
+  SUBROUTINE InterfaceMatricesRHS_FirstAssemblySet(interfaceRHSVector,firstAssembly,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector !<A pointer to the interface RHS vector to set the first assembly flag for
+    LOGICAL, INTENT(IN) :: firstAssembly !<The first assembly flag for the interface RHS vector to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatricesRHS_FirstAssemblySet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceRHSVector)) CALL FlagError("Interface RHS vector is not associated.",err,error,*999)
+#endif    
+
+    interfaceRHSVector%firstAssembly=firstAssembly
+
+    EXITS("InterfaceMatricesRHS_FirstAssemblySet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatricesRHS_FirstAssemblySet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatricesRHS_FirstAssemblySet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the interface matrices for an interface matrices RHS.
   SUBROUTINE InterfaceMatricesRHS_InterfaceMatricesGet(interfaceRHSVector,interfaceMatrices,err,error,*)
 
@@ -562,6 +591,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMatricesRHS_UpdateVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the update flag for an interface RHS vector.
+  SUBROUTINE InterfaceMatricesRHS_UpdateVectorSet(interfaceRHSVector,updateVector,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector !<A pointer to the interface RHS vector to set the update flag for
+    LOGICAL, INTENT(IN) :: updateVector !<The update flag for the interface RHS vector to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatricesRHS_UpdateVectorSet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceRHSVector)) CALL FlagError("Interface RHS vector is not associated.",err,error,*999)
+#endif    
+
+    interfaceRHSVector%updateVector=updateVector
+
+    EXITS("InterfaceMatricesRHS_UpdateVectorSet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatricesRHS_UpdateVectorSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatricesRHS_UpdateVectorSet
 
   !
   !================================================================================================================================
@@ -682,6 +740,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMatrix_FirstAssemblyGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the first assembly flag for an interface matrix.
+  SUBROUTINE InterfaceMatrix_FirstAssemblySet(interfaceMatrix,firstAssembly,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to set the first assembly flag for
+    LOGICAL, INTENT(IN) :: firstAssembly !<The first assembly flag for the interface matrix to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_FirstAssemblySet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    interfaceMatrix%firstAssembly=firstAssembly
+
+    EXITS("InterfaceMatrix_FirstAssemblySet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrix_FirstAssemblySet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_FirstAssemblySet
 
   !
   !================================================================================================================================
@@ -1121,7 +1208,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the update matrix filag for an interface matrix.
+  !>Gets the update matrix flag for an interface matrix.
   SUBROUTINE InterfaceMatrix_UpdateMatrixGet(interfaceMatrix,updateMatrix,err,error,*)
 
     !Argument variables
@@ -1145,6 +1232,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMatrix_UpdateMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the update matrix flag for an interface matrix.
+  SUBROUTINE InterfaceMatrix_UpdateMatrixSet(interfaceMatrix,updateMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to set the update matrix flag for
+    LOGICAL, INTENT(IN) :: updateMatrix !<The update matrix flag for the specified interface matrix to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_UpdateMatrixSet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    interfaceMatrix%updateMatrix=updateMatrix
+
+    EXITS("InterfaceMatrix_UpdateMatrixSet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_UpdateMatrixSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_UpdateMatrixSet
 
   !
   !================================================================================================================================

@@ -298,8 +298,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: meshIdx,meshIdxCount,numberOfComponents,numberOfCoupledMeshes,numberOfDependentVariables,variableIdx, &
-      & variableMeshIdx
+    INTEGER(INTG) :: interfaceConditionMethod,interfaceOperator,meshIdx,meshIdxCount,numberOfComponents,numberOfComponents2, &
+      & numberOfCoupledMeshes,numberOfDependentVariables,variableIdx,variableMeshIdx
     INTEGER(INTG), POINTER :: newVariableMeshIndices(:)
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(FieldVariablePtrType), POINTER :: newFieldVariables(:)
@@ -315,7 +315,8 @@ CONTAINS
     CALL InterfaceCondition_InterfaceGet(interfaceCondition,INTERFACE,err,error,*999)
     
     !Test various inputs have been set up.
-    SELECT CASE(interfaceCondition%method)
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+    SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       NULLIFY(interfaceDependent)
       CALL InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*999)
@@ -332,7 +333,8 @@ CONTAINS
       !Note There is no need to check that the dependent variables have the same number of components.
       !The user will need to set a fixed BC on the interface dof relating to the field components 
       !not present in each of the coupled bodies, eliminating this dof from the solver matrices
-      SELECT CASE(interfaceCondition%OPERATOR)
+      CALL InterfaceCondition_OperatorGet(interfaceCondition,interfaceOperator,err,error,*999)
+      SELECT CASE(interfaceOperator)
       CASE(INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR,INTERFACE_CONDITION_FLS_CONTACT_OPERATOR, &
         & INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR,INTERFACE_CONDITION_SOLID_FLUID_OPERATOR)
         !Check that the dependent variables have the same number of components
@@ -342,6 +344,14 @@ CONTAINS
         DO variableIdx=2,numberOfDependentVariables
           NULLIFY(fieldVariable)
           CALL InterfaceDependent_DependentVariableGet(interfaceDependent,variableIdx,fieldVariable,err,error,*999)
+          CALL FieldVariable_NumberOfComponentsGet(fieldVariable,numberOfComponents2,err,error,*999)
+          IF(numberOfComponents/=numberOfComponents2) THEN
+            localError="The number of components of "//TRIM(NumberToVString(numberOfComponents2,"*",err,error))// &
+              & " for interface dependent variable "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+              & " does not match the number of components of "//TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
+              & " for the first interface dependent variable."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
         ENDDO !variableIdx 
       CASE(INTERFACE_CONDITION_FIELD_NORMAL_CONTINUITY_OPERATOR)
         CALL FlagError("Not implemented.",err,error,*999)
@@ -349,7 +359,7 @@ CONTAINS
         CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
         localError="The interface condition operator of "// &
-          & TRIM(NumberToVString(interfaceCondition%operator,"*",err,error))//" is invalid."
+          & TRIM(NumberToVString(interfaceOperator,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
 
@@ -622,7 +632,7 @@ CONTAINS
       CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
       NULLIFY(decompositionMesh)
       CALL Decomposition_MeshGet(decomposition,decompositionMesh,err,error,*999)
-      IF(.NOT.ASSOCIATED(interfaceMesh,dependentMesh)) THEN
+      IF(.NOT.ASSOCIATED(interfaceMesh,decompositionMesh)) THEN
         localError="The mesh for dependent field number "//TRIM(NumberToVString(fieldUserNumber,"*",err,error))// &
           & " does not match the mesh for interface number "//TRIM(NumberToVString(interfaceUserNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
@@ -739,20 +749,24 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfDependentVariables,sparsityType
+    INTEGER(INTG) :: interfaceConditionMethod,matrixIdx,numberOfDependentVariables,numberOfInterfaceMatrices,sparsityType
     INTEGER(INTG), ALLOCATABLE :: storageTypes(:),structureTypes(:)
+    REAL(DP) :: matrixCoefficient
+    LOGICAL :: hasTranspose
     LOGICAL, ALLOCATABLE :: matricesTranspose(:)
     TYPE(InterfaceDependentType), POINTER :: interfaceDependent
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("InterfaceCondition_EquationsCreateFinish",err,error,*999)
 
-    IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface conditions is not associated.",err,error,*999)
-    
-    SELECT CASE(interfaceCondition%method)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface conditions is not associated.",err,error,*999)
+
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+    SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       !Finish the interface equations creation
       NULLIFY(interfaceEquations)
@@ -761,33 +775,36 @@ CONTAINS
       CALL InterfaceEquations_CreateFinish(interfaceEquations,err,error,*999)
       NULLIFY(interfaceDependent)
       CALL InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*999)
+      CALL InterfaceDependent_NumberOfDependentVariablesGet(interfaceDependent,numberOfDependentVariables,err,error,*999)
       !Create the interface mapping.
       NULLIFY(interfaceMapping)
       CALL InterfaceMapping_CreateStart(interfaceEquations,interfaceMapping,err,error,*999)
       CALL InterfaceMapping_LagrangeVariableTypeSet(interfaceMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-      SELECT CASE(interfaceCondition%method)
+      SELECT CASE(interfaceConditionMethod)
       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
-        numberOfDependentVariables=interfaceDependent%numberOfDependentVariables
+        numberOfInterfaceMatrices=numberOfDependentVariables
       CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-        numberOfDependentVariables=interfaceDependent%numberOfDependentVariables+1
+        numberOfInterfaceMatrices=numberOfDependentVariables+1
       ENDSELECT
-      CALL InterfaceMapping_NumberOfMatricesSet(interfaceMapping,numberOfDependentVariables,err,error,*999)
-      ALLOCATE(matricesTranspose(numberOfDependentVariables),STAT=err)
+      CALL InterfaceMapping_NumberOfMatricesSet(interfaceMapping,numberOfInterfaceMatrices,err,error,*999)
+      ALLOCATE(matricesTranspose(numberOfInterfaceMatrices),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate matrices transpose.",err,error,*999)
       matricesTranspose=.TRUE.
-      SELECT CASE(interfaceCondition%method)
+      SELECT CASE(interfaceConditionMethod)
       CASE(INTERFACE_CONDITION_PENALTY_METHOD)
         !Set the last interface matrix to have no transpose
-        matricesTranspose(numberOfDependentVariables)=.FALSE.
-      ENDSELECT
+        matricesTranspose(numberOfInterfaceMatrices)=.FALSE.
+      END SELECT
       CALL InterfaceMapping_MatricesTransposeSet(interfaceMapping,matricesTranspose,err,error,*999)
       IF(ALLOCATED(matricesTranspose)) DEALLOCATE(matricesTranspose)
       CALL InterfaceMapping_RHSVariableTypeSet(interfaceMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+      
       CALL InterfaceMapping_CreateFinish(interfaceMapping,err,error,*999)
       !Create the interface matrices
       NULLIFY(interfaceMatrices)
       CALL InterfaceMatrices_CreateStart(interfaceEquations,interfaceMatrices,err,error,*999)
-      ALLOCATE(storageTypes(interfaceMatrices%numberOfInterfaceMatrices),STAT=err)
+      CALL InterfaceMatrices_NumberOfInterfaceMatricesGet(interfaceMatrices,numberOfInterfaceMatrices,err,error,*999)
+      ALLOCATE(storageTypes(numberOfInterfaceMatrices),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate storage type.",err,error,*999)
       CALL InterfaceEquations_SparsityTypeGet(interfaceEquations,sparsityType,err,error,*999)
       SELECT CASE(sparsityType)
@@ -795,7 +812,7 @@ CONTAINS
         storageTypes=MATRIX_BLOCK_STORAGE_TYPE
         CALL InterfaceMatrices_StorageTypeSet(interfaceMatrices,storageTypes,err,error,*999)
       CASE(INTERFACE_MATRICES_SPARSE_MATRICES) 
-        ALLOCATE(structureTypes(interfaceMatrices%numberOfInterfaceMatrices),STAT=err)
+        ALLOCATE(structureTypes(numberOfInterfaceMatrices),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate structure type.",err,error,*999)
         storageTypes=MATRIX_COMPRESSED_ROW_STORAGE_TYPE
         structureTypes=INTERFACE_MATRIX_FEM_STRUCTURE
@@ -807,13 +824,26 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
       IF(ALLOCATED(storageTypes)) DEALLOCATE(storageTypes)
+      DO matrixIdx=1,numberOfInterfaceMatrices
+        NULLIFY(interfaceMatrix)
+        CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+        IF((matrixIdx==1).OR. &
+          & (interfaceConditionMethod==INTERFACE_CONDITION_PENALTY_METHOD.AND.matrixIdx==numberOfInterfaceMatrices)) THEN
+          matrixCoefficient=1.0_DP
+        ELSE
+          matrixCoefficient=-1.0_DP
+        ENDIF
+        CALL InterfaceMatrix_MatrixCoefficientSet(interfaceMatrix,matrixCoefficient,err,error,*999)
+        CALL InterfaceMatrix_HasTransposeGet(interfaceMatrix,hasTranspose,err,error,*999)
+        IF(hasTranspose) CALL InterfaceMatrix_TransposeMatrixCoefficientSet(interfaceMatrix,matrixCoefficient,err,error,*999)
+      ENDDO
       CALL InterfaceMatrices_CreateFinish(interfaceMatrices,err,error,*999)
     CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+      localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -1323,7 +1353,7 @@ CONTAINS
  
     ENTERS("InterfaceCondition_LagrangeInitialise",err,error,*998)
 
-    IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*998)
     IF(ASSOCIATED(interfaceCondition%lagrange))  &
       & CALL FlagError("Interface condition Lagrange is already associated.",err,error,*998)
       
@@ -1423,19 +1453,8 @@ CONTAINS
           & TRIM(NumberToVString(fieldUserNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
-!!TODO: Create Field_InterfaceRegionCheck?
-      NULLIFY(penaltyFieldRegion)
-      CALL Field_RegionGet(penaltyField,penaltyFieldRegion,err,error,*999)
-      CALL Region_UserNumberGet(penaltyFieldRegion,fieldRegionUserNumber,err,error,*999)
-      !Check the field is defined on the same region as the interface
-      IF(fieldRegionUserNumber/=parentRegionUserNumber) THEN
-        localError="Invalid region setup. The specified penalty field has been created on interface number "// &
-          & TRIM(NumberToVString(interfaceUserNumber,"*",err,error))//" in parent region number "// &
-          & TRIM(NumberToVString(fieldRegionUserNumber,"*",err,error))// &
-          & " and the specified interface has been created in parent region number "// &
-          & TRIM(NumberToVString(parentRegionUserNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
+      !Check that the penalty field is defined on the same interface as the interface condition
+      CALL Field_InterfaceCheck(penaltyField,INTERFACE,err,error,*999)
       !Check the user number has not already been used for a field in this region.
       NULLIFY(field)
       CALL Field_UserNumberFind(penaltyFieldUserNumber,INTERFACE,field,err,error,*999)
@@ -1449,50 +1468,50 @@ CONTAINS
     CALL InterfaceCondition_PenaltyInitialise(interfaceCondition,err,error,*999)
     IF(.NOT.ASSOCIATED(penaltyField)) THEN
       !Create the penalty field
-      interfaceCondition%penalty%penaltyFieldAutoCreated=.TRUE.
-      CALL Field_CreateStart(penaltyFieldUserNumber,interface,interfaceCondition%penalty%penaltyField,err,error,*999)
-      CALL Field_LabelSet(interfaceCondition%penalty%penaltyField,"Penalty Field",err,error,*999)
-      CALL Field_TypeSetAndLock(interfaceCondition%penalty%penaltyField,FIELD_GENERAL_TYPE,err,error,*999)
-      CALL Field_DependentTypeSetAndLock(interfaceCondition%penalty%penaltyField,FIELD_DEPENDENT_TYPE,  err,error,*999)
+      interfacePenalty%penaltyFieldAutoCreated=.TRUE.
+      CALL Field_CreateStart(penaltyFieldUserNumber,interface,interfacePenalty%penaltyField,err,error,*999)
+      CALL Field_LabelSet(interfacePenalty%penaltyField,"Penalty Field",err,error,*999)
+      CALL Field_TypeSetAndLock(interfacePenalty%penaltyField,FIELD_GENERAL_TYPE,err,error,*999)
+      CALL Field_DependentTypeSetAndLock(interfacePenalty%penaltyField,FIELD_DEPENDENT_TYPE,  err,error,*999)
       NULLIFY(geometricDecomposition)
       CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
-      CALL Field_DecompositionSetAndLock(interfaceCondition%penalty%penaltyField,geometricDecomposition,err,error,*999)
-      CALL Field_GeometricFieldSetAndLock(interfaceCondition%penalty%penaltyField,geometricField,err,error,*999)
-      CALL Field_NumberOfVariablesSetAndLock(interfaceCondition%penalty%penaltyField,1,err,error,*999)
-      CALL Field_VariableTypesSetAndLock(interfaceCondition%penalty%penaltyField,FIELD_U_VARIABLE_TYPE,err,error,*999)
-      CALL Field_VariableLabelSet(interfaceCondition%penalty%penaltyField,FIELD_U_VARIABLE_TYPE,"Alpha",err,error,*999)
-      CALL Field_DimensionSetAndLock(interfaceCondition%penalty%penaltyField,FIELD_U_VARIABLE_TYPE, &
+      CALL Field_DecompositionSetAndLock(interfacePenalty%penaltyField,geometricDecomposition,err,error,*999)
+      CALL Field_GeometricFieldSetAndLock(interfacePenalty%penaltyField,geometricField,err,error,*999)
+      CALL Field_NumberOfVariablesSetAndLock(interfacePenalty%penaltyField,1,err,error,*999)
+      CALL Field_VariableTypesSetAndLock(interfacePenalty%penaltyField,FIELD_U_VARIABLE_TYPE,err,error,*999)
+      CALL Field_VariableLabelSet(interfacePenalty%penaltyField,FIELD_U_VARIABLE_TYPE,"Alpha",err,error,*999)
+      CALL Field_DimensionSetAndLock(interfacePenalty%penaltyField,FIELD_U_VARIABLE_TYPE, &
         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-      CALL Field_DataTypeSetAndLock(interfaceCondition%penalty%penaltyField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+      CALL Field_DataTypeSetAndLock(interfacePenalty%penaltyField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
       IF(interfaceCondition%OPERATOR==INTERFACE_CONDITION_FLS_CONTACT_OPERATOR .OR. &
         & interfaceCondition%OPERATOR==INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR) THEN
         !Default 1 component for the contact lagrange variable in a frictionless contact problem
-        CALL Field_NumberOfComponentsSet(interfaceCondition%penalty%penaltyField,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
-        CALL Field_ComponentInterpolationSet(interfaceCondition%penalty%penaltyField,FIELD_U_VARIABLE_TYPE,1, &
+        CALL Field_NumberOfComponentsSet(interfacePenalty%penaltyField,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+        CALL Field_ComponentInterpolationSet(interfacePenalty%penaltyField,FIELD_U_VARIABLE_TYPE,1, &
           & FIELD_CONSTANT_INTERPOLATION,err,error,*999)
       ELSE
         !Default the number of component to the first variable of the interface dependent field's number of components,
         NULLIFY(dependentVariable)
         CALL InterfaceDependent_DependentVariableGet(interfaceDependent,1,dependentVariable,err,error,*999)
         CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
-        CALL Field_NumberOfComponentsSet(interfaceCondition%penalty%penaltyField,FIELD_U_VARIABLE_TYPE,numberOfComponents, &
+        CALL Field_NumberOfComponentsSet(interfacePenalty%penaltyField,FIELD_U_VARIABLE_TYPE,numberOfComponents, &
           & err,error,*999)
         DO componentIdx=1,numberOfComponents
-          CALL Field_ComponentInterpolationSetAndLock(interfaceCondition%penalty%penaltyField,FIELD_U_VARIABLE_TYPE,componentIdx, &
+          CALL Field_ComponentInterpolationSetAndLock(interfacePenalty%penaltyField,FIELD_U_VARIABLE_TYPE,componentIdx, &
             & FIELD_CONSTANT_INTERPOLATION,err,error,*999)
         ENDDO !componentIdx
       ENDIF
       CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
-      CALL Field_ScalingTypeSet(interfaceCondition%penalty%penaltyField,geometricScalingType,err,error,*999)
+      CALL Field_ScalingTypeSet(interfacePenalty%penaltyField,geometricScalingType,err,error,*999)
     ELSE
       !Check the penalty field
       CALL FlagError("Not implemented.",err,error,*999)
     ENDIF
     !Set pointers
-    IF(interfaceCondition%penalty%penaltyFieldAutoCreated) THEN
-      penaltyField=>interfaceCondition%penalty%penaltyField
+    IF(interfacePenalty%penaltyFieldAutoCreated) THEN
+      penaltyField=>interfacePenalty%penaltyField
     ELSE
-      interfaceCondition%penalty%penaltyField=>penaltyField
+      interfacePenalty%penaltyField=>penaltyField
     ENDIF
     
     EXITS("InterfaceCondition_PenaltyFieldCreateStart")

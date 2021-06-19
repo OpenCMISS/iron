@@ -242,7 +242,6 @@ MODULE BoundaryConditionsRoutines
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDOF,globalDOF
-    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("BoundaryConditions_AddConstantVariable",err,error,*999)
@@ -250,8 +249,6 @@ MODULE BoundaryConditionsRoutines
     !Note: This routine is for constant interpolation
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
     CALL FieldVariable_ConstantDOFGet(fieldVariable,componentNumber,localDOF,err,error,*999)
-    NULLIFY(boundaryConditionsVariable)
-    CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
     CALL BoundaryConditions_AddLocalDOF(boundaryConditions,fieldVariable,localDOF,condition,bcValue,err,error,*999)
 
@@ -318,7 +315,6 @@ MODULE BoundaryConditionsRoutines
     !Local Variables
     INTEGER(INTG) :: localDOF
     LOGICAL :: ghostDOF
-    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("BoundaryConditions_AddElementVariable",err,error,*999)
@@ -326,8 +322,6 @@ MODULE BoundaryConditionsRoutines
     !Note: this routine is for element based interpolation
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
     CALL FieldVariable_UserElementDOFGet(fieldVariable,userElementNumber,componentNumber,localDOF,ghostDOF,err,error,*999)
-    NULLIFY(boundaryConditionsVariable)        
-    CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
     CALL BoundaryConditions_AddLocalDOF(boundaryConditions,fieldVariable,localDOF,condition,bcValue,err,error,*999)
 
@@ -565,15 +559,12 @@ MODULE BoundaryConditionsRoutines
     !Local Variables
     INTEGER(INTG) :: localDOF
     LOGICAL :: ghostDOF
-    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
 
     ENTERS("BoundaryConditions_AddNode",err,error,*999)
 
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
     CALL FieldVariable_UserNodeDOFGet(fieldVariable,versionNumber,derivativeNumber,userNodeNumber,componentNumber, &
       & localDOF,ghostDOF,err,error,*999)
-    NULLIFY(boundaryConditionsVariable)
-    CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
     CALL BoundaryConditions_AddLocalDOF(boundaryConditions,fieldVariable,localDOF,condition,bcValue,err,error,*999)
     
@@ -1114,7 +1105,7 @@ MODULE BoundaryConditionsRoutines
                       & boundaryConditionsVariable%numberOfDirichletConditions,err,error,*999)
                     !Find dirichlet columns and store the non zero indices (with respect to the 1D storage array)
                     NULLIFY(sparsityIndices)
-                    CALL BoundaryConditionsDirichlet_LinearSparsityIndicesGet(boundaryConditionsDirichlet,equationsMatrixIdx, &
+                    CALL BoundaryConditionsDirichlet_DynamicSparsityIndicesGet(boundaryConditionsDirichlet,equationsMatrixIdx, &
                       & equationsSetIdx,sparsityIndices,err,error,*999)
                     ! Setup list for storing dirichlet non zero indices
                     NULLIFY(sparseIndices)
@@ -1381,7 +1372,7 @@ MODULE BoundaryConditionsRoutines
     !Check pointers for association
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
     NULLIFY(boundaryConditionsVariable)
-    CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*998)
+    CALL BoundaryConditions_VariableExists(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*998)
     NULLIFY(dofConstraints)
     CALL BoundaryConditionsVariable_DOFConstraintsGet(boundaryConditionsVariable,dofConstraints,err,error,*999)
 
@@ -1597,7 +1588,7 @@ MODULE BoundaryConditionsRoutines
           DO residualIdx=1,numberOfResiduals
             NULLIFY(residualMapping)
             CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
-            CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfVariables,err,error,*999)          
+            CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfResidualVariables,err,error,*999)
             DO variableIdx=1,numberOfResidualVariables
               NULLIFY(residualVariable)
               CALL EquationsMappingResidual_VariableGet(residualMapping,variableIdx,residualVariable,err,error,*999)
@@ -1744,6 +1735,7 @@ MODULE BoundaryConditionsRoutines
           IF(numberOfInterfaceMatrices>0) THEN
             NULLIFY(lagrangeVariable)
             CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
+            CALL BoundaryConditions_VariableAdd(solverEquations%boundaryConditions,lagrangeVariable,err,error,*999)
             CALL BoundaryConditions_RowVariableAdd(solverEquations%boundaryConditions,lagrangeVariable,rhsVariable,err,error,*999)
           ENDIF
         CASE DEFAULT
@@ -1854,6 +1846,7 @@ MODULE BoundaryConditionsRoutines
       ENDIF
       rowVariableIdx=rowVariableIdx+1
     ENDDO
+    IF(.NOT.rowVariableFound) NULLIFY(boundaryConditionsRowVariable)
 
     EXITS("BoundaryConditions_LHSVariableExists")
     RETURN
@@ -2038,6 +2031,7 @@ MODULE BoundaryConditionsRoutines
       ENDIF
       rowVariableIdx=rowVariableIdx+1
     ENDDO
+    IF(.NOT.rowVariableFound) NULLIFY(boundaryConditionsRowVariable)
 
     EXITS("BoundaryConditions_RHSVariableExists")
     RETURN
@@ -2185,6 +2179,7 @@ MODULE BoundaryConditionsRoutines
       ENDIF
       rowVariableIdx=rowVariableIdx+1
     ENDDO
+    IF(.NOT.rowVariableFound) NULLIFY(boundaryConditionsRowVariable)
 
     EXITS("BoundaryConditions_RowVariableExists")
     RETURN
@@ -2368,15 +2363,12 @@ MODULE BoundaryConditionsRoutines
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDOF,globalDOF
-    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
 
     ENTERS("BoundaryConditions_SetConstantVariable",err,error,*999)
 
     !Note: This routine is for constant interpolation
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
     CALL FieldVariable_ConstantDOFGet(fieldVariable,componentNumber,localDOF,err,error,*999)
-    NULLIFY(boundaryConditionsVariable)
-    CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
     CALL BoundaryConditions_SetLocalDOF(boundaryConditions,fieldVariable,localDOF,condition,bcValue,err,error,*999)
     
@@ -2443,15 +2435,12 @@ MODULE BoundaryConditionsRoutines
     !Local Variables
     INTEGER(INTG) :: localDOF
     LOGICAL :: ghostDOF
-    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
 
     ENTERS("BoundaryConditions_SetElementVariable",err,error,*999)
 
     !Note: this routine is for element based interpolation
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
     CALL FieldVariable_UserElementDOFGet(fieldVariable,userElementNumber,componentNumber,localDOF,ghostDOF,err,error,*999)
-    NULLIFY(boundaryConditionsVariable)
-    CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
     CALL BoundaryConditions_SetLocalDOF(boundaryConditions,fieldVariable,localDOF,condition,bcValue,err,error,*999)
  
@@ -2671,7 +2660,6 @@ MODULE BoundaryConditionsRoutines
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDOF,globalDOF
-    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("BoundaryConditions_SetNodeVariable",err,error,*999)
@@ -2679,8 +2667,6 @@ MODULE BoundaryConditionsRoutines
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
     CALL FieldVariable_ComponentDOFGetUserNode(fieldVariable,versionNumber,derivativeNumber,userNodeNumber,componentNumber, &
       & localDOF,globalDOF,err,error,*999)
-    NULLIFY(boundaryConditionsVariable)
-    CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
     CALL BoundaryConditions_SetLocalDOF(boundaryConditions,fieldVariable,localDOF,condition,bcValue,err,error,*999)
     
@@ -2902,6 +2888,7 @@ MODULE BoundaryConditionsRoutines
       ENDIF
       variableIdx=variableIdx+1
     ENDDO
+    IF(.NOT.variableFound) NULLIFY(boundaryConditionsVariable)
 
     EXITS("BoundaryConditions_VariableExists")
     RETURN

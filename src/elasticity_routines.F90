@@ -732,6 +732,7 @@ CONTAINS
     
     ENTERS("Elasticity_PostSolve",err,error,*999)
 
+    NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
@@ -858,8 +859,7 @@ CONTAINS
     ENTERS("Elasticity_LoadIncrementApply",err,error,*999)
 
     CALL EquationsSet_SpecificationGet(equationsSet,2,esSpecification,err,error,*999)
-
-    
+   
     SELECT CASE(esSpecification(2))
     CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
       CALL FiniteElasticity_LoadIncrementApply(equationsSet,iterationNumber,maximumNumberOfIterations,err,error,*999)

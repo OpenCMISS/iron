@@ -682,6 +682,8 @@ MODULE SolverMappingRoutines
         & interfaceMatricesToSolverMatrixMaps(solverMapping%numberOfSolverMatrices),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate interface condition to solver matrices map interface matrices"// &
         & " to solver matrix maps.",err,error,*999)
+      solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr%numberOfSolverMatrices= &
+        & solverMapping%numberOfSolverMatrices
       DO solverMatrixIdx=1,solverMapping%numberOfSolverMatrices
         NULLIFY(solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
           & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr)
@@ -695,6 +697,8 @@ MODULE SolverMappingRoutines
         & interfaceMatrixToSolverMatricesMaps(interfaceMapping%numberOfInterfaceMatrices),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate interface condition to solver matrices map interface matrix"// &
         & " to solver matrices maps.",err,error,*999)
+      solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr%numberOfInterfaceMatrices= &
+        & interfaceMapping%numberOfInterfaceMatrices
       DO interfaceMatrixIdx=1,interfaceMapping%numberOfInterfaceMatrices
         NULLIFY(solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
           & interfaceMatrixToSolverMatricesMaps(interfaceMatrixIdx)%ptr)
@@ -1715,8 +1719,9 @@ MODULE SolverMappingRoutines
                 includeColumn=(boundaryConditionsVariable%DOFTypes(globalDOF)==BOUNDARY_CONDITION_DOF_FREE)
                 constrainedDOF=(boundaryConditionsVariable%DOFTypes(globalDOF)==BOUNDARY_CONDITION_DOF_CONSTRAINED)
                 globalDofCouplingNumber=0
+                NULLIFY(dofConstraints)
                 CALL BoundaryConditionsVariable_DOFConstraintsExists(boundaryConditionsVariable,dofConstraints,err,error,*999)
-                IF(ASSOCIATED(boundaryConditionsVariable%dofConstraints)) THEN
+                IF(ASSOCIATED(dofConstraints)) THEN
                   IF(dofConstraints%numberOfConstraints>0) THEN
                     NULLIFY(dofCoupling)
                     CALL BoundaryConditionsVariableDOFConstraints_DOFCouplingExists(dofConstraints,globalDOF,dofCoupling, &
@@ -2034,10 +2039,9 @@ MODULE SolverMappingRoutines
               CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
               DO equationMatrixIdx=1,residualMapping%numberOfJacobianMatrices
                 numberOfJacobians=numberOfJacobians+1
-                ALLOCATE(solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
+                NULLIFY(solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
                   & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
-                  & jacobianMatrixToSolverMatrixMaps(numberOfJacobians)%ptr,STAT=err)
-                IF(err/=0) CALL FlagError("Could not allocate Jacobian matrix to solver matrix map.",err,error,*999)
+                  & jacobianMatrixToSolverMatrixMaps(numberOfJacobians)%ptr)
                 CALL SolverMappingJMToSMMap_Initialise(solverMapping% &
                   & equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
                   & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
@@ -2106,10 +2110,9 @@ MODULE SolverMappingRoutines
               CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
               DO equationMatrixIdx=1,residualMapping%numberOfJacobianMatrices
                 numberOfJacobians=numberOfJacobians+1
-                ALLOCATE(solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
+                NULLIFY(solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
                   & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
-                  & jacobianMatrixToSolverMatrixMaps(numberOfJacobians)%ptr,STAT=err)
-                IF(err/=0) CALL FlagError("Could not allocate Jacobian matrix to solver matrix map.",err,error,*999)
+                  & jacobianMatrixToSolverMatrixMaps(numberOfJacobians)%ptr)
                 CALL SolverMappingJMToSMMap_Initialise(solverMapping% &
                   & equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
                   & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
@@ -2239,6 +2242,8 @@ MODULE SolverMappingRoutines
         CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
                 
           !Initialise solver columns to interface condition map
+          NULLIFY(solverMapping%solverMatricesToEquationsMaps(solverMatrixIdx)%ptr% &
+            & solverMatrixToInterfaceConditionMaps(interfaceConditionIdx)%ptr)
           CALL SolverMappingSMToICMap_Initialise(solverMapping%solverMatricesToEquationsMaps(solverMatrixIdx)%ptr% &
             & solverMatrixToInterfaceConditionMaps(interfaceConditionIdx)%ptr,err,error,*999)
 
@@ -2264,11 +2269,6 @@ MODULE SolverMappingRoutines
             NULLIFY(solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
               & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
               & interfaceMatrixToSolverMatrixMaps(interfaceMatrixIdx)%ptr)
-            ALLOCATE(solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
-              & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
-              & interfaceMatrixToSolverMatrixMaps(interfaceMatrixIdx)%ptr,STAT=err)
-            IF(err/=0) CALL FlagError("Could not allocate interface matrices to solver matrix maps interface matrix "// &
-              & "to solver matrix map.",err,error,*999)
             CALL SolverMappingIMToSMMap_Initialise(solverMapping% &
               & interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
               & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
@@ -2326,6 +2326,7 @@ MODULE SolverMappingRoutines
         ALLOCATE(dofMap(solverVariableIdx)%ptr(solverMapping%solverMatricesToEquationsMaps(solverMatrixIdx)%ptr%variablesList% &
           & variables(solverVariableIdx)%ptr%variable%numberOfGlobalDofs),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate dof map global dof map.",err,error,*999)
+        dofMap(solverVariableIdx)%ptr=0
       ENDDO !solverVariableIdx
 
       ALLOCATE(solverLocalDOF(0:numberOfGroupComputationNodes-1),STAT=err)
@@ -2489,8 +2490,8 @@ MODULE SolverMappingRoutines
                           !Initialise
                           NULLIFY(solverMapping%solverMatricesToEquationsMaps(solverMatrixIdx)%ptr% &
                             & solverDOFToVariableDOFsMaps(solverLocalDOF(rank))%ptr)
-                          CALL SolverMappingSDOFToVDOFsMap_Initialise(solverMapping%solverMatricesToEquationsMaps(solverMatrixIdx)% &
-                            & ptr%solverDOFToVariableDOFsMaps(solverLocalDOF(rank))%ptr,err,error,*999)
+                          CALL SolverMappingSDOFToVDOFsMap_Initialise(solverMapping%solverMatricesToEquationsMaps( &
+                            & solverMatrixIdx)%ptr%solverDOFToVariableDOFsMaps(solverLocalDOF(rank))%ptr,err,error,*999)
                           !Allocate the solver DOF to variable DOFs arrays
                           ALLOCATE(solverMapping%solverMatricesToEquationsMaps(solverMatrixIdx)%ptr% &
                             & solverDOFToVariableDOFsMaps(solverLocalDOF(rank))%ptr% &
@@ -4272,8 +4273,8 @@ MODULE SolverMappingRoutines
           NULLIFY(variableDependentField)
           CALL EquationsSet_DependentFieldGet(variableEquationsSet,variableDependentField,err,error,*999)
           IF(ASSOCIATED(dependentField,variableDependentField)) THEN
-            NULLIFY(variableRegion)
-            CALL Field_RegionGet(variableDependentField,variableRegion,err,error,*999)
+            NULLIFY(variableDependentRegion)
+            CALL Field_RegionGet(variableDependentField,variableDependentRegion,err,error,*999)
             IF(ASSOCIATED(dependentRegion,variableDependentRegion)) THEN
               variableFound=.TRUE.
               EXIT
@@ -4882,7 +4883,8 @@ MODULE SolverMappingRoutines
       ENDDO !variableTypeIdx
     ENDDO !residualIdx
     rhsVariableType=createValuesCache%rhsVariableType(equationsSetIndex)
-    CALL SolverMapping_CreateValuesCacheEqnRHSVarListAdd(solverMapping,equationsSetIndex,rhsVariableType,err,error,*999)
+    IF(rhsVariableType/=0) &
+      & CALL SolverMapping_CreateValuesCacheEqnRHSVarListAdd(solverMapping,equationsSetIndex,rhsVariableType,err,error,*999)
         
     EXITS("SolverMapping_EquationsSetAdd")
     RETURN
@@ -5400,7 +5402,7 @@ MODULE SolverMappingRoutines
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dependentVariableType,equationMatrixIdx,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx, &
-      & listItem(2),numberOfInterfaceMatrices,residualIdx
+      & listItem(2),numberOfEquationsSets,numberOfInterfaceMatrices,residualIdx
     LOGICAL :: equationsSetFound,variableFound
     TYPE(EquationsSetType), POINTER :: equationsSet,equationsSet2
     TYPE(FieldVariableType), POINTER :: dependentVariable
@@ -5447,9 +5449,11 @@ MODULE SolverMappingRoutines
         NULLIFY(interfaceMatrixToVarMap)
         CALL InterfaceMapping_InterfaceMatrixToVarMapGet(interfaceMapping,interfaceMatrixIdx,interfaceMatrixToVarMap, &
           & err,error,*999)
+        NULLIFY(equationsSet)
         CALL InterfaceMappingIMToVMap_EquationsSetGet(interfaceMatrixToVarMap,equationsSet,err,error,*999)
         equationsSetFound=.FALSE.
-        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+        CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+        DO equationsSetIdx=1,numberOfEquationsSets
           NULLIFY(equationsSet2)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet2,err,error,*999)
           IF(ASSOCIATED(equationsSet,equationsSet2)) THEN
@@ -5512,9 +5516,9 @@ MODULE SolverMappingRoutines
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
+    ALLOCATE(newInterfaceConditions(solverMapping%numberOfInterfaceConditions+1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate new interface conditions.",err,error,*999)
     IF(solverMapping%numberOfInterfaceConditions>0) THEN
-      ALLOCATE(newInterfaceConditions(solverMapping%numberOfInterfaceConditions+1),STAT=err)
-      IF(err/=0) CALL FlagError("Could not allocate new interface conditions.",err,error,*999)
       DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
         newInterfaceConditions(interfaceConditionIdx)%ptr=>solverMapping%interfaceConditions(interfaceConditionIdx)%ptr
       ENDDO !interfaceConditionIdx

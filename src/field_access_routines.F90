@@ -488,6 +488,8 @@ MODULE FieldAccessRoutines
 
   PUBLIC FieldInterpolatedPointMetrics_JacobianGet
 
+  PUBLIC FieldInterpolationParameters_FieldGet
+
   PUBLIC FieldInterpolationParameters_FieldVariableGet
 
   PUBLIC FieldParameterSet_ParametersGet
@@ -2249,12 +2251,12 @@ CONTAINS
     TYPE(InterfaceType), POINTER :: interface
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Field_RegionGet",err,error,*999)
+    ENTERS("Field_RegionGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     !Check input arguments
+    IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
-    IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*999)
 #endif    
         
     NULLIFY(region)
@@ -2280,7 +2282,8 @@ CONTAINS
     
     EXITS("Field_RegionGet")
     RETURN
-999 ERRORSEXITS("Field_RegionGet",err,error)
+999 NULLIFY(region)    
+998 ERRORSEXITS("Field_RegionGet",err,error)
     RETURN 1
     
   END SUBROUTINE Field_RegionGet
@@ -3011,6 +3014,43 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE FieldInterpolatedPointMetrics_JacobianGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to a field for a field interpolation parameters
+  SUBROUTINE FieldInterpolationParameters_FieldGet(interpolationParameters,field,err,error,*)
+
+    !Argument variables
+    TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters !<A pointer to the interpolation parameters to get the field for.
+    TYPE(FieldType), POINTER :: field !<On exit, a pointer to the field. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldInterpolationParameters_FieldGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(field)) CALL FlagError("Field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interpolationParameters)) CALL FlagError("Field interpolation parameters is not associated.",err,error,*999)
+#endif    
+
+    field=>interpolationParameters%field
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(field)) &
+      & CALL FlagError("The field is not associated for the interpolation parameters.",err,error,*999)
+#endif    
+
+    EXITS("FieldInterpolationParameters_FieldGet")
+    RETURN
+999 NULLIFY(field)
+998 ERRORS("FieldInterpolationParameters_FieldGet",err,error)
+    EXITS("FieldInterpolationParameters_FieldGet")
+    RETURN 1
+    
+  END SUBROUTINE FieldInterpolationParameters_FieldGet
 
   !
   !================================================================================================================================

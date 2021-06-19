@@ -2381,8 +2381,10 @@ CONTAINS
     NULLIFY(sourceGeometricField)
     CALL CellMLFieldMaps_SourceGeometricFieldGet(cellMLFieldMaps,sourceGeometricField,err,error,*999)
     NULLIFY(sourceFieldDomain)
-    CALL CellMLFieldMaps_SourceFieldDomainGet(cellMLFieldMaps,sourceFieldDomain,err,error,*999)
+    CALL CellMLFieldMaps_SourceFieldDomainGet(cellMLFieldMaps,sourceFieldDomain,err,error,*999)   
     CALL Domain_MeshComponentNumberGet(sourceFieldDomain,sourceMeshComponentNumber,err,error,*999)
+    NULLIFY(sourceFieldDecomposition)
+    CALL Domain_DecompositionGet(sourceFieldDomain,sourceFieldDecomposition,err,error,*999)
     
     IF(ASSOCIATED(modelsField)) THEN
       !Check the field has been finished
@@ -2412,8 +2414,6 @@ CONTAINS
           & "geometric field for the specified CellML environment.",err,error,*999)
       ENDIF
       !Check the specified models field has the same decomposition as the source field
-      NULLIFY(sourceFieldDecomposition)
-      CALL Domain_DecompositionGet(sourceFieldDomain,sourceFieldDecomposition,err,error,*999)
       NULLIFY(modelsFieldDecomposition)
       CALL Field_DecompositionGet(modelsField,modelsFieldDecomposition,err,error,*999)
       IF(.NOT.ASSOCIATED(sourceFieldDecomposition,modelsFieldDecomposition)) THEN
@@ -2905,7 +2905,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    IF(ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*998)
     IF(ASSOCIATED(cellML%stateField)) CALL FlagError("CellML environment state field is already associated.",err,error,*998)
       
     ALLOCATE(cellML%stateField,STAT=err)
@@ -3597,7 +3597,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    IF(ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*998)
     IF(ASSOCIATED(cellML%parametersField)) &
       & CALL FlagError("CellML environment parameters field is already associated.",err,error,*998)
       

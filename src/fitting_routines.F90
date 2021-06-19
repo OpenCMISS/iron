@@ -308,16 +308,18 @@ CONTAINS
           CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
           CALL Field_NumberOfComponentsGet(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
           !If the independent field has been defined check the number of components is the same
-          IF((esSpecification(2)==EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE.AND. &
-            & esSpecification(3)==EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE).OR. &
-            & (esSpecification(2)==EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE.AND. &
-            & esSpecification(3)==EQUATIONS_SET_GENERALISED_GAUSS_FITTING_SUBTYPE)) THEN
-            IF(numberOfComponents /= numberOfIndependentComponents) THEN
-              localError="The number of components for the specified dependent field of "// &
-                & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
-                & " does not match the number of components for the independent field of "// &
-                & TRIM(NumberToVString(numberOfIndependentComponents,"*",err,error))//"."
-              CALL FlagError(localError,err,error,*999)
+          IF(ASSOCIATED(independentField)) THEN
+            IF((esSpecification(2)==EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE.AND. &
+              & esSpecification(3)==EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE).OR. &
+              & (esSpecification(2)==EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE.AND. &
+              & esSpecification(3)==EQUATIONS_SET_GENERALISED_GAUSS_FITTING_SUBTYPE)) THEN
+              IF(numberOfComponents /= numberOfIndependentComponents) THEN
+                localError="The number of components for the specified dependent field of "// &
+                  & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
+                  & " does not match the number of components for the independent field of "// &
+                  & TRIM(NumberToVString(numberOfIndependentComponents,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
             ENDIF
           ENDIF
           SELECT CASE(solutionMethod)
@@ -346,16 +348,18 @@ CONTAINS
           !Check that we have the same number of components as the independent field
           CALL Field_NumberOfComponentsGet(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents, &
             & err,error,*999)
-          IF((esSpecification(2)==EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE.AND. &
-            & esSpecification(3)==EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE).OR. &
+          IF(ASSOCIATED(independentField)) THEN
+            IF((esSpecification(2)==EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE.AND. &
+              & esSpecification(3)==EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE).OR. &
             & (esSpecification(2)==EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE.AND. &
             & esSpecification(3)==EQUATIONS_SET_GENERALISED_GAUSS_FITTING_SUBTYPE)) THEN
-            IF(numberOfComponents /= numberOfIndependentComponents) THEN
-              localError="The number of components for the specified dependent field of "// &
-                & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
-                & " does not match the number of components for the independentt field of "// &
-                & TRIM(NumberToVString(numberOfIndependentComponents,"*",err,error))//"."
-              CALL FlagError(localError,err,error,*999)
+              IF(numberOfComponents /= numberOfIndependentComponents) THEN
+                localError="The number of components for the specified dependent field of "// &
+                  & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
+                  & " does not match the number of components for the independentt field of "// &
+                  & TRIM(NumberToVString(numberOfIndependentComponents,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
             ENDIF
           ENDIF
           !Finish creating the field
@@ -515,6 +519,7 @@ CONTAINS
               CALL Field_ComponentMeshComponentSet(equationsIndependent%independentField,FIELD_V_VARIABLE_TYPE,componentIdx, &
                 & geometricMeshComponent,err,error,*999)
             ENDDO !componentIdx
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
             SELECT CASE(solutionMethod)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !Specify fem solution method
@@ -547,7 +552,7 @@ CONTAINS
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsGet(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-            !If the dependent field has been defined use that number of components
+            !If the dependent field has been defined use that number of components            
             IF(ASSOCIATED(dependentField)) THEN
               IF(numberOfComponents /= numberOfDependentComponents) THEN
                 localError="The number of components for the specified independent field of "// &
@@ -739,6 +744,7 @@ CONTAINS
         CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
         CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_QUASISTATIC,err,error,*999)
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
         SELECT CASE(solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           !Finish the equations creation
@@ -781,8 +787,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
-            & " is invalid."
+          localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
@@ -1239,7 +1244,7 @@ CONTAINS
                
         CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
         CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,dataVariable,err,error,*999)
-        CALL FieldVariable_NumberOfComponentsGet(independentVariable,numberOfDataComponents,err,error,*999)
+        CALL FieldVariable_NumberOfComponentsGet(dataVariable,numberOfDataComponents,err,error,*999)
         CALL Field_VariableGet(independentField,FIELD_V_VARIABLE_TYPE,dataWeightVariable,err,error,*999)
         IF(numberOfDataComponents>MAXIMUM_DATA_COMPONENTS) THEN
           localError="Increase the size of the data point vectors. The data variable has "// &
@@ -1274,11 +1279,10 @@ CONTAINS
           CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(decompositionDataPoints,elementNumber, &
             & numberOfElementDataPoints,err,error,*999)
           DO dataPointIdx=1,numberOfElementDataPoints
-            CALL DecompositionDataPoints_ElementDataNumbersGet(decompositionDataPoints,elementNumber,dataPointIdx, &
+            CALL DecompositionDataPoints_ElementDataNumbersGet(decompositionDataPoints,dataPointIdx,elementNumber, &
               & dataPointLocalNumber,dataPointGlobalNumber,dataPointUserNumber,err,error,*999)
             !Need to use global number to get the correct projection results
-            CALL DataProjection_ResultProjectionVectorGlobalGet(dataProjection,dataPointGlobalNumber,projectionXi, &
-              & err,error,*999)
+            CALL DataProjection_ResultProjectionVectorGet(dataProjection,dataPointGlobalNumber,projectionXi,err,error,*999)
             CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi(1:numberOfXi),geometricInterpPoint,err,error,*999)
             CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi(1:numberOfXi),dependentInterpPoint,err,error,*999)
             CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
@@ -1303,11 +1307,13 @@ CONTAINS
               CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
               NULLIFY(rowBasis)
               CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+              NULLIFY(rowQuadratureScheme)
               CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
               CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
               DO rowElementParameterIdx=1,numberOfRowElementParameters
                 rowElementDOFIdx=rowElementDOFIdx+1
-                rowPhi=Basis_EvaluateXi(rowBasis,rowElementParameterIdx,NO_PART_DERIV,projectionXi(1:numberOfXi),err,error)
+                CALL Basis_EvaluateXi(rowBasis,rowElementParameterIdx,NO_PART_DERIV,projectionXi(1:numberOfXi),rowPhi, &
+                  & err,error,*999)
                 IF(updateMatrix) THEN
                   columnElementDOFIdx=0
                   !Loop over element columns
@@ -1322,13 +1328,14 @@ CONTAINS
                       CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                       NULLIFY(columnBasis)
                       CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                      NULLIFY(columnQuadratureScheme)
                       CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
                         & err,error,*999)
                       CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
                       DO columnElementParameterIdx=1,numberOfColumnElementParameters
                         columnElementDOFIdx=columnElementDOFIdx+1
-                        columnPhi=Basis_EvaluateXi(columnBasis,columnElementParameterIdx,NO_PART_DERIV, &
-                          & projectionXi(1:numberOfXi),err,error)
+                        CALL Basis_EvaluateXi(columnBasis,columnElementParameterIdx,NO_PART_DERIV,projectionXi(1:numberOfXi), &
+                          & columnPhi,err,error,*999)
                         sum = rowPhi*columnPhi*dataPointWeight(rowComponentIdx)
                         linearMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                           & linearMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)+sum
@@ -1345,13 +1352,6 @@ CONTAINS
             ENDDO !rowComponentIdx
           ENDDO !dataPointIdx
 
-          !Restore data point vector parameters
-          CALL FieldVariable_ParameterSetDataRestore(dataVariable,FIELD_VALUES_SET_TYPE,independentVectorParameters, &
-            & err,error,*999)
-          !Restore data point weight parameters
-          CALL FieldVariable_ParameterSetDataRestore(dataWeightVariable,FIELD_VALUES_SET_TYPE,independentWeightParameters, &
-            & err,error,*999)
-          
           SELECT CASE(smoothingType)
           CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
             !Do nothing
@@ -1387,6 +1387,7 @@ CONTAINS
                   CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
                   NULLIFY(rowBasis)
                   CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+                  NULLIFY(rowQuadratureScheme)
                   CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
                   CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
                   !Loop over element rows
@@ -1425,6 +1426,7 @@ CONTAINS
                       CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                       NULLIFY(columnBasis)
                       CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                      NULLIFY(columnQuadratureScheme)
                       CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
                         & err,error,*999)
                       CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
@@ -1490,11 +1492,8 @@ CONTAINS
         END SELECT
         
         !Restore data point vector parameters
-        NULLIFY(independentVectorParameters)
-        CALL FieldVariable_ParameterSetDataRestore(dataVariable,FIELD_VALUES_SET_TYPE,independentVectorParameters, &
-          & err,error,*999)
+        CALL FieldVariable_ParameterSetDataRestore(dataVariable,FIELD_VALUES_SET_TYPE,independentVectorParameters,err,error,*999)
         !Restore data point weight parameters
-        NULLIFY(independentWeightParameters)
         CALL FieldVariable_ParameterSetDataRestore(dataWeightVariable,FIELD_VALUES_SET_TYPE,independentWeightParameters, &
           & err,error,*999)
         
@@ -1503,18 +1502,25 @@ CONTAINS
         !==============================
         ! G a u s s   P o i n t   F i t
         !==============================
-        
+
+        NULLIFY(independentField)
         CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+        NULLIFY(dataVariable)
         CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,dataVariable,err,error,*999)
         CALL FieldVariable_NumberOfComponentsGet(independentVariable,numberOfDataComponents,err,error,*999)
+        NULLIFY(dataWeightVariable)
         CALL Field_VariableGet(independentField,FIELD_V_VARIABLE_TYPE,dataWeightVariable,err,error,*999)
+        NULLIFY(dataInterpParameters)
         CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
           & dataInterpParameters,err,error,*999)
+        NULLIFY(dataInterpPoint)
         CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
           & dataInterpPoint,err,error,*999)
         CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,dataInterpParameters,err,error,*999)
+        NULLIFY(dataWeightInterpParameters)
         CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
           & dataWeightInterpParameters,err,error,*999)
+        NULLIFY(dataWeightInterpParameters)
         CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
           & dataWeightInterpPoint,err,error,*999)
         CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,dataWeightInterpParameters, &
@@ -1581,6 +1587,7 @@ CONTAINS
               CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
               NULLIFY(rowBasis)
               CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+              NULLIFY(rowQuadratureScheme)
               CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
               CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
               DO rowElementParameterIdx=1,rowBasis%numberOfElementParameters
@@ -1625,6 +1632,7 @@ CONTAINS
                       CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                       NULLIFY(columnBasis)
                       CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                      NULLIFY(columnQuadratureScheme)
                       CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
                         & err,error,*999)
                       CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
@@ -1786,6 +1794,7 @@ CONTAINS
               CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
               NULLIFY(rowBasis)
               CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+              NULLIFY(rowQuadratureScheme)
               CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
               CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
               !Loop over element rows
@@ -1806,6 +1815,7 @@ CONTAINS
                       CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                       NULLIFY(columnBasis)
                       CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                      NULLIFY(columnQuadratureScheme)
                       CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
                         & err,error,*999)
                       CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
@@ -1899,6 +1909,7 @@ CONTAINS
               CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
               NULLIFY(rowBasis)
               CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+              NULLIFY(rowQuadratureScheme)
               CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
               CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
               DO rowElementParameterIdx=1,numberOfRowElementParameters
@@ -1921,6 +1932,7 @@ CONTAINS
                     CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                     NULLIFY(columnBasis)
                     CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                    NULLIFY(columnQuadratureScheme)
                     CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
                       & err,error,*999)
                     CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
@@ -2165,6 +2177,7 @@ CONTAINS
         !Finish the control loops
         NULLIFY(controlLoopRoot)
         CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
         CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
       CASE DEFAULT
@@ -2180,6 +2193,7 @@ CONTAINS
       !Get the control loop
       NULLIFY(controlLoopRoot)
       CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+      NULLIFY(controlLoop)
       CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
       SELECT CASE(problemSetup%actionType)
       CASE(PROBLEM_SETUP_START_ACTION)

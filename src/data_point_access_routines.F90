@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> This module contains all data point access method routines.
+!>This module contains all data point access method routines.
 MODULE DataPointAccessRoutines
   
   USE BaseRoutines
@@ -65,13 +65,45 @@ MODULE DataPointAccessRoutines
 
   !Interfaces
 
+  !>Gets the label for a data point identified by a given global number.
+  INTERFACE DataPoints_DataLabelGet
+    MODULE PROCEDURE DataPoints_DataLabelGetC
+    MODULE PROCEDURE DataPoints_DataLabelGetVS
+  END INTERFACE DataPoints_DataLabelGet
+
+  !>Changes/sets the label for a data point identified by a given global number.
+  INTERFACE DataPoints_DataLabelSet
+    MODULE PROCEDURE DataPoints_DataLabelSetC
+    MODULE PROCEDURE DataPoints_DataLabelSetVS
+  END INTERFACE DataPoints_DataLabelSet
+
   PUBLIC DataPoints_AssertIsFinished,DataPoints_AssertNotFinished
 
   PUBLIC DataPoints_CoordinateSystemGet
 
+  PUBLIC DataPoints_DataLabelGet,DataPoints_DataLabelSet
+
+  PUBLIC DataPoints_DataPositionGet
+
+  PUBLIC DataPoints_DataUserNumberGet
+
+  PUBLIC DataPoints_DataWeightsGet
+
   PUBLIC DataPoints_DataProjectionIndexGet
 
   PUBLIC DataPoints_DataProjectionUserGet
+
+  PUBLIC DataPoints_InterfaceGet
+
+  PUBLIC DataPoints_IsInterfaceDataPoints
+
+  PUBLIC DataPoints_IsRegionDataPoints
+
+  PUBLIC DataPoints_NumberOfDataPointsGet
+
+  PUBLIC DataPoints_NumberOfDimensionsGet
+
+  PUBLIC DataPoints_RegionGet
 
   PUBLIC DataPointSets_UserNumberFind
 
@@ -221,6 +253,490 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the character label for a data point identified by a given global number. \see OpenCMISS::Iron::cmfe_DataPoints_LabelGet
+  SUBROUTINE DataPoints_DataLabelGetC(dataPoints,globalNumber,label,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the label for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the label for
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On exit, the label of the specified global data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER :: cLength,vsLength
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("DataPoints_DataLabelGetC",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>dataPoints%numberOfDataPoints) THEN
+      localError="The specified data point global number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//". The data point global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(dataPoints%dataPoints)) THEN
+      localError="The data points array is not allocated for data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+#endif
+    
+    cLength=LEN(label)
+    vsLength=LEN_TRIM(dataPoints%dataPoints(globalNumber)%label)
+    IF(cLength>vsLength) THEN
+      label=CHAR(LEN_TRIM(dataPoints%dataPoints(globalNumber)%label))
+    ELSE
+      label=CHAR(dataPoints%dataPoints(globalNumber)%label,cLength)
+    ENDIF
+    
+    EXITS("DataPoints_DataLabelGetC")
+    RETURN
+999 ERRORSEXITS("DataPoints_DataLabelGetC",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DataPoints_DataLabelGetC
+        
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the varying string label for a data point identified by a given global number. \see OpenCMISS::Iron::cmfe_DataPoints_LabelGet
+  SUBROUTINE DataPoints_DataLabelGetVS(dataPoints,globalNumber,label,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the label for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the label for
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On exit, the label of the specified global data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("DataPoints_DataLabelGetVS",err,error,*999)
+    
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>dataPoints%numberOfDataPoints) THEN
+      localError="The specified data point global number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//". The data point global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(dataPoints%dataPoints)) THEN
+      localError="The data points array is not allocated for data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+#endif
+
+    label=dataPoints%dataPoints(globalNumber)%label
+     
+    EXITS("DataPoints_DataLabelGetVS")
+    RETURN
+999 ERRORSEXITS("DataPoints_DataLabelGetVS",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DataPoints_DataLabelGetVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Changes/sets the character label for a data point identified by a given global number.
+  SUBROUTINE DataPoints_DataLabelSetC(dataPoints,globalNumber,label,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to set the label for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to set the label for
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+     
+    ENTERS("DataPoints_DataLabelSetC",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>dataPoints%numberOfDataPoints) THEN
+      localError="The specified data point global number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//". The data point global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(dataPoints%dataPoints)) THEN
+      localError="The data points array is not allocated for data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+#endif
+
+    dataPoints%dataPoints(globalNumber)%label=label
+     
+    EXITS("DataPoints_DataLabelSetC")
+    RETURN
+999 ERRORSEXITS("DataPoints_DataLabelSetC",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DataPoints_DataLabelSetC    
+  
+  !
+  !================================================================================================================================
+  !
+
+
+  !>Changes/sets the varying string label for a data point identified by a given global number.
+  SUBROUTINE DataPoints_DataLabelSetVS(dataPoints,globalNumber,label,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to set the label for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to set the label for
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+     
+    ENTERS("DataPoints_DataLabelSetVS",err,error,*999)
+    
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>dataPoints%numberOfDataPoints) THEN
+      localError="The specified data point global number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//". The data point global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(dataPoints%dataPoints)) THEN
+      localError="The data points array is not allocated for data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+#endif
+
+    dataPoints%dataPoints(globalNumber)%label=label
+    
+    EXITS("DataPoints_DataLabelSetVS")
+    RETURN
+999 ERRORSEXITS("DataPoints_DataLabelSetVS",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DataPoints_DataLabelSetVS
+        
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the position for a data point identified by a given global number.
+  SUBROUTINE DataPoints_DataPositionGet(dataPoints,globalNumber,position,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to set the number for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the values for
+    REAL(DP), INTENT(OUT) :: position(:) !<position(coordinateIdx). On exit, the position of the specified data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("DataPoints_DataPositionGet",err,error,*999)
+
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+#ifdef WITH_PRECHECKS
+    IF(globalNumber<1.OR.globalNumber>dataPoints%numberOfDataPoints) THEN
+      localError="The specified data point global number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//". The data point global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(dataPoints%dataPoints)) THEN
+      localError="The data points array is not allocated for data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(dataPoints%dataPoints(globalNumber)%position)) THEN
+      localError="The position array is not allocated for data point global number "// &
+        & TRIM(NumberToVString(globalNumber,"*",err,error))//" of data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(SIZE(position,1)<dataPoints%numberOfDimensions) THEN
+      localError="The size of the specified position array of "//TRIM(NumberToVString(SIZE(position,1),"*",err,error))// &
+        & " is too small. The array size needs to be >= "//TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))// &
+        & " for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."         
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    position(1:dataPoints%numberOfDimensions)=dataPoints%dataPoints(globalNumber)%position(1:dataPoints%numberOfDimensions)
+   
+    EXITS("DataPoints_DataPositionGet")
+    RETURN
+999 ERRORSEXITS("DataPoints_DataPositionGet",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataPoints_DataPositionGet
+
+  !
+  !================================================================================================================================
+  !  
+
+  !>Gets the user number for a data point identified by a given global number. 
+  SUBROUTINE DataPoints_DataUserNumberGet(dataPoints,globalNumber,userNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the number for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the user number for
+    INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, the user number of the specified global data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("DataPoints_DataUserNumberGet",err,error,*999)
+
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+#ifdef WITH_PRECHECKS
+    IF(globalNumber<1.OR.globalNumber>dataPoints%numberOfDataPoints) THEN
+      localError="The specified data point global number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//". The data point global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(dataPoints%dataPoints)) THEN
+      localError="The data points array is not allocated for data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+#endif
+    
+    userNumber=dataPoints%dataPoints(globalNumber)%userNumber
+    
+    EXITS("DataPoints_DataUserNumberGet")
+    RETURN
+999 ERRORSEXITS("DataPoints_DataUserNumberGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DataPoints_DataUserNumberGet
+        
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the weights for a data point identified by a given global number.
+  SUBROUTINE DataPoints_DataWeightsGet(dataPoints,globalNumber,weights,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to set the weights for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the weights for
+    REAL(DP), INTENT(OUT) :: weights(:) !<weights(coordinateIdx). On exit, the weights of the specified data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("DataPoints_DataWeightsGet",err,error,*999)
+
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+#ifdef WITH_PRECHECKS
+    IF(globalNumber<1.OR.globalNumber>dataPoints%numberOfDataPoints) THEN
+      localError="The specified data point global number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//". The data point global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(dataPoints%dataPoints)) THEN
+      localError="The data points array is not allocated for data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(dataPoints%dataPoints(globalNumber)%weights)) THEN
+      localError="The weights array is not allocated for data point global number "// &
+        & TRIM(NumberToVString(globalNumber,"*",err,error))//" of data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(SIZE(weights,1)<dataPoints%numberOfDimensions) THEN
+      localError="The size of the specified weights array of "//TRIM(NumberToVString(SIZE(weights,1),"*",err,error))// &
+        & " is too small. The array size needs to be >= "//TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))// &
+        & " for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" in region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" in interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."         
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    weights(1:dataPoints%numberOfDimensions)=dataPoints%dataPoints(globalNumber)%weights(1:dataPoints%numberOfDimensions)
+   
+    EXITS("DataPoints_DataWeightsGet")
+    RETURN
+999 ERRORSEXITS("DataPoints_DataWeightsGet",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataPoints_DataWeightsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a data projection for data points
   SUBROUTINE DataPoints_DataProjectionIndexGet(dataPoints,dataProjectionIndex,dataProjection,err,error,*)
 
@@ -358,6 +874,218 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE DataPoints_DataProjectionUserGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the interface for data points
+  SUBROUTINE DataPoints_InterfaceGet(dataPoints,interface,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the interface for
+    TYPE(InterfaceType), POINTER :: interface !<On return, the data points interface. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DataPoints_InterfaceGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    !Check input arguments
+    IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+#endif    
+
+    INTERFACE=>dataPoints%INTERFACE
+
+#ifdef WITH_POSTCHECKS      
+    IF(.NOT.ASSOCIATED(INTERFACE)) THEN
+      localError="The interface for data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))//" is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+ 
+    EXITS("DataPoints_InterfaceGet")
+    RETURN
+999 NULLIFY(interface)
+998 ERRORSEXITS("DataPoints_InterfaceGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataPoints_InterfaceGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Determines if the given data points are interface data points or not. 
+  SUBROUTINE DataPoints_IsInterfaceDataPoints(dataPoints,interfaceDataPoints,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to determine if they are interface data points or not.
+    LOGICAL :: interfaceDataPoints !<On exit, .TRUE. if the given data points are interface data points, .FALSE. if not. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("DataPoints_IsInterfaceDataPoints",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+#endif    
+
+    interfaceDataPoints = ASSOCIATED(dataPoints%interface)
+    
+    EXITS("DataPoints_IsInterfaceDataPoints")
+    RETURN
+999 ERRORSEXITS("DataPoints_IsInterfaceDataPoints",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataPoints_IsInterfaceDataPoints
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Determines if the given data points are region data points or not. 
+  SUBROUTINE DataPoints_IsRegionDataPoints(dataPoints,regionDataPoints,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to determine if they are region data points or not.
+    LOGICAL :: regionDataPoints !<On exit, .TRUE. if the given data point are in a region, .FALSE. if not. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("DataPoints_IsRegionDataPoints",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+#endif    
+
+    regionDataPoints = ASSOCIATED(dataPoints%region)
+    
+    EXITS("DataPoints_IsRegionDataPoints")
+    RETURN
+999 ERRORSEXITS("DataPoints_IsRegionDataPoints",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataPoints_IsRegionDataPoints
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of data points. \see OpenCMISS::Iron::cmfe_DataPoints_NumberOfDataPointsGet
+  SUBROUTINE DataPoints_NumberOfDataPointsGet(dataPoints,numberOfDataPoints,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the number of data points for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDataPoints !<On return, the number of data points
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("DataPoints_NumberOfDataPointsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+#endif
+    
+    numberOfDataPoints=dataPoints%numberOfDataPoints
+    
+    EXITS("DataPoints_NumberOfDataPointsGet")
+    RETURN
+999 ERRORSEXITS("DataPoints_NumberOfDataPointsGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DataPoints_NumberOfDataPointsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of data point dimensions. 
+  SUBROUTINE DataPoints_NumberOfDimensionsGet(dataPoints,numberOfDimensions,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the number of dimensions for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDimensions !<On return, the number of data point dimensions
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("DataPoints_NumberOfDimensionsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+#endif
+    
+    numberOfDimensions=dataPoints%numberOfDimensions
+    
+    EXITS("DataPoints_NumberOfDimensionsGet")
+    RETURN
+999 ERRORSEXITS("DataPoints_NumberOfDimensionsGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DataPoints_NumberOfDimensionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the region for a data points accounting for regions and interfaces
+  SUBROUTINE DataPoints_RegionGet(dataPoints,region,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the region for
+    TYPE(RegionType), POINTER :: region !<On return, the data points region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DataPoints_RegionGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    !Check input arguments
+    IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Field is not associated.",err,error,*999)
+#endif    
+        
+    NULLIFY(region)
+    NULLIFY(interface)
+    region=>dataPoints%region
+    IF(.NOT.ASSOCIATED(region)) THEN          
+      INTERFACE=>dataPoints%INTERFACE
+      IF(ASSOCIATED(INTERFACE)) THEN
+        IF(ASSOCIATED(interface%parentRegion)) THEN
+          region=>interface%parentRegion     
+        ELSE
+          localError="The parent region is not associated for data points number "// &
+            & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))//" of interface number "// &
+            & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ELSE
+        localError="A region or interface is not associated for data points number "// &
+          & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+    
+    EXITS("DataPoints_RegionGet")
+    RETURN
+999 NULLIFY(region)    
+998 ERRORSEXITS("DataPoints_RegionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataPoints_RegionGet
 
   !
   !================================================================================================================================

@@ -2058,8 +2058,11 @@ CONTAINS
               !Create the equations mapping.
               NULLIFY(vectorMapping)
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
+              CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,1,err,error,*999)
+              CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
@@ -2098,8 +2101,11 @@ CONTAINS
               !Create the equations mapping.
               NULLIFY(vectorMapping)
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,1,err,error,*999)
+              CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+               CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
@@ -2108,14 +2114,14 @@ CONTAINS
               CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
                 CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,1,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
                   & err,error,*999)
                 CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,1,MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
                   & err,error,*999)
-                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE, &
                   & err,error,*999)
                 CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,1,EQUATIONS_MATRIX_FEM_STRUCTURE, &
                   & err,error,*999)
@@ -2178,7 +2184,9 @@ CONTAINS
               !Create the equations mapping.
               NULLIFY(vectorMapping)
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,1,err,error,*999)
+              CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
               CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
@@ -2254,9 +2262,9 @@ CONTAINS
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
               CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
               CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,1,err,error,*999)
-              CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
@@ -2812,9 +2820,9 @@ CONTAINS
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     SELECT CASE(pSpecification(3))
-      !All steady state cases of Navier-Stokes
     CASE(PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE, &
       & PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE)
+      !All steady state cases of Navier-Stokes
       SELECT CASE(problemSetup%setupType)
       CASE(PROBLEM_SETUP_INITIAL_TYPE)
         SELECT CASE(problemSetup%actionType)
@@ -2832,11 +2840,13 @@ CONTAINS
         SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Set up a simple control loop
+          NULLIFY(controlLoop)
           CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Finish the control loops
           NULLIFY(controlLoopRoot)
           CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+          NULLIFY(controlLoop)
           CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
           CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
         CASE DEFAULT
@@ -2849,19 +2859,23 @@ CONTAINS
         !Get the control loop
         NULLIFY(controlLoopRoot)
         CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
         SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Start the solvers creation
+          NULLIFY(solvers)
           CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
           CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
           !Set the solver to be a nonlinear solver
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           CALL Solver_TypeSet(solver,SOLVER_NONLINEAR_TYPE,err,error,*999)
           !Set solver defaults
           CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Get the solvers
+          NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
           !Finish the solvers creation
           CALL Solvers_CreateFinish(solvers,err,error,*999)
@@ -2877,11 +2891,15 @@ CONTAINS
           !Get the control loop
           NULLIFY(controlLoopRoot)
           CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+          NULLIFY(controlLoop)
           CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
           !Get the solver
+          NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           !Create the solver equations
+          NULLIFY(solverEquations)
           CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
           CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
           CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
@@ -2890,10 +2908,14 @@ CONTAINS
           !Get the control loop
           NULLIFY(controlLoopRoot)
           CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+          NULLIFY(controlLoop)
           CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
           !Get the solver equations
+          NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(solverEquations)
           CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
           !Finish the solver equations creation
           CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)
@@ -2929,12 +2951,14 @@ CONTAINS
         SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Set up a time control loop
+          NULLIFY(controlLoop)
           CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
           CALL ControlLoop_TypeSet(controlLoop,CONTROL_TIME_LOOP_TYPE,err,error,*999)
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Finish the control loops
           NULLIFY(controlLoopRoot)
           CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+          NULLIFY(controlLoop)
           CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
           CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
         CASE DEFAULT
@@ -2947,10 +2971,12 @@ CONTAINS
         !Get the control loop
         NULLIFY(controlLoopRoot)
         CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
         SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Start the solvers creation
+          NULLIFY(solvers)
           CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
           CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
           !Set the first solver to be an CellML Evaluator for time varying boundary conditions
@@ -2974,12 +3000,14 @@ CONTAINS
           !setup CellML evaluator for constitutive law
           IF(pSpecification(3)==PROBLEM_CONSTITUTIVE_RBS_NAVIER_STOKES_SUBTYPE) THEN
             !Create the CellML evaluator solver
+            NULLIFY(cellmlSolver)
             CALL Solver_NewtonCellMLEvaluatorCreate(solver,cellmlSolver,err,error,*999)
             !Link the CellML evaluator solver to the solver
             CALL Solver_LinkedSolverAdd(solver,cellmlSolver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
           ENDIF
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Get the solvers
+          NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
           !Finish the solvers creation
           CALL Solvers_CreateFinish(solvers,err,error,*999)
@@ -2995,11 +3023,15 @@ CONTAINS
           !Get the control loop
           NULLIFY(controlLoopRoot)
           CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+          NULLIFY(controlLoop)
           CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
           !Get the solver
+          NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
           !Create the solver equations
+          NULLIFY(solverEquations)
           CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
           CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
           CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
@@ -3008,10 +3040,14 @@ CONTAINS
           !Get the control loop
           NULLIFY(controlLoopRoot)
           CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+          NULLIFY(controlLoop)
           CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
           !Get the solver equations
+          NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          NULLIFY(solverEquations)
           CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
           !Finish the solver equations creation
           CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)
@@ -3027,11 +3063,14 @@ CONTAINS
           !Get the control loop
           NULLIFY(controlLoopRoot)
           CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+          NULLIFY(controlLoop)
           CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
           !Get the solver
+          NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
           NULLIFY(solver)
           !Get the boundary condition solver
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           !Create the CellML equations
           NULLIFY(cellMLEquations)
@@ -3043,9 +3082,11 @@ CONTAINS
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
             !Get the CellML evaluator solver
-            CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellmlSolver,err,error,*999)
+            NULLIFY(cellMLSolver)
+            CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*999)
             !Create the CellML equations
-            CALL CellMLEquations_CreateStart(cellmlSolver,cellMLEquations,err,error,*999)
+            NULLIFY(cellMLEquations)
+            CALL CellMLEquations_CreateStart(cellMLSolver,cellMLEquations,err,error,*999)
             !Set the time dependence
             CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
             !Set the linearity
@@ -3055,8 +3096,10 @@ CONTAINS
           !Get the control loop
           NULLIFY(controlLoopRoot)
           CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+          NULLIFY(controlLoop)
           CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
           !Get the solver
+          NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
           !Get the CellML boundary condition solver
           NULLIFY(solver)
@@ -3070,8 +3113,10 @@ CONTAINS
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
             !Get the CellML evaluator solver
-            CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellmlSolver,err,error,*999)
+            NULLIFY(cellMLSolver)
+            CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*999)
             !Get the CellML equations for the CellML evaluator solver
+            NULLIFY(cellMLEquations)
             CALL Solver_CellMLEquationsGet(cellmlSolver,cellMLEquations,err,error,*999)
             !Finish the CellML equations creation
             CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
@@ -3087,9 +3132,9 @@ CONTAINS
           & " is invalid for a transient Navier-Stokes fluid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      ! Multiscale: 3D/1D/0D coupled
     CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE, &
       & PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE)
+      ! Multiscale: 3D/1D/0D coupled
       SELECT CASE(problemSetup%setupType)
       CASE(PROBLEM_SETUP_INITIAL_TYPE)
         SELECT CASE(problemSetup%actionType)
@@ -3107,6 +3152,7 @@ CONTAINS
         SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Set up a time control loop
+          NULLIFY(controlLoop)
           CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
           CALL ControlLoop_TypeSet(controlLoop,CONTROL_TIME_LOOP_TYPE,err,error,*999)
           NULLIFY(iterativeWhileLoop)
@@ -3160,11 +3206,11 @@ CONTAINS
             CALL ControlLoop_TypeSet(simpleLoop,CONTROL_SIMPLE_TYPE,err,error,*999)
             CALL ControlLoop_LabelSet(simpleLoop,"3D Navier-Stokes",err,error,*999)
           ENDIF
-
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Finish the control loops
           NULLIFY(controlLoopRoot)
           CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+          NULLIFY(controlLoop)
           CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
           CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
         CASE DEFAULT
@@ -3465,9 +3511,8 @@ CONTAINS
             CALL FlagError(localError,err,error,*999)
           END SELECT
         ENDIF
-
-        !Create the CELLML solver equations
       CASE(PROBLEM_SETUP_CELLML_EQUATIONS_TYPE)
+        !Create the CELLML solver equations
         SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Get the control loop
@@ -3682,8 +3727,7 @@ CONTAINS
             CALL ControlLoop_TypeSet(iterativeWhileLoop2,CONTROL_WHILE_LOOP_TYPE,err,error,*999)
             CALL ControlLoop_MaximumIterationsSet(iterativeWhileLoop2,1000,err,error,*999)
             CALL ControlLoop_AbsoluteToleranceSet(iterativeWhileLoop2,1.0E6_DP,err,error,*999)
-            CALL ControlLoop_LabelSet(iterativeWhileLoop2,"1D Characteristic/NSE branch value convergence Loop", &
-              & err,error,*999)
+            CALL ControlLoop_LabelSet(iterativeWhileLoop2,"1D Characteristic/NSE branch value convergence Loop",err,error,*999)
           ELSE IF(pSpecification(3) == PROBLEM_STREE1D0D_ADV_NAVIER_STOKES_SUBTYPE) THEN
             ! The 1D-0D boundary value iterative coupling loop
             CALL ControlLoop_NumberOfSubLoopsSet(controlLoop,2,err,error,*999)
@@ -5104,6 +5148,7 @@ CONTAINS
       dXidX=0.0_DP
     
       !Set general and specific pointers
+      NULLIFY(region)
       CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
       NULLIFY(coordinateSystem)
       CALL Region_CoordinateSystemGet(region,coordinateSystem,err,error,*999)
@@ -6217,11 +6262,15 @@ CONTAINS
       NULLIFY(uMaterialsInterpParameters)
       CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
         & uMaterialsInterpParameters,err,error,*999)
+      NULLIFY(uMaterialsInterpPoint)
+      CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,uMaterialsInterpPoint, &
+        & err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,uMaterialsInterpParameters, &
         & err,error,*999)        
 
       NULLIFY(vMaterialsVariable)
       NULLIFY(vMaterialsInterpParameters)
+      NULLIFY(vMaterialsInterpPoint)
       NULLIFY(equationsSetField)
       NULLIFY(independentField)
       NULLIFY(independentVariable)
@@ -6244,6 +6293,8 @@ CONTAINS
         CALL Field_VariableGet(materialsField,FIELD_V_VARIABLE_TYPE,vMaterialsVariable,err,error,*999)
         CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
           & vMaterialsInterpParameters,err,error,*999)
+        CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE,vMaterialsInterpPoint, &
+          & err,error,*999)
         CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,vMaterialsInterpParameters, &
           & err,error,*999)        
       CASE(EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
@@ -6272,13 +6323,15 @@ CONTAINS
       END SELECT
 
       !Loop over all Gauss points
-      DO gaussPointIdx=1,quadratureScheme%numberOfGauss
+      CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+      DO gaussPointIdx=1,numberOfGauss
 
         CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,dependentInterpPoint, &
           & err,error,*999)
         CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
           & err,error,*999)
         CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi,geometricInterpPointMetrics,err,error,*999)
+        
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,uMaterialsInterpPoint, &
           & err,error,*999)
 
@@ -6354,8 +6407,8 @@ CONTAINS
             NULLIFY(rowDomainElements)
             CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
             NULLIFY(rowBasis)
-            CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
             CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+            CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
             NULLIFY(rowQuadratureScheme)
             CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
             CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
@@ -7164,7 +7217,7 @@ CONTAINS
 
           !Analytic equations
           NULLIFY(equationsAnalytic)
-          CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
+          CALL EquationsSet_AnalyticExists(equationsSet,equationsAnalytic,err,error,*999)
           IF(ASSOCIATED(equationsAnalytic)) THEN
             CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
             !Standard analytic functions
@@ -7453,7 +7506,7 @@ CONTAINS
                   !Loop over the local nodes excluding the ghosts.
                   CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
                   DO nodeIdx=1,numberOfNodes
-                    CALL DomainNodes_UserNodeNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
+                    CALL DomainNodes_NodeUserNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
                     CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
                     DO derivativeIdx=1,numberOfNodeDerivatives
                       CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions, &
@@ -7553,7 +7606,7 @@ CONTAINS
                   !Loop over the local nodes excluding the ghosts.
                   CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
                   DO nodeIdx=1,numberOfNodes
-                    CALL DomainNodes_UserNodeNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
+                    CALL DomainNodes_NodeUserNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
                     CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
                     DO derivativeIdx=1,numberOfNodeDerivatives
                       CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions, &
@@ -7766,7 +7819,7 @@ CONTAINS
                         CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
                         !Loop over the local nodes excluding the ghosts.
                         DO nodeIdx=1,numberOfNodes
-                          CALL DomainNodes_UserNodeNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
+                          CALL DomainNodes_NodeUserNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
                           CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
                           DO derivativeIdx=1,numberOfNodeDerivatives
                             CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions, &
@@ -9312,7 +9365,7 @@ CONTAINS
         !Loop over the local nodes excluding the ghosts.
         CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         DO nodeIdx=1,numberOfNodes
-          CALL DomainNodes_UserNodeNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
+          CALL DomainNodes_NodeUserNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
           CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
           CALL DomainNodes_NodeSurroundingElementGet(domainNodes,1,nodeIdx,elementIdx,err,error,*999)
           NULLIFY(basis)
@@ -12292,7 +12345,7 @@ CONTAINS
         CALL DomainElements_ElementBasisGet(domainElements,elementIdx,dependentBasis,err,error,*999)
         CALL Basis_TypeGet(dependentBasis,dependentBasisType,err,error,*999)
         CALL Basis_NumberOfLocalFacesGet(dependentBasis,numberOfLocalFaces,err,error,*999)
-        CALL DecompositionElements_UserElementNumberGet(decompositionElements3D,elementIdx,elementUserNumber,err,error,*999)
+        CALL DecompositionElements_ElementUserNumberGet(decompositionElements3D,elementIdx,elementUserNumber,err,error,*999)
 
         !Note: if CFL tolerance = 0, we'll skip this step, which speeds things up a bit
         IF(toleranceCourant > ZERO_TOLERANCE) THEN
@@ -13323,7 +13376,7 @@ CONTAINS
     boundaryConverged = .TRUE.
     !!!--  L o o p   O v e r   L o c a l  N o d e s  --!!!
     DO nodeIdx=1,numberOfLocalNodes1D
-      CALL DomainNodes_UserNodeNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
+      CALL DomainNodes_NodeUserNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
       
       !Check for the boundary node- go to next if not boundary
       CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
@@ -13885,7 +13938,7 @@ CONTAINS
       ! Loop over internal and boundary elements, skipping ghosts
       DO elementIdx=startElement,stopElement
         CALL DomainMapping_NumberGet(elementsMapping,elementIdx,localElementNumber,err,error,*999)
-        CALL DecompositionElements_UserElementNumberGet(decompositionElements,localElementNumber,userElementNumber,err,error,*999)
+        CALL DecompositionElements_ElementUserNumberGet(decompositionElements,localElementNumber,userElementNumber,err,error,*999)
         !Check computation node for elementIdx
         elementExists=.FALSE.
         ghostElement=.TRUE.
@@ -14795,6 +14848,8 @@ CONTAINS
       CALL Field_NumberOfComponentsGet(geometricField3D,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
       NULLIFY(equationsSetField3D)
       CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField3D,err,error,*999)
+      NULLIFY(uEquationsSetVariable3D)
+      CALL Field_VariableGet(equationsSetField3D,FIELD_U_VARIABLE_TYPE,uEquationsSetVariable3D,err,error,*999)
       NULLIFY(u1EquationsSetVariable3D)
       CALL Field_VariableGet(equationsSetField3D,FIELD_U1_VARIABLE_TYPE,u1EquationsSetVariable3D,err,error,*999)
       NULLIFY(vEquationsSetVariable3D)
@@ -14866,7 +14921,7 @@ CONTAINS
       localBoundaryNormalStress = 0.0_DP
       CALL DomainMapping_NumberOfLocalGet(elementsMapping3D,numberOfLocalElements,err,error,*999)
       DO elementIdx=1,numberOfLocalElements
-        CALL DecompositionElements_UserElementNumberGet(decompositionElements3D,elementIdx,userElementNumber,err,error,*999)
+        CALL DecompositionElements_ElementUserNumberGet(decompositionElements3D,elementIdx,userElementNumber,err,error,*999)
         NULLIFY(domain)
         CALL FieldVariable_ComponentDomainGet(dependentVariable3D,1,domain,err,error,*999)
         NULLIFY(domainTopology)
@@ -15160,9 +15215,9 @@ CONTAINS
                 !Check current values against those passed to the CellML solver
                 CALL FieldVariable_ParameterSetGetLocalNode(uEquationsSetVariable3D,FIELD_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D, &
                   & err,error,*999)
-                CALL FieldVariable_ParameterSetGetLocalNode(uDependentVariable3D,FIELD_PRESSURE_VALUES_SET_TYPE,1,1,nodeNumber, &
+                CALL FieldVariable_ParameterSetGetLocalNode(dependentVariable3D,FIELD_PRESSURE_VALUES_SET_TYPE,1,1,nodeNumber, &
                   & 4,p0D,err,error,*999)
-                CALL FieldVariable_ParameterSetUpdateLocalNode(uDependentVariable3D,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE, &
+                CALL FieldVariable_ParameterSetUpdateLocalNode(dependentVariable3D,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE, &
                   & versionNumber,faceNodeDerivativeIdx,nodeNumber,4,p0D,err,error,*999)
                 CALL FieldVariable_ParameterSetUpdateLocalNode(uEquationsSetVariable3D,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE, &
                   & versionNumber,faceNodeDerivativeIdx,nodeNumber,1,q0D,err,error,*999)
@@ -15191,13 +15246,13 @@ CONTAINS
     ENDIF
 
     !Distribute any updated fields
-    IF (ASSOCIATED(equationsSetField3D)) THEN
+    IF(ASSOCIATED(equationsSetField3D)) THEN
       CALL FieldVariable_ParameterSetUpdateStart(uEquationsSetVariable3D,FIELD_VALUES_SET_TYPE,err,error,*999)
       CALL FieldVariable_ParameterSetUpdateFinish(uEquationsSetVariable3D,FIELD_VALUES_SET_TYPE,err,error,*999)
     ENDIF
-    IF (ASSOCIATED(dependentField3D)) THEN
-      CALL FieldVariable_ParameterSetUpdateStart(uDependentVariable3D,FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_ParameterSetUpdateFinish(uDependentVariable3D,FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
+    IF(ASSOCIATED(dependentField3D)) THEN
+      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable3D,FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable3D,FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
     ENDIF
 
     EXITS("NavierStokes_CalculateBoundaryFlux3D0D")

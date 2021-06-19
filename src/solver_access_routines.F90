@@ -747,9 +747,13 @@ MODULE SolverAccessRoutines
   PUBLIC SolverEquations_LinearityTypeGet
 
   PUBLIC SolverEquations_SolverGet
+    
+  PUBLIC SolverEquations_SolverMappingExists
   
   PUBLIC SolverEquations_SolverMappingGet
 
+  PUBLIC SolverEquations_SolverMatricesExists
+  
   PUBLIC SolverEquations_SolverMatricesGet
 
   PUBLIC SolverEquations_SparsityTypeGet
@@ -4429,6 +4433,37 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks the solver mapping for solver equations exists. 
+  SUBROUTINE SolverEquations_SolverMappingExists(solverEquations,solverMapping,err,error,*)
+
+    !Argument variables
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations to check the solver mapping for
+    TYPE(SolverMappingType), POINTER :: solverMapping !<On exit, a pointer to the solver mapping for the specified solver equations if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverEquations_SolverMappingExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
+#endif    
+
+    solverMapping=>solverEquations%solverMapping
+    
+    EXITS("SolverEquations_SolverMappingExists")
+    RETURN
+998 NULLIFY(solverMapping)
+999 ERRORSEXITS("SolverEquations_SolverMappingExists",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverEquations_SolverMappingExists
+     
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the solver mapping for solver equations. 
   SUBROUTINE SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*)
 
@@ -4459,6 +4494,37 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE SolverEquations_SolverMappingGet
+     
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks the solver matrices for solver equations exists. 
+  SUBROUTINE SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations to check the solver matrices for
+    TYPE(SolverMatricesType), POINTER :: solverMatrices !<On exit, a pointer to the solver matrices for the specified solver equations if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverEquations_SolverMatricesExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is already associated.",err,error,*998)
+    CALL SolverEquations_AssertIsFinished(solverEquations,err,error,*999)
+#endif    
+ 
+    solverMatrices=>solverEquations%solverMatrices
+ 
+    EXITS("SolverEquations_SolverMatricesExists")
+    RETURN
+998 NULLIFY(solverMatrices)
+999 ERRORSEXITS("SolverEquations_SolverMatricesExists",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverEquations_SolverMatricesExists
      
   !
   !================================================================================================================================

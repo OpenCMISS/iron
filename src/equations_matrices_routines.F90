@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): David Ladd
+!> Contributor(s): Chris Bradley, David Ladd
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -224,7 +224,7 @@ MODULE EquationsMatricesRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string  
     !Local Variables
-    INTEGER(INTG) :: dummyErr,matrixIdx,numberOfNonZeros,residualIdx,sourceIdx
+    INTEGER(INTG) :: dummyErr,matrixIdx,numberOfNonZeros,numberOfResiduals,residualIdx,sourceIdx
     INTEGER(INTG), POINTER :: rowIndices(:),columnIndices(:)
     TYPE(DomainMappingType), POINTER :: rowDomainMap,columnDomainMap
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
@@ -350,7 +350,8 @@ MODULE EquationsMatricesRoutines
       !Nonlinear matrices
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
-      DO residualIdx=1,nonlinearMapping%numberOfResiduals
+      CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfResiduals,err,error,*999)
+      DO residualIdx=1,numberOfResiduals
         NULLIFY(residualMapping)
         CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
         NULLIFY(residualVector)
@@ -750,12 +751,12 @@ MODULE EquationsMatricesRoutines
               CALL DomainElements_ElementBasisGet(domainElements,colElementNumber,basis,err,error,*999)
               CALL Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*999)
               DO localNodeIdx=1,numberOfLocalNodes
-                CALL DomainElements_ElementNodeGet(domainElements,localNodeIdx,rowElementNumber,nodeNumber,err,error,*999)
+                CALL DomainElements_ElementNodeGet(domainElements,localNodeIdx,colElementNumber,nodeNumber,err,error,*999)
                 CALL Basis_NodeNumberOfDerivativesGet(basis,localNodeIdx,numberOfNodeDerivatives,err,error,*999)
                 DO derivativeIdx=1,numberOfNodeDerivatives
-                  CALL DomainElements_ElementDerivativeGet(domainElements,derivativeIdx,localNodeIdx,rowElementNumber, &
+                  CALL DomainElements_ElementDerivativeGet(domainElements,derivativeIdx,localNodeIdx,colElementNumber, &
                     & derivativeNumber,err,error,*999)
-                  CALL DomainElements_ElementVersionGet(domainElements,derivativeIdx,localNodeIdx,rowElementNumber, &
+                  CALL DomainElements_ElementVersionGet(domainElements,derivativeIdx,localNodeIdx,colElementNumber, &
                     & versionNumber,err,error,*999)
                   CALL FieldVariable_LocalNodeDOFGet(colsFieldVariable,versionNumber,derivativeNumber,nodeNumber, &
                     & componentIdx,localDOFIdx,err,error,*999)
@@ -775,10 +776,10 @@ MODULE EquationsMatricesRoutines
               CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
               NULLIFY(dataPoints)
               CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,dataPoints,err,error,*999)
-              CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,rowElementNumber,numberOfElementDataPoints, &
+              CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,colElementNumber,numberOfElementDataPoints, &
                 & err,error,*999)
               DO dataPointIdx=1,numberOfElementDataPoints
-                CALL DecompositionDataPoints_ElementDataLocalNumberGet(dataPoints,dataPointIdx,rowElementNumber, &
+                CALL DecompositionDataPoints_ElementDataLocalNumberGet(dataPoints,dataPointIdx,colElementNumber, &
                   & localDataPointNumber,err,error,*999)
                 CALL FieldVariable_LocalDataPointDOFGet(colsFieldVariable,localDataPointNumber,componentIdx,localDOFIdx, &
                   & err,error,*999)
@@ -3725,6 +3726,7 @@ MODULE EquationsMatricesRoutines
       CALL EquationsMappingRHS_VectorCoefficientGet(rhsMapping,rhsCoefficient,err,error,*999)
       ALLOCATE(vectorMatrices%rhsVector,STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate equations matrices RHS vector.",err,error,*999)
+      vectorMatrices%rhsVector%vectorMatrices=>vectorMatrices
       vectorMatrices%rhsVector%rhsCoefficient=rhsCoefficient
       vectorMatrices%rhsVector%updateVector=.TRUE.
       vectorMatrices%rhsVector%firstAssembly=.TRUE.
@@ -4881,7 +4883,7 @@ MODULE EquationsMatricesRoutines
     NULLIFY(jacobianMatrix)
     CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
     jacobianMatrix%residualVector=>residualVector
-    jacobianMatrix%jacobianNumber=0
+    jacobianMatrix%jacobianNumber=matrixIdx
     jacobianMatrix%jacobianCoefficient=jacobianCoefficient
     jacobianMatrix%storageType=MATRIX_BLOCK_STORAGE_TYPE
     jacobianMatrix%structureType=EQUATIONS_MATRIX_NO_STRUCTURE

@@ -112,9 +112,7 @@ MODULE MeshRoutines
 
   PUBLIC MeshElements_Destroy
 
-  PUBLIC MeshElements_ElementBasisGet,MeshElements_ElementBasisSet
-
-  PUBLIC MeshElements_AdjacentElementGet
+  PUBLIC MeshElements_ElementBasisSet
 
   PUBLIC MeshElements_ElementNodesGet
 
@@ -124,7 +122,7 @@ MODULE MeshRoutines
 
   PUBLIC MeshElements_ElementOnBoundaryGet
 
-  PUBLIC MeshElements_ElementUserNumberGet,MeshElements_ElementUserNumberSet
+  PUBLIC MeshElements_ElementUserNumberSet
   
   PUBLIC MeshElements_ElementsUserNumbersAllSet
 
@@ -801,7 +799,7 @@ CONTAINS
     CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
     DO elementIdx=1,meshElements%numberOfElements
       NULLIFY(basis)
-      CALL MeshElements_BasisGet(meshElements,elementIdx,basis,err,error,*999)
+      CALL MeshElements_ElementBasisGet(meshElements,elementIdx,basis,err,error,*999)
       SELECT CASE(basis%type)
       CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
         DO xiCoordIdx=-basis%numberOfXiCoordinates,basis%numberOfXiCoordinates
@@ -1018,7 +1016,7 @@ CONTAINS
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    User number          = ", &
           & meshElements%elements(elementIdx)%userNumber,err,error,*999)
         NULLIFY(basis)
-        CALL MeshElements_BasisGet(meshElements,elementIdx,basis,err,error,*999)
+        CALL MeshElements_ElementBasisGet(meshElements,elementIdx,basis,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Basis number         = ",basis%userNumber,err,error,*999)
         IF(.NOT.ALLOCATED(meshElements%elements(elementIdx)%userElementNodes)) THEN
           localError="User element nodes are not associated for element number "// &
@@ -1208,48 +1206,18 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the basis for a mesh element identified by a given global number. \see OpenCMISS::Iron::cmfe_MeshElements_BasisGet
-  SUBROUTINE MeshElements_ElementBasisGet(meshElements,userElementNumber,basis,err,error,*)
-
-    !Argument variables
-    TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the mesh elements to get the basis for
-    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user number of the element to get the basis for
-    TYPE(BasisType), POINTER :: basis !<On return, a pointer to the basis to get. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: globalElementNumber
-
-    ENTERS("MeshElements_ElementBasisGet",err,error,*999)
-
-    CALL MeshElements_AssertIsFinished(meshElements,err,error,*999)
-    IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*999)    
-    CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
-    
-    CALL MeshElements_BasisGet(meshElements,globalElementNumber,basis,err,error,*999)
-    
-    EXITS("MeshElements_ElementBasisGet")
-    RETURN
-999 ERRORSEXITS("MeshElements_ElementBasisGet",err,error)    
-    RETURN 1
-    
-  END SUBROUTINE MeshElements_ElementBasisGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Changes/sets the basis for a mesh element identified by a given user number. 
-  SUBROUTINE MeshElements_ElementBasisSet(meshElements,userElementNumber,basis,err,error,*)
+  !>Changes/sets the basis for a mesh element identified by a given global number. \see OpenCMISS::Iron::cmfe_MeshElements_BasisSet
+  SUBROUTINE MeshElements_ElementBasisSet(meshElements,globalElementNumber,basis,err,error,*)
 
     !Argument variables
     TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the elements to set the basis for
-    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user number of the element to set the basis for
+    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global number of the element to set the basis for
     TYPE(BasisType), POINTER :: basis !<A pointer to the basis to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: globalElementNumber,overlappingNumberNodes,overlappingNumberDerivatives
+    INTEGER(INTG) :: basisMaxNumberOfDerivatives,basisNumberOfNodes,meshBasisMaxNumberOfDerivatives,meshBasisNumberOfNodes, &
+      & overlappingNumberNodes,overlappingNumberDerivatives
     INTEGER(INTG), ALLOCATABLE :: newUserElementNodes(:),newGlobalElementNodes(:),newUserElementNodeVersions(:,:)
     TYPE(BasisType), POINTER :: meshBasis
  
@@ -1257,21 +1225,24 @@ CONTAINS
 
     CALL MeshElements_AssertNotFinished(meshElements,err,error,*999)
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
-    
+   
     NULLIFY(meshBasis)
-    CALL MeshElements_BasisGet(meshElements,globalElementNumber,meshBasis,err,error,*999)
-    IF(meshBasis%numberOfNodes/=basis%numberOfNodes.OR. &
-      & meshBasis%maximumNumberOfDerivatives/=basis%maximumNumberOfDerivatives) THEN      
+    CALL MeshElements_ElementBasisGet(meshElements,globalElementNumber,meshBasis,err,error,*999)
+    CALL Basis_NumberOfLocalNodesGet(basis,basisNumberOfNodes,err,error,*999)
+    CALL Basis_MaximumNumberOfDerivativesGet(basis,basisMaxNumberOfDerivatives,err,error,*999)
+    CALL Basis_NumberOfLocalNodesGet(meshBasis,meshBasisNumberOfNodes,err,error,*999)
+    CALL Basis_MaximumNumberOfDerivativesGet(meshBasis,meshBasisMaxNumberOfDerivatives,err,error,*999)
+    IF(meshBasisNumberOfNodes/=basisNumberOfNodes.OR. &
+      & meshBasisMaxNumberOfDerivatives/=basisMaxNumberOfDerivatives) THEN      
       !Allocate new user and global element nodes
-      ALLOCATE(newUserElementNodes(basis%numberOfNodes),STAT=err)
+      ALLOCATE(newUserElementNodes(basisNumberOfNodes),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate new user element nodes",err,error,*999)
-      ALLOCATE(newGlobalElementNodes(basis%numberOfNodes),STAT=err)
+      ALLOCATE(newGlobalElementNodes(basisNumberOfNodes),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate new user element nodes",err,error,*999)
-      ALLOCATE(newUserElementNodeVersions(basis%maximumNumberOfDerivatives,basis%numberOfNodes),STAT=err)
+      ALLOCATE(newUserElementNodeVersions(basisMaxNumberOfDerivatives,basisNumberOfNodes),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate element node versions",err,error,*999)      
-      overlappingNumberNodes=MIN(basis%numberOfNodes,meshBasis%numberOfNodes)
-      overlappingNumberDerivatives=MIN(basis%maximumNumberOfDerivatives,meshBasis%maximumNumberOfDerivatives)
+      overlappingNumberNodes=MIN(basisNumberOfNodes,meshBasisNumberOfNodes)
+      overlappingNumberDerivatives=MIN(basisMaxNumberOfDerivatives,meshBasisMaxNumberOfDerivatives)
       !Set default values
       newUserElementNodeVersions=1
       newUserElementNodes(overlappingNumberNodes+1:)=0
@@ -1305,51 +1276,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the adjacent element number for a mesh element identified by a user number. \see OpenCMISS::Iron::cmfe_MeshElements_AdjacentElementGet
-  SUBROUTINE MeshElements_AdjacentElementGet(meshElements,userElementNumber,adjacentElementXi,adjacentUserNumber,err,error,*)
-
-    !Argument variables
-    TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the elements of a mesh component from which to get the adjacent element from.
-    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user number of the element to get the adjacent element for
-    INTEGER(INTG), INTENT(IN) :: adjacentElementXi !< The xi coordinate direction to get the adjacent element Note that -xiCoordinateDirection gives the adjacent element before the element in the xiCoordinateDirection'th direction and +xiCoordinateDirection gives the adjacent element after the element in the xiCoordinateDirection'th direction. The xiCoordinateDirection=0 index will give the information on the current element.
-    INTEGER(INTG), INTENT(OUT) :: adjacentUserNumber !<On return, the adjacent element number in the specified xi coordinate direction. Return 0 if the specified element has no adjacent elements in the specified xi coordinate direction.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: globalElementNumber
-    TYPE(BasisType), POINTER :: basis
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("MeshElements_AdjacentElementGet",err,error,*999)
-
-    CALL MeshElements_AssertIsFinished(meshElements,err,error,*999)
-    CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
-    NULLIFY(basis)
-    CALL MeshElements_BasisGet(meshElements,globalElementNumber,basis,err,error,*999)      
-    IF(adjacentElementXi<-basis%numberOfXi.OR.adjacentElementXi>basis%numberOfXi) THEN
-      localError="The specified adjacent element xi is invalid. The supplied xi is "// &
-        & TRIM(NumberToVString(adjacentElementXi,"*",err,error))//" and needs to be >= -"// &
-        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" and <= "// &
-        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(meshElements%elements(globalElementNumber)%adjacentElements(adjacentElementXi)%numberOfAdjacentElements > 0) THEN !\todo Currently returns only the first adjacent element for now as the python binding require the output array size of the adjacent element to be known a-prior. Add routine to first output number of adjacent elements and then loop over all adjacent elements
-      adjacentUserNumber=meshElements%elements(globalElementNumber)%adjacentElements(adjacentElementXi)%adjacentElements(1)
-    ELSE !Return 0 indicating the specified element has no adjacent elements in the specified xi coordinate direction.
-      adjacentUserNumber=0
-    ENDIF
-
-    EXITS("MeshElements_AdjacentElementGet")
-    RETURN
-999 ERRORSEXITS("MeshElements_AdjacentElementGet",err,error)
-    RETURN 1
-
-  END SUBROUTINE MeshElements_AdjacentElementGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Gets the element nodes for a mesh element identified by a given global number. \see OpenCMISS::Iron::cmfe_MeshElements_NodesGet
   SUBROUTINE MeshElements_ElementNodesGet(meshElements,userElementNumber,userElementNodes,err,error,*)
 
@@ -1366,7 +1292,7 @@ CONTAINS
     ENTERS("MeshElements_ElementNodesGet",err,error,*999)
 
     CALL MeshElements_AssertIsFinished(meshElements,err,error,*999)
-    CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
+    CALL MeshElements_GlobalNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
     IF(SIZE(userElementNodes,1)<SIZE(meshElements%elements(globalElementNumber)%userElementNodes,1)) THEN
       localError="The size of user element nodes is too small. The supplied size is "// &
         & TRIM(NumberToVString(SIZE(userElementNodes,1),"*",err,error))//" and it needs to be >= "// &
@@ -1412,9 +1338,9 @@ CONTAINS
     ENTERS("MeshElements_ElementNodesSet",err,error,*999)
 
     CALL MeshElements_AssertNotFinished(meshElements,err,error,*999)
-    CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
+    CALL MeshElements_GlobalNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
     NULLIFY(basis)
-    CALL MeshElements_BasisGet(meshElements,globalElementNumber,basis,err,error,*999)      
+    CALL MeshElements_ElementBasisGet(meshElements,globalElementNumber,basis,err,error,*999)      
     IF(SIZE(userElementNodes,1)<basis%numberOfNodes) THEN
       localError="The size of user element nodes is too small. The supplied size is "// &
         & TRIM(NumberToVString(SIZE(userElementNodes,1),"*",err,error))//" and it needs to be >= "// &
@@ -1520,9 +1446,9 @@ CONTAINS
     ENTERS("MeshElements_ElementNodeVersionSet",err,error,*999)
 
     CALL MeshElements_AssertNotFinished(meshElements,err,error,*999)
-    CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
+    CALL MeshElements_GlobalNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
     NULLIFY(basis)
-    CALL MeshElements_BasisGet(meshElements,globalElementNumber,basis,err,error,*999)            
+    CALL MeshElements_ElementBasisGet(meshElements,globalElementNumber,basis,err,error,*999)            
     IF(userElementNodeIndex<1.OR.userElementNodeIndex>basis%numberOfNodes) THEN
       localError="The specified element local node index of "//TRIM(NumberToVString(userElementNodeIndex,"*",err,error))// &
         & " is invalid. The element local node index should be between 1 and "// &
@@ -1578,9 +1504,9 @@ CONTAINS
     ENTERS("MeshElements_ElementNodeVersionSet",err,error,*999)
 
     CALL MeshElements_AssertNotFinished(meshElements,err,error,*999)
-    CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
+    CALL MeshElements_GlobalNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
     NULLIFY(basis)    
-    CALL MeshElements_BasisGet(meshElements,globalElementNumber,basis,err,error,*999)
+    CALL MeshElements_ElementBasisGet(meshElements,globalElementNumber,basis,err,error,*999)
     NULLIFY(meshTopology)
     CALL MeshElements_MeshTopologyGet(meshElements,meshTopology,err,error,*999)
     NULLIFY(meshNodes)
@@ -1650,7 +1576,7 @@ CONTAINS
     !Loop over the global elements in the mesh
     DO elementIdx=1,meshElements%numberOfElements
       NULLIFY(basis)
-      CALL MeshElements_BasisGet(meshElements,elementIdx,basis,err,error,*999)
+      CALL MeshElements_ElementBasisGet(meshElements,elementIdx,basis,err,error,*999)
       !First initialize lists that are required to find the adjacent elements list
       DO xiCoordIdx=-basis%numberOfXiCoordinates,basis%numberOfXiCoordinates
         NULLIFY(adjacentElementsList(xiCoordIdx)%ptr)
@@ -2021,41 +1947,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the user element number for a global element number. \see OpenCMISS::Iron::cmfe_MeshElements_UserNumberGet
-  SUBROUTINE MeshElements_ElementUserNumberGet(meshElements,globalNumber,userNumber,err,error,*)
-
-    !Argument variables
-    TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the elements to set the user number for 
-    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number of the elements to get.
-    INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, The user number of the element to get
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("MeshElements_ElementUserNumberGet",err,error,*999)
-
-    CALL MeshElements_AssertIsFinished(meshElements,err,error,*999)
-    IF(globalNumber<1.OR.globalNumber>meshElements%numberOfElements) THEN          
-      localError="The specified global element number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
-        & " is invalid. The global element number must be between 1 and "// &
-        & TRIM(NumberToVString(meshElements%numberOfElements,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
-    userNumber=meshElements%elements(globalNumber)%userNumber
-    
-    EXITS("MeshElements_ElementUserNumberGet")
-    RETURN
-999 ERRORSEXITS("MeshElements_ElementUserNumberGet",err,error)
-    RETURN 1
-  
-  END SUBROUTINE MeshElements_ElementUserNumberGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Changes/sets the user number for a global element identified by a given global number. \see OpenCMISS::Iron::cmfe_MeshElements_UserNumberSet
   SUBROUTINE MeshElements_ElementUserNumberSet(meshElements,globalNumber,userNumber,err,error,*)
 
@@ -2414,24 +2305,21 @@ CONTAINS
   !
   
   !>Returns if the element in a mesh is on the boundary or not
-  SUBROUTINE MeshElements_ElementOnBoundaryGet(meshElements,userElementNumber,onBoundary,err,error,*)
+  SUBROUTINE MeshElements_ElementOnBoundaryGet(meshElements,globalElementNumber,onBoundary,err,error,*)
 
     !Argument variables
     TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the mesh element containing the element to get the boundary type for
-    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the boundary type for
-    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type of the specified user element number.
+    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to get the boundary type for
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type of the specified glboal element number. \see MeshRoutines_MeshBoundaryTypes,MeshRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: globalElementNumber
+    LOGICAL :: boundaryElement
 
     ENTERS("MeshElements_ElementOnBoundaryGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(meshElements%elements)) CALL FlagError("Mesh elements elements is not associated.",err,error,*999)
-    
-    CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
-    IF(meshElements%elements(globalElementNumber)%boundaryElement) THEN
+    CALL MeshElements_ElementBoundaryElementGet(meshElements,globalElementNumber,boundaryElement,err,error,*999)
+    IF(boundaryElement) THEN
       onBoundary=MESH_ON_DOMAIN_BOUNDARY
     ELSE
       onBoundary=MESH_OFF_DOMAIN_BOUNDARY
@@ -2439,8 +2327,7 @@ CONTAINS
     
     EXITS("MeshElements_ElementOnBoundaryGet")
     RETURN
-999 onBoundary=MESH_OFF_DOMAIN_BOUNDARY
-    ERRORSEXITS("MeshElements_ElementOnBoundaryGet",err,error)    
+999 ERRORSEXITS("MeshElements_ElementOnBoundaryGet",err,error)    
     RETURN 1
    
   END SUBROUTINE MeshElements_ElementOnBoundaryGet
@@ -2516,7 +2403,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,elementIdx,insertStatus,localNodeIdx,globalNode,meshNodeIdx,meshNode,numberOfNodes 
+    INTEGER(INTG) :: dummyErr,elementIdx,insertStatus,localNodeIdx,globalNode,meshNodeIdx,meshNode,numberOfLocalNodes,numberOfNodes 
     INTEGER(INTG), POINTER :: globalNodeNumbers(:)
     TYPE(BasisType), POINTER :: basis
     TYPE(MeshType), POINTER :: mesh
@@ -2552,8 +2439,9 @@ CONTAINS
     CALL Tree_CreateFinish(globalNodesTree,err,error,*999)
     DO elementIdx=1,meshElements%numberOfElements
       NULLIFY(basis)
-      CALL MeshElements_BasisGet(meshElements,elementIdx,basis,err,error,*999)
-      DO localNodeIdx=1,basis%numberOfNodes
+      CALL MeshElements_ElementBasisGet(meshElements,elementIdx,basis,err,error,*999)
+      CALL Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*999)
+      DO localNodeIdx=1,numberOfLocalNodes
         globalNode=meshElements%elements(elementIdx)%globalElementNodes(localNodeIdx)
         CALL Tree_ItemInsert(globalNodesTree,globalNode,globalNode,insertStatus,err,error,*999)
       ENDDO !localNodeIdx
@@ -2577,21 +2465,20 @@ CONTAINS
     !Now recalculate the mesh element nodes
     DO elementIdx=1,meshElements%numberOfElements
       NULLIFY(basis)
-      CALL MeshElements_BasisGet(meshElements,elementIdx,basis,err,error,*999)
+      CALL MeshElements_ElementBasisGet(meshElements,elementIdx,basis,err,error,*999)
       ALLOCATE(meshElements%elements(elementIdx)%meshElementNodes(basis%numberOfNodes),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate mesh topology elements mesh element nodes.",err,error,*999)
       DO localNodeIdx=1,basis%numberOfNodes
         globalNode=meshElements%elements(elementIdx)%globalElementNodes(localNodeIdx)
         NULLIFY(treeNode)
         CALL Tree_Search(meshNodes%nodesTree,globalNode,treeNode,err,error,*999)
-        IF(ASSOCIATED(treeNode)) THEN
-          CALL Tree_NodeValueGet(meshNodes%nodesTree,treeNode,meshNode,err,error,*999)
-          meshElements%elements(elementIdx)%meshElementNodes(localNodeIdx)=meshNode
-        ELSE
-          localError="Could not find global node "//TRIM(NumberToVString(globalNode,"*",err,error))//" (user node "// &
+        IF(.NOT.ASSOCIATED(treeNode)) THEN
+           localError="Could not find global node "//TRIM(NumberToVString(globalNode,"*",err,error))//" (user node "// &
             & TRIM(NumberToVString(nodes%nodes(globalNode)%userNumber,"*",err,error))//") in the mesh nodes."
           CALL FlagError(localError,err,error,*999)
         ENDIF
+        CALL Tree_NodeValueGet(meshNodes%nodesTree,treeNode,meshNode,err,error,*999)
+        meshElements%elements(elementIdx)%meshElementNodes(localNodeIdx)=meshNode
       ENDDO !localNodeIdx
     ENDDO !elementIdx
     
@@ -2703,7 +2590,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: derivativeIdx,dummyErr,element,elementIdx,globalDerivative,localNodeIdx,maxNumberOfDerivatives,nodeIdx, &
-      & nodeUserNumber,numberOfDerivatives
+      & nodeUserNumber,numberOfDerivatives,numberOfLocalNodes,numberOfNodeDerivatives,partialDerivativeIdx
     INTEGER(INTG), ALLOCATABLE :: derivatives(:)
     LOGICAL :: found
     TYPE(BasisType), POINTER :: basis
@@ -2725,7 +2612,7 @@ CONTAINS
     DO nodeIdx=1,meshNodes%numberOfNodes
       !Calculate the number of derivatives and versions at each node. This needs to be calculated by looking at the
       !mesh elements as we may have an adjacent element in another domain with a higher order basis also with versions.
-      CALL MeshNodes_UserNodeNumberGet(meshNodes,nodeIdx,nodeUserNumber,err,error,*999)
+      CALL MeshNodes_NodeUserNumberGet(meshNodes,nodeIdx,nodeUserNumber,err,error,*999)
       NULLIFY(nodeDerivativeList)
       CALL List_CreateStart(nodeDerivativeList,err,error,*999)
       CALL List_DataTypeSet(nodeDerivativeList,LIST_INTG_TYPE,err,error,*999)
@@ -2735,10 +2622,11 @@ CONTAINS
       DO elementIdx=1,meshNodes%nodes(nodeIdx)%numberOfSurroundingElements
         element=meshNodes%nodes(nodeIdx)%surroundingElements(elementIdx)
         NULLIFY(basis)
-        CALL MeshElements_BasisGet(meshElements,element,basis,err,error,*999)
+        CALL MeshElements_ElementBasisGet(meshElements,element,basis,err,error,*999)
+        CALL Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*999)
         !Find the local node corresponding to this node
         found=.FALSE.
-        DO localNodeIdx=1,basis%numberOfNodes
+        DO localNodeIdx=1,numberOfLocalNodes
           IF(meshElements%elements(element)%meshElementNodes(localNodeIdx)==nodeIdx) THEN
             found=.TRUE.
             EXIT
@@ -2750,11 +2638,12 @@ CONTAINS
             & "."
           CALL FlagError(localError,err,error,*999)
         ENDIF
-        DO derivativeIdx=1,basis%numberOfDerivatives(localNodeIdx)
-          CALL List_ItemAdd(nodeDerivativeList,basis%partialDerivativeIndex(derivativeIdx,localNodeIdx),err,error,*999)
+        CALL Basis_NodeNumberOfDerivativesGet(basis,localNodeIdx,numberOfNodeDerivatives,err,error,*999)
+        DO derivativeIdx=1,numberOfNodeDerivatives
+          CALL Basis_PartialDerivativeGet(basis,derivativeIdx,localNodeIdx,partialDerivativeIdx,err,error,*999)
+          CALL List_ItemAdd(nodeDerivativeList,partialDerivativeIdx,err,error,*999)
         ENDDO !derivativeIdx
-        IF(basis%numberOfDerivatives(localNodeIdx)>maxNumberOfDerivatives) &
-          & maxNumberOfDerivatives=basis%numberOfDerivatives(localNodeidx)
+        IF(numberOfNodeDerivatives>maxNumberOfDerivatives) maxNumberOfDerivatives=numberOfNodeDerivatives
       ENDDO !elem_idx
       CALL List_RemoveDuplicates(nodeDerivativeList,err,error,*999)
       CALL List_DetachAndDestroy(nodeDerivativeList,numberOfDerivatives,derivatives,err,error,*999)
@@ -2818,7 +2707,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: elementIdx,localNodeIdx,derivativeIdx,nodeIdx,numberOfVersions,versionIdx
+    INTEGER(INTG) :: elementIdx,localNodeIdx,derivativeIdx,nodeIdx,numberOfLocalNodes,numberOfNodeDerivatives, &
+      & numberOfVersions,versionIdx
     INTEGER(INTG), ALLOCATABLE :: versions(:)
     TYPE(BasisType), POINTER :: basis
     TYPE(ListPtrType), POINTER :: nodeVersionList(:,:)
@@ -2852,9 +2742,11 @@ CONTAINS
     ENDDO!nodeIdx
     DO elementIdx=1,meshElements%numberOfElements
       NULLIFY(basis)
-      CALL MeshElements_BasisGet(meshElements,elementIdx,basis,err,error,*999)
-      DO localNodeIdx=1,basis%numberOfNodes
-        DO derivativeIdx=1,basis%numberOfDerivatives(localNodeIdx)
+      CALL MeshElements_ElementBasisGet(meshElements,elementIdx,basis,err,error,*999)
+      CALL Basis_NumberOfLocalNodesGet(baSis,numberOfLocalNodes,err,error,*999)
+      DO localNodeIdx=1,numberOfLocalNodes
+        CALL Basis_NodeNumberOfDerivativesGet(basis,localNodeIdx,numberOfNodeDerivatives,err,error,*999)
+        DO derivativeIdx=1,numberOfNodeDerivatives
           CALL List_ItemAdd(nodeVersionList(derivativeIdx,meshElements%elements(elementIdx)%meshElementNodes(localNodeIdx))%ptr, &
             & meshElements%elements(elementIdx)%userElementNodeVersions(derivativeIdx,localNodeIdx),err,error,*999)
         ENDDO!derivativeIdx
@@ -2924,7 +2816,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: element,elementIdx,insertPosition,localNodeIdx,node,surroundingElementNumber
+    INTEGER(INTG) :: element,elementIdx,insertPosition,localNodeIdx,node,numberOfLocalNodes,surroundingElementNumber
     INTEGER(INTG), ALLOCATABLE :: newSurroundingElements(:)
     LOGICAL :: foundElement
     TYPE(BasisType), POINTER :: basis
@@ -2943,8 +2835,9 @@ CONTAINS
 
     DO elementIdx=1,meshElements%numberOfElements
       NULLIFY(basis)
-      CALL MeshElements_BasisGet(meshElements,elementIdx,basis,err,error,*999)
-      DO localNodeIdx=1,basis%numberOfNodes
+      CALL MeshElements_ElementBasisGet(meshElements,elementIdx,basis,err,error,*999)
+      CALL Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*999)
+      DO localNodeIdx=1,numberOfLocalNodes
         node=meshElements%elements(elementIdx)%meshElementNodes(localNodeIdx)
         foundElement=.FALSE.
         element=1

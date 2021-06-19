@@ -379,16 +379,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: adjacentElementIdx,adjacentElementNodeNumber,adjacentElementNumber,adjacencyWeights(1), &
-      & adjacentVertexNumber,computationNodeIdx,domainNumber, &
-      & edgeNumber,elementIdx,elementNodeNumber,elementNumber,elementStart,elementStop,graphElement, &
-      & graphNodeElement,groupCommunicator,insertStatus,interfaceElementIdx,linkedElement,linkedNodeElement, &
-      & maxNumberOfElementsPerNode,maxNumberOfVerticesPerNode,mpiIError, &
-      & myComputationNodeNumber,myTotalNumberOfEdges,myVertexStart, &
-      & myVertexStop,myNumberOfVertices,numberFlag, &
-      & numberOfComputationNodes,numberOfConstraints,numberOfEdges,numberOfGraphNodes,numberOfMeshElements, &
-      & numberOfNodeElements,numberOfNodeVertices,numberOfVertices, &
-      & oldSuperVertexNumber,parmetisOptions(0:2),randomSeedsSize,sumEdges,superVertexNumber,totalNumberOfElements, &
-      & totalNumberOfVertices,vertexIdx,vertexNumber,vertexStart,vertexStop,vertexRankNumber,weightFlag,xicIdx
+      & adjacentVertexNumber,computationNodeIdx,domainNumber,edgeNumber,elementIdx,elementNodeNumber,elementNumber, &
+      & elementStart,elementStop,graphElement,graphNodeElement,groupCommunicator,insertStatus,interfaceElementIdx, &
+      & linkedElement,linkedNodeElement,maxNumberOfElementsPerNode,maxNumberOfVerticesPerNode,mpiIError, &
+      & myComputationNodeNumber,myTotalNumberOfEdges,myVertexStart,myVertexStop,myNumberOfVertices,numberFlag, &
+      & numberOfComputationNodes,numberOfConstraints,numberOfEdges,numberOfGraphNodes,numberOfInterfaceElements, &
+      & numberOfMeshElements,numberOfNodeElements,numberOfNodeVertices,numberOfVertices,oldSuperVertexNumber, &
+      & parmetisOptions(0:2),randomSeedsSize,sumEdges,superVertexNumber,totalNumberOfElements,totalNumberOfVertices, &
+      & vertexIdx,vertexNumber,vertexStart,vertexStop,vertexRankNumber,weightFlag,xicIdx
     INTEGER(INTG), ALLOCATABLE :: adjacency(:),elementCounts(:),elementDisplacements(:),elementOffset(:),element2VertexMap(:), &
       & elementStarts(:),elementStops(:),numberOfElements(:),myNumberOfEdges(:),vertexDomain(:), &
       & randomSeeds(:),elementReceiveCounts(:),vertexDisplacements(:),vertexDistance(:),vertexReceiveCounts(:), &
@@ -521,11 +519,13 @@ CONTAINS
         NULLIFY(meshConnectivity)
         CALL Interface_MeshConnectivityGet(INTERFACE,meshConnectivity,err,error,*999)
         !Add in any graph edges from the mesh connectivity.
-        DO interfaceElementIdx=1,meshConnectivity%numberOfInterfaceElements
-          graphNodeElement=meshConnectivity%elementConnectivity(interfaceElementIdx,1)%coupledElementNumber
+        CALL InterfaceMeshConnectivity_NumberOfInterfaceElementsGet(meshConnectivity,numberOfInterfaceElements,err,error,*999)
+        DO interfaceElementIdx=1,numberOfInterfaceElements
+          CALL InterfaceMeshConnectivity_CoupledElementNumberGet(meshConnectivity,interfaceElementIdx,1,graphNodeElement, &
+            & err,error,*999)
           graphElement=graphNodeElement+graphNode%elementOffset
-          linkedNodeElement=meshConnectivity%elementConnectivity(interfaceElementIdx,graphNode%currentLinkIndex+1)% &
-            & coupledElementNumber
+          CALL InterfaceMeshConnectivity_CoupledElementNumberGet(meshConnectivity,interfaceElementIdx, &
+            & graphNode%currentLinkIndex+1,linkedNodeElement,err,error,*999)
           linkedElement=linkedNodeElement+linkedNode%elementOffset
           IF(element2VertexMap(graphElement)==0.AND.element2VertexMap(linkedElement)==0) THEN
             superVertexNumber=superVertexNumber+1
@@ -850,8 +850,10 @@ CONTAINS
         CALL Decomposition_InterfaceGet(decomposition,interface,err,error,*999)
         NULLIFY(meshConnectivity)
         CALL Interface_MeshConnectivityGet(interface,meshConnectivity,err,error,*999)
-        DO interfaceElementIdx=1,meshConnectivity%numberOfInterfaceElements
-          graphNodeElement=meshConnectivity%elementConnectivity(interfaceElementIdx,1)%coupledElementNumber
+        CALL InterfaceMeshConnectivity_NumberOfInterfaceElementsGet(meshConnectivity,numberOfInterfaceElements,err,error,*999)
+        DO interfaceElementIdx=1,numberOfInterfaceElements
+          CALL InterfaceMeshConnectivity_CoupledElementNumberGet(meshConnectivity,interfaceElementIdx,1,graphNodeElement, &
+            & err,error,*999)
           graphElement=graphNodeElement+graphNode%elementOffset
           vertexNumber=element2VertexMap(graphElement)
           domainNumber=vertexDomain(vertexNumber)
@@ -1668,7 +1670,7 @@ CONTAINS
         DO coupledDecompositionIdx=1,SIZE(decompositionConnectivity%elementConnectivity,2)
           DO elementIdx=1,SIZE(decompositionConnectivity%elementConnectivity,1)
             CALL DecompositionElementConnectivity_Finalise(decompositionConnectivity% &
-              & elementConnectivity(elementIdx,coupledDecompositionIdx),err,error,*999)
+              & elementConnectivity(elementIdx,coupledDecompositionIdx)%ptr,err,error,*999)
           ENDDO !elementIdx
         ENDDO !coupledDecompositionIdx
         DEALLOCATE(decompositionConnectivity%elementConnectivity)
@@ -2029,7 +2031,7 @@ CONTAINS
     CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     NULLIFY(decompositionElements)
     CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
-    CALL DecompositionElements_LocalElementNumberGet(decompositionElements,elementUserNumber,elementLocalNumber, &
+    CALL DecompositionElements_LocalNumberGet(decompositionElements,elementUserNumber,elementLocalNumber, &
       & ghostElement,err,error,*999)
     NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
@@ -2348,7 +2350,7 @@ CONTAINS
     CALL Mesh_MeshTopologyGet(mesh,1,meshTopology,err,error,*999)
     NULLIFY(meshElements)
     CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
-    CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
+    CALL MeshElements_GlobalNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
     domainNumber=decomposition%elementDomain(globalElementNumber)
     
     EXITS("Decomposition_ElementDomainGet")
@@ -2387,7 +2389,7 @@ CONTAINS
     CALL Mesh_MeshTopologyGet(mesh,1,meshTopology,err,error,*999)
     NULLIFY(meshElements)
     CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
-    CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
+    CALL MeshElements_GlobalNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
     CALL WorkGroup_NumberOfGroupNodesGet(decomposition%workGroup,numberOfComputationNodes,err,error,*999)
     IF(domainNumber<0.OR.domainNumber>=numberOfComputationNodes) THEN
       localError="Domain number "//TRIM(NumberToVString(domainNumber,"*",err,error))// &
@@ -2887,7 +2889,7 @@ CONTAINS
     CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     NULLIFY(decompositionElements)
     CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
-    CALL DecompositionElements_LocalElementNumberGet(decompositionElements,elementUserNumber,elementLocalNumber, &
+    CALL DecompositionElements_LocalNumberGet(decompositionElements,elementUserNumber,elementLocalNumber, &
       & ghostElement,err,error,*999)
     NULLIFY(decompositionData)
     CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,decompositionData,err,error,*999)
@@ -2941,7 +2943,7 @@ CONTAINS
     CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
     NULLIFY(decompositionData)
     CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,decompositionData,err,error,*999)
-    CALL DecompositionElements_LocalElementNumberGet(decompositionElements,userElementNumber,localElementNumber, &
+    CALL DecompositionElements_LocalNumberGet(decompositionElements,userElementNumber,localElementNumber, &
        & ghostElement,err,error,*999)
     numberOfDataPoints = decompositionData%elementDataPoints(localElementNumber)%numberOfProjectedData
     IF(dataPointIndex<=0.OR.dataPointIndex>numberOfDataPoints) THEN
@@ -2990,7 +2992,7 @@ CONTAINS
     CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
     NULLIFY(decompositionData)
     CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,decompositionData,err,error,*999)
-    CALL DecompositionElements_LocalElementNumberGet(decompositionElements,userElementNumber,localElementNumber, &
+    CALL DecompositionElements_LocalNumberGet(decompositionElements,userElementNumber,localElementNumber, &
       & ghostElement,err,error,*999)
     
     numberOfDataPoints=decompositionData%elementDataPoints(localElementNumber)%numberOfProjectedData
@@ -5277,7 +5279,7 @@ CONTAINS
       localElementNumbers(domainNumber)=localElementNumbers(domainNumber)+1
       !Calculate the adjacent elements to the computation domains and the adjacent domain numbers themselves
       NULLIFY(basis)
-      CALL MeshElements_BasisGet(meshElements,elementIdx,basis,err,error,*999)
+      CALL MeshElements_ElementBasisGet(meshElements,elementIdx,basis,err,error,*999)
       NULLIFY(adjacentDomainsList)
       CALL List_CreateStart(adjacentDomainsList,err,error,*999)
       CALL List_DataTypeSet(adjacentDomainsList,LIST_INTG_TYPE,err,error,*999)
@@ -6260,7 +6262,7 @@ CONTAINS
       CALL DomainElement_Initialise(domainElements%elements(elementIdx),err,error,*999)
       globalElement=elementsMapping%localToGlobalMap(elementIdx)
       NULLIFY(basis)
-      CALL MeshElements_BasisGet(meshElements,globalElement,basis,err,error,*999)
+      CALL MeshElements_ElementBasisGet(meshElements,globalElement,basis,err,error,*999)
       domainElements%elements(elementIdx)%number=elementIdx
       domainElements%elements(elementIdx)%basis=>basis
       ALLOCATE(domainElements%elements(elementIdx)%elementNodes(basis%numberOfNodes),STAT=err)

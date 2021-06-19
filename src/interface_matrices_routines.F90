@@ -79,6 +79,11 @@ MODULE InterfaceMatricesRoutines
 
   !Interfaces
 
+  INTERFACE InterfaceMatrices_MatrixCoefficientSet
+    MODULE PROCEDURE InterfaceMatrices_MatrixCoefficientSet0
+    MODULE PROCEDURE InterfaceMatrices_MatrixCoefficientSet1
+  END INTERFACE InterfaceMatrices_MatrixCoefficientSet
+
   INTERFACE InterfaceMatrices_StorageTypeSet
     MODULE PROCEDURE InterfaceMatrices_StorageTypeSet0
     MODULE PROCEDURE InterfaceMatrices_StorageTypeSet1    
@@ -88,6 +93,11 @@ MODULE InterfaceMatricesRoutines
     MODULE PROCEDURE InterfaceMatrices_StructureTypeSet0
     MODULE PROCEDURE InterfaceMatrices_StructureTypeSet1    
   END INTERFACE InterfaceMatrices_StructureTypeSet
+
+  INTERFACE InterfaceMatrices_TransposeMatrixCoefficientSet
+    MODULE PROCEDURE InterfaceMatrices_TransposeMatrixCoefficientSet0
+    MODULE PROCEDURE InterfaceMatrices_TransposeMatrixCoefficientSet1
+  END INTERFACE InterfaceMatrices_TransposeMatrixCoefficientSet
 
   PUBLIC InterfaceMatrices_CreateFinish,InterfaceMatrices_CreateStart
 
@@ -101,11 +111,23 @@ MODULE InterfaceMatricesRoutines
 
   PUBLIC InterfaceMatrices_Output
 
+  PUBLIC InterfaceMatrices_MatrixCoefficientSet
+
   PUBLIC InterfaceMatrices_StorageTypeSet
 
   PUBLIC InterfaceMatrices_StructureTypeSet
 
+  PUBLIC InterfaceMatrices_TransposeMatrixCoefficientSet
+
   PUBLIC InterfaceMatrices_ValueInitialise
+
+  PUBLIC InterfaceMatrix_MatrixCoefficientSet
+
+  PUBLIC InterfaceMatrix_StorageTypeSet
+
+  PUBLIC InterfaceMatrix_StructureTypeSet
+
+  PUBLIC InterfaceMatrix_TransposeMatrixCoefficientSet
 
 CONTAINS
 
@@ -221,6 +243,8 @@ CONTAINS
         CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
         NULLIFY(interfaceMatrixToVarMap)
         CALL InterfaceMapping_InterfaceMatrixToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixToVarMap,err,error,*999)
+        NULLIFY(rowsFieldVariable)
+        CALL InterfaceMappingIMToVMap_VariableGet(interfaceMatrixToVarMap,rowsFieldVariable,err,error,*999)
         CALL InterfaceMappingIMToVMap_MeshIndexGet(interfaceMatrixToVarMap,rowsMeshIdx,err,error,*999)
         IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
           !If the rows and column variables are both the Lagrange variable (this is the diagonal matrix)
@@ -602,14 +626,14 @@ CONTAINS
                     !Loop over the row DOFs in the domain mesh element
                     CALL Basis_NumberOfLocalNodesGet(rowBasis,numberOfLocalRowNodes,err,error,*999)
                     DO rowLocalNodeIdx=1,numberOfLocalRowNodes
-                      CALL DomainElements_ElementNodeGet(rowDomainElements,rowLocalNodeIdx,interfaceElementIdx,rowNode, &
+                      CALL DomainElements_ElementNodeGet(rowDomainElements,rowLocalNodeIdx,domainElement,rowNode, &
                         & err,error,*999)
                       CALL Basis_NodeNumberOfDerivativesGet(rowBasis,rowLocalNodeIdx,numberOfRowNodeDerivatives,err,error,*999)
                       DO rowLocalDerivativeIdx=1,numberOfRowNodeDerivatives
                         CALL DomainElements_ElementDerivativeGet(rowDomainElements,rowLocalDerivativeIdx,rowLocalNodeIdx, &
-                          & interfaceElementIdx,rowDerivative,err,error,*999)
+                          & domainElement,rowDerivative,err,error,*999)
                         CALL DomainElements_ElementVersionGet(rowDomainElements,rowLocalDerivativeIdx,rowLocalNodeIdx, &
-                          & interfaceElementIdx,rowVersion,err,error,*999)
+                          & domainElement,rowVersion,err,error,*999)
                         CALL FieldVariable_LocalNodeDOFGet(rowVariable,rowVersion,rowDerivative,rowNode,rowComponentIdx, &
                           & localRow,err,error,*999)
                         CALL List_ItemAdd(columnIndicesLists(localRow)%ptr,globalColumn,err,error,*999)
@@ -1127,6 +1151,72 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets the matrix coefficients of the interface matrices
+  SUBROUTINE InterfaceMatrices_MatrixCoefficientSet0(interfaceMatrices,matrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices
+    REAL(DP), INTENT(IN) :: matrixCoefficient !<The multiplicative matrix coefficient for the interface matrices. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("InterfaceMatrices_MatrixCoefficientSet0",err,error,*999)
+
+    CALL InterfaceMatrices_MatrixCoefficientSet1(interfaceMatrices,[matrixCoefficient],err,error,*999)
+     
+    EXITS("InterfaceMatrices_MatrixCoefficientSet0")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_MatrixCoefficientSet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrices_MatrixCoefficientSet0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the matrix coefficients of the interface matrices
+  SUBROUTINE InterfaceMatrices_MatrixCoefficientSet1(interfaceMatrices,matrixCoefficients,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices
+    REAL(DP), INTENT(IN) :: matrixCoefficients(:) !<matrixCoefficients(matrixIdx). The multiplicative matrix coefficient for the matrixIdx'th inteface matrices.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("InterfaceMatrices_MatrixCoefficientSet1",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+    IF(SIZE(matrixCoefficients,1)/=interfaceMatrices%numberOfInterfaceMatrices) THEN
+      localError="The size of the matrix coefficients array of "// &
+        & TRIM(NumberToVString(SIZE(matrixCoefficients,1),"*",err,error))// &
+        & " is not equal to the number of interface matrices of"// &
+        & TRIM(NumberToVString(interfaceMatrices%numberOfInterfaceMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+      NULLIFY(interfaceMatrix)
+      CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+      CALL InterfaceMatrix_MatrixCoefficientSet(interfaceMatrix,matrixCoefficients(matrixIdx),err,error,*999)
+    ENDDO !matrixIdx
+     
+    EXITS("InterfaceMatrices_MatrixCoefficientSet1")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_MatrixCoefficientSet1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrices_MatrixCoefficientSet1
+
+  !
+  !================================================================================================================================
+  !
+
   !>Sets the storage type (sparsity) of the interface matrices
   SUBROUTINE InterfaceMatrices_StorageTypeSet0(interfaceMatrices,storageType,err,error,*)
 
@@ -1179,26 +1269,7 @@ CONTAINS
     DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
       NULLIFY(interfaceMatrix)
       CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
-      SELECT CASE(storageTypes(matrixIdx))
-      CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE
-      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE        
-      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE
-      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE
-      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
-      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
-      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
-      CASE DEFAULT
-        localError="The specified storage type of "//TRIM(NumberToVString(storageTypes(matrixIdx),"*",err,error))// &
-          & " for interface matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
+      CALL InterfaceMatrix_StorageTypeSet(interfaceMatrix,storageTypes(matrixIdx),err,error,*999)
     ENDDO !matrixIdx
      
     EXITS("InterfaceMatrices_StorageTypeSet1")
@@ -1263,17 +1334,7 @@ CONTAINS
     DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
       NULLIFY(interfaceMatrix)
       CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
-      SELECT CASE(structureTypes(matrixIdx))
-      CASE(INTERFACE_MATRIX_NO_STRUCTURE)
-        interfaceMatrix%structureType=INTERFACE_MATRIX_NO_STRUCTURE
-      CASE(INTERFACE_MATRIX_FEM_STRUCTURE)
-        interfaceMatrix%structureType=INTERFACE_MATRIX_FEM_STRUCTURE
-      CASE DEFAULT
-        localError="The specified strucutre type of "// &
-          & TRIM(NumberToVString(structureTypes(matrixIdx),"*",err,error))//" for interface matrix number "// &
-          & TRIM(NumberToVString(matrixIdx,"*",err,error))//" is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
+      CALL InterfaceMatrix_StructureTypeSet(interfaceMatrix,structureTypes(matrixIdx),err,error,*999)
     ENDDO !matrixIdx
     
     EXITS("InterfaceMatrices_StructureTypeSet1")
@@ -1283,6 +1344,72 @@ CONTAINS
     
   END SUBROUTINE InterfaceMatrices_StructureTypeSet1
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the transpose matrix coefficients of the interface matrices
+  SUBROUTINE InterfaceMatrices_TransposeMatrixCoefficientSet0(interfaceMatrices,transposeMatrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices
+    REAL(DP), INTENT(IN) :: transposeMatrixCoefficient !<The multiplicative matrix coefficient for the transposed interface matrices. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("InterfaceMatrices_TransposeMatrixCoefficientSet0",err,error,*999)
+
+    CALL InterfaceMatrices_TransposeMatrixCoefficientSet1(interfaceMatrices,[transposeMatrixCoefficient],err,error,*999)
+     
+    EXITS("InterfaceMatrices_TranposeMatrixCoefficientSet0")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_TransposeMatrixCoefficientSet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrices_TransposeMatrixCoefficientSet0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the matrix coefficients of the transposed interface matrices
+  SUBROUTINE InterfaceMatrices_TransposeMatrixCoefficientSet1(interfaceMatrices,transposeMatrixCoefficients,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices
+    REAL(DP), INTENT(IN) :: transposeMatrixCoefficients(:) !<transposeMatrixCoefficients(matrixIdx). The multiplicative matrix coefficient for the matrixIdx'th transposed inteface matrices.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("InterfaceMatrices_TransposeMatrixCoefficientSet1",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+    IF(SIZE(transposeMatrixCoefficients,1)/=interfaceMatrices%numberOfInterfaceMatrices) THEN
+      localError="The size of the transpose matrix coefficients array of "// &
+        & TRIM(NumberToVString(SIZE(transposeMatrixCoefficients,1),"*",err,error))// &
+        & " is not equal to the number of interface matrices of"// &
+        & TRIM(NumberToVString(interfaceMatrices%numberOfInterfaceMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+      NULLIFY(interfaceMatrix)
+      CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+      CALL InterfaceMatrix_TransposeMatrixCoefficientSet(interfaceMatrix,transposeMatrixCoefficients(matrixIdx),err,error,*999)
+    ENDDO !matrixIdx
+     
+    EXITS("InterfaceMatrices_TransposeMatrixCoefficientSet1")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_TransposeMatrixCoefficientSet1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrices_TransposeMatrixCoefficientSet1
+
   !
   !================================================================================================================================
   !
@@ -1420,6 +1547,165 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMatrix_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the matrix coefficient for an interface matrix.
+  SUBROUTINE InterfaceMatrix_MatrixCoefficientSet(interfaceMatrix,matrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to set the matrix coefficient for
+    REAL(DP), INTENT(IN) :: matrixCoefficient !<The matrix coefficient to set for the interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("InterfaceMatrix_MatrixCoefficientSet",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+    IF(ABS(matrixCoefficient)<=ZERO_TOLERANCE) THEN
+      localError="The specified matrix coefficient of "//TRIM(NumberToVString(matrixCoefficient,"*",err,error))// &
+        & " for interface matrix "//TRIM(NumberToVString(interfaceMatrix%matrixNumber,"*",err,error))// &
+        & " is invalid. The matrix coefficient should be /= 0.0"
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    interfaceMatrix%matrixCoefficient=matrixCoefficient
+       
+    EXITS("InterfaceMatrix_MatrixCoefficientSet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrix_MatrixCoefficientSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_MatrixCoefficientSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the storage (sparsity) type for an interface matrix.
+  SUBROUTINE InterfaceMatrix_StorageTypeSet(interfaceMatrix,storageType,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to set the storage type for
+    INTEGER(INTG), INTENT(IN) :: storageType !<The storage type to set for the interface matrix. \see InterfaceMatricesRoutines_InterfaceMatricesSparsityTypes,InterfaceMatricesRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("InterfaceMatrix_StorageTypeSet",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+
+    SELECT CASE(storageType)
+    CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+      interfaceMatrix%storageType=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE
+    CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+      interfaceMatrix%storageType=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE        
+    CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      interfaceMatrix%storageType=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE
+    CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+      interfaceMatrix%storageType=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE
+    CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      interfaceMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
+    CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      interfaceMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
+    CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      interfaceMatrix%storageType=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
+    CASE DEFAULT
+      localError="The specified storage type of "//TRIM(NumberToVString(storageType,"*",err,error))// &
+        & " for interface matrix number "//TRIM(NumberToVString(interfaceMatrix%matrixNumber,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("InterfaceMatrix_StorageTypeSet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrix_StorageTypeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_StorageTypeSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the structure (sparsity) type for an interface matrix.
+  SUBROUTINE InterfaceMatrix_StructureTypeSet(interfaceMatrix,structureType,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to set the structure type for
+    INTEGER(INTG), INTENT(IN) :: structureType !<The structure type to set for the interface matrix. \see InterfaceMatricesRoutines_InterfaceMatrixStructureTypes,InterfaceMatricesRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("InterfaceMatrix_StructureTypeSet",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+    
+    SELECT CASE(structureType)
+    CASE(INTERFACE_MATRIX_NO_STRUCTURE)
+      interfaceMatrix%structureType=INTERFACE_MATRIX_NO_STRUCTURE
+    CASE(INTERFACE_MATRIX_FEM_STRUCTURE)
+      interfaceMatrix%structureType=INTERFACE_MATRIX_FEM_STRUCTURE
+    CASE DEFAULT
+      localError="The specified strucutre type of "// &
+        & TRIM(NumberToVString(structureType,"*",err,error))//" for interface matrix number "// &
+        & TRIM(NumberToVString(interfaceMatrix%matrixNumber,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("InterfaceMatrix_StructureTypeSet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrix_StructureTypeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_StructureTypeSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the transpose matrix coefficient for an interface matrix.
+  SUBROUTINE InterfaceMatrix_TransposeMatrixCoefficientSet(interfaceMatrix,transposeMatrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to set the transpose matrix coefficient for
+    REAL(DP), INTENT(IN) :: transposeMatrixCoefficient !<The transpose matrix coefficient to set for the interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("InterfaceMatrix_TransposeMatrixCoefficientSet",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+    IF(ABS(transposeMatrixCoefficient)<=ZERO_TOLERANCE) THEN
+      localError="The specified transpose matrix coefficient of "// &
+        & TRIM(NumberToVString(transposeMatrixCoefficient,"*",err,error))// &
+        & " for interface matrix "//TRIM(NumberToVString(interfaceMatrix%matrixNumber,"*",err,error))// &
+        & " is invalid. The transpose matrix coefficient should be /= 0.0"
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.interfaceMatrix%hasTranspose) THEN
+      localError="Can not set the matrix transpose coefficient for interface matrix "// &
+        & TRIM(NumberToVString(interfaceMatrix%matrixNumber,"*",err,error))//" as it does not have a transpose."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    interfaceMatrix%transposeMatrixCoefficient=transposeMatrixCoefficient
+       
+    EXITS("InterfaceMatrix_TransposeMatrixCoefficientSet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrix_TranposeMatrixCoefficientSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_TransposeMatrixCoefficientSet
 
   !
   !================================================================================================================================

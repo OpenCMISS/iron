@@ -99,12 +99,11 @@ CONTAINS
     TYPE(ContextPtrType), ALLOCATABLE :: newContexts(:)
     TYPE(VARYING_STRING) :: dummyError
 
+    ENTERS("Context_Create",err,error,*998)
+
+    IF(ASSOCIATED(context)) CALL FlagError("Context is already associated.",err,error,*998)
+
     NULLIFY(newContext)
-
-    ENTERS("Context_Create",err,error,*999)
-
-    IF(ASSOCIATED(context)) CALL FlagError("Context is already associated.",err,error,*999)
-
     CALL Context_Initialise(newContext,err,error,*999)
     !Setup the random seeds based on the time
     CALL RANDOM_SEED(SIZE=randomSeedsSize)

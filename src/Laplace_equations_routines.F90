@@ -819,25 +819,25 @@ CONTAINS
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL Laplace_EquationsSetSolutionMethodSet(equationsSet,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
+        SELECT CASE(esSpecification(3))
+        CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE)
+          CALL EquationsSet_LabelSet(equationsSet,"Standard Laplace equations set",err,error,*999)
+        CASE(EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE)
+          CALL EquationsSet_LabelSet(equationsSet,"Generalised Laplace equations set",err,error,*999)
+        CASE(EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
+          CALL EquationsSet_LabelSet(equationsSet,"Moving mesh Laplace equations set",err,error,*999)
+        CASE DEFAULT
+          localError="The third equations set specification of "// &
+            & TRIM(NumberToVstring(esSpecification(3),"*",err,error))// &
+            & " is not valid for a Laplace type of a classical field equations set."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
         !Do nothing
       CASE DEFAULT
         localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
           & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
           & " is invalid for a standard Laplace equation."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      SELECT CASE(esSpecification(3))
-      CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE)
-        CALL EquationsSet_LabelSet(equationsSet,"Standard Laplace equations set",err,error,*999)       
-      CASE(EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE)
-        CALL EquationsSet_LabelSet(equationsSet,"Generalised Laplace equations set",err,error,*999)       
-      CASE(EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
-        CALL EquationsSet_LabelSet(equationsSet,"Moving mesh Laplace equations set",err,error,*999)               
-      CASE DEFAULT
-        localError="The third equations set specification of "// &
-          & TRIM(NumberToVstring(esSpecification(3),"*",err,error))// &
-          & " is not valid for a Laplace type of a classical field equations set."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       
@@ -1082,10 +1082,14 @@ CONTAINS
       NULLIFY(equationsMaterials)
       IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
         CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+        numberOfMaterialsComponents=NUMBER_OF_VOIGT(numberOfDimensions)
+      ELSE IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
+        CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+        numberOfMaterialsCOmponents=1
       ENDIF
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
-        IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
+        IF(ASSOCIATED(equationsMaterials)) THEN
           IF(equationsMaterials%materialsFieldAutoCreated) THEN
             !Create the auto created materials field
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%region,equationsMaterials%materialsField, &
@@ -1097,9 +1101,12 @@ CONTAINS
             CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,geometricField,err,error,*999)
             CALL Field_NumberOfVariablesSetAndLock(equationsMaterials%materialsField,1,err,error,*999)
-            CALL Field_VariableTypesSetAndLock(equationsMaterials%materialsField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-            CALL Field_VariableLabelSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,"Conductivity",err,error,*999)
-            numberOfMaterialsComponents=NUMBER_OF_VOIGT(numberOfDimensions)
+            CALL Field_VariableTypesSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,err,error,*999)
+            IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
+              CALL Field_VariableLabelSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,"Conductivity",err,error,*999)
+            ELSE IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
+              CALL Field_VariableLabelSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,"Smoothing",err,error,*999)
+            ENDIF
             !Set the number of materials components
             CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
               & numberOfMaterialsComponents,err,error,*999)        
@@ -1115,8 +1122,13 @@ CONTAINS
             SELECT CASE(solutionMethod)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               DO componentIdx=1,numberOfMaterialsComponents                
-                CALL Field_ComponentInterpolationSetAndLock(equationsMaterials%materialsField, &
-                  & FIELD_U_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
+                  CALL Field_ComponentInterpolationSetAndLock(equationsMaterials%materialsField, &
+                    & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                ELSE IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
+                  CALL Field_ComponentInterpolationSetAndLock(equationsMaterials%materialsField, &
+                    & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+                ENDIF
               ENDDO !componentIdx
               !Default the scaling to the geometric field scaling
               CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
@@ -1139,9 +1151,8 @@ CONTAINS
             !Check the user specified field
             CALL Field_TypeCheck(equationsSetSetup%field,FIELD_MATERIAL_TYPE,err,error,*999)
             CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,1,err,error,*999)
-            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            numberOfMaterialsComponents=NUMBER_OF_VOIGT(numberOfDimensions)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfMaterialsComponents, &
               & err,error,*999)
             CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)          
@@ -1165,16 +1176,20 @@ CONTAINS
           ENDIF
         ENDIF
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-        IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
+        IF(ASSOCIATED(equationsMaterials)) THEN
           IF(equationsMaterials%materialsFieldAutoCreated) THEN
             CALL Field_CreateFinish(equationsMaterials%materialsField,err,error,*999)
-            !Default conductivity values to 1.0 on the diagonal, 0.0 elsewhere
-            CALL Field_NumberOfComponentsGet(equationsSet%geometry%geometricField,FIELD_U_VARIABLE_TYPE, &
-              & numberOfDimensions,err,error,*999)
-            DO componentIdx=1,numberOfDimensions
-              componentNumber=TENSOR_TO_VOIGT(componentIdx,componentIdx,numberOfDimensions)
-              CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,componentNumber,1.0_DP,err,error,*999)
+            DO componentIdx=1,numberOfMaterialsComponents
+              IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
+                !Default conductivity values to 1.0 on the diagonal, 0.0 elsewhere
+                componentNumber=TENSOR_TO_VOIGT(componentIdx,componentIdx,numberOfDimensions)
+                CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,componentNumber,1.0_DP,err,error,*999)
+              ELSE IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
+                !Default smoothing value to 1.0
+                CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999)
+              ENDIF
             ENDDO !componentIdx
           ENDIF
         ENDIF
@@ -1287,7 +1302,8 @@ CONTAINS
       ! Equations setup
       !
       CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
-      IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) &
+      IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE.OR. &
+        & esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) &
         & CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1316,13 +1332,10 @@ CONTAINS
           CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
           SELECT CASE(equations%sparsityType)
           CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
-              & err,error,*999)
+            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
           CASE(EQUATIONS_MATRICES_SPARSE_MATRICES) 
-            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
-              & err,error,*999)
-            CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
-              & err,error,*999)
+            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+            CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
           CASE DEFAULT
             localError="The equations matrices sparsity type of "// &
               & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."

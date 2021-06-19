@@ -80,7 +80,11 @@ ignore_routines = ["Enters","Exits","Errors","ExtractErrorMessageVS","ExtractErr
 		"EffDistStrain","Beprpr","OneThirdAlpha","Beprime","DeltatGamma","CauchyStress","hardening","Tangent",
 		"JuxtaTensVec","JuxtaTensTens","TransTens","DetTens","TraceTens","InvTens","DotTensTens","IdentityTens",
 		"ZeroTens","DevTens","MUnimodular","CrossVecVec","DotVecVec","TensProd","TensProd33","oplus","ominus",
-		"DotTens2Tens4","DotTens4Tens2","InvTens2by2","MacBrackets"]
+	        "DotTens2Tens4","DotTens4Tens2","InvTens2by2","MacBrackets",
+                "Problem_SolverJacobianEvaluatePetsc","Problem_SolverJacobianFDCalculatePetsc",
+                "Problem_SolverObjectiveEvaluatePetsc","Problem_SolverResidualEvaluatePetsc",
+                "Problem_SolverConvergenceTestPetsc","Problem_SolverDAECellMLRHSPetsc",
+                "Problem_SolverNonlinearMonitorPETSC","Problem_SolverOptimiserMonitorPETSC"]
 
 def _join_lines(source):
     """Remove Fortran line continuations"""

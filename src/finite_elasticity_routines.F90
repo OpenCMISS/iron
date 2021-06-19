@@ -447,7 +447,7 @@ CONTAINS
               & deformedX(componentIdx),err,error,*999)
           ENDDO !componentIdx
           !Don't forget the pressure component
-          CALL DomainNodes_UserNodeNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
+          CALL DomainNodes_NodeUserNumberGet(domainNodes,nodeIdx,userNodeNumber,err,error,*999)
           CALL MeshNodes_NodeCheckExists(meshNodes,userNodeNumber,nodeExists,globalNodeNumber,meshNodeNumber,err,error,*999)
           IF(nodeExists) THEN
             CALL Decomposition_NodeDomainGet(decomposition,userNodeNumber,pressureMeshComponent,domainNumber,err,error,*999)
@@ -2309,12 +2309,12 @@ CONTAINS
       NULLIFY(coordinateSystem)
       CALL Region_CoordinateSystemGet(region,coordinateSystem,err,error,*999)
       CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*999)
+      NULLIFY(vectorMapping)
+      CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
       NULLIFY(lhsMapping)
       CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
       NULLIFY(equationsInterpolation)
       CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
-      NULLIFY(vectorMapping)
-      CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
       NULLIFY(nonlinearMapping)
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
       NULLIFY(residualMapping)
@@ -2356,6 +2356,7 @@ CONTAINS
 
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
       
       NULLIFY(colsVariable)
@@ -2377,7 +2378,7 @@ CONTAINS
       totalNumberOfSurfacePressureConditions=boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE)+ &
         & boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
 
-      CALL DecompositionElements_ElementBoundaryElementGet(decompositionElements,elementNumber,boundaryElement,err,error,*999)
+      CALL DecompositionElements_ElementBoundaryElementGet(dependentDecompElements,elementNumber,boundaryElement,err,error,*999)
       haveSurfacePressure=boundaryElement.AND.totalNumberofSurfacePressureConditions>0
       
       !Grab interpolation parameters, points and metrics.
@@ -4476,15 +4477,19 @@ CONTAINS
         NULLIFY(dependentVariable)
         CALL EquationsMappingResidual_VariableGet(residualMapping,1,dependentVariable,err,error,*999)
         CALL FieldVariable_VariableTypeGet(dependentVariable,dependentVariableType,err,error,*999)
+        NULLIFY(rhsMapping)
+        CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
         NULLIFY(rhsVariable)
         CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
         CALL FieldVariable_VariableTypeGet(rhsVariable,rhsVariableType,err,error,*999)
         NULLIFY(geometricField)
+        NULLIFY(geometricVariable)
         NULLIFY(dependentField)
         IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
           CALL EquationsSet_GeometricFieldGet(equationsSet,dependentField,err,error,*999)
           geometricVariable=>dependentVariable
           CALL EquationsSet_DependentFieldGet(equationsSet,geometricField,err,error,*999)
+          NULLIFY(dependentVariable)
           CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,dependentVariable,err,error,*999)
         ELSE
           CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
@@ -7192,8 +7197,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: componentIdx,dataPointIdx,dataPointNumber,elementIdx,elementNumber,esSpecification(3),fieldInterpolation, &
       & fieldVarType,finishIdx,gaussPointIdx,meshComponentNumber,numberOfComponents,numberOfDataPoints, &
-      & numberOfDependentComponents,numberOfDimensions,numberOfGauss,numberOfTimes,numberOfXi,outputType,partIdx,startIdx, &
-      & residualVariableType,variableType
+      & numberOfDependentComponents,numberOfDimensions,numberOfElementXi,numberOfGauss,numberOfTimes,numberOfXi,outputType, &
+      & partIdx,startIdx,residualVariableType,variableType
     REAL(DP) :: dZdNu(3,3),Fg(3,3),Fe(3,3),J,Jg,Je,C(3,3),f(3,3),E(3,3),growthValues(3),xi(3),values(3,3)
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime4(1),userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1)
@@ -7546,7 +7551,7 @@ CONTAINS
 
             CALL DecompositionDataPoints_ElementDataGlobalNumberGet(dataPoints,dataPointIdx,elementNumber,dataPointNumber, &
               & err,error,*999)
-            CALL DataProjection_ResultElementXiGlobalGet(dataProjection,dataPointNumber,xi,err,error,*999)
+            CALL DataProjection_ResultElementXiGet(dataProjection,dataPointNumber,numberOfElementXi,xi,err,error,*999)
             CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),geometricInterpPoint,err,error,*999)
             CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
             CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),dependentInterpPoint,err,error,*999)
@@ -8132,7 +8137,7 @@ CONTAINS
     CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     NULLIFY(decompositionElements)
     CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
-    CALL DecompositionElements_LocalElementNumberGet(decompositionElements,userElementNumber,localElementNumber,ghostElement, &
+    CALL DecompositionElements_LocalNumberGet(decompositionElements,userElementNumber,localElementNumber,ghostElement, &
       & err,error,*999)
     NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
@@ -11709,6 +11714,7 @@ CONTAINS
             NULLIFY(equationsSetEquationsField)
             CALL EquationsSet_EquationsFieldGet(equationsSet,equationsSetEquationsField,err,error,*999)
             IF(equationsSetEquationsField%equationsSetFieldAutoCreated) THEN
+              NULLIFY(geometricDecomposition)
               CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
               CALL Field_DecompositionSetAndLock(equationsSetEquationsField%equationsSetField,geometricDecomposition, &
                 & err,error,*999)
@@ -11777,6 +11783,7 @@ CONTAINS
             CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
             CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition, err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -11989,6 +11996,7 @@ CONTAINS
             CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
             CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -12120,6 +12128,7 @@ CONTAINS
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSet%dependent%dependentField,err,error,*999)
             CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -12287,6 +12296,7 @@ CONTAINS
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSet%dependent%dependentField,err,error,*999)
             CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -12507,6 +12517,7 @@ CONTAINS
             CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
             CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -12843,6 +12854,7 @@ CONTAINS
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSet%dependent%dependentField,err,error,*999)
             CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -13083,6 +13095,7 @@ CONTAINS
             CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
             CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -13270,6 +13283,7 @@ CONTAINS
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSet%dependent%dependentField,err,error,*999)
             CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -13501,6 +13515,7 @@ CONTAINS
           CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,esIndependent%independentField,err,error,*999)
           CALL Field_TypeSetAndLock(esIndependent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
           CALL Field_DependentTypeSetAndLock(esIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(esIndependent%independentField,geometricDecomposition,err,error,*999)
           CALL Field_GeometricFieldSetAndLock(esIndependent%independentField,geometricField,err,error,*999)
@@ -13521,6 +13536,7 @@ CONTAINS
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,esIndependent%independentField,err,error,*999)
             CALL Field_TypeSetAndLock(esIndependent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(esIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(esIndependent%independentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(esIndependent%independentField,geometricField,err,error,*999)
@@ -13577,6 +13593,7 @@ CONTAINS
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,esIndependent%independentField,err,error,*999)
             CALL Field_TypeSetAndLock(esIndependent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(esIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(esIndependent%independentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(esIndependent%independentField,geometricField,err,error,*999)
@@ -13689,6 +13706,7 @@ CONTAINS
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,esIndependent%independentField,err,error,*999)
             CALL Field_TypeSetAndLock(esIndependent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(esIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(esIndependent%independentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(esIndependent%independentField,geometricField,err,error,*999)
@@ -13762,6 +13780,7 @@ CONTAINS
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,esIndependent%independentField,err,error,*999)
             CALL Field_TypeSetAndLock(esIndependent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(esIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(esIndependent%independentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(esIndependent%independentField,geometricField,err,error,*999)
@@ -13893,6 +13912,7 @@ CONTAINS
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,esIndependent%independentField,err,error,*999)
             CALL Field_TypeSetAndLock(esIndependent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(esIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(esIndependent%independentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(esIndependent%independentField,geometricField,err,error,*999)
@@ -13983,6 +14003,7 @@ CONTAINS
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,esIndependent%independentField,err,error,*999)
             CALL Field_TypeSetAndLock(esIndependent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(esIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(esIndependent%independentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(esIndependent%independentField,geometricField,err,error,*999)
@@ -14199,6 +14220,7 @@ CONTAINS
           CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,esMaterials%materialsField,err,error,*999)
           CALL Field_TypeSetAndLock(esMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
           CALL Field_DependentTypeSetAndLock(esMaterials%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(esMaterials%materialsField,geometricDecomposition,err,error,*999)
           CALL Field_GeometricFieldSetAndLock(esMaterials%materialsField,geometricField,err,error,*999)
@@ -14336,6 +14358,7 @@ CONTAINS
           CALL Field_TypeSetAndLock(esSource%sourceField,FIELD_GENERAL_TYPE,err,error,*999)
           CALL Field_LabelSet(esSource%sourceField,"Source Field",err,error,*999)
           CALL Field_DependentTypeSetAndLock(esSource%sourceField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(esSource%sourceField,geometricDecomposition,err,error,*999)
           CALL Field_GeometricFieldSetAndLock(esSource%sourceField,geometricField,err,error,*999)
@@ -14585,6 +14608,7 @@ CONTAINS
           CALL Field_TypeSetAndLock(esDerived%derivedField,FIELD_GENERAL_TYPE,err,error,*999)
           CALL Field_LabelSet(esDerived%derivedField,"Derived Field",err,error,*999)
           CALL Field_DependentTypeSetAndLock(esDerived%derivedField,FIELD_DEPENDENT_TYPE,err,error,*999)
+          NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(esDerived%derivedField,geometricDecomposition,err,error,*999)
           CALL Field_GeometricFieldSetAndLock(esDerived%derivedField,geometricField,err,error,*999)
@@ -15018,8 +15042,8 @@ CONTAINS
             CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
             CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
             CALL Solver_LabelSet(solver,"Dynamic nolinear solver",err,error,*999)
-            CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
             CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
+            CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
             CALL Solver_DynamicLinearityTypeSet(solver,SOLVER_DYNAMIC_NONLINEAR,err,error,*999)
             !Set solver defaults
             CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_NEWMARK1_SCHEME,err,error,*999)
@@ -15765,7 +15789,7 @@ CONTAINS
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
-    
+    problemSubType=pSpecification(3)
     CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
     
     SELECT CASE(problemSubType)

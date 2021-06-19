@@ -63,7 +63,7 @@ MODULE BasisAccessRoutines
   !> \addtogroup BasisRoutines_BasisTypes BasisRoutines::BasisTypes
   !> \brief Basis definition type parameters
   !> \todo Combine simplex and serendipity elements???
-  !> \see BasisRoutines,OPENCMISS_BasisTypes
+  !> \see BasisRoutines,OpenCMISS_BasisTypes
   !>@{ 
   INTEGER(INTG), PARAMETER :: BASIS_LAGRANGE_HERMITE_TP_TYPE=1 !<Lagrange-Hermite tensor product basis type \see BasisRoutines_BasisTypes,BasisRoutines
   INTEGER(INTG), PARAMETER :: BASIS_SIMPLEX_TYPE=2 !<Simplex basis type \see BasisRoutines_BasisTypes,BasisRoutines
@@ -77,7 +77,7 @@ MODULE BasisAccessRoutines
 
   !> \addtogroup BasisRoutines_InterpolationSpecifications BasisRoutines::InterpolationSpecifications
   !> \brief Interpolation specification parameters
-  !> \see BasisRoutines,OPENCMISS_InterpolationSpecifications
+  !> \see BasisRoutines,OpenCMISS_InterpolationSpecifications
   !>@{ 
   INTEGER(INTG), PARAMETER :: BASIS_LINEAR_LAGRANGE_INTERPOLATION=1 !<Linear Lagrange interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
   INTEGER(INTG), PARAMETER :: BASIS_QUADRATIC_LAGRANGE_INTERPOLATION=2 !<Quadratic Lagrange interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
@@ -119,7 +119,7 @@ MODULE BasisAccessRoutines
   
   !> \addtogroup BasisRoutines_QuadratureTypes BasisRoutines::QuadratureTypes
   !> \brief Quadrature type parameters
-  !> \see BasisRoutines,OPENCMISS_QuadratureTypes
+  !> \see BasisRoutines,OpenCMISS_QuadratureTypes
   !>@{
   INTEGER(INTG), PARAMETER :: BASIS_GAUSS_LEGENDRE_QUADRATURE=1 !<Gauss-Legendre quadrature  \see BasisRoutines_QuadratureTypes,BasisRoutines
   INTEGER(INTG), PARAMETER :: BASIS_GAUSS_LAGUERRE_QUADRATURE=2 !<Gauss-Laguerre quadrature  \see BasisRoutines_QuadratureTypes,BasisRoutines
@@ -250,6 +250,8 @@ MODULE BasisAccessRoutines
 
   PUBLIC Basis_LocalLineNumberGet
 
+  PUBLIC Basis_MaximumNumberOfDerivativesGet
+
   PUBLIC Basis_NodeNumberOfDerivativesGet
 
   PUBLIC Basis_NumberOfElementParametersGet
@@ -263,6 +265,8 @@ MODULE BasisAccessRoutines
   PUBLIC Basis_NumberOfNodesXiCGet
 
   PUBLIC Basis_NumberOfXiGet
+
+  PUBLIC Basis_PartialDerivativeGet
 
   PUBLIC Basis_QuadratureGaussXiGet
 
@@ -1800,7 +1804,7 @@ CONTAINS
     IF(localNodeIdx<1.OR.localNodeIdx>basis%numberOfNodes) THEN
       localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
         & " is invalid for basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
-        & ". The local node index should be >=1 and <= "//TRIM(NumberToVString(basis%numberOfNodes,"*",err,error))//"."
+        & ". The local node index should be >= 1 and <= "//TRIM(NumberToVString(basis%numberOfNodes,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)     
     ENDIF
     IF(.NOT.ALLOCATED(basis%numberOfDerivatives)) THEN
@@ -1818,6 +1822,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_NodeNumberOfDerivativesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the maximum number of derivatives for the specified basis 
+  SUBROUTINE Basis_MaximumNumberOfDerivativesGet(basis,maximumNumberOfDerivatives,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the maximum number of derivatives for
+    INTEGER(INTG), INTENT(OUT) :: maximumNumberOfDerivatives !<On return, the maximum number of derivatives in the basis
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Basis_MaximumNumberOfDerivativesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+#endif    
+   
+    maximumNumberOfDerivatives=basis%maximumNumberOfDerivatives
+    
+    EXITS("Basis_MaximumNumberOfDerivativesGet")
+    RETURN
+999 ERRORSEXITS("Basis_MaximumNumberOfDerivativesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_MaximumNumberOfDerivativesGet
 
   !
   !================================================================================================================================
@@ -2006,6 +2039,65 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_NumberOfXiGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the basis partial derivative index for a local node and derivative in a basis.
+  SUBROUTINE Basis_PartialDerivativeGet(basis,localDerivativeIdx,localNodeIdx,partialDerivativeIdx,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the partial derivative for
+    INTEGER(INTG), INTENT(IN) :: localDerivativeIdx !<The local derivative index to get the partial derivative for
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the partial derivative for
+    INTEGER(INTG), INTENT(OUT) :: partialDerivativeIdx !<On exit, the partial derivative index for the local node and derivative in the basis.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_PartialDerivativeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(localNodeIdx<1.OR.localNodeIdx>basis%numberOfNodes) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid. The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfNodes,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfDerivatives)) THEN
+      localError="The number of derivatives array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localDerivativeIdx<1.OR.localDerivativeIdx>basis%numberOfDerivatives(localNodeIdx)) THEN
+      localError="The specified local derivative index of "//TRIM(NumberToVString(localDerivativeIdx,"*",err,error))// &
+        & " is invalid. The local derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfDerivatives(localNodeIdx),"*",err,error))// &
+        & " for local node index "//TRIM(NumberToVString(localNodeIdx,"*",err,error))//" of basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%partialDerivativeIndex)) THEN
+      localError="The partial derivative index array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    partialDerivativeIdx=basis%partialDerivativeIndex(localDerivativeIdx,localNodeIdx)
+    
+    EXITS("Basis_PartialDerivativeGet")
+    RETURN
+999 ERRORSEXITS("Basis_PartialDerivativeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_PartialDerivativeGet
 
   !
   !================================================================================================================================

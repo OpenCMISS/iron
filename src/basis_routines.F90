@@ -598,26 +598,24 @@ CONTAINS
 
   !>Evaluates the appropriate partial derivative index at position xi for the basis for double precision arguments.
   !>Note for simplex basis functions the xi coordinates should exclude the last area coordinate.
-  FUNCTION Basis_EvaluateXiDP(basis,elementParameterIndex,partialDerivativeIndex,xi,err,error)
+  SUBROUTINE Basis_EvaluateXiDP(basis,elementParameterIndex,partialDerivativeIndex,xi,evaluatedBasis,err,error,*)
   
     !Argument variables
     TYPE(BasisType), POINTER :: basis !<A pointer to the basis
     INTEGER(INTG), INTENT(IN) :: elementParameterIndex !<The element parameter index to evaluate i.e., the local basis index within the element basis.
     INTEGER(INTG), INTENT(IN) :: partialDerivativeIndex !<The partial derivative index to evaluate \see Constants_PartialDerivativeConstants
     REAL(DP), INTENT(IN) :: xi(:) !<The Xi position to evaluate the basis function at
+    REAL(DP), INTENT(OUT) :: evaluatedBasis !<On exit, the value of the basis evaluated at the specified xi location.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Function variable
-    REAL(DP) :: Basis_EvaluateXiDP
     !Local Variables
     INTEGER(INTG) :: localNodeIdx,derivativeIdx
     REAL(DP) :: xil(SIZE(xi,1)+1)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Basis_EvaluateXiDP",err,error,*999)
-    
-    Basis_EvaluateXiDP=0.0_DP
-    
+
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)    
     IF(elementParameterIndex<1.OR.elementParameterIndex>basis%numberOfElementParameters) THEN
       localError="The specified element parameter index of "// &
@@ -626,32 +624,33 @@ CONTAINS
         & TRIM(NumberToVString(basis%numberOfElementParameters,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     SELECT CASE(basis%type)
     CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
       localNodeIdx=basis%elementParameterIndexInv(1,elementParameterIndex)
       derivativeIdx=basis%elementParameterIndexInv(2,elementParameterIndex)
-      Basis_EvaluateXiDP=Basis_LHTPBasisEvaluate(basis,localNodeIdx,derivativeIdx,partialDerivativeIndex,xi,err,error)
+      evaluatedBasis=Basis_LHTPBasisEvaluate(basis,localNodeIdx,derivativeIdx,partialDerivativeIndex,xi,err,error)
       IF(err/=0) GOTO 999
     CASE(BASIS_SIMPLEX_TYPE)
       !Create the area coordinates from the xi coordinates
       CALL Basis_XiToAreaCoordinates(xi(1:SIZE(xi,1)),xil(1:SIZE(xi,1)+1),err,error,*999)
       localNodeIdx=basis%elementParameterIndexInv(1,elementParameterIndex)
-      Basis_EvaluateXiDP=Basis_SimplexBasisEvaluate(basis,localNodeIdx,partialDerivativeIndex,xil,err,error)
+      evaluatedBasis=Basis_SimplexBasisEvaluate(basis,localNodeIdx,partialDerivativeIndex,xil,err,error)
       IF(err/=0) GOTO 999
     CASE(BASIS_RADIAL_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
-     CASE DEFAULT
-      localError="Basis type "//TRIM(NumberToVString(basis%TYPE,"*",err,error))//" is invalid or not implemented."
+    CASE DEFAULT
+      localError="Basis type "//TRIM(NumberToVString(basis%type,"*",err,error))//" is invalid or not implemented."
       CALL FlagError(localError,err,error,*999)
     END SELECT
     
     EXITS("Basis_EvaluateXiDP")
     RETURN
 999 ERRORSEXITS("Basis_EvaluateXiDP",err,error)
-    RETURN
+    RETURN 1
     
-  END FUNCTION Basis_EvaluateXiDP
+  END SUBROUTINE Basis_EvaluateXiDP
   
   !
   !================================================================================================================================

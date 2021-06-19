@@ -19387,7 +19387,7 @@ CONTAINS
     CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     NULLIFY(decompositionElements)
     CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
-    CALL DecompositionElements_LocalElementNumberGet(decompositionElements,userElementNumber,localElementNumber,ghostElement, &
+    CALL DecompositionElements_LocalNumberGet(decompositionElements,userElementNumber,localElementNumber,ghostElement, &
       & err,error,*999)
     NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
@@ -19537,7 +19537,7 @@ CONTAINS
     CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     NULLIFY(decompositionElements)
     CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
-    CALL DecompositionElements_LocalElementNumberGet(decompositionElements,userElementNumber,localElementNumber,ghostElement, &
+    CALL DecompositionElements_LocalNumberGet(decompositionElements,userElementNumber,localElementNumber,ghostElement, &
       & err,error,*999)
     NULLIFY(interpolationParameters)
     CALL FieldVariable_InterpolationParameterInitialise(fieldVariable,interpolationParameters,err,error,*999)
@@ -22221,8 +22221,8 @@ CONTAINS
       DO nodeIdx=1,meshEmbedding%CHILD_NODE_XI_POSITION(elementIdx)%NUMBER_OF_NODES
         interpVal = 0.0
         DO localNodeIdx=1,basis%numberOfNodes
-          WT = Basis_EvaluateXi(basis,localNodeIdx,NO_PART_DERIV,meshEmbedding%CHILD_NODE_XI_POSITION(elementIdx)% &
-            & XI_COORDS(:,nodeIdx),err,error)
+          CALL Basis_EvaluateXi(basis,localNodeIdx,NO_PART_DERIV,meshEmbedding%CHILD_NODE_XI_POSITION(elementIdx)% &
+            & XI_COORDS(:,nodeIdx),WT,err,error,*999)
           interpVal = interpVal + WT * parentValues(nodeIdx)
         ENDDO !localNodeIdx
         
@@ -22276,8 +22276,8 @@ CONTAINS
           ! Version variable added and initialized above
           CALL Field_ParameterSetGetNode(childField,FIELD_U_VARIABLE_TYPE,FIELD_valueS_SET_TYPE,version,1,& ! TODO: FROM INPUT
             &  element%globalElementNodes(localNodeIdx),childComponent,VAL ,err,error,*999)   ! global no?
-          WT = Basis_EvaluateXi(basis,localNodeIdx,NO_PART_DERIV,meshEmbedding%GAUSS_POINT_XI_POSITION(gaussPointIdx,elementIdx)% &
-            & CHILD_XI_COORD,err,error) 
+          CALL Basis_EvaluateXi(basis,localNodeIdx,NO_PART_DERIV,meshEmbedding%GAUSS_POINT_XI_POSITION(gaussPointIdx,elementIdx)% &
+            & CHILD_XI_COORD,WT,err,error,*999) 
           interpVal = interpVal + WT * VAL
         ENDDO !localNodeIdx
         ! store in gauss point parent field 

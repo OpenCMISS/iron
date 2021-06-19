@@ -723,6 +723,7 @@ CONTAINS
     
     ALLOCATE(solver%cellMLEvaluatorSolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate solver CellML evaluator solver.",err,error,*999)
+    solver%solveType=SOLVER_CELLML_EVALUATOR_TYPE
     solver%cellMLEvaluatorSolver%solver=>solver
     solver%cellMLEvaluatorSolver%solverLibrary=SOLVER_CMISS_LIBRARY
        
@@ -818,6 +819,7 @@ CONTAINS
       CALL CellML_CellMLModelsFieldGet(cellML,cellMLModelsField,err,error,*999)
       NULLIFY(modelsField)
       CALL CellMLModelsField_ModelsFieldGet(cellMLModelsField,modelsField,err,error,*999)
+      NULLIFY(modelsVariable)
       CALL Field_VariableGet(modelsField,FIELD_U_VARIABLE_TYPE,modelsVariable,err,error,*999)
       CALL FieldVariable_TotalNumberOfDOFsGet(modelsVariable,totalNumberOfDOFs,err,error,*999)
       NULLIFY(modelsData)
@@ -1328,10 +1330,49 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: solverIdx
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Solver_CreateFinish",err,error,*999)
 
     CALL Solver_AssertNotFinished(solver,err,error,*999)
+
+    !Do solver type specific checks
+    SELECT CASE(solver%solveType)
+    CASE(SOLVER_LINEAR_TYPE)
+      !Do nothing
+    CASE(SOLVER_NONLINEAR_TYPE)
+      !Do nothing
+    CASE(SOLVER_DYNAMIC_TYPE)
+      !Check degree and order restrictions
+      NULLIFY(dynamicSolver)
+      CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)      
+      IF(dynamicSolver%degree<dynamicSolver%order) THEN
+        localError="Invalid dynamic solver setup. The solver dynamic degree of "// &
+          & TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))//" must be >= the solver dynamic order of "// &
+          & TRIM(NumberToVString(dynamicSolver%order,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      IF(dynamicSolver%order==SOLVER_DYNAMIC_SECOND_ORDER.AND.dynamicSolver%degree==SOLVER_DYNAMIC_FIRST_DEGREE) THEN
+        localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
+          & " is invalid. You must have at least a second degree polynomial interpolation for a second order dynamic solver."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    CASE(SOLVER_DAE_TYPE)
+      !Do nothing
+    CASE(SOLVER_EIGENPROBLEM_TYPE)
+      !Do nothing
+    CASE(SOLVER_OPTIMISER_TYPE)
+      !Do nothing
+    CASE(SOLVER_CELLML_EVALUATOR_TYPE)
+      !Do nothing
+    CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
+      !Do nothing
+    CASE DEFAULT
+      localError="The solve type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))// &
+        & " for solver number "//TRIM(NumberToVString(solver%globalNumber,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     
     !Set the finished flag. The final solver finish will be done once the solver equations have been finished.
     DO solverIdx=1,solver%numberOfLinkedSolvers
@@ -2066,8 +2107,10 @@ CONTAINS
       CALL CellML_CellMLModelsFieldGet(cellML,cellMLModelsField,err,error,*999)
       NULLIFY(modelsField)
       CALL CellMLModelsField_ModelsFieldGet(cellMLModelsField,modelsField,err,error,*999)
+      NULLIFY(modelsVariable)
       CALL Field_VariableGet(modelsField,FIELD_U_VARIABLE_TYPE,modelsVariable,err,error,*999)
       CALL FieldVariable_TotalNumberOfDOFsGet(modelsVariable,totalNumberOfDOFs,err,error,*999)
+      NULLIFY(modelsData)
       CALL FieldVariable_ParameterSetDataGet(modelsVariable,FIELD_VALUES_SET_TYPE,modelsData,err,error,*999)
  
 !!TODO: Maybe move this getting of fields earlier up the DAE solver chain? For now keep here.
@@ -2509,6 +2552,7 @@ CONTAINS
     ALLOCATE(solver%DAESolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate solver differential-algebraic equation solver.",err,error,*999)
     !Initialise
+    solver%solveType=SOLVER_DAE_TYPE
     solver%DAESolver%solver=>solver
     solver%DAESolver%daeType=0
     solver%DAESolver%daeSolveType=0
@@ -3012,8 +3056,10 @@ CONTAINS
       CALL CellML_CellMLModelsFieldGet(cellML,cellMLModelsField,err,error,*999)
       NULLIFY(modelsField)
       CALL CellMLModelsField_ModelsFieldGet(cellMLModelsField,modelsField,err,error,*999)
+      NULLIFY(modelsVariable)
       CALL Field_VariableGet(modelsField,FIELD_U_VARIABLE_TYPE,modelsVariable,err,error,*999)
       CALL FieldVariable_TotalNumberOfDOFsGet(modelsVariable,totalNumberOfDOFs,err,error,*999)
+      NULLIFY(modelsData)
       CALL FieldVariable_ParameterSetDataGet(modelsVariable,FIELD_VALUES_SET_TYPE,modelsData,err,error,*999)
  
 !!TODO: Maybe move this getting of fields earlier up the DAE solver chain? For now keep here.
@@ -3287,6 +3333,7 @@ CONTAINS
       NULLIFY(modelsVariable)
       CALL Field_VariableGet(modelsField,FIELD_U_VARIABLE_TYPE,modelsVariable,err,error,*999)
       CALL FieldVariable_TotalNumberOfDOFsGet(modelsVariable,totalNumberOfDOFs,err,error,*999)
+      NULLIFY(modelsData)
       CALL FieldVariable_ParameterSetDataGet(modelsVariable,FIELD_VALUES_SET_TYPE,modelsData,err,error,*999)
        
       !Make sure CellML fields have been updated to the current value of any mapped fields
@@ -4333,6 +4380,7 @@ CONTAINS
         NULLIFY(vectorMatrices)
         CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
         !Dynamic variables and matrices
+        NULLIFY(dynamicMapping)
         CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
         NULLIFY(dynamicVariable)
         dynamicVariableType=0
@@ -4604,35 +4652,38 @@ CONTAINS
         CALL SolverDynamic_LinkedLinearSolverGet(dynamicSolver,linearSolver,err,error,*999)
         CALL Solver_LibraryTypeGet(linearSolver,linearLibraryType,err,error,*999)
         NULLIFY(solverMatrices)
-        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
-        CALL SolverMatrices_LibraryTypeSet(solverMatrices,linearLibraryType,err,error,*999)
-        IF(dynamicSolver%explicit) THEN
-          CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE,err,error,*999)
-        ELSE
-          CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
-          SELECT CASE(sparsityType)
-          CASE(SOLVER_SPARSE_MATRICES)
-            CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-          CASE(SOLVER_FULL_MATRICES)
-            CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
-          CASE DEFAULT
-            localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-          CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
-          SELECT CASE(symmetryType)
-          CASE(SOLVER_SYMMETRIC_MATRICES)
-            CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
-          CASE(SOLVER_UNSYMMETRIC_MATRICES)
-            CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
-          CASE DEFAULT
-            localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
+        CALL SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*999)
+        IF(.NOT.ASSOCIATED(solverMatrices)) THEN
+          CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
+          CALL SolverMatrices_LibraryTypeSet(solverMatrices,linearLibraryType,err,error,*999)
+          IF(dynamicSolver%explicit) THEN
+            CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE,err,error,*999)
+          ELSE
+            CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+            SELECT CASE(sparsityType)
+            CASE(SOLVER_SPARSE_MATRICES)
+              CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+            CASE(SOLVER_FULL_MATRICES)
+              CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+            CASE DEFAULT
+              localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+            CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+            SELECT CASE(symmetryType)
+            CASE(SOLVER_SYMMETRIC_MATRICES)
+              CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
+            CASE(SOLVER_UNSYMMETRIC_MATRICES)
+              CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
+            CASE DEFAULT
+              localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ENDIF
+          CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
         ENDIF
-        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
         !Link linear solver
         linearSolver%solverEquations=>solver%solverEquations
         !Finish the creation of the linear solver
@@ -4642,35 +4693,38 @@ CONTAINS
         CALL SolverDynamic_LinkedNonlinearSolverGet(dynamicSolver,nonlinearSolver,err,error,*999)
         CALL Solver_LibraryTypeGet(nonlinearSolver,nonlinearLibraryType,err,error,*999)
         NULLIFY(solverMatrices)
-        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
-        CALL SolverMatrices_LibraryTypeSet(solverMatrices,nonlinearLibraryType,err,error,*999)
-        IF(dynamicSolver%explicit) THEN
-          CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE,err,error,*999)
-        ELSE
-          CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
-          SELECT CASE(sparsityType)
-          CASE(SOLVER_SPARSE_MATRICES)
-            CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-          CASE(SOLVER_FULL_MATRICES)
-            CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
-          CASE DEFAULT
-            localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-          CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
-          SELECT CASE(symmetryType)
-          CASE(SOLVER_SYMMETRIC_MATRICES)
-            CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
-          CASE(SOLVER_UNSYMMETRIC_MATRICES)
-            CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
-          CASE DEFAULT
-            localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
+        CALL SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*999)
+        IF(.NOT.ASSOCIATED(solverMatrices)) THEN
+          CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
+          CALL SolverMatrices_LibraryTypeSet(solverMatrices,nonlinearLibraryType,err,error,*999)
+          IF(dynamicSolver%explicit) THEN
+            CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE,err,error,*999)
+          ELSE
+            CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+            SELECT CASE(sparsityType)
+            CASE(SOLVER_SPARSE_MATRICES)
+              CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+            CASE(SOLVER_FULL_MATRICES)
+              CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+            CASE DEFAULT
+              localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+            CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+            SELECT CASE(symmetryType)
+            CASE(SOLVER_SYMMETRIC_MATRICES)
+              CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
+            CASE(SOLVER_UNSYMMETRIC_MATRICES)
+              CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
+            CASE DEFAULT
+              localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ENDIF
+          CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
         ENDIF
-        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
         !Link nonlinear solver
         nonlinearSolver%solverEquations=>solver%solverEquations
         !Finish the creation of the nonlinear solver
@@ -4715,12 +4769,6 @@ CONTAINS
     NULLIFY(dynamicSolver)
     CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
     IF(degree/=dynamicSolver%degree) THEN
-      IF(degree>=dynamicSolver%order) THEN
-        localError="Invalid dynamic solver setup. The specfied degree of "// &
-          & TRIM(NumberToVString(degree,"*",err,error))//" must be >= the current dynamic order of "// &
-          & TRIM(NumberToVString(dynamicSolver%order,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
       SELECT CASE(degree)
       CASE(SOLVER_DYNAMIC_FIRST_DEGREE,SOLVER_DYNAMIC_SECOND_DEGREE,SOLVER_DYNAMIC_THIRD_DEGREE)
         ALLOCATE(newTheta(degree),STAT=err)
@@ -4801,6 +4849,7 @@ CONTAINS
     !Allocate memory for dynamic solver and set default values (link solver later on)
     ALLOCATE(solver%dynamicSolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate solver dynamic solver.",err,error,*999)
+    solver%solveType=SOLVER_DYNAMIC_TYPE
     solver%dynamicSolver%solver=>solver
     solver%dynamicSolver%solverLibrary=SOLVER_CMISS_LIBRARY
     solver%dynamicSolver%solverInitialised=.FALSE.
@@ -4979,6 +5028,7 @@ CONTAINS
     TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable
     TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
     TYPE(VARYING_STRING) :: localError
    
     ENTERS("Solver_DynamicMeanPredictedCalculate",err,error,*999)
@@ -5026,6 +5076,11 @@ CONTAINS
       NULLIFY(processedVariablesList)
       CALL FieldVariablesList_CreateStart(processedVariablesList,err,error,*999)
       CALL FieldVariablesList_CreateFinish(processedVariablesList,err,error,*999)
+      !Get solver variables list
+      NULLIFY(solverMatrixToEquationsMap)
+      CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,1,solverMatrixToEquationsMap,err,error,*999)
+      NULLIFY(solverMappingVariables)
+      CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
       !Loop over the equations sets
       CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
       DO equationsSetIdx=1,numberOfEquationsSets
@@ -5398,11 +5453,6 @@ CONTAINS
     CALL Solver_AssertIsDynamic(solver,err,error,*999)
     NULLIFY(dynamicSolver)
     CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
-    IF(order==SOLVER_DYNAMIC_SECOND_ORDER.AND.dynamicSolver%degree==SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-      localError="Invalid dynamic solver degree. You must have at least a second degree polynomial "// &
-        & "interpolation for a second order dynamic solver."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
     
     SELECT CASE(order)
     CASE(SOLVER_DYNAMIC_FIRST_ORDER)
@@ -5926,6 +5976,7 @@ CONTAINS
      
     ALLOCATE(solver%eigenproblemSolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate solver eigenproblem solver.",err,error,*999)
+    solver%solveType=SOLVER_EIGENPROBLEM_TYPE
     solver%eigenproblemSolver%solver=>solver
     solver%eigenproblemSolver%solverLibrary=SOLVER_PETSC_LIBRARY
          
@@ -7122,6 +7173,7 @@ CONTAINS
     !Allocate and initialise a geometric transformation solver
     ALLOCATE(solver%geometricTransformationSolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate solver geometric transformation solver.",err,error,*999)
+    solver%solveType=SOLVER_GEOMETRIC_TRANSFORMATION_TYPE
     solver%geometricTransformationSolver%solver=>solver
     solver%geometricTransformationSolver%arbitraryPath=.FALSE.
     !Set default number of load increment
@@ -7552,31 +7604,34 @@ CONTAINS
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         !Create the solver matrices
         NULLIFY(solverMatrices)
-        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
-        CALL SolverMatrices_LibraryTypeSet(solverMatrices,directSolver%solverLibrary,err,error,*999)
-        CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
-        SELECT CASE(sparsityType)
-        CASE(SOLVER_SPARSE_MATRICES)
-          CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-        CASE(SOLVER_FULL_MATRICES)
-          CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
-        CASE DEFAULT
-          localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
-        SELECT CASE(symmetryType)
-        CASE(SOLVER_SYMMETRIC_MATRICES)
-          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
-        CASE(SOLVER_UNSYMMETRIC_MATRICES)
-          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
-        CASE DEFAULT
-          localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+        CALL SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*999)
+        IF(.NOT.ASSOCIATED(solverMatrices)) THEN
+          CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
+          CALL SolverMatrices_LibraryTypeSet(solverMatrices,directSolver%solverLibrary,err,error,*999)
+          CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+          SELECT CASE(sparsityType)
+          CASE(SOLVER_SPARSE_MATRICES)
+            CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+          CASE(SOLVER_FULL_MATRICES)
+            CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+          CASE DEFAULT
+            localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+          SELECT CASE(symmetryType)
+          CASE(SOLVER_SYMMETRIC_MATRICES)
+            CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
+          CASE(SOLVER_UNSYMMETRIC_MATRICES)
+            CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
+          CASE DEFAULT
+            localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+        ENDIF
       ENDIF
       CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
       IF(numberOfMatrices/=1) THEN
@@ -7725,6 +7780,7 @@ CONTAINS
       
     ALLOCATE(linearSolver%directSolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate linear solver direct solver.",err,error,*999)
+    linearSolver%linearSolveType=SOLVER_LINEAR_DIRECT_SOLVE_TYPE
     linearSolver%directSolver%linearSolver=>linearSolver
     !Default to an LU direct linear solver
     linearSolver%directSolver%directSolverType=SOLVER_DIRECT_LU
@@ -8411,6 +8467,7 @@ CONTAINS
     !Allocate and initialise a linear solver
     ALLOCATE(solver%linearSolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate solver linear solver.",err,error,*999)
+    solver%solveType=SOLVER_LINEAR_TYPE
     solver%linearSolver%solver=>solver
     solver%linearSolver%linkedNewtonPetSCSolver=.FALSE.
     NULLIFY(solver%linearSolver%directSolver)
@@ -8522,31 +8579,34 @@ CONTAINS
         !Create the solver matrices and vectors
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMatrices)
-        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
-        CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
-        CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
-        SELECT CASE(sparsityType)
-        CASE(SOLVER_SPARSE_MATRICES)
-          CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-        CASE(SOLVER_FULL_MATRICES)
-          CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
-        CASE DEFAULT
-          localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
-        SELECT CASE(symmetryType)
-        CASE(SOLVER_SYMMETRIC_MATRICES)
-          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
-        CASE(SOLVER_UNSYMMETRIC_MATRICES)
-          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
-        CASE DEFAULT
-          localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+        CALL SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*999)
+        IF(.NOT.ASSOCIATED(solverMatrices)) THEN
+          CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
+          CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
+          CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+          SELECT CASE(sparsityType)
+          CASE(SOLVER_SPARSE_MATRICES)
+            CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+          CASE(SOLVER_FULL_MATRICES)
+            CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+          CASE DEFAULT
+            localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+          SELECT CASE(symmetryType)
+          CASE(SOLVER_SYMMETRIC_MATRICES)
+            CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
+          CASE(SOLVER_UNSYMMETRIC_MATRICES)
+            CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
+          CASE DEFAULT
+            localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+        ENDIF
       ENDIF
       !Create the PETSc KSP solver
       IF(linearSolver%linkedNewtonPetSCSolver) THEN
@@ -8809,6 +8869,7 @@ CONTAINS
     !Allocate and initialise an iterative solver
     ALLOCATE(linearSolver%iterativeSolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate linear solver iterative solver.",err,error,*999)
+    linearSolver%linearSolveType=SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE
     linearSolver%iterativeSolver%linearSolver=>linearSolver
     linearSolver%iterativeSolver%solverLibrary=SOLVER_PETSC_LIBRARY
     linearSolver%iterativeSolver%iterativeSolverType=SOLVER_ITERATIVE_GMRES
@@ -9480,7 +9541,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr
+    INTEGER(INTG) :: dummyErr,previousLinearSolveType
     TYPE(LinearSolverType), POINTER :: linearSolver
     TYPE(VARYING_STRING) :: dummyError,localError
     
@@ -9490,7 +9551,8 @@ CONTAINS
     CALL Solver_AssertIsLinear(solver,err,error,*998)
     NULLIFY(linearSolver)
     CALL Solver_LinearSolverGet(solver,linearSolver,err,error,*998)
-    IF(linearSolveType/=linearSolver%linearSolveType) THEN
+    previousLinearSolveType=linearSolver%linearSolveType
+    IF(linearSolveType/=previousLinearSolveType) THEN
       !Intialise the new solver type
       SELECT CASE(linearSolveType)
       CASE(SOLVER_LINEAR_DIRECT_SOLVE_TYPE)
@@ -9502,14 +9564,13 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
       !Finalise the old solver type
-      SELECT CASE(solver%linearSolver%linearSolveType)
+      SELECT CASE(previousLinearSolveType)
       CASE(SOLVER_LINEAR_DIRECT_SOLVE_TYPE)
         CALL SolverLinear_DirectFinalise(solver%linearSolver%directSolver,err,error,*999)
       CASE(SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE)
         CALL SolverLinear_IterativeFinalise(solver%linearSolver%iterativeSolver,err,error,*999)
       CASE DEFAULT
-        localError="The linear solver type of "// &
-          & TRIM(NumberToVString(solver%linearSolver%linearSolveType,"*",err,error))//" is invalid."
+        localError="The linear solver type of "//TRIM(NumberToVString(previousLinearSolveType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       solver%linearSolver%linearSolveType=linearSolveType
@@ -10173,7 +10234,7 @@ CONTAINS
               ENDIF
             ENDIF
             CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
-            IF(massMatrixNumber/=0.AND.dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+            IF(massMatrixNumber/=0) THEN
               NULLIFY(massMatrix)
               CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
               NULLIFY(massDistributedMatrix)
@@ -10585,7 +10646,7 @@ CONTAINS
                         CALL EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet(dynamicVarToEquationsMatricesMap, &
                           & equationsMatrixIdx,equationsMatrixNumber,err,error,*999)
                         CALL EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet(dynamicVarToEquationsMatricesMap, &
-                          & equationsMatrixIdx,lhsVariableDOF,columnNumber,err,error,*999)
+                          & equationsMatrixIdx,lhsVariableDOF,equationsColumnNumber,err,error,*999)
                         IF(equationsMatrixNumber==stiffnessMatrixNumber) &
                           & dofValue=alphaValue*stiffnessMatrixCoefficient*equationsStiffnessCoefficient
                         IF(equationsMatrixNumber==dynamicMapping%dampingMatrixNumber) &
@@ -10621,7 +10682,7 @@ CONTAINS
                           CALL EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet(linearVarToEquationsMatricesMap, &
                             & equationsMatrixIdx,equationsMatrixNumber,err,error,*999)
                           CALL EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet(linearVarToEquationsMatricesMap, &
-                            & equationsMatrixIdx,lhsVariableDOF,columnNumber,err,error,*999)
+                            & equationsMatrixIdx,lhsVariableDOF,equationsColumnNumber,err,error,*999)
                           NULLIFY(equationsMatrix)
                           CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixNumber,equationsMatrix, &
                             & err,error,*999)
@@ -12062,6 +12123,7 @@ CONTAINS
               NULLIFY(solverMappingVariables)
               CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
               DO residualVariableIdx=1,numberOfResidualVariables
+                NULLIFY(residualVariable)
                 CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
                 NULLIFY(solverMappingVariable)
                 CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,residualVariable,solverMappingVariable, &
@@ -12384,6 +12446,7 @@ CONTAINS
     !Allocate and initialise a Quasi-Newton solver
     ALLOCATE(nonlinearSolver%quasiNewtonSolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate nonlinear solver Quasi-Newton solver.",err,error,*999)
+    nonlinearSolver%nonlinearSolveType=SOLVER_NONLINEAR_QUASI_NEWTON
     nonlinearSolver%quasiNewtonSolver%nonlinearSolver=>nonlinearSolver
     nonlinearSolver%quasiNewtonSolver%solutionInitialiseType=SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD
     nonlinearSolver%quasiNewtonSolver%totalNumberOfFunctionEvaluations=0
@@ -12791,31 +12854,34 @@ CONTAINS
       NULLIFY(linkedLinearSolver)
       CALL SolverNonlinearQuasiNewton_LinkedLinearSolverGet(quasiNewtonSolver,linkedLinearSolver,err,error,*999)
       NULLIFY(solverMatrices)
-      CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
-      CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
-      CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
-      SELECT CASE(sparsityType)
-      CASE(SOLVER_SPARSE_MATRICES)
-        CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-      CASE(SOLVER_FULL_MATRICES)
-        CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
-      CASE DEFAULT
-        localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
-          & " is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
-      SELECT CASE(symmetryType)
-      CASE(SOLVER_SYMMETRIC_MATRICES)
-        CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
-      CASE(SOLVER_UNSYMMETRIC_MATRICES)
-        CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
-      CASE DEFAULT
-        localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
-          & " is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+      CALL SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*999)
+      IF(.NOT.ASSOCIATED(solverMatrices)) THEN
+        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
+        CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
+        CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+        SELECT CASE(sparsityType)
+        CASE(SOLVER_SPARSE_MATRICES)
+          CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+        CASE(SOLVER_FULL_MATRICES)
+          CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+        CASE DEFAULT
+          localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+        SELECT CASE(symmetryType)
+        CASE(SOLVER_SYMMETRIC_MATRICES)
+          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
+        CASE(SOLVER_UNSYMMETRIC_MATRICES)
+          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
+        CASE DEFAULT
+          localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+      ENDIF
       !Link linear solver
       linkedLinearSolver%solverEquations=>solver%solverEquations
       !Finish the creation of the linear solver
@@ -13643,6 +13709,8 @@ CONTAINS
       ENDDO !equationsSetIdx                  
       !Create the solver matrices and vectors
       NULLIFY(solverMatrices)
+      CALL SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*999)
+      IF(.NOT.ASSOCIATED(solverMatrices)) THEN
       CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
       CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
 !!TODO: set up the matrix structure if using an analytic Jacobian
@@ -13658,6 +13726,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
       CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+    ENDIF
       !Create the PETSc SNES solver
       CALL PETSc_SNESCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
       !Set the nonlinear solver type to be a Quasi-Newton trust region solver
@@ -14314,6 +14383,7 @@ CONTAINS
     !Allocate and initialise a Newton solver
     ALLOCATE(nonlinearSolver%newtonSolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate nonlinear solver Newton solver.",err,error,*999)
+    nonlinearSolver%nonlinearSolveType=SOLVER_NONLINEAR_NEWTON
     nonlinearSolver%newtonSolver%nonlinearSolver=>nonlinearSolver
     nonlinearSolver%newtonSolver%solutionInitialiseType=SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD
     nonlinearSolver%newtonSolver%totalNumberOfFunctionEvaluations=0
@@ -14711,6 +14781,8 @@ CONTAINS
       NULLIFY(linkedLinearSolver)
       CALL SolverNonlinearNewton_LinkedLinearSolverGet(newtonSolver,linkedLinearSolver,err,error,*999)
       NULLIFY(solverMatrices)
+      CALL SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*999)
+      IF(.NOT.ASSOCIATED(solverMatrices)) THEN
       CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
       CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
       CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
@@ -14736,6 +14808,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
       CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+      ENDIF
       !Link linear solver
       linkedLinearSolver%solverEquations=>solver%solverEquations
       !Finish the creation of the linear solver
@@ -15576,6 +15649,8 @@ CONTAINS
       ENDDO !equationsSetIdx                 
       !Create the solver matrices and vectors
       NULLIFY(solverMatrices)
+      CALL SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*999)
+      IF(.NOT.ASSOCIATED(solverMatrices)) THEN
       CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
       CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
 !!TODO: set up the matrix structure if using an analytic Jacobian
@@ -15591,6 +15666,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
       CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+    ENDIF
       !Create the PETSc SNES solver
       CALL PETSc_SNESCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
       !Set the nonlinear solver type to be a Newton trust region solver
@@ -16109,6 +16185,7 @@ CONTAINS
     !Allocate and initialise a Nonlinear solver
     ALLOCATE(solver%nonlinearSolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate solver nonlinear solver.",err,error,*999)
+    solver%solveType=SOLVER_NONLINEAR_TYPE
     solver%nonlinearSolver%solver=>solver
     NULLIFY(solver%nonlinearSolver%newtonSolver)
     !Default to a nonlinear Newton solver
@@ -16372,7 +16449,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr
+    INTEGER(INTG) :: dummyErr,previousNonlinearSolveType
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
     TYPE(VARYING_STRING) :: dummyError,localError
     
@@ -16382,10 +16459,11 @@ CONTAINS
     CALL Solver_AssertIsNonlinear(solver,err,error,*999)
     NULLIFY(nonlinearSolver)
     CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
+    previousNonlinearSolveType=nonlinearSolver%nonlinearSolveType
     IF(nonlinearSolveType/=nonlinearSolver%nonlinearSolveType) THEN
       CALL Solver_LinkedSolverRemove(solver,SOLVER_LINEAR_TYPE,err,error,*999)
       !Finalise the old solver type
-      SELECT CASE(nonlinearSolver%nonlinearSolveType)
+      SELECT CASE(previousNonlinearSolveType)
       CASE(SOLVER_NONLINEAR_NEWTON)
         CALL SolverNonlinear_NewtonFinalise(nonlinearSolver%newtonSolver,err,error,*999)
       CASE(SOLVER_NONLINEAR_BFGS_INVERSE)
@@ -16396,10 +16474,9 @@ CONTAINS
         CALL SolverNonlinear_QuasiNewtonFinalise(nonlinearSolver%quasiNewtonSolver,err,error,*999)
       CASE DEFAULT
         localError="The nonlinear solver type of "// &
-          & TRIM(NumberToVString(nonlinearSolver%nonlinearSolveType,"*",err,error))//" is invalid."
+          & TRIM(NumberToVString(previousNonlinearSolveType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      nonlinearSolver%nonlinearSolveType=nonlinearSolveType
       !Intialise the new solver type
       SELECT CASE(nonlinearSolveType)
       CASE(SOLVER_NONLINEAR_NEWTON)
@@ -16675,6 +16752,7 @@ CONTAINS
      
     ALLOCATE(solver%optimiserSolver,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate solver optimiser solver.",err,error,*999)
+    solver%solveType=SOLVER_OPTIMISER_TYPE
     solver%optimiserSolver%solver=>solver
     solver%optimiserSolver%solverLibrary=SOLVER_PETSC_LIBRARY
     solver%optimiserSolver%variableType=SOLVER_OPTIMISER_CONTINUOUS_VARIABLES
@@ -17115,7 +17193,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr
+    INTEGER(INTG) :: dummyErr,previousSolveType
     TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("Solver_TypeSet",err,error,*998)
@@ -17123,8 +17201,9 @@ CONTAINS
     CALL Solver_AssertNotFinished(solver,err,error,*998)
     IF(ASSOCIATED(solver%linkingSolver)) &
       & CALL FlagError("Can not changed the solver type for a solve that has been linked.",err,error,*998)
-        
-    IF(solveType/=solver%solveType) THEN
+
+    previousSolveType=solver%solveType
+    IF(solveType/=previousSolveType) THEN
       !Initialise the new solver type 
       SELECT CASE(solveType)
       CASE(SOLVER_LINEAR_TYPE)
@@ -17148,7 +17227,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
       !Finalise the old solve type
-      SELECT CASE(solver%solveType)
+      SELECT CASE(previousSolveType)
       CASE(SOLVER_LINEAR_TYPE)
         CALL Solver_LinearFinalise(solver%linearSolver,err,error,*999)
       CASE(SOLVER_NONLINEAR_TYPE)
@@ -17166,11 +17245,9 @@ CONTAINS
       CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
         CALL Solver_GeometricTransformationFinalise(solver%geometricTransformationSolver,err,error,*999)
       CASE DEFAULT
-        localError="The solver solve type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))//" is invalid."
+        localError="The solver solve type of "//TRIM(NumberToVString(previousSolveType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      !Set the solve type
-      solver%solveType=solveType
     ENDIF
     
     EXITS("Solver_TypeSet")
@@ -17258,7 +17335,7 @@ CONTAINS
       CALL DistributedVector_DataGet(solverVector,solverData,err,error,*999)
       !Loop over the solver variable dofs
       NULLIFY(solverMatrixToEquationsMap)
-      CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverIdx,solverMatrixToEquationsMap,err,error,*999)
+      CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap,err,error,*999)
       CALL SolverMappingSMToEQSMap_NumberOfDOFsGet(solverMatrixToEquationsMap,numberOfSolverDOFs,err,error,*999)
       DO solverDOFIdx=1,numberOfSolverDOFs
         NULLIFY(solverDOFToVariableDOFsMap)
@@ -18158,7 +18235,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(solverToLink)) CALL FlagError("The solver to link is not associated.",err,error,*999)
-    IF(solverTypeToLink<1.OR.solverTypeToLink<=SOLVER_NUMBER_OF_SOLVER_TYPES) THEN
+    IF(solverTypeToLink<1.OR.solverTypeToLink>SOLVER_NUMBER_OF_SOLVER_TYPES) THEN
       localError="The specified solver type to link of "//TRIM(NumberToVString(solverTypeToLink,"*",err,error))//&
         & " is invalid. The solver type should be >= 1 and <= "// &
         & TRIM(NumberToVString(SOLVER_NUMBER_OF_SOLVER_TYPES,"*",err,error))//"."

@@ -45,6 +45,7 @@
 MODULE MeshAccessRoutines
   
   USE BaseRoutines
+  USE BasisAccessRoutines
   USE DecompositionAccessRoutines
   USE Kinds
   USE ISO_VARYING_STRING
@@ -61,12 +62,12 @@ MODULE MeshAccessRoutines
 
   !Module parameters
 
-  !> \addtogroup MESH_ROUTINES_MeshBoundaryTypes MESH_ROUTINES::MeshBoundaryTypes
+  !> \addtogroup MeshRoutines_MeshBoundaryTypes MeshRoutines::MeshBoundaryTypes
   !> \brief The types of whether or not a node/element is on a mesh domain boundary.
-  !> \see MESH_ROUTINES
+  !> \see MeshRoutines
   !>@{
-  INTEGER(INTG), PARAMETER :: MESH_OFF_DOMAIN_BOUNDARY=0 !<The node/element is not on the mesh domain boundary. \see MESH_ROUTINES_MeshBoundaryTypes,MESH_ROUTINES
-  INTEGER(INTG), PARAMETER :: MESH_ON_DOMAIN_BOUNDARY=1 !<The node/element is on the mesh domain boundary. \see MESH_ROUTINES_MeshBoundaryTypes,MESH_ROUTINES
+  INTEGER(INTG), PARAMETER :: MESH_OFF_DOMAIN_BOUNDARY=0 !<The node/element is not on the mesh domain boundary. \see MeshRoutines_MeshBoundaryTypes,MeshRoutines
+  INTEGER(INTG), PARAMETER :: MESH_ON_DOMAIN_BOUNDARY=1 !<The node/element is on the mesh domain boundary. \see MeshRoutines_MeshBoundaryTypes,MeshRoutines
   !>@}
   
   !Module types
@@ -107,6 +108,8 @@ MODULE MeshAccessRoutines
   PUBLIC Mesh_NodesGet
 
   PUBLIC Mesh_NumberOfComponentsGet
+  
+  PUBLIC Mesh_NumberOfDimensionsGet
 
   PUBLIC Mesh_NumberOfElementsGet
 
@@ -120,18 +123,22 @@ MODULE MeshAccessRoutines
 
   PUBLIC MeshElements_AssertIsFinished,MeshElements_AssertNotFinished
 
-  PUBLIC MeshElements_BasisGet
+  PUBLIC MeshElements_ElementAdjacentElementGet
+
+  PUBLIC MeshElements_ElementBasisGet
+
+  PUBLIC MeshElements_ElementBoundaryElementGet
 
   PUBLIC MeshElements_ElementCheckExists
 
-  PUBLIC MeshElements_GlobalElementNumberGet
+  PUBLIC MeshElements_ElementUserNumberGet
+
+  PUBLIC MeshElements_GlobalNumberGet
     
   PUBLIC MeshElements_MeshElementGet
 
   PUBLIC MeshElements_MeshTopologyGet
   
-  PUBLIC MeshElements_UserElementNumberGet
-
   PUBLIC MeshNodes_GlobalNodeNumberGet
   
   PUBLIC MeshNodes_MeshNodeGet
@@ -142,17 +149,17 @@ MODULE MeshAccessRoutines
   
   PUBLIC MeshNodes_NodeOnBoundaryGet
 
+  PUBLIC MeshNodes_NodeCheckExists    
+
   PUBLIC MeshNodes_NodeDerivativesGet
 
   PUBLIC MeshNodes_NodeNumberOfDerivativesGet
 
   PUBLIC MeshNodes_NodeNumberOfVersionsGet
 
-  PUBLIC MeshNodes_NodeCheckExists    
+  PUBLIC MeshNodes_NodeUserNumberGet
 
   PUBLIC MeshNodes_NumberOfNodesGet
-
-  PUBLIC MeshNodes_UserNodeNumberGet
 
   PUBLIC MeshTopology_MeshGet
 
@@ -778,6 +785,33 @@ CONTAINS
   !================================================================================================================================
   !
   
+  !>Gets the number of mesh dimensions for a mesh identified by a pointer. 
+  SUBROUTINE Mesh_NumberOfDimensionsGet(mesh,numberOfDimensions,err,error,*)
+
+    !Argument variables
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to get the number of dimensions for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDimensions !<On return, the number of dimensions in the specified mesh.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Mesh_NumberOfDimensionsGet",err,error,*999)
+
+    CALL Mesh_AssertIsFinished(mesh,err,error,*999)
+    
+    numberOfDimensions=mesh%numberOfDimensions
+     
+    EXITS("Mesh_NumberOfDimensionsGet")
+    RETURN
+999 ERRORSEXITS("Mesh_NumberOfDimensionsGet",err,error)    
+    RETURN 1
+    
+  END SUBROUTINE Mesh_NumberOfDimensionsGet
+
+  !
+  !================================================================================================================================
+  !
+  
   !>Gets the number of elements for a mesh identified by a pointer. \see OpenCMISS::Iron::cmfe_Mesh_NumberOfElementsGet
   SUBROUTINE Mesh_NumberOfElementsGet(mesh,numberOfElements,err,error,*)
 
@@ -1148,12 +1182,67 @@ CONTAINS
     
   END SUBROUTINE MeshElements_AssertNotFinished
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the adjacent element number for a mesh element identified by a global number. \see OpenCMISS::Iron::cmfe_MeshElements_AdjacentElementGet
+  SUBROUTINE MeshElements_ElementAdjacentElementGet(meshElements,globalElementNumber,adjacentElementXi,adjacentGlobalNumber,err,error,*)
+
+    !Argument variables
+    TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the elements of a mesh component from which to get the adjacent element from.
+    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global number of the element to get the adjacent element for
+    INTEGER(INTG), INTENT(IN) :: adjacentElementXi !< The xi coordinate direction to get the adjacent element Note that -xiCoordinateDirection gives the adjacent element before the element in the xiCoordinateDirection'th direction and +xiCoordinateDirection gives the adjacent element after the element in the xiCoordinateDirection'th direction. The xiCoordinateDirection=0 index will give the information on the current element.
+    INTEGER(INTG), INTENT(OUT) :: adjacentGlobalNumber !<On return, the adjacent element global number in the specified xi coordinate direction. Return 0 if the specified element has no adjacent elements in the specified xi coordinate direction.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    INTEGER(INTG) :: numberOfXi
+    TYPE(BasisType), POINTER :: basis
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("MeshElements_ElementAdjacentElementGet",err,error,*999)
+
+    CALL MeshElements_AssertIsFinished(meshElements,err,error,*999)
+#ifdef WITH_PRECHECKS    
+    NULLIFY(basis)
+    CALL MeshElements_ElementBasisGet(meshElements,globalElementNumber,basis,err,error,*999)
+    CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
+    IF(adjacentElementXi<-numberOfXi.OR.adjacentElementXi>numberOfXi) THEN
+      localError="The specified adjacent element xi is invalid. The supplied xi is "// &
+        & TRIM(NumberToVString(adjacentElementXi,"*",err,error))//" and needs to be >= -"// &
+        & TRIM(NumberToVString(numberOfXi,"*",err,error))//" and <= "// &
+        & TRIM(NumberToVString(numberOfXi,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(meshElements%elements(globalElementNumber)%adjacentElements)) THEN
+      localError="The adjacent elements array is not allocated for global element number "// &
+        & TRIM(NumberToVString(globalElementNumber,"*",err,error))//" of the mesh elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    IF(meshElements%elements(globalElementNumber)%adjacentElements(adjacentElementXi)%numberOfAdjacentElements > 0) THEN !\todo Currently returns only the first adjacent element for now as the python binding require the output array size of the adjacent element to be known a-prior. Add routine to first output number of adjacent elements and then loop over all adjacent elements
+      adjacentGlobalNumber=meshElements%elements(globalElementNumber)%adjacentElements(adjacentElementXi)%adjacentElements(1)
+    ELSE !Return 0 indicating the specified element has no adjacent elements in the specified xi coordinate direction.
+      adjacentGlobalNumber=0
+    ENDIF
+
+    EXITS("MeshElements_ElementAdjacentElementGet")
+    RETURN
+999 ERRORSEXITS("MeshElements_ElementAdjacentElementGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE MeshElements_ElementAdjacentElementGet
+
   !  
   !================================================================================================================================
   !
 
-  !>Get the basis for an element in the mesh elements identified by its global number
-  SUBROUTINE MeshElements_BasisGet(meshElements,globalElementNumber,basis,err,error,*)
+  !>Get the basis for an element in the mesh elements identified by its global number. \see OpenCMISS::Iron::cmfe_MeshElements_BasisGet
+  SUBROUTINE MeshElements_ElementBasisGet(meshElements,globalElementNumber,basis,err,error,*)
 
     !Argument variables
     TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the mesh elements to get the element basis for
@@ -1166,7 +1255,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif
     
-    ENTERS("MeshElements_BasisGet",err,error,*998)
+    ENTERS("MeshElements_ElementBasisGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
@@ -1190,14 +1279,54 @@ CONTAINS
     ENDIF
 #endif    
     
-    EXITS("MeshElements_BasisGet")
+    EXITS("MeshElements_ElementBasisGet")
     RETURN
 999 NULLIFY(basis)
-998 ERRORSEXITS("MeshElements_BasisGet",err,error)
+998 ERRORSEXITS("MeshElements_ElementBasisGet",err,error)
     RETURN 1
     
-  END SUBROUTINE MeshElements_BasisGet
+  END SUBROUTINE MeshElements_ElementBasisGet
 
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns if the element in a mesh is on the boundary or not
+  SUBROUTINE MeshElements_ElementBoundaryElementGet(meshElements,globalElementNumber,boundaryElement,err,error,*)
+
+    !Argument variables
+    TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the mesh element containing the element to get the boundary status for
+    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to get the boundary status for
+    LOGICAL, INTENT(OUT) :: boundaryElement !<On return, the boundary element status of the specified global element number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError 
+#endif    
+
+    ENTERS("MeshElements_ElementBoundaryElementGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
+    IF(globalElementNumber<1.OR.globalelementNumber>meshElements%numberOfElements) THEN
+      localError="The specified global element number of "//TRIM(NumberToVString(globalElementNumber,"*",err,error))// &
+        & " is invalid. The global element number should be >=1 and <= "// &
+        & TRIM(NumberToVString(meshElements%numberOfElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(meshElements%elements)) CALL FlagError("Mesh elements elements is not allocated.",err,error,*999)
+#endif
+    
+    boundaryElement=meshElements%elements(globalElementNumber)%boundaryElement
+    
+    EXITS("MeshElements_ElementBoundaryElementGet")
+    RETURN
+999 ERRORSEXITS("MeshElements_ElementBoundaryElementGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshElements_ElementBoundaryElementGet
+  
   !
   !================================================================================================================================
   !
@@ -1237,12 +1366,52 @@ CONTAINS
     
   END SUBROUTINE MeshElements_ElementCheckExists
   
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the user element number for an element in mesh elements. \see OpenCMISS::Iron::cmfe_MeshElements_UserNumberGet
+  SUBROUTINE MeshElements_ElementUserNumberGet(meshElements,elementNumber,userElementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the mesh elements containing the elemnet to get the user number for
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number of the element to get the user number for
+    INTEGER(INTG), INTENT(OUT) :: userElementNumber !<On return, the user element number of the specified element
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("MeshElements_ElementUserNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
+    IF(elementNumber<1.OR.elementNumber>meshElements%numberOfElements) THEN
+      localError="The specified mesh element number of "//TRIM(NumberToVString(elementNumber,"*",err,error))// &
+        & " is invalid. The element number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(meshElements%numberOfElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(meshElements%elements)) CALL FlagError("Mesh elements elements is not allocated.",err,error,*999)
+#endif
+    
+    userElementNumber=meshElements%elements(elementNumber)%userNumber
+        
+    EXITS("MeshElemnets_ElementUserNumberGet")
+    RETURN
+999 ERRORSEXITS("MeshElements_ElementUserNumberGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshElements_ElementUserNumberGet
+  
   !  
   !================================================================================================================================
   !
 
   !>Get the global element number in the mesh elements from a user element number
-  SUBROUTINE MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*)
+  SUBROUTINE MeshElements_GlobalNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*)
 
     !Argument variables
     TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the mesh elements to get the element for
@@ -1256,7 +1425,7 @@ CONTAINS
     TYPE(MeshTopologyType), POINTER :: meshTopology
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MeshElements_GlobalElementNumberGet",err,error,*999)
+    ENTERS("MeshElements_GlobalNumberGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
@@ -1279,12 +1448,12 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("MeshElements_GlobalElementNumberGet")
+    EXITS("MeshElements_GlobalNumberGet")
     RETURN
-999 ERRORSEXITS("MeshElements_GlobalElementNumberGet",err,error)
+999 ERRORSEXITS("MeshElements_GlobalumberGet",err,error)
     RETURN 1
     
-  END SUBROUTINE MeshElements_GlobalElementNumberGet
+  END SUBROUTINE MeshElements_GlobalNumberGet
 
   !  
   !================================================================================================================================
@@ -1371,46 +1540,6 @@ CONTAINS
     
   END SUBROUTINE MeshElements_MeshTopologyGet
 
-  !
-  !================================================================================================================================
-  !
-  
-  !>Returns the user element number for an element in mesh elements
-  SUBROUTINE MeshElements_UserElementNumberGet(meshElements,elementNumber,userElementNumber,err,error,*)
-
-    !Argument variables
-    TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the mesh elements containing the elemnet to get the user number for
-    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number of the element to get the user number for
-    INTEGER(INTG), INTENT(OUT) :: userElementNumber !<On return, the user element number of the specified element
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-#ifdef WITH_PRECHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif    
-
-    ENTERS("MeshElements_UserElementNumberGet",err,error,*999)
-
-#ifdef WITH_PRECHECKS    
-    IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
-    IF(elementNumber<1.OR.elementNumber>meshElements%numberOfElements) THEN
-      localError="The specified mesh element number of "//TRIM(NumberToVString(elementNumber,"*",err,error))// &
-        & " is invalid. The element number must be >= 1 and <= "// &
-        & TRIM(NumberToVString(meshElements%numberOfElements,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(.NOT.ALLOCATED(meshElements%elements)) CALL FlagError("Mesh elements elements is not allocated.",err,error,*999)
-#endif
-    
-    userElementNumber=meshElements%elements(elementNumber)%userNumber
-        
-    EXITS("MeshElemnets_UserElementNumberGet")
-    RETURN
-999 ERRORSEXITS("MeshElements_UserElementNumberGet",err,error)    
-    RETURN 1
-   
-  END SUBROUTINE MeshElements_UserElementNumberGet
-  
   !  
   !================================================================================================================================
   !
@@ -1824,6 +1953,45 @@ CONTAINS
   !
   !================================================================================================================================
   !
+  
+  !>Returns the user node number for a node in mesh nodes
+  SUBROUTINE MeshNodes_NodeUserNumberGet(meshNodes,meshNodeNumber,userNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the node to get the user number for
+    INTEGER(INTG), INTENT(IN) :: meshNodeNumber !<The mesh number of the node to get the user number for
+    INTEGER(INTG), INTENT(OUT) :: userNodeNumber !<On return, the user node number of the specified node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif
+    ENTERS("MeshNodes_NodeUserNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+    IF(meshNodeNumber<1.OR.meshNodeNumber>meshNodes%numberOfNodes) THEN
+      localError="The specified mesh node number of "//TRIM(NumberToVString(meshNodeNumber,"*",err,error))// &
+        & " is invalid. The mesh node number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(meshNodes%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(meshNodes%nodes)) CALL FlagError("Mesh nodes nodes is not allocated.",err,error,*999)
+#endif    
+    
+    userNodeNumber=meshNodes%nodes(meshNodeNumber)%userNumber
+        
+    EXITS("MeshNodes_NodeUserNumberGet")
+    RETURN
+999 ERRORSEXITS("MeshNodes_NodeUserNumberGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshNodes_NodeUserNumberGet
+  
+  !
+  !================================================================================================================================
+  !
 
   !>Returns the number of nodes for a node in a mesh
   SUBROUTINE MeshNodes_NumberOfNodesGet(meshNodes,numberOfNodes,err,error,*)
@@ -1849,45 +2017,6 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE MeshNodes_NumberOfNodesGet
-  
-  !
-  !================================================================================================================================
-  !
-  
-  !>Returns the user node number for a node in mesh nodes
-  SUBROUTINE MeshNodes_UserNodeNumberGet(meshNodes,meshNodeNumber,userNodeNumber,err,error,*)
-
-    !Argument variables
-    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the node to get the user number for
-    INTEGER(INTG), INTENT(IN) :: meshNodeNumber !<The mesh number of the node to get the user number for
-    INTEGER(INTG), INTENT(OUT) :: userNodeNumber !<On return, the user node number of the specified node
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-#ifdef WITH_PRECHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif
-    ENTERS("MeshNodes_UserNodeNumberGet",err,error,*999)
-
-#ifdef WITH_PRECHECKS    
-    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
-    IF(meshNodeNumber<1.OR.meshNodeNumber>meshNodes%numberOfNodes) THEN
-      localError="The specified mesh node number of "//TRIM(NumberToVString(meshNodeNumber,"*",err,error))// &
-        & " is invalid. The mesh node number must be >= 1 and <= "// &
-        & TRIM(NumberToVString(meshNodes%numberOfNodes,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(.NOT.ALLOCATED(meshNodes%nodes)) CALL FlagError("Mesh nodes nodes is not allocated.",err,error,*999)
-#endif    
-    
-    userNodeNumber=meshNodes%nodes(meshNodeNumber)%userNumber
-        
-    EXITS("MeshNodes_UserNodeNumberGet")
-    RETURN
-999 ERRORSEXITS("MeshNodes_UserNodeNumberGet",err,error)    
-    RETURN 1
-   
-  END SUBROUTINE MeshNodes_UserNodeNumberGet
   
   !
   !================================================================================================================================

@@ -51,6 +51,8 @@ MODULE ProblemRoutines
   USE ContextAccessRoutines
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE DataPointAccessRoutines
+  USE DataProjectionAccessRoutines
   USE DistributedMatrixVector
   USE ElasticityRoutines
   USE EquationsRoutines
@@ -214,7 +216,7 @@ CONTAINS
     
     ENTERS("Problem_CellMLEquationsSolve",err,error,*999)
 
-    CALL CellMLEquations_AssertNotFinished(cellMLEquations,err,error,*999)
+    CALL CellMLEquations_AssertIsFinished(cellMLEquations,err,error,*999)
  
     NULLIFY(solver)
     CALL CellMLEquations_SolverGet(cellMLEquations,solver,err,error,*999)
@@ -2984,28 +2986,35 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: load_step
+    INTEGER(INTG) :: component,coupledElementNumber,coupledLineFaceNumber,coupledMeshFaceLineNumber,coupledMeshIdx,dataPointIdx, &
+      & exitTag,globalDataPointNumber,interfaceConditionIdx,interfaceElementNumber,iUnit,loadStep,numberOfCoupledElements, &
+      & numberOfCoupledMeshes,numberOfDataDimensions,numberOfInterfaceConditions,numberOfProjectedData,numberOfReducedXi, &
+      & pSpecification(4),solveCall
+    REAL(DP) :: position(3),reducedXi(3)
+    CHARACTER(LEN=100) :: filenameOutput,groupname
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(SolverMappingType), POINTER :: solverMapping 
-    TYPE(VARYING_STRING) :: directory    
-    INTEGER(INTG) :: interfaceConditionIdx, interfaceElementNumber, dataPointIdx, globalDataPointNumber, coupledElementNumber, &
-      & coupledMeshFaceLineNumber, coupledMeshIdx,component
-    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface 
-    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
-    TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity !<A pointer to the interface points connectivity
-    TYPE(FieldType), POINTER :: coupledMeshDependentField
-    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:)
-    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoints(:)
-    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
-    TYPE(DecompositionElementDataPointsType), POINTER :: decompositionElementData !<A pointer to the decomposition data point topology
     TYPE(DataPointsType), POINTER :: interfaceDatapoints
     TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DecompositionType), POINTER :: dependentDecomposition,lagrangeDecomposition
+    TYPE(DecompositionDataPointsType), POINTER :: lagrangeDecompositionDataPoints
+    TYPE(DecompositionElementDataPointsType), POINTER :: decompositionElementData
+    TYPE(DecompositionElementsType), POINTER :: dependentDecompositionElements,lagrangeDecompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: dependentDecompositionTopology,lagrangeDecompositionTopology
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(InterfaceType), POINTER :: INTERFACE
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceDependentType), POINTER :: interfaceDependent
+    TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange
+    TYPE(InterfacePointConnectivityType), POINTER :: pointConnectivity
+    TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity
+    TYPE(FieldType), POINTER :: coupledMeshDependentField,lagrangeField
+    TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
+    TYPE(FieldVariableType), POINTER :: coupledMeshDependentVariable
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations
-    INTEGER(INTG) :: IUNIT
-    CHARACTER(LEN=100) :: filenameOutput,groupname
-    TYPE(VARYING_STRING) :: localError
-    INTEGER(INTG) :: solve_call
+    TYPE(SolverMappingType), POINTER :: solverMapping 
+    TYPE(VARYING_STRING) :: directory,localError
 
     ENTERS("Problem_SolverNewtonFieldsOutput",err,error,*999)
 
@@ -3017,14 +3026,13 @@ CONTAINS
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
-    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    IF(SIZE(problem%specification,1)<1) CALL FlagError("Problem specification must have at least one entry.",err,error,*999)
-    SELECT CASE(problem%specification(1))
+    SELECT CASE(pSpecification(1))
     CASE(PROBLEM_ELASTICITY_CLASS)
-      IF(SIZE(problem%specification,1)/=3) &
+      IF(SIZE(pSpecification,1)/=3) &
         & CALL FlagError("Problem specification must have three entries for an elasticity problem.",err,error,*999)
-      SELECT CASE(problem%specification(2))
+      SELECT CASE(pSpecification(2))
       CASE(PROBLEM_LINEAR_ELASTICITY_TYPE,PROBLEM_FINITE_ELASTICITY_TYPE,PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE, &
         & PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
 
@@ -3037,15 +3045,15 @@ CONTAINS
         !   ENDIF
         
         !   ! Find how many times the problem solve command has been issued.
-        !   max_solve_calls=100
+        !   maxSolveCalls=100
         !   coupledMeshIdx=1
-        !   load_step=1
+        !   loadStep=1
         !   firstIterationNumber=0
-        !   DO solve_call=1,max_solve_calls
+        !   DO solveCall=1,maxSolveCalls
         !     fileToCheck=directory// &
         !       & "mesh"//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))// &
-        !       & "_solveCall"//TRIM(NumberToVString(solve_call,"*",err,error))// &
-        !       & "_load"//TRIM(NumberToVString(load_step,"*",err,error))// &
+        !       & "_solveCall"//TRIM(NumberToVString(solveCall,"*",err,error))// &
+        !       & "_load"//TRIM(NumberToVString(loadStep,"*",err,error))// &
         !       & "_iter"//TRIM(NumberToVString(firstIterationNumber,"*",err,error))//".part0.exnode"
         !     INQUIRE(FILE=CHAR(fileToCheck),EXIST=fileExists)
         !     IF(.NOT.fileExists) THEN
@@ -3053,14 +3061,14 @@ CONTAINS
         !     ENDIF
         !   ENDDO
         
-        !   load_step=solver%solvers%controlLoop%loadIncrementLoop%iterationNumber
+        !   loadStep=solver%solvers%controlLoop%loadIncrementLoop%iterationNumber
         
-        !   IF((iterationNumber > 0).OR.(load_step > 1))THEN
-        !     solve_call = solve_call - 1
+        !   IF((iterationNumber > 0).OR.(loadStep > 1))THEN
+        !     solveCall = solveCall - 1
         !   ENDIF
         
-        !   WRITE(*,'(1X,''SolveCall: '',I4)') solve_call
-        !   WRITE(*,'(1X,''  LoadStep: '',I4)') load_step
+        !   WRITE(*,'(1X,''SolveCall: '',I4)') solveCall
+        !   WRITE(*,'(1X,''  LoadStep: '',I4)') loadStep
         !   WRITE(*,'(1X,''    Iteration: '',I4)') iterationNumber
         
         !   DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
@@ -3069,8 +3077,8 @@ CONTAINS
         !       NULLIFY(fields)
         !       fields=>region%FIELDS
         !       fileName=directory//"mesh"//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
-        !         & "_solveCall"//TRIM(NumberToVString(solve_call,"*",err,error))// &
-        !         & "_load"//TRIM(NumberToVString(load_step,"*",err,error))// &
+        !         & "_solveCall"//TRIM(NumberToVString(solveCall,"*",err,error))// &
+        !         & "_load"//TRIM(NumberToVString(loadStep,"*",err,error))// &
         !         & "_iter"//TRIM(NumberToVString(iterationNumber,"*",err,error))
         !       method="FORTRAN"
         !       CALL FIELD_IO_ELEMENTS_EXPORT(fields,fileName,method,err,error,*999)
@@ -3082,117 +3090,159 @@ CONTAINS
         ! ENDIF
 
       CASE DEFAULT
-        localError="The problem type of "//TRIM(NumberToVString(problem%specification(2),"*",err,error))//" &
-          & is invalid."
+        localError="The problem type of "//TRIM(NumberToVString(pSpecification(2),"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(PROBLEM_BIOELECTRICS_CLASS,PROBLEM_FLUID_MECHANICS_CLASS,PROBLEM_ELECTROMAGNETICS_CLASS, &
       & PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_FITTING_CLASS,PROBLEM_MODAL_CLASS,PROBLEM_MULTI_PHYSICS_CLASS)
       !Do nothing???
     CASE DEFAULT
-      localError="The problem class of "//TRIM(NumberToVString(problem%SPECIFICATION(1),"*",err,error))//" &
-        & is invalid."
+      localError="The problem class of "//TRIM(NumberToVString(pSpecification(1),"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    SELECT CASE(problem%SPECIFICATION(1))
+    SELECT CASE(pSpecification(1))
     CASE(PROBLEM_ELASTICITY_CLASS)
-      SELECT CASE(problem%SPECIFICATION(2))
+      SELECT CASE(pSpecification(2))
       CASE(PROBLEM_LINEAR_ELASTICITY_TYPE,PROBLEM_FINITE_ELASTICITY_TYPE)
         ! Pass
       CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE,PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
         
         IF(diagnostics1) THEN
-          IUNIT = 300
+          iUnit = 300
           NULLIFY(solverMapping)
           CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-          DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
-            interfaceCondition=>solverMapping%interfaceConditions(interfaceConditionIdx)%ptr
-            INTERFACE=>solverMapping%interfaceConditions(interfaceConditionIdx)%ptr%INTERFACE
-            pointsConnectivity=>interface%pointsConnectivity
-            interfaceDatapoints=>pointsConnectivity%dataPoints
+          CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+          DO interfaceConditionIdx=1,numberOfInterfaceConditions
+            NULLIFY(interfaceCondition)
+            CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
+            NULLIFY(INTERFACE)
+            CALL InterfaceCondition_InterfaceGet(interfaceCondition,INTERFACE,err,error,*999)
+            NULLIFY(pointsConnectivity)
+            CALL Interface_PointsConnectivityExists(INTERFACE,pointsConnectivity,err,error,*999)
             IF(ASSOCIATED(pointsConnectivity)) THEN
-              DO coupledMeshIdx=1,INTERFACE%numberOfCoupledMeshes
-                filenameOutput=directory//"PointsConnectivity"//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))// &
-                  & "_solveCall"//TRIM(NumberToVString(solve_call,"*",err,error))// &
-                  & "_load"//TRIM(NumberToVString(load_step,"*",err,error))// &
+              NULLIFY(interfaceLagrange)
+              CALL InterfaceCondition_InterfaceLagrangeGet(interfaceCondition,interfaceLagrange,err,error,*999)
+              NULLIFY(lagrangeField)
+              CALL InterfaceLagrange_LagrangeFieldGet(interfaceLagrange,lagrangeField,err,error,*999)
+              NULLIFY(lagrangeDecomposition)
+              CALL Field_DecompositionGet(lagrangeField,lagrangeDecomposition,err,error,*999)
+              NULLIFY(lagrangeDecompositionTopology)
+              CALL Decomposition_DecompositionTopologyGet(lagrangeDecomposition,lagrangeDecompositionTopology,err,error,*999)
+              NULLIFY(lagrangeDecompositionElements)
+              CALL DecompositionTopology_DecompositionElementsGet(lagrangeDecompositionTopology,lagrangeDecompositionElements, &
+                & err,error,*999)
+              NULLIFY(lagrangeDecompositionDataPoints)
+              CALL DecompositionTopology_DecompositionDataPointsGet(lagrangeDecompositionTopology,lagrangeDecompositionDataPoints, &
+                & err,error,*999)
+              NULLIFY(interfaceDependent)
+              CALL InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*999)
+              NULLIFY(interfaceDataPoints)
+              CALL InterfacePointsConnectivity_DataPointsGet(pointsConnectivity,interfaceDataPoints,err,error,*999)
+              CALL DataPoints_NumberOfDimensionsGet(interfaceDataPoints,numberOfDataDimensions,err,error,*999)
+              CALL Interface_NumberOfCoupledMeshesGet(INTERFACE,numberOfCoupledMeshes,err,error,*999)
+              DO coupledMeshIdx=1,numberOfCoupledMeshes
+               filenameOutput=directory//"PointsConnectivity"//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))// &
+                  & "_solveCall"//TRIM(NumberToVString(solveCall,"*",err,error))// &
+                  & "_load"//TRIM(NumberToVString(loadStep,"*",err,error))// &
                   & "_iter"//TRIM(NumberToVString(iterationNumber,"*",err,error))//".exdata"
-                OPEN(UNIT=IUNIT,FILE=filenameOutput,STATUS="UNKNOWN",ACTION="WRITE",IOSTAT=err)
+                OPEN(UNIT=iUnit,FILE=filenameOutput,STATUS="UNKNOWN",ACTION="WRITE",IOSTAT=err)
                 groupname="PointsConnectivity"//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))
-                WRITE(IUNIT,'( '' Group name: '',A)') groupname
-                WRITE(IUNIT,'(1X,''#Fields=4'')')
-                WRITE(IUNIT,'(1X,''1) coordinates, coordinate, rectangular cartesian, #Components=3'')')
-                WRITE(IUNIT,'(1X,''  x.  Value index= 1, #Derivatives=0'')')
-                WRITE(IUNIT,'(1X,''  y.  Value index= 2, #Derivatives=0'')')
-                WRITE(IUNIT,'(1X,''  z.  Value index= 3, #Derivatives=0'')')
-                WRITE(IUNIT,'(1X,''2) error, field, rectangular cartesian, #Components=3'')')
-                WRITE(IUNIT,'(1X,''  x.  Value index= 4, #Derivatives=0'')')
-                WRITE(IUNIT,'(1X,''  y.  Value index= 5, #Derivatives=0'')')
-                WRITE(IUNIT,'(1X,''  z.  Value index= 6, #Derivatives=0'')')
-                WRITE(IUNIT,'(1X,''3) projectedCoordinate, field, rectangular cartesian, #Components=3'')')
-                WRITE(IUNIT,'(1X,''  x.  Value index= 7, #Derivatives=0'')')
-                WRITE(IUNIT,'(1X,''  y.  Value index= 8, #Derivatives=0'')')
-                WRITE(IUNIT,'(1X,''  z.  Value index= 9, #Derivatives=0'')')
-                WRITE(IUNIT,'(1X,''4) exitTag, field, rectangular cartesian, #Components=1'')')
-                WRITE(IUNIT,'(1X,''  tag.  Value index= 10, #Derivatives=0'')')
-                coupledMeshDependentField=>interfaceCondition%dependent%equationsSets(coupledMeshIdx)%ptr% &
-                  & dependent%dependentField
+                WRITE(iUnit,'( '' Group name: '',A)') groupname
+                WRITE(iUnit,'(1X,''#Fields=4'')')
+                WRITE(iUnit,'(1X,''1) coordinates, coordinate, rectangular cartesian, #Components=3'')')
+                WRITE(iUnit,'(1X,''  x.  Value index= 1, #Derivatives=0'')')
+                WRITE(iUnit,'(1X,''  y.  Value index= 2, #Derivatives=0'')')
+                WRITE(iUnit,'(1X,''  z.  Value index= 3, #Derivatives=0'')')
+                WRITE(iUnit,'(1X,''2) error, field, rectangular cartesian, #Components=3'')')
+                WRITE(iUnit,'(1X,''  x.  Value index= 4, #Derivatives=0'')')
+                WRITE(iUnit,'(1X,''  y.  Value index= 5, #Derivatives=0'')')
+                WRITE(iUnit,'(1X,''  z.  Value index= 6, #Derivatives=0'')')
+                WRITE(iUnit,'(1X,''3) projectedCoordinate, field, rectangular cartesian, #Components=3'')')
+                WRITE(iUnit,'(1X,''  x.  Value index= 7, #Derivatives=0'')')
+                WRITE(iUnit,'(1X,''  y.  Value index= 8, #Derivatives=0'')')
+                WRITE(iUnit,'(1X,''  z.  Value index= 9, #Derivatives=0'')')
+                WRITE(iUnit,'(1X,''4) exitTag, field, rectangular cartesian, #Components=1'')')
+                WRITE(iUnit,'(1X,''  tag.  Value index= 10, #Derivatives=0'')')
+                NULLIFY(equationsSet)
+                CALL InterfaceDependent_EquationsSetGet(interfaceDependent,coupledMeshIdx,equationsSet,err,error,*999)
+                NULLIFY(coupledMeshDependentField)
+                CALL EquationsSet_DependentFieldGet(equationsSet,coupledMeshDependentField,err,error,*999)
+                NULLIFY(coupledMeshDependentVariable)
+                CALL Field_VariableGet(coupledMeshDependentField,FIELD_U_VARIABLE_TYPE,coupledMeshDependentVariable,err,error,*999)
+                NULLIFY(dependentDecomposition)
+                CALL Field_DecompositionGet(coupledMeshDependentField,dependentDecomposition,err,error,*999)
+                NULLIFY(dependentDecompositionTopology)
+                CALL Decomposition_DecompositionTopologyGet(dependentDecomposition,dependentDecompositionTopology,err,error,*999)
+                NULLIFY(dependentDecompositionElements)
+                CALL DecompositionTopology_DecompositionElementsGet(dependentDecompositionTopology,dependentDecompositionElements, &
+                  & err,error,*999)
                 NULLIFY(interpolationParameters)
-                CALL Field_InterpolationParametersInitialise(coupledMeshDependentField,interpolationParameters,err,error, &
-                  & *999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                NULLIFY(interpolatedPoints)
-                CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoints,err,error,*999, &
+                CALL FieldVariable_InterpolationParameterInitialise(coupledMeshDependentVariable,interpolationParameters, &
+                  & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+                NULLIFY(interpolatedPoint)
+                CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999, &
                   & FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                interpolatedPoint=>interpolatedPoints(FIELD_U_VARIABLE_TYPE)%ptr
-                dataProjection=>interfaceDatapoints%dataProjections%dataProjections(coupledMeshIdx+1)%ptr
-                DO interfaceElementNumber=1,SIZE(pointsConnectivity%coupledElements,1)
-                  decompositionElementData=>interfaceCondition%LAGRANGE%lagrangeField%DECOMPOSITION%TOPOLOGY%dataPoints% &
-                    & elementDataPoints(interfaceElementNumber)
-                  DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
-                    globalDataPointNumber=decompositionElementData%dataIndices(dataPointIdx)%globalNumber
-                    WRITE(IUNIT,'(1X,''Node:'',I4)') globalDataPointNumber
-                    DO component=1,3
-                      WRITE(IUNIT,'(1X,3E25.15)') interfaceDatapoints%dataPoints(globalDataPointNumber)%position(component)
+                NULLIFY(dataProjection)
+                CALL DataPoints_DataProjectionIndexGet(interfaceDataPoints,coupledMeshIdx+1,dataProjection,err,error,*999)
+                CALL InterfacePointsConnectivity_MaximumCoupledElementsGet(pointsConnectivity,coupledMeshIdx, &
+                  & numberOfCoupledElements,err,error,*999)
+                DO interfaceElementNumber=1,numberOfCoupledElements
+                  NULLIFY(decompositionElementData)
+                  CALL DecompositionDataPoints_ElementDataPointsGet(lagrangeDecompositionDataPoints,interfaceElementNumber, &
+                    & decompositionElementData,err,error,*999)
+                  CALL DecompositionElementDataPoints_NumberOfDataPointsGet(decompositionElementData,numberOfProjectedData, &
+                    & err,error,*999)
+                  DO dataPointIdx=1,numberOfProjectedData
+                    CALL DecompositionElementDataPoints_GlobalNumberGet(decompositionElementData,dataPointIdx, &
+                      & globalDataPointNumber,err,error,*999)
+                    CALL DataPoints_DataPositionGet(interfaceDataPoints,globalDataPointNumber,position(1:numberOfDataDimensions), &
+                      & err,error,*999)
+                    WRITE(iUnit,'(1X,''Node:'',I4)') globalDataPointNumber
+                    DO component=1,numberOfDataDimensions
+                      WRITE(iUnit,'(1X,3E25.15)') position(component)
                     ENDDO !component
-                    coupledElementNumber=pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
-                      & coupledElementNumber
-                    coupledMeshFaceLineNumber=coupledMeshDependentField%DECOMPOSITION%TOPOLOGY%ELEMENTS% &
-                      & ELEMENTS(coupledElementNumber)% &
-                      & elementFaces(pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
-                      & elementLineFaceNumber)
+                    NULLIFY(pointConnectivity)
+                    CALL InterfacePointsConnectivity_CoupledPointGet(pointsConnectivity,globalDataPointNumber,coupledMeshIdx, &
+                      & pointConnectivity,err,error,*999)
+                    CALL InterfacePointConnectivity_CoupledElementNumberGet(pointConnectivity,coupledElementNumber, &
+                      & err,error,*999)
+                    CALL InterfacePointConnectivity_CoupledLineFaceNumberGet(pointConnectivity,coupledLineFaceNumber, &
+                      & err,error,*999)
+                    CALL InterfacePointConnectivity_ReducedXiGet(pointConnectivity,numberOfReducedXi,reducedXi,err,error,*999)
+                    CALL DecompositionElements_ElementFaceNumberGet(dependentDecompositionElements,coupledLineFaceNumber, &
+                      & coupledElementNumber,coupledMeshFaceLineNumber,err,error,*999)
                     CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,coupledMeshFaceLineNumber, &
-                      & interpolationParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                    CALL Field_InterpolateXi(NO_PART_DERIV,pointsConnectivity%pointsConnectivity(globalDataPointNumber, &
-                      & coupledMeshIdx)%reducedXi(:),interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE) !Interpolate contact data points on each surface
-                    DO component=1,3
-                      WRITE(IUNIT,'(1X,3E25.15)') interpolatedPoint%VALUES(component,NO_PART_DERIV) - &
-                        & interfaceDatapoints%dataPoints(globalDataPointNumber)%position(component)
+                      & interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+                    CALL Field_InterpolateXi(NO_PART_DERIV,reducedXi(1:numberOfReducedXi),interpolatedPoint, &
+                      & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE) !Interpolate contact data points on each surface
+                    DO component=1,numberOfDataDimensions
+                      WRITE(iUnit,'(1X,3E25.15)') interpolatedPoint%values(component,NO_PART_DERIV) - position(component)
+                    ENDDO !component                    
+                    DO component=1,numberOfDataDimensions
+                      WRITE(iUnit,'(1X,3E25.15)') interpolatedPoint%values(component,NO_PART_DERIV)
                     ENDDO !component
-                    DO component=1,3
-                      WRITE(IUNIT,'(1X,3E25.15)') interpolatedPoint%VALUES(component,NO_PART_DERIV)
-                    ENDDO !component
-                    WRITE(IUNIT,'(1X,I2)') dataProjection%dataProjectionResults(globalDataPointNumber)%exitTag
+                    CALL DataProjection_ResultExitTagGet(dataProjection,globalDataPointNumber,exitTag,err,error,*999)
+                    WRITE(iUnit,'(1X,I2)') exitTag
                   ENDDO !dataPointIdx
                 ENDDO !interfaceElementNumber
-                CALL Field_InterpolationParametersFinalise(interpolationParameters,err,error,*999)
-                CALL Field_InterpolatedPointsFinalise(interpolatedPoints,err,error,*999)
-                OPEN(UNIT=IUNIT)
+                CALL Field_InterpolatedPointFinalise(interpolatedPoint,err,error,*999)
+                CALL FieldVariable_InterpolationParameterFinalise(interpolationParameters,err,error,*999)
+                OPEN(UNIT=iUnit)
               ENDDO !coupledMeshIdx
             ENDIF
           ENDDO !interfaceConditionIdx
         ENDIF
         
       CASE DEFAULT
-        localError="The problem type of "//TRIM(NumberToVString(problem%SPECIFICATION(2),"*",err,error))//" &
-          & is invalid."
+        localError="The problem type of "//TRIM(NumberToVString(pSpecification(2),"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(PROBLEM_BIOELECTRICS_CLASS,PROBLEM_FLUID_MECHANICS_CLASS,PROBLEM_ELECTROMAGNETICS_CLASS, &
       & PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_FITTING_CLASS,PROBLEM_MODAL_CLASS,PROBLEM_MULTI_PHYSICS_CLASS)
       !Do nothing???
     CASE DEFAULT
-      localError="The problem class of "//TRIM(NumberToVString(problem%SPECIFICATION(1),"*",err,error))//" &
-        & is invalid."
+      localError="The problem class of "//TRIM(NumberToVString(pSpecification(1),"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
    

@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -1815,6 +1815,7 @@ CONTAINS
             & err,error,*999)
         ENDDO !variableIdx
         IF(ALLOCATED(variableTypes)) DEALLOCATE(variableTypes)
+        residualMapping%numberOfJacobianMatrices=residualMapping%numberOfVariables
         ALLOCATE(residualMapping%varToJacobianMatrixMaps(residualMapping%numberOfVariables),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate variable to Jacobian matrix maps.",err,error,*999)
         ALLOCATE(residualMapping%jacobianMatrixToVarMaps(residualMapping%numberOfVariables),STAT=err)
@@ -1865,7 +1866,7 @@ CONTAINS
           residualMapping%jacobianMatrixToVarMaps(variableIdx)%ptr%variableType=residualMapping%variableTypes(variableIdx)
           residualMapping%jacobianMatrixToVarMaps(variableIdx)%ptr%variable=>dependentVariable
           residualMapping%jacobianMatrixToVarMaps(variableIdx)%ptr%numberOfColumns=numberOfGlobal
-          residualMapping%jacobianMatrixToVarMaps(matrixIdx)%ptr%jacobianCoefficient=residualCoefficient
+          residualMapping%jacobianMatrixToVarMaps(variableIdx)%ptr%jacobianCoefficient=residualCoefficient
           ALLOCATE(residualMapping%jacobianMatrixToVarMaps(variableIdx)%ptr%equationsColumnToDOFVariableMap(numberOfGlobal), &
             & STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate equations column to DOF variable map.",err,error,*999)
@@ -2289,13 +2290,11 @@ CONTAINS
           !Only one variable so map it to a residual and have no RHS.
           vectorMapping%createValuesCache%numberOfResidualVariables=1
         ELSE         
-          !Map first variable to a residual, the second variable to the RHS and all other variables to linear matrices.
+          !Map first variable to a residual and the second variable to the RHS.
           vectorMapping%createValuesCache%numberOfResidualVariables=1
           NULLIFY(fluxVariable)
           CALL Field_VariableIndexGet(dependentField,2,fluxVariable,fluxVariableType,err,error,*999)
           vectorMapping%createValuesCache%rhsVariableType=fluxVariableType
-          IF(dependentField%numberOfVariables>2) &
-            & vectorMapping%createValuesCache%numberOfLinearMatrices=dependentField%numberOfVariables-2
         ENDIF
       CASE DEFAULT
         localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
@@ -2325,10 +2324,6 @@ CONTAINS
           NULLIFY(fluxVariable)
           CALL Field_VariableIndexGet(dependentField,2,fluxVariable,fluxVariableType,err,error,*999)
           vectorMapping%createValuesCache%rhsVariableType=fluxVariableType
-          IF(dependentField%numberOfVariables>2) THEN
-            !Map the remaining variables to linear matrices
-            vectorMapping%createValuesCache%numberOfLinearMatrices=dependentField%numberOfVariables-2
-          ENDIF
         ENDIF
       CASE(EQUATIONS_NONLINEAR)
         !Dynamic, nonlinear equations.
@@ -2339,10 +2334,6 @@ CONTAINS
           NULLIFY(fluxVariable)
           CALL Field_VariableIndexGet(dependentField,2,fluxVariable,fluxVariableType,err,error,*999)
           vectorMapping%createValuesCache%rhsVariableType=fluxVariableType
-          IF(dependentField%numberOfVariables>2) THEN
-            !Map the remaining variables to linear matrices
-            vectorMapping%createValuesCache%numberOfLinearMatrices=dependentField%numberOfVariables-2
-          ENDIF
         ENDIF
       CASE DEFAULT
         localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
@@ -2807,11 +2798,11 @@ CONTAINS
     NULLIFY(equations)
     CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     CALL Equations_AssertIsDynamic(equations,err,error,*999)
-    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated",err,error,*999)
    
     IF(dynamicVariableType==0) THEN
       createValuesCache%dynamicVariableType=0
     ELSE
+      NULLIFY(equationsSet)
       CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)      
       NULLIFY(dependentField)
       CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
@@ -2875,6 +2866,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("EquationsMappingVector_LHSMappingFinalise",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMappingVector_LHSMappingFinalise
 
   !
@@ -2958,6 +2950,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("EquationsMappingVector_LinearMappingFinalise",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMappingVector_LinearMappingFinalise
 
   !
@@ -3464,20 +3457,22 @@ CONTAINS
       newNumberOfResidualVariables=0
       newResidualVariableTypes=0
       newResidualCoefficients=1.0_DP
-      DO residualIdx=1,MIN(numberOfResiduals,previousNumberOfResiduals)
-        newNumberOfResidualVariables(residualIdx)=createValuesCache%numberOfResidualVariables(residualIdx)
-        DO variableIdx=1,createValuesCache%numberOfResidualVariables(residualIdx)
-          newResidualVariableTypes(variableIdx,residualIdx)=createValuesCache%residualVariableTypes(variableIdx,residualIdx)
-        ENDDO !variableIdx
-        newResidualCoefficients(residualIdx)=createValuesCache%residualCoefficients(residualIdx)
-      ENDDO !residualIdx
-      !Default any new residuals to be the same as the first residual
-      DO residualIdx=createValuesCache%numberOfResiduals+1,numberOfResiduals
-        newNumberOfResidualVariables(residualIdx)=createValuesCache%numberOfResidualVariables(1)
-        DO variableIdx=1,createValuesCache%numberOfResidualVariables(1)
-          newResidualVariableTypes(variableIdx,residualIdx)=createValuesCache%residualVariableTypes(variableIdx,1)
-        ENDDO !variableIdx
-      ENDDO !residualIdx
+      IF(previousNumberOfResiduals>0) THEN
+        DO residualIdx=1,MIN(numberOfResiduals,previousNumberOfResiduals)
+          newNumberOfResidualVariables(residualIdx)=createValuesCache%numberOfResidualVariables(residualIdx)
+          DO variableIdx=1,createValuesCache%numberOfResidualVariables(residualIdx)
+            newResidualVariableTypes(variableIdx,residualIdx)=createValuesCache%residualVariableTypes(variableIdx,residualIdx)
+          ENDDO !variableIdx
+          newResidualCoefficients(residualIdx)=createValuesCache%residualCoefficients(residualIdx)
+        ENDDO !residualIdx
+        !Default any new residuals to be the same as the first residual
+        DO residualIdx=createValuesCache%numberOfResiduals+1,numberOfResiduals
+          newNumberOfResidualVariables(residualIdx)=createValuesCache%numberOfResidualVariables(1)
+          DO variableIdx=1,createValuesCache%numberOfResidualVariables(1)
+            newResidualVariableTypes(variableIdx,residualIdx)=createValuesCache%residualVariableTypes(variableIdx,1)
+          ENDDO !variableIdx
+        ENDDO !residualIdx
+      ENDIF
       CALL MOVE_ALLOC(newNumberOfResidualVariables,createValuesCache%numberOfResidualVariables)
       CALL MOVE_ALLOC(newResidualVariableTypes,createValuesCache%residualVariableTypes)
       CALL MOVE_ALLOC(newResidualCoefficients,createValuesCache%residualCoefficients)
@@ -4345,14 +4340,17 @@ CONTAINS
   SUBROUTINE EquationsMappingVToJMMap_Finalise(varToEquationsJacobianMap,err,error,*)
 
     !Argument variables
-    TYPE(VarToJacobianMatrixMapType) :: varToEquationsJacobianMap !<The variable to equations Jacobian map to finalise
+    TYPE(VarToJacobianMatrixMapType), POINTER :: varToEquationsJacobianMap !<A pointer to the variable to equations Jacobian map to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("EquationsMappingVToJMMap_Finalise",err,error,*999)
-    
-    IF(ALLOCATED(varToEquationsJacobianMap%dofToColumnsMap)) DEALLOCATE(varToEquationsJacobianMap%dofToColumnsMap)
+
+    IF(ASSOCIATED(varToEquationsJacobianMap)) THEN
+      IF(ALLOCATED(varToEquationsJacobianMap%dofToColumnsMap)) DEALLOCATE(varToEquationsJacobianMap%dofToColumnsMap)
+      DEALLOCATE(varToEquationsJacobianMap)
+    ENDIF
     
     EXITS("EquationsMappingVToJMMap_Finalise")
     RETURN
@@ -4370,19 +4368,27 @@ CONTAINS
   SUBROUTINE EquationsMappingVToJMMap_Initialise(varToEquationsJacobianMap,err,error,*)
 
     !Argument variables
-    TYPE(VarToJacobianMatrixMapType) :: varToEquationsJacobianMap !<The variable to equations Jacobian map to initialise
+    TYPE(VarToJacobianMatrixMapType), POINTER :: varToEquationsJacobianMap !<A pointer to the variable to equations Jacobian map to initialise. Must not be allocated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("EquationsMappingVToJMMap_Initialise",err,error,*999)
-    
+    ENTERS("EquationsMappingVToJMMap_Initialise",err,error,*998)
+
+    IF(ASSOCIATED(varToEquationsJacobianMap)) &
+      &  CALL FlagError("Variable to equations Jacobian map is already associated.",err,error,*998)
+
+    ALLOCATE(varToEquationsJacobianMap,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate the variable to equations Jacobian map.",err,error,*999)
     varToEquationsJacobianMap%variableType=0
     NULLIFY(varToEquationsJacobianMap%variable)
     
     EXITS("EquationsMappingVToJMMap_Initialise")
     RETURN
-999 ERRORS("EquationsMappingVToJMMap_Initialise",err,error)    
+999 CALL EquationsMappingVToJMMap_Finalise(varToEquationsJacobianMap,dummyErr,dummyError,*998)
+998 ERRORS("EquationsMappingVToJMMap_Initialise",err,error)    
     EXITS("EquationsMappingVToJMMap_Initialise")    
     RETURN 1
    

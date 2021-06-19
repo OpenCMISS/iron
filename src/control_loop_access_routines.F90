@@ -435,7 +435,7 @@ CONTAINS
     !Argument variables
     TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoopRoot!<A pointer to the control loop to root
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier
-    TYPE(ControlLoopType), POINTER :: controlLoop !<On exit, the specified control loop
+    TYPE(ControlLoopType), POINTER :: controlLoop !<On exit, the specified control loop. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -472,19 +472,19 @@ CONTAINS
     ENTERS("ControlLoop_Get1",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(.NOT.ASSOCIATED(controlLoopRoot)) CALL FlagError("Control loop root is not associated.",err,error,*998)
     IF(ASSOCIATED(controlLoop)) CALL FlagError("Control loop is already associated.",err,error,*998)      
+    IF(.NOT.ASSOCIATED(controlLoopRoot)) CALL FlagError("Control loop root is not associated.",err,error,*999)
     IF(.NOT.COUNT(controlLoopIdentifiers==CONTROL_LOOP_NODE)==1) THEN
       localError="Invalid control loop identifier. The control loop identifier has "// &
         & TRIM(NumberToVString(COUNT(controlLoopIdentifiers==CONTROL_LOOP_NODE),"*",err,error))// &
         & " control loop node identifiers and it should only have 1."
-      CALL FlagError(localError,err,error,*998)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.controlLoopIdentifiers(SIZE(controlLoopIdentifiers,1))==CONTROL_LOOP_NODE) THEN
       localError="Invalid control loop identifier. The last value in the identifier vector is "// &
         & TRIM(NumberToVString(controlLoopIdentifiers(SIZE(controlLoopIdentifiers,1)),"*",err,error))// &
         & " and it should be "//TRIM(NumberToVString(CONTROL_LOOP_NODE,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*998)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
     

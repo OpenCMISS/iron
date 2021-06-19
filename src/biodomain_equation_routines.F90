@@ -194,9 +194,7 @@ CONTAINS
       localError="The control loop type of "//TRIM(NumberToVString(loopType,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-
-
-    
+   
     EXITS("Biodomain_PostLoop")
     RETURN
 999 ERRORSEXITS("Biodomain_PostLoop",err,error)
@@ -313,6 +311,7 @@ CONTAINS
             CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
             CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -446,6 +445,7 @@ CONTAINS
               CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
               CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
               CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+              NULLIFY(geometricDecomposition)
               CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
               CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
               CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -671,6 +671,7 @@ CONTAINS
               CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsIndependent%independentField,err,error,*999)
               CALL Field_TypeSetAndLock(equationsIndependent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
               CALL Field_DependentTypeSetAndLock(equationsIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+              NULLIFY(geometricDecomposition)
               CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
               CALL Field_DecompositionSetAndLock(equationsIndependent%independentField,geometricDecomposition,err,error,*999)
               CALL Field_GeometricFieldSetAndLock(equationsIndependent%independentField,geometricField,err,error,*999)
@@ -724,6 +725,7 @@ CONTAINS
               CALL Field_LabelSet(equationsIndependent%independentField,"Independent Field",err,error,*999)
               CALL Field_TypeSetAndLock(equationsIndependent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
               CALL Field_DependentTypeSetAndLock(equationsIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+              NULLIFY(geometricDecomposition)
               CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
               CALL Field_DecompositionSetAndLock(equationsIndependent%independentField,geometricDecomposition,err,error,*999)
               CALL Field_GeometricFieldSetAndLock(equationsIndependent%independentField,geometricField,err,error,*999)
@@ -989,6 +991,7 @@ CONTAINS
               CALL Field_LabelSet(equationsIndependent%independentField,"Independent Field",err,error,*999)
               CALL Field_TypeSetAndLock(equationsIndependent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
               CALL Field_DependentTypeSetAndLock(equationsIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+              NULLIFY(geometricDecomposition)
               CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
               CALL Field_DecompositionSetAndLock(equationsIndependent%independentField,geometricDecomposition, err,error,*999)
               CALL Field_GeometricFieldSetAndLock(equationsIndependent%independentField,geometricField,err,error,*999)
@@ -1204,6 +1207,7 @@ CONTAINS
           CALL Field_LabelSet(equationsMaterials%materialsField,"Materials Field",err,error,*999)
           CALL Field_TypeSetAndLock(equationsMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
           CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
           CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,geometricField,err,error,*999)
@@ -2808,6 +2812,7 @@ CONTAINS
       
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
       
       NULLIFY(colsVariable)
@@ -2949,7 +2954,7 @@ CONTAINS
                 
         !Calculate jacobianGaussWeight.
         CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
-        CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+        CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
 
         !Loop over field components
@@ -2963,6 +2968,7 @@ CONTAINS
           CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
           NULLIFY(rowBasis)
           CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+          NULLIFY(rowQuadratureScheme)
           CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
           CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
           !Loop over element rows
@@ -2989,6 +2995,7 @@ CONTAINS
                   CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                   NULLIFY(columnBasis)
                   CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                  NULLIFY(columnQuadratureScheme)
                   CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
                   CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
                   DO columnElementParameterIdx=1,numberOfColumnElementParameters

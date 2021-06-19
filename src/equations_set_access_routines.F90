@@ -3833,18 +3833,20 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
     IF(minSpecificationLength==0) THEN
       specificationLength=equationsSet%specificationLength
     ELSE
-      specificationLength=MAX(minSpecificationLength,equationsSet%specificationLength)
+      IF(minSpecificationLength>equationsSet%specificationLength) THEN
+        localError="The requested minimum number of specification parameters of "// &
+          & TRIM(NumberToVString(minSpecificationLength,"*",err,error))//" for equations set number "// &
+          & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+        IF(ASSOCIATED(equationsSet%region)) &
+          & localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+        localError=localError//" is too large. The equations set only has "// &
+          & TRIM(NumberToVString(equationsSet%specificationLength,"*",err,error))//" specification parameters."
+        CALL FlagError(localError,err,error,*999)
+      ELSE
+        specificationLength=minSpecificationLength
+      ENDIF
     ENDIF
 #ifdef WITH_PRECHECKS
-    IF(specificationLength>equationsSet%specificationLength) THEN
-      localError="The specification for equations set number "//TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
-      IF(ASSOCIATED(equationsSet%region)) &
-        & localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
-      localError=localError//" does not have enougth specification identifiers. The specification length is "// &
-        & TRIM(NumberToVString(equationsSet%specificationLength,"*",err,error))//" and "// &
-        & TRIM(NumberToVString(minSpecificationLength,"*",err,error))//" specification identifiers have been requested."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
     IF(SIZE(equationsSetSpecification,1)<specificationLength) THEN
       localError="The equations set specification array size is "// &
         & TRIM(NumberToVstring(SIZE(equationsSetSpecification,1),"*",err,error))// &

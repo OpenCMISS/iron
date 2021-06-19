@@ -979,16 +979,17 @@ CONTAINS
     IF(minSpecificationLength==0) THEN
       specificationLength=problem%specificationLength
     ELSE
-      specificationLength=MAX(minSpecificationLength,problem%specificationLength)
+      IF(minSpecificationLength>problem%specificationLength) THEN
+        localError="The requested minimum number of specification parameters of "// &
+          & TRIM(NumberToVString(minSpecificationLength,"*",err,error))//" for problem number "// &
+          & TRIM(NumberToVString(problem%userNumber,"*",err,error))//" is too large. The problem only has "// &
+          & TRIM(NumberToVString(problem%specificationLength,"*",err,error))//" specification parameters."
+        CALL FlagError(localError,err,error,*999)
+      ELSE
+        specificationLength=minSpecificationLength
+      ENDIF
     ENDIF
 #ifdef WITH_PRECHECKS
-    IF(specificationLength>problem%specificationLength) THEN
-      localError="The specification for problem number "//TRIM(NumberToVString(problem%userNumber,"*",err,error))// &
-        & " does not have enougth specification identifiers. The specification length is "// &
-        & TRIM(NumberToVString(problem%specificationLength,"*",err,error))//" and "// &
-        & TRIM(NumberToVString(minSpecificationLength,"*",err,error))//" specification identifiers have been requested."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
     IF(SIZE(problemSpecification,1)<specificationLength) THEN
       localError="The problem specification array size is "// &
         & TRIM(NumberToVstring(SIZE(problemSpecification,1),"*",err,error))// &

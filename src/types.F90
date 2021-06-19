@@ -224,7 +224,7 @@ MODULE Types
     INTEGER(INTG) :: maximumNumberOfDerivatives !<The maximum number of derivatives at any node in the basis. Old CMISS name NKT(0,basisFamilyIdx)
     INTEGER(INTG), ALLOCATABLE :: numberOfDerivatives(:) !<numberOfDerivatives(localNodeIdx). The number of derivatives at the localNodeIdx'th node in the basis. Old CMISS name NKT(localNodeIdx,basisFamilyIdx).
     INTEGER(INTG), ALLOCATABLE :: nodePositionIndex(:,:) !<nodePositionIndex(localNodeIdx,xiCoordIdx). The index of the node position for the localNodeIdx'th local node in the xiCoordiIdx'th coordinate. For Lagrange-Hermite tensor product basis functions: The number of coordinates equals the number of xi directions. Thus if nodePositionIndex(localNodeIdx,:)=1,2,2 then local node localNodeIdx is the first node in the xi(coord)=1 direction, the second node in the xi(coord)=2 direction and the second node in the xi(coord)=3 direction; For simplex basis functions: The number of coordinates equals the number of xi directions plus one. The index specifies the inverse distance away from the corner/end of that area coordinate. Thus if an element has quadratic interpolation the index will range from 3 (closest to the corner/end of the element that the area coordinate has the value 1) to 1 (closest to the corners/end of the element that the area coordinate has the value 0). If M is the order of the element then in nodePositionIndex(localNodeIdx,:)=1,1,M then that node is apex for the third area coordinate. In general the index values will add up to M+number of xi directions+1 (i.e., subtract one from the indicies to get the standard simplex coordinates. Old CMISS name INP(localNodeIdx,xiIdx,basisIdx). \see Types::BasisType::nodePositionIndexInv.
-    INTEGER(INTG), ALLOCATABLE :: nodePositionIndexInv(:,:,:,:) !<nodePositionIndexInv(localNodeCoord1,localNodeCoord2,localNodeCoord3,localNodeCoord4). The inverse of the node position index for the basis. The nodePositionIndexInv gives the local node number for the node that has node position indices of localNodeCoord1 in the 1st xi(coord) direction, localNodeCoord2 in the 2nd xi(coord) direction, localNodeCoord3 in the 3rd xi(coord) direction and localNodeCoord4 in the 4th xi(coord) direction. NOTE: that if the basis has less than 4 xi(coord) direction the position index is 1. Old CMISS name NNB(inp1,inp2,inp3,nbf). \see Types::BasisType::NODE_POSITION_INDEX.
+    INTEGER(INTG), ALLOCATABLE :: nodePositionIndexInv(:,:,:,:) !<nodePositionIndexInv(localNodeCoord1,localNodeCoord2,localNodeCoord3,localNodeCoord4). The inverse of the node position index for the basis. The nodePositionIndexInv gives the local node number for the node that has node position indices of localNodeCoord1 in the 1st xi(coord) direction, localNodeCoord2 in the 2nd xi(coord) direction, localNodeCoord3 in the 3rd xi(coord) direction and localNodeCoord4 in the 4th xi(coord) direction. NOTE: that if the basis has less than 4 xi(coord) direction the position index is 1. Old CMISS name NNB(inp1,inp2,inp3,nbf). \see Types::BasisType::NodePositionIndex.
     INTEGER(INTG), ALLOCATABLE :: derivativeOrderIndex(:,:,:) !<derivativeOrderIndex(derivativeIdx,localNodeIdx,0:xiIdx). The index of the derivative order for the derivativeIdx'th derivative of the localNodeIdx'th node in the xiIdx'th direction of the basis. The derivative index is NO_PART_DERIV for zeroth order, FIRST_PART_DERIV for the first order and SECOND_PART_DERIV for the second order derivative. Thus a derivativeOrderIndex(derivativeIdx,localNodeIdx,1..) of {NO_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV} indicates that the derivativeIdx'th derivative of the localNodeIdx'th node of the basis is the first derivative with respect to the s2 direction. Old CMISS name IDO(derivativeIdx,localNodeIdx,1:xiIdx,basisFamilyIdx). \see Types::BasisType::derivativeOrderIndexInv,CONSTANTS_PartialDerivativeConstants
     INTEGER(INTG), ALLOCATABLE :: derivativeOrderIndexInv(:,:,:,:) !<derivativeOrderIndexInv(partialDerivIdx1,partialDerivIdx2,partialDerivIdx3,localNodeIdx). The inverse of the derivative order index for the nn'th local node of the basis. derivativeOrderIndexInv gives the derivative number for the partialDerivIdx1 partial derivative in the 1st xi direction, the partialDerivIdx2 partial derivative in the 2nd xi direction and the partialDerivIdx3 partial derivative in the 3rd xi direction. NOTE: local node localNodeIdx does not carry any derivatives of the requested partial derivative type then derivativeOrderIndexInv will return 0. If the basis has less than 3 xi directions then the partial derivative index is 1. \see Types::BasisType::derivativeOrderIndex
     INTEGER(INTG), ALLOCATABLE :: partialDerivativeIndex(:,:) !<partialDerivativeIndex(derivativeIdx,localNodeIdx). Gives the partial derivative number (partialDerivIdx) of the derivativeIdx'th derivative of the localNodeIdx'th local node for the basis. Old CMISS name IDO(derivativeIdx,localNodeIdx,0,basisFamilyIdx).
@@ -278,7 +278,7 @@ MODULE Types
     INTEGER(INTG) :: userNumber !<The user defined identifier for the coordinate. The user number must be unique.
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer back to the coordinate systems for the coordinate system
     LOGICAL :: coordinateSystemFinished !<Is .TRUE. if the coordinate system has finished being created, .FALSE. if not.
-    INTEGER(INTG) :: type !<The type of coordinate system. Old CMISS name ITYP10(nr). \see COORINDATE_ROUTINES_CoordinateSystemTypes
+    INTEGER(INTG) :: type !<The type of coordinate system. Old CMISS name ITYP10(nr). \see CoordinateRoutines_CoordinateSystemTypes
     INTEGER(INTG) :: radialInterpolationType !<The type of radial interpolation type for non-rectangular cartesian systems. Old CMISS name JTYP10(nr). \see CoordinateRoutines_RadialInterpolations
     INTEGER(INTG) :: numberOfDimensions !<The number of dimensions for the coordinate system. Old CMISS name NJT.
     REAL(DP) :: focus !<The focus of the coordinate system for a prolate-spheriodal coordinate system.
@@ -308,9 +308,11 @@ MODULE Types
   
   !>Contains information about a data projection result.
   TYPE DataProjectionResultType
-    INTEGER(INTG) :: userNumber !<The user number of the data point to which the projection result corresponds to.   
+    INTEGER(INTG) :: userDataPointNumber !<The user number of the data point to which the projection result corresponds to.
+    INTEGER(INTG) :: globalDataPointNumber !<The global number of the data point to which the projection results cooresponds to.
     REAL(DP) :: distance !<The distances between the data point and the projection. Assigned only if dataPointsProjected is .TRUE.
-    INTEGER(INTG) :: elementNumber !<The element of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE.
+    INTEGER(INTG) :: elementNumber !<The local element number of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE.
+    INTEGER(INTG) :: globalElementNumber !<The global element number of the mesh the data point projects onto. Temp whilst we still have global data points. Assigned only if dataPointsProjected is .TRUE.
     INTEGER(INTG) :: elementLineFaceNumber !<The element line/face of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE. and DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE or DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE is chosen    
     INTEGER(INTG) :: exitTag !<The exit tag of the data projection. Assigned only if dataPointsProjected is .TRUE. \See DataProtectionRoutines,DataProjectionRoutines_DataProjectionTypes 
     REAL(DP), ALLOCATABLE :: xi(:) !<The xi coordinate of the projection. Assigned only if dataPointsProjected is .TRUE.
@@ -320,7 +322,7 @@ MODULE Types
 
   !>Contains information on projection candidates
   TYPE DataProjectionCandidateType
-    INTEGER(INTG), ALLOCATABLE :: candidateElementNumbers(:) !<candidateElementNumbers(candidateElementIdx). The user specified user (get convert to local element number in PROJECTION_EVALUATE routines) candidate element numbers
+    INTEGER(INTG), ALLOCATABLE :: candidateElementNumbers(:) !<candidateElementNumbers(candidateElementIdx). The candidate element local numbers
     INTEGER(INTG), ALLOCATABLE :: localFaceLineNumbers(:) !<localFaceLineNumbers(candidateElementIdx). The user specified corresponding element face/line numbers for the candidate elements
   END TYPE DataProjectionCandidateType
 
@@ -334,6 +336,7 @@ MODULE Types
     TYPE(DataPointsType), POINTER :: dataPoints !<The pointer to the data points for this data projection.
     TYPE(DataProjectionsType), POINTER :: dataProjections !<A pointer back to the data projections
     TYPE(FieldType), POINTER :: projectionField !<The pointer to the geometric/dependent field for this data projection.
+    TYPE(FieldVariableType), POINTER :: projectionVariable !<A point to the geometric/dependent field variable for this data projection
     INTEGER(INTG) :: projectionVariableType !<The variable type of the geometric/dependent field for this data projection.
     INTEGER(INTG) :: projectionSetType !<The parameter set type of the geometric/dependent field for this data projection. 
     TYPE(DecompositionType), POINTER :: decomposition !<The pointer to the decomposition where data points are projected
@@ -1209,6 +1212,11 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: connectedLineFace !<The coupled element line/face number to be connected to the decomposition.
   END TYPE DecompositionElementConnectivityType
 
+  !>A buffer type to allow for arrays of pointers to DecompositionElementConnectivityType
+  TYPE DecompositionElementConnectivityPtrType
+    TYPE(DecompositionElementConnectivityType), POINTER :: ptr !<A pointer to DecompositionElementConnectivityType
+  END TYPE DecompositionElementConnectivityPtrType
+
   !>Contains information on the coupling between decompositions in an interface
   TYPE DecompositionConnectivityType
     TYPE(DecompositionCouplingType), POINTER :: decompositionCoupling !<A pointer back to the decomposition coupling
@@ -1217,7 +1225,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: totalNumberOfInterfaceElements !<The total number of elements in the interface
     INTEGER(INTG) :: numberOfGlobalInterfaceElements !<The global number of elements in the interface
     INTEGER(INTG) :: numberOfCoupledDecompositions !<The number of coupled decompositions in the interface
-    TYPE(DecompositionElementConnectivityType), ALLOCATABLE :: elementConnectivity(:,:) !<elementConnectivity(elementIdx,coupledDecompositionIdx) !<The decomposition connectivity for a given interface element
+    TYPE(DecompositionElementConnectivityPtrType), ALLOCATABLE :: elementConnectivity(:,:) !<elementConnectivity(elementIdx,coupledDecompositionIdx) !<The decomposition connectivity for a given interface element
     INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<coupledNodes(coupledMeshIdx,interfaceNodeIdx). Coupled nodes numbers
   END TYPE DecompositionConnectivityType
   
@@ -1234,7 +1242,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfDimensions !<The number of dimensions (Xi directions) for this decomposition/mesh.
     INTEGER(INTG) :: numberOfComponents !<The number of mesh components in this decomposition/mesh.
     INTEGER(INTG) :: meshComponentNumber !<The component number (index) of the mesh component that this decomposition belongs to (i.e., was generated from).
-    INTEGER(INTG) :: domainDecompositionType !<The type of the domain decomposition \see MESH_ROUTINES_DecompositionTypes.
+    INTEGER(INTG) :: domainDecompositionType !<The type of the domain decomposition \see MeshRoutines_DecompositionTypes.
     TYPE(WorkGroupType), POINTER :: workGroup !<The work group to use for this decomposition
     INTEGER(INTG) :: numberOfElements !<The number of elements in the decomposition
     INTEGER(INTG), ALLOCATABLE :: elementDomain(:) !<elementDomain(elementIdx). The domain number that the elementIdx'th global element is in for the decomposition. Note: the domain numbers start at 0 and go up to the numberOfDomains-1.
@@ -1339,7 +1347,9 @@ END TYPE GeneratedMeshEllipsoidType
 
   PUBLIC DecompositionTopologyType
 
-  PUBLIC DecompositionCouplingType,DecompositionConnectivityType,DecompositionElementConnectivityType
+  PUBLIC DecompositionCouplingType,DecompositionConnectivityType
+
+  PUBLIC DecompositionElementConnectivityType,DecompositionElementConnectivityPtrType
 
   PUBLIC DecompositionType,DecompositionPtrType,DecompositionsType
 
@@ -1402,9 +1412,9 @@ END TYPE GeneratedMeshEllipsoidType
   !>Contains the parameters required to interpolate a field variable within an element. Old CMISS name XE
   TYPE FieldInterpolationParametersType
     TYPE(FieldType), POINTER :: field !<A pointer to the field to be interpolated.
-    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field VARIABLE to be interpolated.
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to be interpolated.
     INTEGER(INTG) :: numberOfXi !<The number of xi directions for the interpolation parameters.
-    TYPE(BasisPtrType), ALLOCATABLE :: bases(:) !<BASES(componentIdx). An array to hold a pointer to the basis (if any) used for interpolating the componentIdx'th component of the field variable.
+    TYPE(BasisPtrType), ALLOCATABLE :: bases(:) !<bases(componentIdx). An array to hold a pointer to the basis (if any) used for interpolating the componentIdx'th component of the field variable.
     INTEGER(INTG), ALLOCATABLE :: numberOfParameters(:) !<numberOfParameters(componentIdx). The number of interpolation parameters used for interpolating the componentIdx'th component of the field variable.
     REAL(DP), ALLOCATABLE :: parameters(:,:) !<parameters(elementParameterIdx,componentIdx). The elementParameterIdx'th interpolation parameter used for interpolating the componentIdx'th component of the field variable.
     REAL(DP), ALLOCATABLE :: scaleFactors(:,:) !<scaleFactors(elementParameterIdx,componentIdx). The scale factors used for scaling the componentIdx'th component of the field variable.
@@ -2752,7 +2762,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: totalNumberOfColumns !<The total number of local columns in the interface matrices
     INTEGER(INTG) :: numberOfGlobalColumns !<The number of global columns in the interface matrices
     INTEGER(INTG) :: numberOfInterfaceMatrices !<The number of interfaces matrices defined for the interface condition.
-    TYPE(InterfaceMatrixPtrType), ALLOCATABLE :: matrices(:) !<matrices(matrixIdx)%PTR contains the information on the matrixIdx'th  interface matrix.
+    TYPE(InterfaceMatrixPtrType), ALLOCATABLE :: matrices(:) !<matrices(matrixIdx)%ptr contains the information on the matrixIdx'th  interface matrix.
     TYPE(InterfaceRHSType), POINTER :: rhsVector !<A pointer to the RHS vector information for the interface matrices.
   END TYPE InterfaceMatricesType
 
@@ -2931,6 +2941,11 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: connectedLineFace !<The coupled  element line/face number to be connected to the interface mesh.
   END TYPE InterfaceElementConnectivityType
 
+  !>A buffer type to allow arrays of pointers to InterfaceElementConnectivityType
+  TYPE InterfaceElementConnectivityPtrType
+    TYPE(InterfaceElementConnectivityType), POINTER :: ptr !<A pointer to the InterfaceElementConnectivityType
+  END TYPE InterfaceElementConnectivityPtrType
+
   !>Contains information on the coupling between meshes in an interface
   TYPE InterfaceMeshConnectivityType
     TYPE(InterfaceType), POINTER :: interface !<A pointer back to the interface for the coupled mesh connectivity
@@ -2940,7 +2955,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfInterfaceElements !<The number of elements in the interface
     INTEGER(INTG) :: numberOfInterfaceNodes !<The number of nodes in the interface
     INTEGER(INTG) :: numberOfCoupledMeshes !<The number of coupled meshes in the interface
-    TYPE(InterfaceElementConnectivityType), ALLOCATABLE :: elementConnectivity(:,:) !<elementConnectivity(elementIdx,coupledMeshIdx) !<The mesh connectivity for a given interface mesh element
+    TYPE(InterfaceElementConnectivityPtrType), ALLOCATABLE :: elementConnectivity(:,:) !<elementConnectivity(elementIdx,coupledMeshIdx) !<The mesh connectivity for a given interface mesh element
     INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<coupledNodes(coupledMeshIdx,interfaceNodeIdx). Coupled nodes numbers
   END TYPE InterfaceMeshConnectivityType
 
@@ -2954,7 +2969,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: totalNumberOfInterfaceElements !<The total number (including ghosts) of elements in the interface
     INTEGER(INTG) :: numberOfGlobalInterfaceElements !<The number of global interface elements in the interface
     INTEGER(INTG) :: numberOfCoupledDecompositions !<The number of coupled decompositions in the interface
-    TYPE(InterfaceElementConnectivityType), ALLOCATABLE :: elementConnectivity(:,:) !<elementConnectivity(elementIdx,coupledMeshIdx) !<The mesh connectivity for a given interface mesh element
+    TYPE(InterfaceElementConnectivityPtrType), ALLOCATABLE :: elementConnectivity(:,:) !<elementConnectivity(elementIdx,coupledMeshIdx) !<The mesh connectivity for a given interface mesh element
     INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<coupledNodes(coupledMeshIdx,interfaceNodeIdx). Coupled nodes numbers
   END TYPE InterfaceDecompositionConnectivityType
 
@@ -2965,6 +2980,11 @@ END TYPE GeneratedMeshEllipsoidType
     REAL(DP), ALLOCATABLE :: xi(:) !<xi(xiIdx). The full xi location the data point is connected to in this coupled mesh
     REAL(DP), ALLOCATABLE :: reducedXi(:) !<reducedXi(xiIdx). The reduced (face/line) xi location the data point is connected to in this coupled mesh
   END TYPE InterfacePointConnectivityType
+
+  !>A buffer type for arrays of pointers to InterfacePointConnectivityType
+  TYPE InterfacePointConnectivityPtrType
+    TYPE(InterfacePointConnectivityType), POINTER :: ptr !<A pointer to the InterfacePointConnectivityType
+  END TYPE InterfacePointConnectivityPtrType
   
   !Contains information on coupled mesh elements that are connected to each interface element.
   TYPE InterfaceCoupledElementsType
@@ -2978,7 +2998,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(MeshType), POINTER :: interfaceMesh !<A pointer to the interface mesh where the xi locations of data points are defined
     LOGICAL :: pointsConnectivityFinished !<Is .TRUE. if the data points connectivity has finished being created, .FALSE. if not.
     TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points defined on the interface for the connectivity
-    TYPE(InterfacePointConnectivityType), ALLOCATABLE :: pointsConnectivity(:,:) !<pointsConnectivity(dataPointIndex,coupledMeshIdx). The points connectivity information for each data point in each coupled mesh. 
+    TYPE(InterfacePointConnectivityPtrType), ALLOCATABLE :: pointsConnectivity(:,:) !<pointsConnectivity(dataPointIndex,coupledMeshIdx). A pointer to the points connectivity information for each data point in each coupled mesh. 
     TYPE(InterfaceCoupledElementsType), ALLOCATABLE :: coupledElements(:,:) !<coupledElements(interfaceElementIdx,coupledMeshIdx). The coupled mesh elements that are connected to each interface element.
     INTEGER(INTG), ALLOCATABLE :: maxNumberOfCoupledElements(:) !<maxNumberOfCoupledElements(coupledMeshIdx). The maximum number of coupled elements to an interface element in coupledMeshIdx'th mesh
   END TYPE InterfacePointsConnectivityType
@@ -3051,11 +3071,11 @@ END TYPE GeneratedMeshEllipsoidType
 
   PUBLIC InterfaceDecompositionConnectivityType
   
-  PUBLIC InterfaceElementConnectivityType
+  PUBLIC InterfaceElementConnectivityType,InterfaceElementConnectivityPtrType
 
   PUBLIC InterfaceMeshConnectivityType
 
-  PUBLIC InterfacePointConnectivityType,InterfacePointsConnectivityType
+  PUBLIC InterfacePointConnectivityType,InterfacePointsConnectivityType,InterfacePointConnectivityPtrType
 
   PUBLIC InterfaceCoupledElementsType
 

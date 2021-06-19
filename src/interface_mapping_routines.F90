@@ -464,10 +464,15 @@ CONTAINS
           EXIT
         ENDIF
       ENDDO !variableTypeIdx
+      DO variableTypeIdx2=variableTypeIdx+1,FIELD_NUMBER_OF_VARIABLE_TYPES
+        IF(ASSOCIATED(lagrangeField%variableTypeMap(variableTypeIdx2)%ptr)) THEN
+          interfaceMapping%createValuesCache%rhsLagrangeVariableType=variableTypeIdx2
+          EXIT
+        ENDIF
+      ENDDO !variableTypeIdx2
       IF(interfaceMapping%createValuesCache%lagrangeVariableType==0) &
         & CALL FlagError("Could not find a Lagrange variable type in the Lagrange field.",err,error,*999)
       !Default the RHS Lagrange variable to zero
-      interfaceMapping%createValuesCache%rhsLagrangeVariableType=0
       IF(interfaceMapping%createValuesCache%rhsLagrangeVariableType==0) &
         & CALL FlagError("Could not find a RHS Lagrange variable type in the Lagrange field.",err,error,*999)
       ALLOCATE(interfaceMapping%createValuesCache%matrixCoefficients(interfaceMapping%createValuesCache% &

@@ -86,6 +86,8 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC Interface_MeshGet
 
+  PUBLIC Interface_MeshConnectivityExists
+
   PUBLIC Interface_MeshConnectivityGet
 
   PUBLIC Interface_MeshesGet
@@ -96,17 +98,31 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC Interface_ParentRegionGet
 
+  PUBLIC Interface_PointsConnectivityExists
+
   PUBLIC Interface_PointsConnectivityGet
 
   PUBLIC Interface_UserNumberFind
 
   PUBLIC Interface_UserNumberGet
 
+  PUBLIC InterfaceCoupledElements_CoupledElementNumberGet
+
+  PUBLIC InterfaceCoupledElements_NumberOfCoupledElementsGet
+
+  PUBLIC InterfaceElementConnectivity_CoupledElementNumberGet
+
+  PUBLIC InterfaceElementConnectivity_CoupledLineFaceNumberGet
+
+  PUBLIC InterfaceElementConnectivity_XiGet
+
   PUBLIC InterfaceMeshConnectivity_AssertIsFinished,InterfaceMeshConnectivity_AssertNotFinished
 
   PUBLIC InterfaceMeshConnectivity_BasisGet
 
   PUBLIC InterfaceMeshConnectivity_CoupledElementNumberGet
+
+  PUBLIC InterfaceMeshConnectivity_CoupledElementGet
 
   PUBLIC InterfaceMeshConnectivity_CoupledNodeNumberGet
 
@@ -120,8 +136,20 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC InterfaceMeshConnectivity_NumberOfInterfaceNodesGet
 
+  PUBLIC InterfacePointConnectivity_CoupledElementNumberGet
+
+  PUBLIC InterfacePointConnectivity_CoupledLineFaceNumberGet
+
+  PUBLIC InterfacePointConnectivity_ReducedXiGet
+
+  PUBLIC InterfacePointConnectivity_XiGet
+
   PUBLIC InterfacePointsConnectivity_AssertIsFinished,InterfacePointsConnectivity_AssertNotFinished
 
+  PUBLIC InterfacePointsConnectivity_CoupledElementsGet
+
+  PUBLIC InterfacePointsConnectivity_CoupledPointGet
+  
   PUBLIC InterfacePointsConnectivity_DataPointsGet
 
   PUBLIC InterfacePointsConnectivity_InterfaceGet
@@ -638,6 +666,37 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the mesh connectivity for a given interface if it exists.
+  SUBROUTINE Interface_MeshConnectivityExists(INTERFACE,meshConnectivity,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to check if the mesh connectivity exists for
+    TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity !<On exit, a pointer to the mesh connectivity for the interface if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Interface_MeshConnectivityExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(meshConnectivity)) CALL FlagError("Mesh connectivity is already associated.",err,error,*998)
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
+#endif    
+    
+    meshConnectivity=>interface%meshConnectivity
+    
+    EXITS("Interface_MeshConnectivityExists")
+    RETURN
+999 NULLIFY(meshConnectivity)
+998 ERRORSEXITS("Interface_MeshConnectivityExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_MeshConnectivityExists
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the meshes for a interface. 
   SUBROUTINE Interface_MeshesGet(INTERFACE,meshes,err,error,*)
 
@@ -797,6 +856,37 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the points connectivity for a given interface if it exists.
+  SUBROUTINE Interface_PointsConnectivityExists(INTERFACE,pointsConnectivity,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to check if the points connectivity exists for
+    TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity !<On exit, a pointer to the points connectivity for the interface if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Interface_PointConnectivityExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(pointsConnectivity)) CALL FlagError("Point connectivity is already associated.",err,error,*998)
+#endif    
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
+     
+    pointsConnectivity=>interface%pointsConnectivity
+
+    EXITS("Interface_PointsConnectivityExists")
+    RETURN
+999 NULLIFY(pointsConnectivity)
+998 ERRORSEXITS("Interface_PointsConnectivityExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_PointsConnectivityExists
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the points connectivity for a given interface.
   SUBROUTINE Interface_PointsConnectivityGet(INTERFACE,pointsConnectivity,err,error,*)
 
@@ -920,6 +1010,202 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Interface_UserNumberGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the coupled element number for an interface coupled elements
+  SUBROUTINE InterfaceCoupledElements_CoupledElementNumberGet(interfaceCoupledElements,coupledElementIdx,coupledElementNumber, &
+    & err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceCoupledElementsType), POINTER, INTENT(INOUT) :: interfaceCoupledElements !<The interface coupled elements to get the coupled element number for
+    INTEGER(INTG), INTENT(IN) :: coupledElementIdx !<The coupled element index to get the element numer for
+    INTEGER(INTG), INTENT(OUT) :: coupledElementNumber !<On return, the coupled element number in the interface coupled elements.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("InterfaceCoupledElements_CoupledElementNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceCoupledElements)) &
+      & CALL FlagError("Interface coupled elements is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(interfaceCoupledElements%elementNumbers)) &
+      & CALL FlagError("The element numbers are not allocated for the interface coupled elements.",err,error,*999)
+    IF(coupledElementIdx<1.OR.coupledElementIdx>interfaceCoupledElements%numberOfCoupledElements) THEN
+      localError="The specified coupled element index of "//TRIM(NumberToVString(coupledElementIdx,"*",err,error))// &
+        & " is invalid. The coupled element index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceCoupledElements%numberOfCoupledElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    coupledElementNumber=interfaceCoupledElements%elementNumbers(coupledElementIdx)
+
+    EXITS("InterfaceCoupledElements_CoupledElementNumberGet")
+    RETURN
+999 ERRORS("InterfaceCoupledElements_CoupledElementNumberGet",err,error)
+    EXITS("InterfaceCoupledElements_CoupledElementNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCoupledElements_CoupledElementNumberGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the number of coupled elements for an interface coupled elements
+  SUBROUTINE InterfaceCoupledElements_NumberOfCoupledElementsGet(interfaceCoupledElements,numberOfCoupledElements,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceCoupledElementsType), POINTER, INTENT(INOUT) :: interfaceCoupledElements !<The interface coupled elements to get the number of coupled elements for
+    INTEGER(INTG), INTENT(OUT) :: numberOfCoupledElements !<On return, the number of coupled elements in the interface coupled elements.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceCoupledElements_NumberOfCoupledElementsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceCoupledElements)) &
+      & CALL FlagError("Interface coupled elements is not associated.",err,error,*999)
+#endif    
+
+    numberOfCoupledElements=interfaceCoupledElements%numberOfCoupledElements
+
+    EXITS("InterfaceCoupledElements_NumberOfCoupledElementsGet")
+    RETURN
+999 ERRORS("InterfaceCoupledElements_NumberOfCoupledElementsGet",err,error)
+    EXITS("InterfaceCoupledElements_NumberOfCoupledElementsGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCoupledElements_NumberOfCoupledElementsGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the coupled element number for an interface mesh connectivity elements connectivity
+  SUBROUTINE InterfaceElementConnectivity_CoupledElementNumberGet(interfaceElementConnectivity,coupledElementNumber,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceElementConnectivityType), POINTER, INTENT(INOUT) :: interfaceElementConnectivity !<The interface element connectivity to get the coupled element number for
+    INTEGER(INTG), INTENT(OUT) :: coupledElementNumber !<On return, the coupled element number in the interface element connectivity.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceElementConnectivity_CoupledElementNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceElementConnectivity)) &
+      & CALL FlagError("Interface element connectivity is not associated.",err,error,*999)
+#endif    
+
+    coupledElementNumber=interfaceElementConnectivity%coupledElementNumber
+
+    EXITS("InterfaceElementConnectivity_CoupledElementNumberGet")
+    RETURN
+999 ERRORS("InterfaceElementConnectivity_CoupledElementNumberGet",err,error)
+    EXITS("InterfaceElementConnectivity_CoupledElementNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceElementConnectivity_CoupledElementNumberGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the coupled line/face number for an interface mesh connectivity elements connectivity
+  SUBROUTINE InterfaceElementConnectivity_CoupledLineFaceNumberGet(interfaceElementConnectivity,coupledLineFaceNumber,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceElementConnectivityType), POINTER, INTENT(INOUT) :: interfaceElementConnectivity !<The interface element connectivity to get the coupled line/face number for
+    INTEGER(INTG), INTENT(OUT) :: coupledLineFaceNumber !<On return, the coupled line/face number in the interface element connectivity.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceElementConnectivity_CoupledLineFaceNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceElementConnectivity)) &
+      & CALL FlagError("Interface element connectivity is not associated.",err,error,*999)
+#endif    
+
+    coupledLineFaceNumber=interfaceElementConnectivity%connectedLineFace
+
+    EXITS("InterfaceElementConnectivity_CoupledLineFaceNumberGet")
+    RETURN
+999 ERRORS("InterfaceElementConnectivity_CoupledLineFaceNumberGet",err,error)
+    EXITS("InterfaceElementConnectivity_CoupledLineFaceNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceElementConnectivity_CoupledLineFaceNumberGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the xi location for an interface mesh connectivity elements connectivity
+  SUBROUTINE InterfaceElementConnectivity_XiGet(interfaceElementConnectivity,meshComponentNumber,elementParameterIdx, &
+    & numberOfXi,xi,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceElementConnectivityType), POINTER, INTENT(INOUT) :: interfaceElementConnectivity !<The interface element connectivity to get the xi for
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the xi for
+    INTEGER(INTG), INTENT(IN) :: elementParameterIdx !<The element parameter index to get the xi for
+    INTEGER(INTG), INTENT(OUT) :: numberOfXi !<On returnm, the number of xi for the element connectivity
+    REAL(DP), INTENT(OUT) :: xi(:) !<On return, the specified xi for the element connnectivity
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("InterfaceElementConnectivity_XiGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceElementConnectivity)) &
+      & CALL FlagError("Interface element connectivity is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(interfaceElementConnectivity%xi)) &
+      & CALL FlagError("Interfce element connectivity xi is not allocated.",err,error,*999)
+    IF(meshComponentNumber<1.OR.meshComponentNumber>SIZE(interfaceElementConnectivity%xi,2)) THEN
+      localError="The specified mesh component number of "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
+        & " is invalid. The mesh component number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(interfaceElementConnectivity%xi,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(elementParameterIdx<1.OR.elementParameterIdx>SIZE(interfaceElementConnectivity%xi,3)) THEN
+      localError="The specified element parameter index of "//TRIM(NumberToVString(elementParameterIdx,"*",err,error))// &
+        & " is invalid. The element parameter index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(interfaceElementConnectivity%xi,3),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(xi,1)<SIZE(interfaceElementConnectivity%xi,1)) THEN
+      localError="The size of the specified xi array of "//TRIM(NumberToVString(SIZE(xi,1),"*",err,error))// &
+        & " is too small. The size should be >= "//TRIM(NumberToVString(SIZE(interfaceElementConnectivity%xi,1),"*",err,error))// &
+        & "."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    numberOfXi=SIZE(interfaceElementConnectivity%xi,1)
+    xi(1:numberOfXi)=interfaceElementConnectivity%xi(1:numberOfXi,meshComponentNumber,elementParameterIdx)
+
+    EXITS("InterfaceElementConnectivity_XiGet")
+    RETURN
+999 ERRORS("InterfaceElementConnectivity_XiGet",err,error)
+    EXITS("InterfaceElementConnectivity_XiGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceElementConnectivity_XiGet
 
   !
   !=================================================================================================================================
@@ -1077,7 +1363,7 @@ CONTAINS
       & CALL FlagError("The element connectivity array is not allocated for the interface mesh connectivity.",err,error,*999)
 #endif    
 
-    coupledElementNumber=interfaceMeshConnectivity%elementConnectivity(interfaceElementNumber,meshIndex)%coupledElementNumber
+    coupledElementNumber=interfaceMeshConnectivity%elementConnectivity(interfaceElementNumber,meshIndex)%ptr%coupledElementNumber
     
     EXITS("InterfaceMeshConnectivity_CoupledElementNumberGet")
     RETURN
@@ -1085,6 +1371,67 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMeshConnectivity_CoupledElementNumberGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns a pointer to the coupled elements for an interface element number and a couple mesh index for an interface mesh connectivity
+  SUBROUTINE InterfaceMeshConnectivity_CoupledElementGet(interfaceMeshConnectivity,interfaceElementNumber, &
+    & meshIndex,coupledElement,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to get the coupled elements for
+    INTEGER(INTG), INTENT(IN) :: interfaceElementNumber !<The interface element number to get the coupled elements for
+    INTEGER(INTG), INTENT(IN) :: meshIndex !<The mesh index to get the coupled elements for.
+    TYPE(InterfaceElementConnectivityType), POINTER :: coupledElement !<On exit, a pointer the coupled elements. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("InterfaceMeshConnectivity_CoupledElementGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(coupledElement)) CALL FlagError("Coupled element is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
+      & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+    IF(interfaceElementNumber<1.OR.interfaceElementNumber>interfaceMeshConnectivity%numberOfInterfaceElements) THEN
+      localError="The specified interface element number of "//TRIM(NumberToVString(interfaceElementNumber,"*",err,error))// &
+        & " is invalid. The interface element number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMeshConnectivity%numberOfInterfaceElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(meshIndex<1.OR.meshIndex>interfaceMeshConnectivity%numberOfCoupledMeshes) THEN
+      localError="The specified mesh index of "//TRIM(NumberToVString(meshIndex,"*",err,error))// &
+        & " is invalid. The mesh index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMeshConnectivity%numberOfCoupledMeshes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(interfaceMeshConnectivity%elementConnectivity)) &
+      & CALL FlagError("The element connectivity array is not allocated for the interface mesh connectivity.",err,error,*999)
+#endif    
+
+    coupledElement=>interfaceMeshConnectivity%elementConnectivity(interfaceElementNumber,meshIndex)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(coupledElement)) THEN
+      localError="The interface mesh connectivity coupled elements is not associated for interface element number "// &
+        & TRIM(NumberToVString(interfaceElementNumber,"*",err,error))//" and coupled mesh index "// &
+        & TRIM(NumberToVstring(meshIndex,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    EXITS("InterfaceMeshConnectivity_CoupledElementGet")
+    RETURN
+999 NULLIFY(coupledElement)
+998 ERRORSEXITS("InterfaceMeshConnectivity_CoupledElementGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMeshConnectivity_CoupledElementGet
 
   !
   !=================================================================================================================================
@@ -1308,6 +1655,157 @@ CONTAINS
   !=================================================================================================================================
   !
 
+  !>Returns the coupled element number for an interface points connectivity point connectivity
+  SUBROUTINE InterfacePointConnectivity_CoupledElementNumberGet(interfacePointConnectivity,coupledElementGlobalNumber,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointConnectivityType), POINTER, INTENT(INOUT) :: interfacePointConnectivity !<The interface point connectivity to get the coupled element number for
+    INTEGER(INTG), INTENT(OUT) :: coupledElementGlobalNumber !<On return, the coupled element global number in the interface point connectivity.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfacePointConnectivity_CoupledElementNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfacePointConnectivity)) &
+      & CALL FlagError("Interface point connectivity is not associated.",err,error,*999)
+#endif    
+
+!!TODO: should use local element numbers
+    coupledElementGlobalNumber=interfacePointConnectivity%coupledElementNumber
+
+    EXITS("InterfacePointConnectivity_CoupledElementNumberGet")
+    RETURN
+999 ERRORS("InterfacePointConnectivity_CoupledElementNumberGet",err,error)
+    EXITS("InterfacePointConnectivity_CoupledElementNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfacePointConnectivity_CoupledElementNumberGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the coupled line/face number for an interface points connectivity point connectivity
+  SUBROUTINE InterfacePointConnectivity_CoupledLineFaceNumberGet(interfacePointConnectivity,coupledLineFaceNumber,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointConnectivityType), POINTER, INTENT(INOUT) :: interfacePointConnectivity !<The interface point connectivity to get the coupled line/face number for
+    INTEGER(INTG), INTENT(OUT) :: coupledLineFaceNumber !<On return, the coupled line/face number in the interface point connectivity.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfacePointConnectivity_CoupledLineFaceNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfacePointConnectivity)) &
+      & CALL FlagError("Interface point connectivity is not associated.",err,error,*999)
+#endif    
+
+    coupledLineFaceNumber=interfacePointConnectivity%elementLineFaceNumber
+
+    EXITS("InterfacePointConnectivity_CoupledLineFaceNumberGet")
+    RETURN
+999 ERRORS("InterfacePointConnectivity_CoupledLineFaceNumberGet",err,error)
+    EXITS("InterfacePointConnectivity_CoupledLineFaceNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfacePointConnectivity_CoupledLineFaceNumberGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the reduced xi location for an interface points connectivity point connectivity
+  SUBROUTINE InterfacePointConnectivity_ReducedXiGet(interfacePointConnectivity,numberOfXi,reducedXi,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointConnectivityType), POINTER, INTENT(INOUT) :: interfacePointConnectivity !<The interface point connectivity to get the reduced xi for
+    INTEGER(INTG), INTENT(OUT) :: numberOfXi !<On return, the number of xi for the reduced xi
+    REAL(DP), INTENT(OUT) :: reducedXi(:) !<On return, the specified reduced xi for the point connnectivity
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("InterfacePointConnectivity_ReducedXiGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfacePointConnectivity)) &
+      & CALL FlagError("Interface point connectivity is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(interfacePointConnectivity%reducedXi)) &
+      & CALL FlagError("Interfce element connectivity reduced  xi is not allocated.",err,error,*999)
+    IF(SIZE(reducedXi,1)<SIZE(interfacePointConnectivity%reducedXi,1)) THEN
+      localError="The size of the specified reduced xi array of "//TRIM(NumberToVString(SIZE(reducedXi,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(SIZE(interfacePointConnectivity%reducedXi,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    numberOfXi=MIN(SIZE(reducedXi,1),SIZE(interfacePointConnectivity%reducedXi,1))
+    reducedXi(1:numberOfXi)=interfacePointConnectivity%reducedXi(1:numberOfXi)
+
+    EXITS("InterfacePointConnectivity_ReducedXiGet")
+    RETURN
+999 ERRORS("InterfacePointConnectivity_ReducedXiGet",err,error)
+    EXITS("InterfacePointConnectivity_ReducedXiGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfacePointConnectivity_ReducedXiGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the xi location for an interface points connectivity point connectivity
+  SUBROUTINE InterfacePointConnectivity_XiGet(interfacePointConnectivity,numberOfXi,xi,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointConnectivityType), POINTER, INTENT(INOUT) :: interfacePointConnectivity !<The interface point connectivity to get the xi for
+    INTEGER(INTG), INTENT(OUT) :: numberOfXi !<On return, the number of xi for the xi in the point connnectivity
+    REAL(DP), INTENT(OUT) :: xi(:) !<On return, the specified xi for the point connnectivity
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("InterfacePointConnectivity_XiGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfacePointConnectivity)) &
+      & CALL FlagError("Interface point connectivity is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(interfacePointConnectivity%xi)) &
+      & CALL FlagError("Interfce element connectivity xi is not allocated.",err,error,*999)
+    IF(SIZE(xi,1)<SIZE(interfacePointConnectivity%xi,1)) THEN
+      localError="The size of the specified xi array of "//TRIM(NumberToVString(SIZE(xi,1),"*",err,error))// &
+        & " is too small. The size should be >= "//TRIM(NumberToVString(SIZE(interfacePointConnectivity%xi,1),"*",err,error))// &
+        & "."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    numberOfXi=MIN(SIZE(xi,1),SIZE(interfacePointConnectivity%xi,1))
+    xi(1:numberOfXi)=interfacePointConnectivity%xi(1:numberOfXi)
+
+    EXITS("InterfacePointConnectivity_XiGet")
+    RETURN
+999 ERRORS("InterfacePointConnectivity_XiGet",err,error)
+    EXITS("InterfacePointConnectivity_XiGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfacePointConnectivity_XiGet
+
+  !
+  !=================================================================================================================================
+  !
+
   !>Assert that a interface points connectivity has been finished
   SUBROUTINE InterfacePointsConnectivity_AssertIsFinished(interfacePointsConnectivity,err,error,*)
 
@@ -1385,6 +1883,158 @@ CONTAINS
     RETURN 1   
     
   END SUBROUTINE InterfacePointsConnectivity_AssertNotFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the coupled elements for an interface points connectivity
+  SUBROUTINE InterfacePointsConnectivity_CoupledElementsGet(interfacePointsConnectivity,interfaceElementIdx,coupledMeshIdx, &
+    & coupledElements,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(INOUT) :: interfacePointsConnectivity !<The interface points connectivity to get the coupled elements for
+    INTEGER(INTG), INTENT(IN) :: interfaceElementIdx !<The interface element index to get the coupled elements for.
+    INTEGER(INTG), INTENT(IN) :: coupledMeshIdx !<The coupled mesh index to get the coupled elements for.
+    TYPE(InterfaceCoupledElementsType), POINTER :: coupledElements !<On return, the coupled elements for the interface points connectivity. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("InterfacePointsConnectivity_CoupledElementsGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(coupledElements)) CALL FlagError("Coupled elements is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
+      & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(interfacePointsConnectivity%coupledElements)) THEN
+      localError="The coupled elements is not associated for the interface points connectivity"
+      IF(ASSOCIATED(interfacePointsConnectivity%INTERFACE)) localError=localError// &
+        & " on interfce number "//TRIM(NumberToVString(interfacePointsConnectivity%INTERFACE%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(interfaceElementIdx<1.OR.interfaceElementIdx>SIZE(interfacePointsConnectivity%coupledElements,1)) THEN
+      localError="The specified interface element index of "//TRIM(NumberToVString(interfaceElementIdx,"*",err,error))// &
+        & " is invalid for the interface points connectivity"
+      IF(ASSOCIATED(interfacePointsConnectivity%INTERFACE)) localError=localError// &
+        & " on interface number "//TRIM(NumberToVString(interfacePointsConnectivity%INTERFACE%userNumber,"*",err,error))
+      localError=localError//". The interface element index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(interfacePointsConnectivity%coupledElements,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(coupledMeshIdx<1.OR.coupledMeshIdx>SIZE(interfacePointsConnectivity%coupledElements,2)) THEN
+      localError="The specified coupled mesh index of "//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))// &
+        & " is invalid for the interface points connectivity"
+      IF(ASSOCIATED(interfacePointsConnectivity%INTERFACE)) localError=localError// &
+        & " on interface number "//TRIM(NumberToVString(interfacePointsConnectivity%INTERFACE%userNumber,"*",err,error))
+      localError=localError//". The coupled mesh index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(interfacePointsConnectivity%coupledElements,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    coupledElements=>interfacePointsConnectivity%coupledElements(interfaceElementIdx,coupledMeshIdx)
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(coupledElements)) THEN
+      localError="The coupled elements is not associated for interface element index "// &
+        & TRIM(NumberToVString(interfaceElementIdx,"*",err,error))//" and coupled mesh index "// &
+        & TRIM(NumberToVString(coupledMeshIdx,"*",err,error))//" for the interface points connectivity"
+      IF(ASSOCIATED(interfacePointsConnectivity%INTERFACE)) localError=localError// &
+        & " on interface number "//TRIM(NumberToVString(interfacePointsConnectivity%INTERFACE%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    EXITS("InterfacePointsConnectivity_CoupledElementsGet")
+    RETURN
+999 NULLIFY(coupledElements)
+998 ERRORS("InterfacePointsConnectivity_CoupledElementsGet",err,error)
+    EXITS("InterfacePointsConnectivity_CoupledElementsGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfacePointsConnectivity_CoupledElementsGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the interface mesh for an interface points connectivity
+  SUBROUTINE InterfacePointsConnectivity_CoupledPointGet(interfacePointsConnectivity,dataPointIdx,coupledMeshIdx, &
+    & pointConnectivity,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(INOUT) :: interfacePointsConnectivity !<The interface points connectivity to get the point connectivity for
+    INTEGER(INTG), INTENT(IN) :: dataPointIdx !<The data point index to get the coupled point connectivity for.
+    INTEGER(INTG), INTENT(IN) :: coupledMeshIdx !<The coupled mesh index to get the coupled point connectivity for.
+    TYPE(InterfacePointConnectivityType), POINTER :: pointConnectivity !<On return, the point connectivity for the interface points connectivity. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("InterfacePointsConnectivity_CoupledPointGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(pointConnectivity)) CALL FlagError("Point connectivity is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
+      & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(interfacePointsConnectivity%pointsConnectivity)) THEN
+      localError="The points connectivity is not associated for the interface points connectivity"
+      IF(ASSOCIATED(interfacePointsConnectivity%INTERFACE)) localError=localError// &
+        & " on interfce number "//TRIM(NumberToVString(interfacePointsConnectivity%INTERFACE%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(dataPointIdx<1.OR.dataPointIdx>SIZE(interfacePointsConnectivity%pointsConnectivity,1)) THEN
+      localError="The specified data point index of "//TRIM(NumberToVString(dataPointIdx,"*",err,error))// &
+        & " is invalid for the interface points connectivity"
+      IF(ASSOCIATED(interfacePointsConnectivity%INTERFACE)) localError=localError// &
+        & " on interface number "//TRIM(NumberToVString(interfacePointsConnectivity%INTERFACE%userNumber,"*",err,error))
+      localError=localError//". The data point index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(interfacePointsConnectivity%pointsConnectivity,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(coupledMeshIdx<1.OR.coupledMeshIdx>SIZE(interfacePointsConnectivity%pointsConnectivity,2)) THEN
+      localError="The specified coupled mesh index of "//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))// &
+        & " is invalid for the interface points connectivity"
+      IF(ASSOCIATED(interfacePointsConnectivity%INTERFACE)) localError=localError// &
+        & " on interface number "//TRIM(NumberToVString(interfacePointsConnectivity%INTERFACE%userNumber,"*",err,error))
+      localError=localError//". The coupled mesh index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(interfacePointsConnectivity%pointsConnectivity,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    pointConnectivity=>interfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(pointConnectivity)) THEN
+      localError="The interface point connectivity is not associated for data point index "// &
+        & TRIM(NumberToVString(dataPointIdx,"*",err,error))//" and coupled mesh index "// &
+        & TRIM(NumberToVString(coupledMeshIdx,"*",err,error))//" for the interface points connectivity"
+      IF(ASSOCIATED(interfacePointsConnectivity%INTERFACE)) localError=localError// &
+        & " on interface number "//TRIM(NumberToVString(interfacePointsConnectivity%INTERFACE%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    EXITS("InterfacePointsConnectivity_CoupledPointGet")
+    RETURN
+999 NULLIFY(pointConnectivity)
+998 ERRORS("InterfacePointsConnectivity_CoupledPointGet",err,error)
+    EXITS("InterfacePointsConnectivity_CoupledPointGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfacePointsConnectivity_CoupledPointGet
 
   !
   !=================================================================================================================================

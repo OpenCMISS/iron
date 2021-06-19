@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -5607,7 +5607,7 @@ CONTAINS
 
     ENTERS("EquationsSet_LoadIncrementApply",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(equationsSet%specification)) &
       & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
     IF(SIZE(equationsSet%specification,1)<1) &

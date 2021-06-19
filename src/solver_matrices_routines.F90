@@ -355,27 +355,27 @@ CONTAINS
               & equationsMatrixIdx,dynamicEquationsMatrixToSolverMatrixMap,err,error,*999)
             dynamicEquationsMatrixToSolverMatrixMap%solverMatrix=>solverEquations%solverMatrices%matrices(solverMatrixIdx)%ptr
           ENDDO !equationsMatrixIdx
-        ELSE
-          CALL SolverMappingEMSToSMMap_NumberOfJacobianMatricesGet(equationsMatricesToSolverMatrixMap,numberOfJacobianMatrices, &
-            & err,error,*999)
-          IF(numberOfJacobianMatrices>0) THEN
-            DO equationsMatrixIdx=1,numberOfJacobianMatrices
-              NULLIFY(jacobianMatrixToSolverMatrixMap)
-              CALL SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
-                & equationsMatrixIdx,jacobianMatrixToSolverMatrixMap,err,error,*999)
-              jacobianMatrixToSolverMatrixMap%solverMatrix=>solverEquations%solverMatrices%matrices(solverMatrixIdx)%ptr
-            ENDDO !equationsMatrixIdx
-          ELSE
-            CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap,numberOfLinearMatrices, &
-            & err,error,*999)
-            DO equationsMatrixIdx=1,numberOfLinearMatrices
-              !Add the solver matrix to the solvers mapping
-              NULLIFY(linearEquationsMatrixToSolverMatrixMap)
-              CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+        ENDIF
+        CALL SolverMappingEMSToSMMap_NumberOfJacobianMatricesGet(equationsMatricesToSolverMatrixMap,numberOfJacobianMatrices, &
+          & err,error,*999)
+        IF(numberOfJacobianMatrices>0) THEN
+          DO equationsMatrixIdx=1,numberOfJacobianMatrices
+            NULLIFY(jacobianMatrixToSolverMatrixMap)
+            CALL SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+              & equationsMatrixIdx,jacobianMatrixToSolverMatrixMap,err,error,*999)
+            jacobianMatrixToSolverMatrixMap%solverMatrix=>solverEquations%solverMatrices%matrices(solverMatrixIdx)%ptr
+          ENDDO !equationsMatrixIdx
+        ENDIF
+        CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap,numberOfLinearMatrices, &
+          & err,error,*999)
+        IF(numberOfLinearMatrices>0) THEN
+          DO equationsMatrixIdx=1,numberOfLinearMatrices
+            !Add the solver matrix to the solvers mapping
+            NULLIFY(linearEquationsMatrixToSolverMatrixMap)
+            CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
               & equationsMatrixIdx,linearEquationsMatrixToSolverMatrixMap,err,error,*999)
-              linearEquationsMatrixToSolverMatrixMap%solverMatrix=>solverEquations%solverMatrices%matrices(solverMatrixIdx)%ptr
-            ENDDO !equationsMatrixIdx
-          ENDIF
+            linearEquationsMatrixToSolverMatrixMap%solverMatrix=>solverEquations%solverMatrices%matrices(solverMatrixIdx)%ptr
+          ENDDO !equationsMatrixIdx
         ENDIF
       ENDDO !equationsSetIdx
     ENDDO !solverMatrixIdx
@@ -1016,6 +1016,7 @@ CONTAINS
               NULLIFY(equationsMatrixToSolverMatrixMap)
               CALL SolverMappingEMSToSMMap_DynamicMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
                 & equationsMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)
+              NULLIFY(equationsMatrix)
               CALL SolverMappingEMToSMMap_EquationsMatrixGet(equationsMatrixToSolverMatrixMap,equationsMatrix,err,error,*999)
               NULLIFY(distributedMatrix)
               CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,distributedMatrix,err,error,*999)
@@ -1029,6 +1030,7 @@ CONTAINS
               NULLIFY(equationsMatrixToSolverMatrixMap)
               CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
                 & equationsMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)
+              NULLIFY(equationsMatrix)
               CALL SolverMappingEMToSMMap_EquationsMatrixGet(equationsMatrixToSolverMatrixMap,equationsMatrix,err,error,*999)
               NULLIFY(distributedMatrix)
               CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,distributedMatrix,err,error,*999)
@@ -1042,6 +1044,7 @@ CONTAINS
               NULLIFY(jacobianMatrixToSolverMatrixMap)
               CALL SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
                 & equationsMatrixIdx,jacobianMatrixToSolverMatrixMap,err,error,*999)
+              NULLIFY(jacobianMatrix)
               CALL SolverMappingJMToSMMap_JacobianMatrixGet(jacobianMatrixToSolverMatrixMap,jacobianMatrix,err,error,*999)
               NULLIFY(distributedMatrix)
               CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,distributedMatrix,err,error,*999)
