@@ -1871,6 +1871,7 @@ CONTAINS
       DO dataPointIdx=1,numberOfDataPoints
         elementNumber=dataProjection%dataProjectionResults(dataPointIdx)%elementNumber
         localLineFaceNumber=dataProjection%dataProjectionResults(dataPointIdx)%elementLineFaceNumber
+        NULLIFY(basis)
         CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
         CALL Basis_BoundaryXiToXi(basis,localLineFaceNumber,dataProjection% &
           & dataProjectionResults(dataPointIdx)%xi(1:dataProjection%numberOfXi),dataProjection% &

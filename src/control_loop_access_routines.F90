@@ -699,6 +699,7 @@ CONTAINS
     !Find a time loop from either the specified control loop or the next time loop up the chain.
     controlLoopLevel=controlLoop%controlLoopLevel
     parentLoop=>controlLoop
+    NULLIFY(timeLoop)
     DO levelIdx=controlLoopLevel,1,-1
       IF(controlLoopLevel==0) THEN
         CALL FlagError("Could not find a time loop for the specified control loop.",err,error,*999)
@@ -721,6 +722,9 @@ CONTAINS
         ENDIF
       ENDIF
     ENDDO !levelIdx
+    IF(.NOT.ASSOCIATED(timeLoop)) THEN
+      CALL FlagError("Could not find a time control loop to get the current time information for.",err,error,*999)
+    ENDIF
        
     EXITS("ControlLoop_CurrentTimeInformationGet")
     RETURN

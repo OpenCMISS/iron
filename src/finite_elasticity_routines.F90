@@ -2369,7 +2369,7 @@ CONTAINS
       CALL BasisQuadratureScheme_NumberOfGaussGet(columnQuadratureScheme,numberOfGauss,err,error,*999)
       CALL Basis_NumberOfXiGet(colsBasis,numberOfXi,err,error,*999)
       
-      IF(haveHydrostaticPressure) pressureComponent=numberOfComponents
+      IF(haveHydrostaticPressure) pressureComponent=numberOfColsComponents
 
 !!TODO: Need to fix this as equations sets shouldn't know about boundary conditions.      
       boundaryConditions=>equationsSet%boundaryConditions
@@ -8923,8 +8923,8 @@ CONTAINS
                   CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,faceParameterIdx,NO_PART_DERIV, &
                     & gaussPointIdx,rowPhi,err,error,*999)
                   rowElementDOFIdx=elementBaseDOFIdx+faceElementParameter
-                  residualVector%elementResidual%vector(elementDOFIdx)= &
-                    & residualVector%elementResidual%vector(elementDOFIdx)+ & ! sign: double -'s. p(appl) always opposite to normal'
+                  residualVector%elementResidual%vector(rowElementDOFIdx)= &
+                    & residualVector%elementResidual%vector(rowElementDOFIdx)+ & ! sign: double -'s. p(appl) always opposite to normal'
                     & pressureGWNormalComponent*rowPhi
                 ENDDO !faceParameterIdx
                 !Update elementBaseDOFIdx
@@ -14612,8 +14612,6 @@ CONTAINS
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(esDerived%derivedField,geometricDecomposition,err,error,*999)
           CALL Field_GeometricFieldSetAndLock(esDerived%derivedField,geometricField,err,error,*999)
-        ELSE
-          CALL FlagError("Not implemented.",err,error,*999)
         ENDIF
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
         ALLOCATE(variableTypes(esDerived%numberOfVariables),STAT=err)

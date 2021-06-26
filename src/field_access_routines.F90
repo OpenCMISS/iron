@@ -88,23 +88,23 @@ MODULE FieldAccessRoutines
   INTEGER(INTG), PARAMETER :: FIELD_GEOMETRIC_GENERAL_TYPE=5 !<Geometric general field \see FieldRoutines_FieldTypes,FieldRoutines
   !>@}
 
-  !> \addtogroup FieldRoutines_DofTypes FieldRoutines::DofTypes
-  !> \brief Field dof type parameters
+  !> \addtogroup FieldRoutines_DOFTypes FieldRoutines::DOFTypes
+  !> \brief Field DOF type parameters
   !> \see FieldRoutines
   !>@{
-  INTEGER(INTG), PARAMETER :: FIELD_CONSTANT_DOF_TYPE=1 !<The dof is from a field variable component with constant interpolation \see FieldRoutines_DofTypes,FieldRoutines
-  INTEGER(INTG), PARAMETER :: FIELD_ELEMENT_DOF_TYPE=2 !<The dof is from a field variable component with element based interpolation \see FieldRoutines_DofTypes,FieldRoutines
-  INTEGER(INTG), PARAMETER :: FIELD_NODE_DOF_TYPE=3 !<The dof is from a field variable component with node based interpolation \see FieldRoutines_DofTypes,FieldRoutines
-  INTEGER(INTG), PARAMETER :: FIELD_GRID_POINT_DOF_TYPE=4 !<The dof is from a field variable component with grid point based interpolation \see FieldRoutines_DofTypes,FieldRoutines
-  INTEGER(INTG), PARAMETER :: FIELD_GAUSS_POINT_DOF_TYPE=5 !<The dof is from a field variable component with Gauss point based interpolation \see FieldRoutines_DofTypes,FieldRoutines
-  INTEGER(INTG), PARAMETER :: FIELD_DATA_POINT_DOF_TYPE=6 !<The dof is from a field variable component with Gauss point based interpolation \see FieldRoutines_DofTypes,FieldRoutines
+  INTEGER(INTG), PARAMETER :: FIELD_CONSTANT_DOF_TYPE=1 !<The DOF is from a field variable component with constant interpolation \see FieldRoutines_DOFTypes,FieldRoutines
+  INTEGER(INTG), PARAMETER :: FIELD_ELEMENT_DOF_TYPE=2 !<The DOF is from a field variable component with element based interpolation \see FieldRoutines_DOFTypes,FieldRoutines
+  INTEGER(INTG), PARAMETER :: FIELD_NODE_DOF_TYPE=3 !<The DOF is from a field variable component with node based interpolation \see FieldRoutines_DOFTypes,FieldRoutines
+  INTEGER(INTG), PARAMETER :: FIELD_GRID_POINT_DOF_TYPE=4 !<The DOF is from a field variable component with grid point based interpolation \see FieldRoutines_DOFTypes,FieldRoutines
+  INTEGER(INTG), PARAMETER :: FIELD_GAUSS_POINT_DOF_TYPE=5 !<The DOF is from a field variable component with Gauss point based interpolation \see FieldRoutines_DOFTypes,FieldRoutines
+  INTEGER(INTG), PARAMETER :: FIELD_DATA_POINT_DOF_TYPE=6 !<The DOF is from a field variable component with Gauss point based interpolation \see FieldRoutines_DOFTypes,FieldRoutines
   !>@}
   !> \addtogroup FieldRoutines_DOFOrderTypes FieldRoutines::DOFOrderTypes
   !> \brief Field DOF order types
   !> \see FieldRoutines,OpenCMISS_FieldDOFOrderTypes
   !>@{
-  INTEGER(INTG), PARAMETER :: FIELD_SEPARATED_COMPONENT_DOF_ORDER=1 !<Field variable component dofs are not contiguous \see FieldRoutines_DOFOrderTypes,FieldRoutines
-  INTEGER(INTG), PARAMETER :: FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER=2 !<Field variable component dofs are contiguous \see FieldRoutines_DOFOrderTypes,FieldRoutines
+  INTEGER(INTG), PARAMETER :: FIELD_SEPARATED_COMPONENT_DOF_ORDER=1 !<Field variable component DOFs are not contiguous \see FieldRoutines_DOFOrderTypes,FieldRoutines
+  INTEGER(INTG), PARAMETER :: FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER=2 !<Field variable component DOFs are contiguous \see FieldRoutines_DOFOrderTypes,FieldRoutines
   !>@}
 
   !> \addtogroup FieldRoutines_ScalingTypes FieldRoutines::ScalingTypes
@@ -590,7 +590,7 @@ MODULE FieldAccessRoutines
 
   PUBLIC FieldVariable_NumberOfGlobalDOFsGet
 
-  PUBLIC FieldVariable_ParameterSetCheck
+  PUBLIC FieldVariable_ParameterSetExists
 
   PUBLIC FieldVariable_ParameterSetGet
 
@@ -676,11 +676,11 @@ CONTAINS
   SUBROUTINE Field_ComponentDOFGetConstant(field,variableType,componentNumber,localDOF,globalDOF,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the dof for
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the dof for \see FieldRoutines_VariableTypes,FieldRoutines
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
-    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the constant
-    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the constant
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the DOF for \see FieldRoutines_VariableTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the DOF for
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local DOF corresponding to the constant
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global DOF corresponding to the constant
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -710,12 +710,12 @@ CONTAINS
     & globalDOF,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the dof for
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the dof for \see FieldRoutines_VariableTypes,FieldRoutines
-    INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The user data point number to get the dof for
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
-    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the user data point
-    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the user data point
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the DOF for \see FieldRoutines_VariableTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The user data point number to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the DOF for
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local DOF corresponding to the user data point
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global DOF corresponding to the user data point
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -740,17 +740,17 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the dof numbers for a field component that corresponds to the specified user element.
+  !>Returns the DOF numbers for a field component that corresponds to the specified user element.
   SUBROUTINE Field_ComponentDOFGetUserElement(field,variableType,userElementNumber,componentNumber,localDOF, &
     & globalDOF,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the dof for
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the dof for \see FieldRoutines_VariableTypes,FieldRoutines
-    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the dof for
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
-    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the user element
-    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the user element
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the DOF for \see FieldRoutines_VariableTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the DOF for
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local DOF corresponding to the user element
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global DOF corresponding to the user element
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -780,12 +780,12 @@ CONTAINS
     & componentNumber,localDOF,globalDOF,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the dof for
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the dof for \see FieldRoutines_VariableTypes,FieldRoutines
-    INTEGER(INTG), INTENT(IN) :: versionNumber !<The version number to get the dof for
-    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the dof for
-    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the dof for
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the DOF for \see FieldRoutines_VariableTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: versionNumber !<The version number to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the DOF for
     INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local DOF corresponding to the user node
     INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global DOF corresponding to the user node
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -3719,14 +3719,14 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the dof numbers for a field variable component that corresponds to the specified constant
+  !>Returns the DOF numbers for a field variable component that corresponds to the specified constant
   SUBROUTINE FieldVariable_ComponentDOFGetConstant(fieldVariable,componentNumber,localDOF,globalDOF,err,error,*)
 
     !Argument variables
-    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the dof for
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
-    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the constant
-    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the constant
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the DOF for
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local DOF corresponding to the constant
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global DOF corresponding to the constant
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3750,16 +3750,16 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the dof numbers for a field variable component that corresponds to the specified user data point.
-  SUBROUTINE FieldVariable_ComponentDOFGetUserDataPoint(fieldVariable,userDataPointNumber,componentNumber,localDof, &
-    & globalDof,err,error,*)
+  !>Returns the DOF numbers for a field variable component that corresponds to the specified user data point.
+  SUBROUTINE FieldVariable_ComponentDOFGetUserDataPoint(fieldVariable,userDataPointNumber,componentNumber,localDOF, &
+    & globalDOF,err,error,*)
 
     !Argument variables
-    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the dof for
-    INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The user data point number to get the dof for
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
-    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the user data point
-    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the user data point
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The user data point number to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the DOF for
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local DOF corresponding to the user data point
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global DOF corresponding to the user data point
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3789,11 +3789,11 @@ CONTAINS
     & globalDOF,err,error,*)
 
     !Argument variables
-    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the dof for
-    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the dof for
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
-    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the user element
-    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the user element
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the DOF for
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local DOF corresponding to the user element
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global DOF corresponding to the user element
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3823,13 +3823,13 @@ CONTAINS
     & componentNumber,localDOF,globalDOF,err,error,*)
 
     !Argument variables
-    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the dof for
-    INTEGER(INTG), INTENT(IN) :: versionNumber !<The version number to get the dof for
-    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the dof for
-    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the dof for
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
-    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local dof corresponding to the user node
-    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global dof corresponding to the user node
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: versionNumber !<The version number to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the DOF for
+    INTEGER(INTG), INTENT(OUT) :: localDOF !<On exit, the local DOF corresponding to the user node
+    INTEGER(INTG), INTENT(OUT) :: globalDOF !<On exit, the global DOF corresponding to the user node
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4607,7 +4607,7 @@ CONTAINS
   !
 
   !>Checks the DOF order type for a field variable.
-  SUBROUTINE FieldVariable_DOFOrderTypeCheck(fieldVariable,dofOrderType,err,error,*)
+  SUBROUTINE FieldVariable_DOFOrderTypeCheck(fieldVariable,DOFOrderType,err,error,*)
 
     !Argument variables
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to check the DOF order type for
@@ -5194,7 +5194,7 @@ CONTAINS
     !Argument variables
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
-    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the DOF number for field variable component. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5271,7 +5271,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
-    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the DOF number for field variable component. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5358,7 +5358,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%elementParam2DOFMap%elements)) THEN
-      localError="Element parameter to dof map elements is not allocated "// &
+      localError="Element parameter to DOF map elements is not allocated "// &
         & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
@@ -5382,14 +5382,14 @@ CONTAINS
   !
 
   !>Returns the DOF number for a user element DOF
-  SUBROUTINE FieldVariable_UserElementDOFGet(fieldVariable,userElementNumber,componentNumber,dofNumber,ghostDof,err,error,*)
+  SUBROUTINE FieldVariable_UserElementDOFGet(fieldVariable,userElementNumber,componentNumber,dofNumber,ghostDOF,err,error,*)
 
     !Argument variables
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
-    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
-    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the dof corresponds to a ghost node, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the DOF number for field variable component. 
+    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the DOF corresponds to a ghost node, .FALSE. if not.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5496,7 +5496,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%elementParam2DOFMap%elements)) THEN
-      localError="Element parameter to dof map elements is not allocated "// &
+      localError="Element parameter to DOF map elements is not allocated "// &
         & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
        IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
@@ -5529,7 +5529,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
-    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the DOF number for field variable component. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5657,7 +5657,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%nodeParam2DOFMap%nodes)) THEN
-      localError="Node parameter to dof map nodes is not allocated "// &
+      localError="Node parameter to DOF map nodes is not allocated "// &
         & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
        IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
@@ -5667,7 +5667,7 @@ CONTAINS
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%nodeParam2DOFMap%nodes(localNodeNumber)% &
       & derivatives)) THEN
-      localError="Node parameter to dof map nodes derivatives is not allocated "// &
+      localError="Node parameter to DOF map nodes derivatives is not allocated "// &
         & " for local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
         & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
@@ -5678,7 +5678,7 @@ CONTAINS
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%nodeParam2DOFMap%nodes(localNodeNumber)% &
       & derivatives(derivativeNumber)%versions)) THEN
-      localError="Node parameter to dof map nodes derivatives versions is not allocated "// &
+      localError="Node parameter to DOF map nodes derivatives versions is not allocated "// &
         & " for derivative number "//TRIM(NumberToVString(derivativeNumber,"*",err,error))// &
         & " of local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
         & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
@@ -5706,7 +5706,7 @@ CONTAINS
 
   !>Returns the DOF number for a user node DOF
   SUBROUTINE FieldVariable_UserNodeDOFGet(fieldVariable,versionNumber,derivativeNumber,userNodeNumber,componentNumber, &
-    & dofNumber,ghostDof,err,error,*)
+    & dofNumber,ghostDOF,err,error,*)
 
     !Argument variables
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
@@ -5714,8 +5714,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
-    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component.
-    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the dof corresponds to a ghost node, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the DOF number for field variable component.
+    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the DOF corresponds to a ghost node, .FALSE. if not.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5860,7 +5860,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%nodeParam2DOFMap%nodes)) THEN
-      localError="Node parameter to dof map nodes is not allocated "// &
+      localError="Node parameter to DOF map nodes is not allocated "// &
         & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
        IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
@@ -5870,7 +5870,7 @@ CONTAINS
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%nodeParam2DOFMap%nodes(localNodeNumber)% &
       & derivatives)) THEN
-      localError="Node parameter to dof map nodes derivatives is not allocated "// &
+      localError="Node parameter to DOF map nodes derivatives is not allocated "// &
         & " for local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
         & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
@@ -5881,7 +5881,7 @@ CONTAINS
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%nodeParam2DOFMap%nodes(localNodeNumber)% &
       & derivatives(derivativeNumber)%versions)) THEN
-      localError="Node parameter to dof map nodes derivatives versions is not allocated "// &
+      localError="Node parameter to DOF map nodes derivatives versions is not allocated "// &
         & " for derivative number "//TRIM(NumberToVString(derivativeNumber,"*",err,error))// &
         & " of local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
         & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
@@ -5916,7 +5916,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
-    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the DOF number for field variable component. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6003,7 +6003,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints)) THEN
-      localError="Gauss point parameter to dof map gauss points is not allocated "// &
+      localError="Gauss point parameter to DOF map gauss points is not allocated "// &
         & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
@@ -6042,7 +6042,7 @@ CONTAINS
   !
 
   !>Returns the DOF number for a user Gauss point DOF
-  SUBROUTINE FieldVariable_UserGaussDOFGet(fieldVariable,gaussPointNumber,userElementNumber,componentNumber,dofNumber,ghostDof, &
+  SUBROUTINE FieldVariable_UserGaussDOFGet(fieldVariable,gaussPointNumber,userElementNumber,componentNumber,dofNumber,ghostDOF, &
     & err,error,*)
 
     !Argument variables
@@ -6050,8 +6050,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
-    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
-    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the dof corresponds to a ghost node, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the DOF number for field variable component. 
+    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the DOF corresponds to a ghost node, .FALSE. if not.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6158,7 +6158,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints)) THEN
-      localError="Gauss point parameter to dof map gauss points is not allocated "// &
+      localError="Gauss point parameter to DOF map gauss points is not allocated "// &
         & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
@@ -6203,7 +6203,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
     INTEGER(INTG), INTENT(IN) :: localDataPointNumber !<The local data point number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
-    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the DOF number for field variable component. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6291,7 +6291,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%dataPointParam2DOFMap%dataPoints)) THEN
-      localError="Dat point parameter to dof map data points is not allocated "// &
+      localError="Dat point parameter to DOF map data points is not allocated "// &
         & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
@@ -6315,14 +6315,14 @@ CONTAINS
   !
 
   !>Returns the DOF number for a user data point DOF
-  SUBROUTINE FieldVariable_UserDataPointDOFGet(fieldVariable,userDataPointNumber,componentNumber,dofNumber,ghostDof,err,error,*)
+  SUBROUTINE FieldVariable_UserDataPointDOFGet(fieldVariable,userDataPointNumber,componentNumber,dofNumber,ghostDOF,err,error,*)
 
     !Argument variables
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The user data point number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
-    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
-    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the dof corresponds to a ghost DOF, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the DOF number for field variable component. 
+    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the DOF corresponds to a ghost DOF, .FALSE. if not.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6430,7 +6430,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%dataPointParam2DOFMap%dataPoints)) THEN
-      localError="Data point parameter to dof map data points is not allocated "// &
+      localError="Data point parameter to DOF map data points is not allocated "// &
         & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
@@ -6462,7 +6462,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: elementDataPointIndex !<The index of the data point projected onto the element to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
-    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the DOF number for field variable component. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6603,7 +6603,7 @@ CONTAINS
 #endif
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%dataPointParam2DOFMap%dataPoints)) THEN
-      localError="Dat point parameter to dof map data points is not allocated "// &
+      localError="Dat point parameter to DOF map data points is not allocated "// &
         & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
@@ -6628,15 +6628,15 @@ CONTAINS
 
   !>Returns the DOF number for a local user element data point DOF
   SUBROUTINE FieldVariable_UserElementDataDOFGet(fieldVariable,userElementNumber,elementDataPointIndex,componentNumber, &
-    & dofNumber,ghostDof,err,error,*)
+    & dofNumber,ghostDOF,err,error,*)
 
     !Argument variables
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: elementDataPointIndex !<The index of the data point projected onto the element to get the DOF for. 
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
-    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
-    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the dof corresponds to a ghost DOF, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the DOF number for field variable component. 
+    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the DOF corresponds to a ghost DOF, .FALSE. if not.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6792,7 +6792,7 @@ CONTAINS
 #endif
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%paramToDOFMap%dataPointParam2DOFMap%dataPoints)) THEN
-      localError="Dat point parameter to dof map data points is not allocated "// &
+      localError="Dat point parameter to DOF map data points is not allocated "// &
         & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
@@ -7067,7 +7067,7 @@ CONTAINS
   !
 
   !>Returns a pointer to a field parameter set of a specified type if such a parameter set exists
-  SUBROUTINE FieldVariable_ParameterSetCheck(fieldVariable,parameterSetType,parameterSet,err,error,*)
+  SUBROUTINE FieldVariable_ParameterSetExists(fieldVariable,parameterSetType,parameterSet,err,error,*)
 
     !Argument variables
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to check the parameter set for.
@@ -7080,7 +7080,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
 
-    ENTERS("FieldVariable_ParameterSetCheck",err,error,*998)
+    ENTERS("FieldVariable_ParameterSetExists",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(parameterSet)) CALL FlagError("Field parameter set is already associated.",err,error,*998)
@@ -7095,13 +7095,13 @@ CONTAINS
 
     parameterSet=>fieldVariable%parameterSets%setType(parameterSetType)%ptr
 
-    EXITS("FieldVariable_ParameterSetCheck")
+    EXITS("FieldVariable_ParameterSetExists")
     RETURN
 999 NULLIFY(parameterSet)
-998 ERRORSEXITS("FieldVariable_ParameterSetCheck",err,error)
+998 ERRORSEXITS("FieldVariable_ParameterSetExists",err,error)
     RETURN 1
     
-  END SUBROUTINE FieldVariable_ParameterSetCheck
+  END SUBROUTINE FieldVariable_ParameterSetExists
 
   !
   !================================================================================================================================
@@ -7123,17 +7123,14 @@ CONTAINS
 
     ENTERS("FieldVariable_ParameterSetGet",err,error,*998)
 
-    CALL FieldVariable_ParameterSetCheck(fieldVariable,parameterSetType,parameterSet,err,error,*999)
+    CALL FieldVariable_ParameterSetExists(fieldVariable,parameterSetType,parameterSet,err,error,*999)
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(parameterSet)) THEN
-      IF(ASSOCIATED(fieldVariable%field)) THEN
-        localError="The parameter set type of "//TRIM(NumberToVString(parameterSetType,"*",err,error))// &
-          & " has not been defined on field number "//TRIM(NumberToVString(fieldVariable%field%userNumber, &
-          & "*",err,error))//"."
-      ELSE
-        localError="The parameter set type of "//TRIM(NumberToVString(parameterSetType,"*",err,error))// &
-          & " has not been defined on the field variable."
-      ENDIF
+      localError="The parameter set type of "//TRIM(NumberToVString(parameterSetType,"*",err,error))// &
+        & " has not been defined on field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+          & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif

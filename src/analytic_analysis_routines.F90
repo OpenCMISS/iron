@@ -728,7 +728,7 @@ CONTAINS
     INTEGER(INTG) :: elementIdx,componentIdx,gaussIdx,elementParameterIdx,variableType
     REAL(DP) :: analyticIntegral,numericalIntegral,jacobianGaussWeight
     TYPE(BasisType), POINTER :: basis,dependentBasis,geometricBasis
-    TYPE(DecompositionType), POINTER :: decomposition,dependentDecomposition,geometricDecomposition
+    TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(DomainType), POINTER :: domain,dependentDomain,geometricDomain
     TYPE(DomainElementsType), POINTER :: domainElements,dependentDomainElements,geometricDomainElements
     TYPE(DomainTopologyType), POINTER :: domainTopology,dependentDomainTopology,geometricDomainTopology
@@ -766,7 +766,7 @@ CONTAINS
     NULLIFY(dependentField)
     CALL FieldVariable_FieldGet(fieldVariable,dependentField,err,error,*999)
     NULLIFY(dependentDecomposition)
-    CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
+    CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
     NULLIFY(geometricField)
     CALL Field_GeometricFieldGet(dependentField,geometricField,err,error,*999)
     NULLIFY(geometricDecomposition)

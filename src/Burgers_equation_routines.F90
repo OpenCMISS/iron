@@ -214,7 +214,7 @@ CONTAINS
               & globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,dependentValue,err,error,*999)
             CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
             DO versionIdx=1,numberOfVersions
-              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,versionIdx,derivativeIdx,nodeIdx,dimensionIdx,localDOFIdx, &
+              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,versionIdx,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
                 & err,error,*999)
               CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
                 & dependentValue,err,error,*999)
@@ -731,6 +731,7 @@ CONTAINS
             CALL Field_LabelSet(equationsMaterials%materialsField,"Materials Field",err,error,*999)
             CALL Field_TypeSetAndLock(equationsMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,geometricField,err,error,*999)
@@ -850,7 +851,6 @@ CONTAINS
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       NULLIFY(equationsAnalytic)
       CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
-      CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
@@ -858,7 +858,7 @@ CONTAINS
         CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
         SELECT CASE(esSpecification(3))
         CASE(EQUATIONS_SET_BURGERS_SUBTYPE)
-          SELECT CASE(analyticFunctionType)
+          SELECT CASE(equationsSetSetup%analyticFunctionType)
           CASE(EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1)
             !Check that domain is 1D
             IF(numberOfDimensions/=1) THEN
@@ -880,7 +880,7 @@ CONTAINS
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE)
-          SELECT CASE(analyticFunctionType)
+          SELECT CASE(equationsSetSetup%analyticFunctionType)
           CASE(EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1, &
             & EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_2)
             !Check that domain is 1D
@@ -924,6 +924,7 @@ CONTAINS
             CALL Field_LabelSet(equationsAnalytic%analyticField,"Analytic Field",err,error,*999)
             CALL Field_TypeSetAndLock(equationsAnalytic%analyticField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsAnalytic%analyticField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsAnalytic%analyticField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsAnalytic%analyticField,geometricField,err,error,*999)
@@ -1033,7 +1034,7 @@ CONTAINS
             CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
             CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
             CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,1,err,error,*999)
-            CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
             CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
             CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
             !Create the equations matrices
@@ -1171,9 +1172,9 @@ CONTAINS
             CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
             CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
             CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,1,err,error,*999)
-            CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
             CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
-            CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
             CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
             CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
             !Create the equations matrices
@@ -1182,11 +1183,11 @@ CONTAINS
             CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
             SELECT CASE(sparsityType)
             CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-              CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+              CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
               CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,1,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
             CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-              CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-              CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+              CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+              CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
               CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,1,MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
                 & err,error,*999)
               CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,1,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
@@ -1772,6 +1773,8 @@ CONTAINS
         NULLIFY(solvers)
         CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
         CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
         IF(pSpecification(3)==PROBLEM_DYNAMIC_BURGERS_SUBTYPE) THEN
             !Set the solver to be a dynamic nonlinear solver
           CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
@@ -1784,7 +1787,6 @@ CONTAINS
           CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
         ELSE
           !Set the solver to be a static nonlinear solver
-          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           CALL Solver_TypeSet(solver,SOLVER_NONLINEAR_TYPE,err,error,*999)
           CALL Solver_LabelSet(solver,"Nonlinear solver",err,error,*999)
           CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
@@ -2044,7 +2046,7 @@ CONTAINS
           dudX(componentIdx)=0.0_DP
           DO xiIdx=1,numberOfXi
             uDeriv(componentIdx,xiIdx)=dependentInterpPoint%values(componentIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx))
-            dXidX(xiIdx,componentIdx)=geometricInterpPointMetrics%dXidX(xiIdx,columnComponentIdx)
+            dXidX(xiIdx,componentIdx)=geometricInterpPointMetrics%dXidX(xiIdx,componentIdx)
             dudX(componentIdx)=uDeriv(componentIdx,xiIdx)*dXidX(xiIdx,componentIdx)
           ENDDO !xiIdx            
         ENDDO !componentIdx
@@ -2065,6 +2067,8 @@ CONTAINS
           CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
           NULLIFY(rowsBasis)
           CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+          NULLIFY(rowsQuadratureScheme)
+          CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
           CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,error,*999)
           DO rowElementParameterIdx=1,numberOfRowsElementParameters
             rowElementDOFIdx=rowElementDOFIdx+1                    
@@ -2081,6 +2085,8 @@ CONTAINS
               CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
               NULLIFY(colsBasis)
               CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+              NULLIFY(colsQuadratureScheme)
+              CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
               CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
               DO columnElementParameterIdx=1,numberOfColsElementParameters
                 columnElementDOFIdx=columnElementDOFIdx+1
@@ -2348,7 +2354,9 @@ CONTAINS
       NULLIFY(colsQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
       CALL BasisQuadratureScheme_NumberOfGaussGet(colsQuadratureScheme,numberOfGauss,err,error,*999)
-      
+
+      NULLIFY(equationsInterpolation)
+      CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
       NULLIFY(geometricInterpParameters)
       CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
         & geometricInterpParameters,err,error,*999)
@@ -2433,6 +2441,7 @@ CONTAINS
           CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
           NULLIFY(rowsBasis)
           CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+          NULLIFY(rowsQuadratureScheme)
           CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
           CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,error,*999)
           !Loop over element rows
@@ -2454,6 +2463,7 @@ CONTAINS
                 CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
                 NULLIFY(colsBasis)
                 CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+                NULLIFY(colsQuadratureScheme)
                 CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
                 CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
                 DO columnElementParameterIdx=1,numberOfColsElementParameters

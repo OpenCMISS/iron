@@ -308,8 +308,7 @@ CONTAINS
         !Static, nonlinear equations
         !Check the number of residuals
         IF(createValuesCache%numberOfResiduals<1) THEN
-          localError="The number of residuals of "// &
-            & TRIM(NumberToVString(createValuesCache%numberOfResiduals,"*",err,error))// &
+          localError="The number of residuals of "//TRIM(NumberToVString(createValuesCache%numberOfResiduals,"*",err,error))// &
             & " is invalid. The number of residuals must be >= 1 for static nonlinear equations."
           CALL FlagError(localError,err,error,*999)
         ENDIF
@@ -359,6 +358,11 @@ CONTAINS
         ENDDO !matrixIdx
       CASE(EQUATIONS_NONLINEAR)
         !Check the residuals
+        IF(createValuesCache%numberOfResiduals<1) THEN
+          localError="The number of residuals of "//TRIM(NumberToVString(createValuesCache%numberOfResiduals,"*",err,error))// &
+            & " is invalid. The number of residuals must be >= 1 for dynamic nonlinear equations."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
         isResidualType=.FALSE.
         DO residualIdx=1,createValuesCache%numberOfResiduals
           CALL EquationsMappingVectorCVC_NumberOfResidualVariablesGet(createValuesCache,residualIdx,numberOfResidualVariables, &
@@ -381,8 +385,11 @@ CONTAINS
           ENDDO !variableIdx          
         ENDDO !residualIdx
         !Check that at least one of the residual variables correspond to the dynamic variable.
-        IF(.NOT.isResidualType) CALL FlagError("Invalid equations mapping. There are no residual variables that correspond "// &
-          & "to the dynamic variable.",err,error,*999)
+        IF(.NOT.isResidualType) THEN
+          localError="The specified dynamic variable type of "//TRIM(NumberToVString(dynamicVariableType,"*",err,error))// &
+            & " is not the same as any residual variable type in dynamic nonlinear equations."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
         !Check any linear variable types are in the dependent field
         DO matrixIdx=1,createValuesCache%numberOfLinearMatrices
           CALL EquationsMappingVectorCVC_LinearMatrixVariableTypeGet(createValuesCache,matrixIdx,linearVariableType,err,error,*999)
@@ -2808,22 +2815,24 @@ CONTAINS
       CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
       !Check the dynamic variable type is not being by other equations matrices or vectors
       IF(equations%linearity==EQUATIONS_NONLINEAR) THEN
-        isResidualType=.FALSE.
-        DO residualIdx=1,createValuesCache%numberOfResiduals
-          CALL EquationsMappingVectorCVC_NumberOfResidualVariablesGet(createValuesCache,residualIdx,numberOfResidualVariables, &
-            & err,error,*999)
-          DO variableIdx=1,numberOfResidualVariables
-            CALL EquationsMappingVectorCVC_ResidualVariableTypeGet(createValuesCache,variableIdx,residualIdx,residualVariableType, &
+        IF(createValuesCache%numberOfResiduals>0) THEN
+          isResidualType=.FALSE.
+          DO residualIdx=1,createValuesCache%numberOfResiduals
+            CALL EquationsMappingVectorCVC_NumberOfResidualVariablesGet(createValuesCache,residualIdx,numberOfResidualVariables, &
               & err,error,*999)
-            IF(residualVariableType==dynamicVariableType) isResidualType=.TRUE.
-          ENDDO !variableIdx
-        ENDDO !residualIdx
-        IF(.NOT.isResidualType) THEN
-          localError="The specified dynamic variable type of "//TRIM(NumberToVString(dynamicVariableType,"*",err,error))// &
-            & " is not the same as any residual variable type in dynamic nonlinear equations."
-          CALL FlagError(localError,err,error,*999)
+            DO variableIdx=1,numberOfResidualVariables
+              CALL EquationsMappingVectorCVC_ResidualVariableTypeGet(createValuesCache,variableIdx,residualIdx, &
+                & residualVariableType,err,error,*999)
+              IF(residualVariableType==dynamicVariableType) isResidualType=.TRUE.
+            ENDDO !variableIdx
+          ENDDO !residualIdx
+          IF(.NOT.isResidualType) THEN
+            localError="The specified dynamic variable type of "//TRIM(NumberToVString(dynamicVariableType,"*",err,error))// &
+              & " is not the same as any residual variable type in dynamic nonlinear equations."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
         ENDIF
-      END IF
+      ENDIF
       IF(createValuesCache%rhsVariableType==dynamicVariableType) THEN
         localError="The specified dynamic variable type of "//TRIM(NumberToVString(dynamicVariableType,"*",err,error))// &
           & " is the same as the variable type for the RHS vector."
@@ -3245,7 +3254,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: linearVariableType,matrixIdx,minNumberOfLinearMatrices,variableIdx
+    INTEGER(INTG) :: linearVariableType,matrixIdx,minNumberOfLinearMatrices,numberOfVariables,variableIdx
     INTEGER(INTG), ALLOCATABLE :: newLinearMatrixVariableTypes(:)
     REAL(DP), ALLOCATABLE :: newLinearMatrixCoefficients(:)
     TYPE(EquationsType), POINTER :: equations
@@ -3320,9 +3329,9 @@ CONTAINS
     ELSE
       !If we need to reallocate and reset all the create values cache arrays and change the number of matrices
       IF(numberOfLinearMatrices/=createValuesCache%numberOfLinearMatrices) THEN
-        ALLOCATE(newLinearMatrixVariableTypes(createValuesCache%numberOfLinearMatrices),STAT=err)
+        ALLOCATE(newLinearMatrixVariableTypes(numberOfLinearMatrices),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new linear matrix variable types.",err,error,*999)
-        ALLOCATE(newLinearMatrixCoefficients(createValuesCache%numberOfLinearMatrices),STAT=err)
+        ALLOCATE(newLinearMatrixCoefficients(numberOfLinearMatrices),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate old linear matrix coefficients.",err,error,*999)
         newLinearMatrixVariableTypes=0
         newLinearMatrixCoefficients=1.0_DP
@@ -3339,7 +3348,8 @@ CONTAINS
             CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
             NULLIFY(dependentField)
             CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-            DO variableIdx=1,dependentField%numberOfVariables
+            CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+            DO variableIdx=1,numberOfVariables
               NULLIFY(linearVariable)
               CALL Field_VariableIndexGet(dependentField,1,linearVariable,linearVariableType,err,error,*999)
               IF(linearVariableType/=createValuesCache%rhsVariableType) EXIT
@@ -3557,12 +3567,13 @@ CONTAINS
           newSourceVariableTypes(sourceIdx)=createValuesCache%sourceVariableTypes(sourceIdx)
           newSourceCoefficients(sourceIdx)=createValuesCache%sourceCoefficients(sourceIdx)
         ENDDO !sourceIdx
-        !Default any new sources to be the same as the first source
         IF(ALLOCATED(createValuesCache%sourceVariableTypes)) THEN
+          !Default any new sources to be the previous first source vriable type
+          sourceVariableType=createValuesCache%sourceVariableTypes(1)                    
+        ELSE 
+          !Default any new sources to be the same as the first source field variable
           NULLIFY(sourceVariable)
           CALL Field_VariableIndexGet(sourceField,1,sourceVariable,sourceVariableType,err,error,*999)
-         ELSE 
-          sourceVariableType=createValuesCache%sourceVariableTypes(1)                    
         ENDIF
         DO sourceIdx=createValuesCache%numberOfSources+1,numberOfSources
           newSourceVariableTypes(sourceIdx)=sourceVariableType

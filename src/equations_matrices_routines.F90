@@ -4670,7 +4670,7 @@ MODULE EquationsMatricesRoutines
       & selectionType==EQUATIONS_MATRICES_RHS_SOURCE_ONLY.OR. &
       & selectionType==EQUATIONS_MATRICES_RESIDUAL_SOURCE_ONLY.OR. &
       & selectionType==EQUATIONS_MATRICES_VECTORS_ONLY) THEN    
-      NULLIFY(sourceVector)
+      NULLIFY(sourceVectors)
       CALL EquationsMatricesVector_SourceVectorsExists(vectorMatrices,sourceVectors,err,error,*999)
       IF(ASSOCIATED(sourceVectors)) THEN
         DO sourceIdx=1,sourceVectors%numberOfSources

@@ -10438,9 +10438,9 @@ CONTAINS
               CALL EquationsMappingSource_VectorCoefficientGet(sourceMapping,sourceCoefficient,err,error,*999)
               NULLIFY(sourceVector)
               CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*999)
-              NULLIFY(distributedSourceVector)
+              NULLIFY(currentSourceVector)
               CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
-                & distributedSourceVector,err,error,*999)
+                & currentSourceVector,err,error,*999)
               sourceCoefficient=sourceCoefficient*currentFunctionFactor
               CALL DistributedVector_VectorAdd(sourcesTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourceCoefficient, &
                 & currentSourceVector,err,error,*999)
@@ -17356,6 +17356,9 @@ CONTAINS
             CALL SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet(solverDOFToVariableDOFsMap,equationsDOFIdx,variableDOF, &
               & variableCoefficient,additiveConstant,err,error,*999)
             alphaValue=solverData(solverDOFIdx)*variableCoefficient+additiveConstant
+            !Store alpha as the incremented value
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,variableDOF, &
+              & alphaValue,err,error,*999)            
             !Set the dependent field DOF
             IF(dynamicSolver%solverInitialised) THEN
               SELECT CASE(dynamicSolver%degree)
@@ -17448,6 +17451,7 @@ CONTAINS
         CALL SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*999)
         NULLIFY(dependentVariable)
         CALL SolverMappingVariable_FieldVariableGet(solverMappingVariable,dependentVariable,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
         IF(dynamicSolver%solverInitialised) THEN
           CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
           IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
@@ -17489,6 +17493,7 @@ CONTAINS
         CALL SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*999)
         NULLIFY(dependentVariable)
         CALL SolverMappingVariable_FieldVariableGet(solverMappingVariable,dependentVariable,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
         IF(dynamicSolver%solverInitialised) THEN
           CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
           IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN

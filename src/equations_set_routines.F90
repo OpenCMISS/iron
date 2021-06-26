@@ -1593,7 +1593,11 @@ CONTAINS
           ENDIF
           IF(dampingMatrixNumber/=0) THEN
             NULLIFY(velocityParameters)
-            CALL FieldVariable_ParameterSetGet(dynamicVariable,FIELD_VELOCITY_VALUES_SET_TYPE,velocityParameters,err,error,*999)
+            CALL FieldVariable_ParameterSetExists(dynamicVariable,FIELD_VELOCITY_VALUES_SET_TYPE,velocityParameters,err,error,*999)
+            !If no velocity values then use the incremental alpha
+            IF(.NOT.ASSOCIATED(velocityParameters)) &
+              & CALL FieldVariable_ParameterSetGet(dynamicVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,velocityParameters, &
+              & err,error,*999)
             NULLIFY(velocityDistributedVector)
             CALL FieldParameterSet_ParametersGet(velocityParameters,velocityDistributedVector,err,error,*999)
             NULLIFY(dampingMatrix)
@@ -1604,7 +1608,11 @@ CONTAINS
           ENDIF
           IF(massMatrixNumber/=0) THEN
             NULLIFY(accelerationParameters)
-            CALL FieldVariable_ParameterSetGet(dynamicVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,accelerationParameters, &
+            CALL FieldVariable_ParameterSetExists(dynamicVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,accelerationParameters, &
+              & err,error,*999)
+            !If no accerlation values then use the incremental alpha
+            IF(ASSOCIATED(accelerationParameters)) &
+              & CALL FieldVariable_ParameterSetGet(dynamicVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,accelerationParameters, &
               & err,error,*999)
             NULLIFY(accelerationDistributedVector)
             CALL FieldParameterSet_ParametersGet(accelerationParameters,accelerationDistributedVector,err,error,*999)
@@ -1841,6 +1849,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       ENDIF
       !Check that the specified field has been created on the same region as the equations set
+      NULLIFY(actualFieldRegion)
       CALL Field_RegionGet(field,actualFieldRegion,err,error,*999)
       CALL Region_UserNumberGet(actualFieldRegion,actualFieldRegionUserNumber,err,error,*999)
       IF(equationsSetRegionUserNumber/=actualFieldRegionUserNumber) THEN
@@ -4326,7 +4335,7 @@ CONTAINS
         NULLIFY(residualVariable)
         CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
         NULLIFY(residualParameterSet)
-        CALL FieldVariable_ParameterSetCheck(residualVariable,FIELD_RESIDUAL_SET_TYPE,residualParameterSet,err,error,*999)
+        CALL FieldVariable_ParameterSetExists(residualVariable,FIELD_RESIDUAL_SET_TYPE,residualParameterSet,err,error,*999)
         IF(ASSOCIATED(residualParameterSet)) THEN
           NULLIFY(residualVariableDistributedVector)
           CALL FieldParameterSet_ParametersGet(residualParameterSet,residualVariableDistributedVector,err,error,*999)

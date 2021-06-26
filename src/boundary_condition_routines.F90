@@ -186,7 +186,7 @@ MODULE BoundaryConditionsRoutines
 
   PUBLIC BoundaryConditions_VariableGet
 
-  PUBLIC BoundaryConditionsRowVariable_RowConditionSet
+  PUBLIC BoundaryConditionsRowVariable_RowConditionTypeSet
 
   PUBLIC BoundaryConditionsVariable_NeumannIntegrate
 
@@ -757,8 +757,8 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: boundaryConditionsVarType,colIdx,count,dirichletDOF,dirichletIdx,dofIdx,domainNumber,dummy, &
-      & equationsMatrixIdx,equationsSetIdx,groupCommunicator,last,lhsVariableType,localDOFIdx,mpiIError, &
+    INTEGER(INTG) :: boundaryConditionsVarType,colIdx,count,currentRowCondition,dirichletDOF,dirichletIdx,dofIdx,domainNumber, &
+      & dummy,equationsMatrixIdx,equationsSetIdx,groupCommunicator,last,lhsVariableType,localDOFIdx,mpiIError, &
       & myGroupComputationNodeNumber,neumannIdx,numberOfBoundaryConditionsVariables,numberOfBoundaryConditionsRowVariables, &
       & numberOfDynamicMatrices,numberOfEquationsSets,numberOfGlobal,numberOfGroupComputationNodes,numberOfLinearMatrices, &
       & numberOfNonZeros,numberOfRows,parameterSetIdx,pressureIdx,rowIdx,sendCount,storageType,totalNumberOfLocal,variableIdx
@@ -896,7 +896,10 @@ MODULE BoundaryConditionsRoutines
               IF(domainNumber==myGroupComputationNodeNumber) THEN
                 !On my rank
                 CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,dofIdx,1,localDOFIdx,err,error,*999)
-                CALL BoundaryConditionsRowVariable_RowConditionSet(boundaryConditionsRHSRowVariable,localDOFIdx, &
+                CALL BoundaryConditionsRowVariable_RowConditionTypeGet(boundaryConditionsRHSRowVariable,localDOFIdx, &
+                  & currentRowCondition,err,error,*999)
+                IF(currentRowCondition==BOUNDARY_CONDITION_FREE_ROW) & 
+                  & CALL BoundaryConditionsRowVariable_RowConditionTypeSet(boundaryConditionsRHSRowVariable,localDOFIdx, &
                   & BOUNDARY_CONDITION_NEUMANN_ROW,err,error,*999)
               ENDIF
             ENDIF
@@ -905,7 +908,10 @@ MODULE BoundaryConditionsRoutines
               IF(domainNumber==myGroupComputationNodeNumber) THEN
                 !On my rank
                 CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,dofIdx,1,localDOFIdx,err,error,*999)
-                CALL BoundaryConditionsRowVariable_RowConditionSet(boundaryConditionsRowVariable,localDOFIdx, &
+                CALL BoundaryConditionsRowVariable_RowConditionTypeGet(boundaryConditionsRHSRowVariable,localDOFIdx, &
+                  & currentRowCondition,err,error,*999)
+                IF(currentRowCondition==BOUNDARY_CONDITION_FREE_ROW) & 
+                  CALL BoundaryConditionsRowVariable_RowConditionTypeSet(boundaryConditionsRowVariable,localDOFIdx, &
                   & BOUNDARY_CONDITION_NEUMANN_ROW,err,error,*999)
               ENDIF
             ENDIF
@@ -918,7 +924,7 @@ MODULE BoundaryConditionsRoutines
               IF(domainNumber==myGroupComputationNodeNumber) THEN
                 !On my rank
                 CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,dofIdx,1,localDOFIdx,err,error,*999)
-                CALL BoundaryConditionsRowVariable_RowConditionSet(boundaryConditionsRHSRowVariable,localDOFIdx, &
+                CALL BoundaryConditionsRowVariable_RowConditionTypeSet(boundaryConditionsRHSRowVariable,localDOFIdx, &
                   & BOUNDARY_CONDITION_NEUMANN_ROW,err,error,*999)
               ENDIF
             ENDIF
@@ -927,7 +933,7 @@ MODULE BoundaryConditionsRoutines
               IF(domainNumber==myGroupComputationNodeNumber) THEN
                 !On my rank
                 CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,dofIdx,1,localDOFIdx,err,error,*999)
-                CALL BoundaryConditionsRowVariable_RowConditionSet(boundaryConditionsRowVariable,localDOFIdx, &
+                CALL BoundaryConditionsRowVariable_RowConditionTypeSet(boundaryConditionsRowVariable,localDOFIdx, &
                   & BOUNDARY_CONDITION_NEUMANN_ROW,err,error,*999)
               ENDIF
             ENDIF
@@ -959,7 +965,7 @@ MODULE BoundaryConditionsRoutines
                 IF(domainNumber==myGroupComputationNodeNumber) THEN
                   !On my rank
                   CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,dofIdx,1,localDOFIdx,err,error,*999)
-                  CALL BoundaryConditionsRowVariable_RowConditionSet(boundaryConditionsRowVariable,localDOFIdx, &
+                  CALL BoundaryConditionsRowVariable_RowConditionTypeSet(boundaryConditionsRowVariable,localDOFIdx, &
                     & BOUNDARY_CONDITION_DIRICHLET_ROW,err,error,*999)
                 ENDIF
               ENDIF
@@ -3208,7 +3214,7 @@ MODULE BoundaryConditionsRoutines
   !
 
   !>Sets the boundary condition row type  for the row boundary conditions.
-  SUBROUTINE BoundaryConditionsRowVariable_RowConditionSet(boundaryConditionsRowVariable,dofIdx,rowCondition,err,error,*)
+  SUBROUTINE BoundaryConditionsRowVariable_RowConditionTypeSet(boundaryConditionsRowVariable,dofIdx,rowCondition,err,error,*)
 
     !Argument variables
     TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable !<A pointer to the boundary conditions row variable to set the row condition for
@@ -3221,7 +3227,7 @@ MODULE BoundaryConditionsRoutines
     TYPE(FieldVariableType), POINTER :: rowVariable
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("BoundaryConditionsRowVariable_RowConditionSet",err,error,*999)
+    ENTERS("BoundaryConditionsRowVariable_RowConditionTypeSet",err,error,*999)
 
     NULLIFY(rowVariable)
     CALL BoundaryConditionsRowVariable_LHSVariableGet(boundaryConditionsRowVariable,rowVariable,err,error,*999)
@@ -3280,12 +3286,12 @@ MODULE BoundaryConditionsRoutines
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  New condition = ",rowCondition,err,error,*999)
     ENDIF
     
-    EXITS("BoundaryConditionsRowVariable_RowConditionSet")
+    EXITS("BoundaryConditionsRowVariable_RowConditionTypeSet")
     RETURN
-999 ERRORSEXITS("BoundaryConditionsRowVariable_RowConditionSet",err,error)
+999 ERRORSEXITS("BoundaryConditionsRowVariable_RowConditionTypeSet",err,error)
     RETURN 1
     
-  END SUBROUTINE BoundaryConditionsRowVariable_RowConditionSet
+  END SUBROUTINE BoundaryConditionsRowVariable_RowConditionTypeSet
 
   !
   !================================================================================================================================
@@ -4401,7 +4407,7 @@ MODULE BoundaryConditionsRoutines
                   DO derivIdx=1,numberOfNodeDerivatives
                     CALL DomainFaces_DerivativeGlobalIndexGet(domainFaces,derivIdx,nodeIdx,faceNumber,derivativeNumber, &
                       & err,error,*999)
-                    CALL DomainFaces_DerivativeVersionNumberGet(domainFaces,derivIdx,nodeIdx,lineNumber,versionNumber, &
+                    CALL DomainFaces_DerivativeVersionNumberGet(domainFaces,derivIdx,nodeIdx,faceNumber,versionNumber, &
                       & err,error,*999)
                     CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
                       & componentNumber,localDOF,err,error,*999)
@@ -4432,7 +4438,7 @@ MODULE BoundaryConditionsRoutines
                   DO derivIdx=1,numberOfNodeDerivatives
                     CALL DomainFaces_DerivativeGlobalIndexGet(domainFaces,derivIdx,nodeIdx,faceNumber,derivativeNumber, &
                       & err,error,*999)
-                    CALL DomainFaces_DerivativeVersionNumberGet(domainFaces,derivIdx,nodeIdx,lineNumber,versionNumber, &
+                    CALL DomainFaces_DerivativeVersionNumberGet(domainFaces,derivIdx,nodeIdx,faceNumber,versionNumber, &
                       & err,error,*999)
                     CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
                       & componentNumber,localDOF,err,error,*999)
@@ -4664,10 +4670,10 @@ MODULE BoundaryConditionsRoutines
     
     DO neumannIdx=1,numberOfPointDofs
       globalDOF=boundaryConditionsNeumann%setDofs(neumannIdx)
-      CALL DomainMapping_NumberOfDomainsFromGlobalGet(pointDOFMapping,globalDOF,numberOfDomains,err,error,*999)
+      CALL DomainMapping_NumberOfDomainsFromGlobalGet(rowsMapping,globalDOF,numberOfDomains,err,error,*999)
       IF(diagnostics2) CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Neumann point DOF index = ",neumannIdx,err,error,*999)
       DO domainIdx=1,numberOfDomains
-        CALL DomainMapping_LocalTypeFromGlobalGet(pointDOFMapping,neumannIdx,domainIdx,localType,err,error,*999)
+        CALL DomainMapping_LocalTypeFromGlobalGet(rowsMapping,neumannIdx,domainIdx,localType,err,error,*999)
         IF(localDOF==DOMAIN_LOCAL_GHOST) THEN
           CALL DomainMapping_DomainNumberFromGlobalGet(rowsMapping,globalDOF,domainIdx,domainNumber,err,error,*999)
           localDofNumbers(domainNumber)=localDofNumbers(domainNumber)+1
@@ -4916,7 +4922,7 @@ MODULE BoundaryConditionsRoutines
       globalDOF=boundaryConditionsNeumann%setDofs(neumannIdx)
       CALL DomainMapping_DomainNumberFromGlobalGet(rowsMapping,globalDOF,1,domainNumber,err,error,*999)
       IF(domainNumber==myGroupNodeNumber) THEN
-        CALL DomainMapping_DomainNumberFromGlobalGet(rowsMapping,globalDOF,1,localDOF,err,error,*999)
+        CALL DomainMapping_LocalNumberFromGlobalGet(rowsMapping,globalDOF,1,localDOF,err,error,*999)
         ! Set point DOF vector value
         CALL DomainMapping_LocalNumberFromGlobalGet(pointDOFMapping,neumannIdx,1,localNeumannConditionIdx,err,error,*999)
         CALL FieldVariable_ParameterSetGetLocalDOF(fieldVariable,FIELD_BOUNDARY_CONDITIONS_SET_TYPE,localDOF,pointValue, &

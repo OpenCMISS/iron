@@ -4426,7 +4426,7 @@ CONTAINS
           ENDDO !xiIdx
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           !Handle the first case of no partial derivative
-           interpolatedPoint%values(componentIdx,1)=Basis_InterpolateLocalFaceGauss(interpolationParameters%bases( &
+          interpolatedPoint%values(componentIdx,1)=Basis_InterpolateLocalFaceGauss(interpolationParameters%bases( &
             & componentIdx)%ptr,NO_PART_DERIV,quadratureScheme,localFaceNumber,gaussPointNumber, &
             & interpolationParameters%parameters(:,componentIdx),err,error)
           IF(err/=0) GOTO 999
@@ -4434,6 +4434,7 @@ CONTAINS
             & err,error,*999)
           !Now process all the first partial derivatives
           DO xiIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfXi
+            partialDerivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
             interpolatedPoint%values(componentIdx,partialDerivativeIdx)=Basis_InterpolateLocalFaceGauss( &
               & interpolationParameters%bases(componentIdx)%ptr,partialDerivativeIdx,quadratureScheme, &
               & localFaceNumber,gaussPointNumber,interpolationParameters%parameters(:,componentIdx),err,error)

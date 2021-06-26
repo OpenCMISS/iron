@@ -2725,7 +2725,7 @@ CONTAINS
     CALL Field_VariableGet(geometricTransformationSolver%field,geometricTransformationSolver%fieldVariableType, &
       & fieldVariable,err,error,*999)
     NULLIFY(boundaryConditionsParameterSet)
-    CALL FieldVariable_ParameterSetCheck(fieldVariable,FIELD_BOUNDARY_CONDITIONS_SET_TYPE,boundaryConditionsParameterSet, &
+    CALL FieldVariable_ParameterSetExists(fieldVariable,FIELD_BOUNDARY_CONDITIONS_SET_TYPE,boundaryConditionsParameterSet, &
       & err,error,*999)
     IF(ASSOCIATED(boundaryConditionsParameterSet)) transformBC=.TRUE. !if the BC is defined on the field variable to be transformed
     
@@ -3030,8 +3030,6 @@ CONTAINS
     
     SELECT CASE(pSpecification(1))
     CASE(PROBLEM_ELASTICITY_CLASS)
-      IF(SIZE(pSpecification,1)/=3) &
-        & CALL FlagError("Problem specification must have three entries for an elasticity problem.",err,error,*999)
       SELECT CASE(pSpecification(2))
       CASE(PROBLEM_LINEAR_ELASTICITY_TYPE,PROBLEM_FINITE_ELASTICITY_TYPE,PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE, &
         & PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)

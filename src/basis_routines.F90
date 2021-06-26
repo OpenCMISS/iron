@@ -1813,8 +1813,8 @@ CONTAINS
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
     NULLIFY(quadratureScheme)
     CALL Basis_QuadratureSchemeGet(basis,quadratureSchemeIdx,quadratureScheme,err,error,*999)    
-    IF(basis%quadrature%evaluateFaceGauss) &
-      & CALL FlagError("The face gauss interpolation scheme has not been created",err,error,*999)
+    IF(.NOT.basis%quadrature%evaluateFaceGauss) &
+      & CALL FlagError("The face Gauss interpolation scheme has not been created.",err,error,*999)
     IF(localFaceNumber<1.OR.localFaceNumber>basis%numberOfLocalFaces) THEN
       localError="The specified local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
         & " is invalid. The Gauss point number should be >= 1 and <= "// &
@@ -5677,12 +5677,12 @@ CONTAINS
 
     CALL Basis_AssertNotFinished(basis,err,error,*999)
     CALL Basis_AssertIsLHTPBasis(basis,err,error,*999)    
-    IF(basis%numberOfXi<=1) CALL FlagError("Can not collapse a basis with only 1 xi direction",err,error,*999) 
-    IF(SIZE(collapsedXi,1)==basis%numberOfXi) THEN
-      localError="The size of the xi collapsed array ("// &
-        & TRIM(NumberToVString(SIZE(collapsedXi,1),"*",err,error))//") does not match the number of xi directions ("// &
-        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//") for basis number "// &
-        & TRIM(NumberToVString(basis%userNumber,"*",err,error))
+    IF(basis%numberOfXi<=1) CALL FlagError("Can not collapse a basis with only 1 xi direction.",err,error,*999) 
+    IF(SIZE(collapsedXi,1)<basis%numberOfXi) THEN
+      localError="The size of the collapsed xi array of "// &
+        & TRIM(NumberToVString(SIZE(collapsedXi,1),"*",err,error))//" is less than the number of xi directions of "// &
+        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -5695,8 +5695,8 @@ CONTAINS
       CASE(BASIS_COLLAPSED_AT_XI0,BASIS_COLLAPSED_AT_XI1,BASIS_NOT_COLLAPSED)
         !Do nothing
       CASE DEFAULT
-        localError="Collapsed xi value "//TRIM(NumberToVString(collapsedXi(xiIdx1),"*",err,error))// &
-          & " in xi direction "//TRIM(NumberToVString(xiIdx1,"*",err,error))//" is invalid"
+        localError="The collapsed xi value of "//TRIM(NumberToVString(collapsedXi(xiIdx1),"*",err,error))// &
+          & " in xi direction "//TRIM(NumberToVString(xiIdx1,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     ENDDO !xiIdx1
@@ -5715,7 +5715,7 @@ CONTAINS
           ELSE
             localError="Invalid collapsing of a two dimensional basis. Xi direction "// &
               & TRIM(NumberToVString(xiIdx1,"*",err,error))//" is collapsed so xi direction "// &
-              & TRIM(NumberToVString(xiIdx2,"*",err,error))//" must be collapsed at an end"
+              & TRIM(NumberToVString(xiIdx2,"*",err,error))//" must be collapsed at an end."
             CALL FlagError(localError,err,error,*999)
           ENDIF
         ELSE
@@ -5736,7 +5736,7 @@ CONTAINS
                 localError="Invalid collapsing of a three dimensional basis. Xi direction "// &
                   & TRIM(NumberToVString(xiIdx1,"*",err,error))//" is collapsed and xi direction "// &
                   & TRIM(NumberToVString(xiIdx2,"*",err,error))//" is not collapsed so xi direction "// &
-                  & TRIM(NumberToVString(xiIdx3,"*",err,error))//" must be collapsed at an end"
+                  & TRIM(NumberToVString(xiIdx3,"*",err,error))//" must be collapsed at an end."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
             ELSE IF(collapsedXi(xiIdx3)==BASIS_NOT_COLLAPSED) THEN
@@ -5750,14 +5750,14 @@ CONTAINS
                 localError="Invalid collapsing of a three dimensional basis. Xi direction "// &
                   & TRIM(NumberToVString(xiIdx1,"*",err,error))//" is collapsed and xi direction "// &
                   & TRIM(NumberToVString(xiIdx3,"*",err,error))//" is not collapsed so xi direction "// &
-                  & TRIM(NumberToVString(xiIdx2,"*",err,error))//" must be collapsed at an end"
+                  & TRIM(NumberToVString(xiIdx2,"*",err,error))//" must be collapsed at an end."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
             ELSE
               localError="Invalid collapsing of a three dimensional basis. Xi direction "// &
                 & TRIM(NumberToVString(xiIdx1,"*",err,error))//" is collapsed so one of xi directions "// &
                 & TRIM(NumberToVString(xiIdx2,"*",err,error))//" or "// &
-                & TRIM(NumberToVString(xiIdx3,"*",err,error))//" must be collapsed at an end"
+                & TRIM(NumberToVString(xiIdx3,"*",err,error))//" must be collapsed at an end."
               CALL FlagError(localError,err,error,*999)
             ENDIF
           ELSE
@@ -5775,16 +5775,17 @@ CONTAINS
               localError="Invalid collapsing of a three dimensional basis. Xi directions "// &
                 & TRIM(NumberToVString(xiIdx1,"*",err,error))//" and "// &
                 & TRIM(NumberToVString(xiIdx2,"*",err,error))//" are collapsed so xi direction "// &
-                & TRIM(NumberToVString(xiIdx3,"*",err,error))//" must be collapsed at an end"
+                & TRIM(NumberToVString(xiIdx3,"*",err,error))//" must be collapsed at an end."
               CALL FlagError(localError,err,error,*999)
             ENDIF
           ENDIF
         ENDIF
       ELSE
-        localError="Invalid collapsing of basis. The number of collapsed directions ("// &
+        localError="Invalid collapsing of basis. The number of collapsed directions of "// &
           & TRIM(NumberToVString(numberCollapsed,"*",err,error))// &
-          & ") must be less than the number of xi directions ("// &
-          & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//")"
+          & " must be less than the number of xi directions of "// &
+          & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" for basis number "// &
+          & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     ELSE

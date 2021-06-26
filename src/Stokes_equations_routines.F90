@@ -308,6 +308,7 @@ CONTAINS
           !define new created field to be dependent
           CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
           !look for decomposition rule already defined
+          NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           !apply decomposition rule found on new created field
           CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
@@ -413,6 +414,7 @@ CONTAINS
           !label the field
           CALL Field_LabelSetAndLock(equationsMaterials%materialsField,"Materials Field",err,error,*999)
           CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           !apply decomposition rule found on new created field
           CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
@@ -493,6 +495,7 @@ CONTAINS
             !define new created field to be independent
             CALL Field_DependentTypeSetAndLock(equationsIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
             !look for decomposition rule already defined
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             !apply decomposition rule found on new created field
             CALL Field_DecompositionSetAndLock(equationsIndependent%independentField,geometricDecomposition,err,error,*999)
@@ -664,7 +667,8 @@ CONTAINS
           END SELECT
         CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
           IF(equationsAnalytic%analyticFieldAutoCreated) THEN
-            CALL Field_CreateFinish(equationsAnalytic%analyticField,err,error,*999)
+            !No analytic field has been created above so wait until one is.
+            !CALL Field_CreateFinish(equationsAnalytic%analyticField,err,error,*999)
           ENDIF
 !!TODO: Set default values
         CASE DEFAULT
@@ -940,6 +944,7 @@ CONTAINS
           & PROBLEM_LAPLACE_STOKES_SUBTYPE)
           CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
           !Set the solver to be a linear solver
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
           !Set solver defaults
@@ -947,6 +952,7 @@ CONTAINS
         CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE)
           CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
           !Set the solver to be a first order dynamic solver
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
           CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
@@ -957,6 +963,7 @@ CONTAINS
         CASE(PROBLEM_ALE_STOKES_SUBTYPE)
           CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
           !Set the first solver to be a linear solver for the Laplace mesh movement problem
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
           !Set solver defaults
@@ -1011,6 +1018,7 @@ CONTAINS
           CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
         CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE)
           !Get the solver
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           !Create the solver equations
           CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
@@ -1032,6 +1040,7 @@ CONTAINS
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
           !Create the solver equations
+          NULLIFY(solverEquations)
           CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
           CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
           CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
@@ -1044,13 +1053,17 @@ CONTAINS
         END SELECT
       CASE(PROBLEM_SETUP_FINISH_ACTION)
         !Get the solver equations
+        NULLIFY(solver)
         CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+        NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         !Finish the solver equations creation
         CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)
         IF(pSpecification(3)==PROBLEM_ALE_STOKES_SUBTYPE) THEN
           !Get the solver equations
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          NULLIFY(solverEquations)
           CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
           !Finish the solver equations creation
           CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)
@@ -1364,6 +1377,7 @@ CONTAINS
           CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
           NULLIFY(rowBasis)
           CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+          NULLIFY(rowQuadratureScheme)
           CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
           CALL BasisQuadratureScheme_GaussWeightGet(rowQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
           jacobianGaussWeight=jacobian*gaussWeight
@@ -1389,6 +1403,7 @@ CONTAINS
                 CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                 NULLIFY(columnBasis)
                 CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                NULLIFY(columnQuadratureScheme)
                 CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
                 CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
                 DO columnElementParameterIdx=1,numberOfColumnElementParameters
@@ -1499,6 +1514,7 @@ CONTAINS
                 CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
                 NULLIFY(rowBasis)
                 CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+                NULLIFY(rowQuadratureScheme)
                 CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
                 CALL BasisQuadratureScheme_GaussWeightGet(rowQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
                 jacobianGaussWeight=jacobian*gaussWeight
@@ -2097,10 +2113,10 @@ CONTAINS
           ENDDO !variableIdx
           CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
           CALL FieldVariable_ParameterSetDataRestore(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateStart(uDependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateFinish(uDependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
         ENDIF
       ENDIF
-      CALL FieldVariable_ParameterSetUpdateStart(uDependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_ParameterSetUpdateFinish(uDependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
     CASE(PROBLEM_ALE_STOKES_SUBTYPE)
       !Pre solve for the linear solver
       IF(solveType==SOLVER_LINEAR_TYPE) THEN

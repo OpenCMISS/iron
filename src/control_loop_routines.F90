@@ -1863,7 +1863,7 @@ CONTAINS
  
     ENTERS("ControlLoop_WhileInitialise",err,error,*998)
 
-    IF(ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*998)
     IF(ASSOCIATED(controlLoop%whileLoop)) &
       & CALL FlagError("The while loop is already associated for this control loop.",err,error,*998)
     

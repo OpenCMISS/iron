@@ -1221,6 +1221,7 @@ CONTAINS
           CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
           numberOfEquationsSetComponents = 2
           IF(equationsField%equationsSetFieldAutoCreated) THEN
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsField%equationsSetField,geometricDecomposition, &
               & err,error,*999)
@@ -1377,6 +1378,7 @@ CONTAINS
             CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
             CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -1553,6 +1555,7 @@ CONTAINS
           CALL Field_LabelSet(equationsMaterials%materialsField,"Materials Field",err,error,*999)
           CALL Field_TypeSetAndLock(equationsMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
           CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
           CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,geometricField,err,error,*999)
@@ -1645,6 +1648,7 @@ CONTAINS
           CALL Field_LabelSet(equationsSource%sourceField,"Source Field",err,error,*999)
           CALL Field_TypeSetAndLock(equationsSource%sourceField,FIELD_GENERAL_TYPE,err,error,*999)
           CALL Field_DependentTypeSetAndLock(equationsSource%sourceField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(equationsSource%sourceField,geometricDecomposition,err,error,*999)
           CALL Field_GeometricFieldSetAndLock(equationsSource%sourceField,geometricField,err,error,*999)
@@ -1657,9 +1661,8 @@ CONTAINS
           !Set the number of source components
           CALL Field_NumberOfComponentsSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,numberOfSourceComponents, &
             & err,error,*999)
-          !Default the source components to the first geometric interpolation setup with constant interpolation
-          CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,componentIdx,geometricMeshComponent, &
-            & err,error,*999)
+          !Default the source components to the first geometric interpolation setup with node based interpolation
+          CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
           DO componentIdx=1,numberOfSourceComponents
             CALL Field_ComponentMeshComponentSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,componentIdx, &
               & geometricMeshComponent,err,error,*999)
@@ -1957,6 +1960,7 @@ CONTAINS
             CALL Field_LabelSet(equationsAnalytic%analyticField,"Analytic Field",err,error,*999)
             CALL Field_TypeSetAndLock(equationsAnalytic%analyticField,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeSetAndLock(equationsAnalytic%analyticField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             CALL Field_DecompositionSetAndLock(equationsAnalytic%analyticField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsAnalytic%analyticField,geometricField,err,error,*999)
@@ -2347,9 +2351,11 @@ CONTAINS
     CALL EquationsMatrix_UpdateMatrixGet(dampingMatrix,updateDamping,err,error,*999)
     NULLIFY(sourcesMapping)
     CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
+    NULLIFY(sourceMapping)
     IF(ASSOCIATED(sourcesMapping)) THEN
       CALL EquationsMappingSources_SourceMappingGet(sourcesMapping,1,sourceMapping,err,error,*999)
     ENDIF
+    NULLIFY(sourceField)
     NULLIFY(sourceVectors)
     NULLIFY(sourceVector)
     updateSource=.FALSE.
@@ -2609,6 +2615,7 @@ CONTAINS
           CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
           NULLIFY(rowBasis)
           CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+          NULLIFY(rowQuadratureScheme)
           CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
           CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
           !Loop over element rows
@@ -2632,6 +2639,7 @@ CONTAINS
                 CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                 NULLIFY(columnBasis)
                 CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                NULLIFY(columnQuadratureScheme)
                 CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
                 CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
                 DO columnElementParameterIdx=1,numberOfColumnElementParameters
@@ -2695,6 +2703,7 @@ CONTAINS
                       CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                       NULLIFY(columnBasis)
                       CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                      NULLIFY(columnQuadratureScheme)
                       CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
                         & err,error,*999)
                       CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
@@ -3420,6 +3429,7 @@ CONTAINS
           CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
           NULLIFY(rowBasis)
           CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+          NULLIFY(rowQuadratureScheme)
           CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
           CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
           !Loop over element rows
@@ -3443,6 +3453,7 @@ CONTAINS
                 CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                 NULLIFY(columnBasis)
                 CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                NULLIFY(columnQuadratureScheme)
                 CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
                 CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
                 DO columnElementParameterIdx=1,numberOfColumnElementParameters
@@ -3826,49 +3837,51 @@ CONTAINS
           IF(problem%specification(3)==PROBLEM_LINEAR_DIFFUSION_SUBTYPE) THEN
             !>Set the source field to a specified analytical function
             NULLIFY(sourceField)
-            CALL EquationsSet_SourceFieldGet(equationsSet,sourceField,err,error,*999)
-            NULLIFY(sourceVariable)
-            CALL Field_VariableGet(sourceField,FIELD_U_VARIABLE_TYPE,sourceVariable,err,error,*999)
-            CALL FieldVariable_NumberOfComponentsGet(sourceVariable,numberOfComponents,err,error,*999)
-            DO componentIdx=1,numberOfComponents
-              CALL FieldVariable_ComponentInterpolationCheck(sourceVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
-                & err,error,*999)
-              NULLIFY(domain)
-              CALL FieldVariable_DomainGet(dynamicVariable,componentIdx,domain,err,error,*999)
-              NULLIFY(domainTopology)
-              CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-              NULLIFY(domainNodes)
-              CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-              !Loop over the local nodes excluding the ghosts.
-              CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
-              DO nodeIdx=1,numberOfNodes
+            CALL EquationsSet_SourceFieldExists(equationsSet,sourceField,err,error,*999)
+            IF(ASSOCIATED(sourceField)) THEN
+              NULLIFY(sourceVariable)
+              CALL Field_VariableGet(sourceField,FIELD_U_VARIABLE_TYPE,sourceVariable,err,error,*999)
+              CALL FieldVariable_NumberOfComponentsGet(sourceVariable,numberOfComponents,err,error,*999)
+              DO componentIdx=1,numberOfComponents
+                CALL FieldVariable_ComponentInterpolationCheck(sourceVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
+                  & err,error,*999)
+                NULLIFY(domain)
+                CALL FieldVariable_DomainGet(dynamicVariable,componentIdx,domain,err,error,*999)
+                NULLIFY(domainTopology)
+                CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+                NULLIFY(domainNodes)
+                CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+                !Loop over the local nodes excluding the ghosts.
+                CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+                DO nodeIdx=1,numberOfNodes
 !!TODO \todo We should interpolate the geometric field here and the node position.
-                DO dimensionIdx=1,numberOfDimensions
-                  !Default to version 1 of each node derivative
-                  CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
-                  x(dimensionIdx)=geometricParameters(localDofIdx)
-                ENDDO !dimensionIdx
-                !Loop over the derivatives
-                CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-                DO derivativeIdx=1,numberOfNodeDerivatives
-                  SELECT CASE(analyticFunctionType)
-                  CASE(EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1)
-                    VALUE=-1*A1*EXP(-1*currentTime)*(X(1)*X(1)+X(2)*X(2)+X(3)*X(3)+6)
-                  CASE DEFAULT
-                    localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*", err,error))// &
-                      & " is invalid."
-                    CALL FlagError(localError,err,error,*999)
-                  END SELECT
-                  !Default to version 1 of each node derivative
-                  CALL FieldVariable_LocalNodeDOFGet(sourceVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
-                    & err,error,*999)
-                  CALL FieldVariable_ParameterSetUpdateLocalDof(sourceVariable,FIELD_VALUES_SET_TYPE,localDOFIdx,VALUE, &
-                    & err,error,*999)
-                ENDDO !derivativeIdx
-              ENDDO !nodeIdx
-            ENDDO !componentIdx
-            CALL FieldVariable_ParameterSetUpdateStart(sourceVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-            CALL FieldVariable_ParameterSetUpdateFinish(sourceVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+                  DO dimensionIdx=1,numberOfDimensions
+                    !Default to version 1 of each node derivative
+                    CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
+                    x(dimensionIdx)=geometricParameters(localDofIdx)
+                  ENDDO !dimensionIdx
+                  !Loop over the derivatives
+                  CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+                  DO derivativeIdx=1,numberOfNodeDerivatives
+                    SELECT CASE(analyticFunctionType)
+                    CASE(EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1)
+                      VALUE=-1*A1*EXP(-1*currentTime)*(X(1)*X(1)+X(2)*X(2)+X(3)*X(3)+6)
+                    CASE DEFAULT
+                      localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*", err,error))// &
+                        & " is invalid."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                    !Default to version 1 of each node derivative
+                    CALL FieldVariable_LocalNodeDOFGet(sourceVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
+                      & err,error,*999)
+                    CALL FieldVariable_ParameterSetUpdateLocalDof(sourceVariable,FIELD_VALUES_SET_TYPE,localDOFIdx,VALUE, &
+                      & err,error,*999)
+                  ENDDO !derivativeIdx
+                ENDDO !nodeIdx
+              ENDDO !componentIdx
+              CALL FieldVariable_ParameterSetUpdateStart(sourceVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateFinish(sourceVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+            ENDIF
           ENDIF
           IF(ASSOCIATED(materialsField)) & 
             & CALL Field_ParameterSetDataRestore(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &

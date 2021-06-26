@@ -363,6 +363,7 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsSetIndependentType), POINTER :: equationsIndependent
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
+    TYPE(EquationsSetSourceType), POINTER :: equationsSource
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
     TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
@@ -1124,13 +1125,15 @@ CONTAINS
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
+        CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
         !Create the equations
+        NULLIFY(equations)
         CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
         IF(esSpecification(3)==EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE.OR. &
           & esSpecification(3)==EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE) THEN
-          CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
-        ELSE
           CALL Equations_LinearityTypeSet(equations,EQUATIONS_NONLINEAR,err,error,*999)
+        ELSE
+          CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
         ENDIF
         IF(esSpecification(3)==EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE.OR. &
           & esSpecification(3)==EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE.OR. &
@@ -1145,36 +1148,51 @@ CONTAINS
         SELECT CASE(solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           !Finish the creation of the equations
+          NULLIFY(equations)
           CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
           CALL Equations_CreateFinish(equations,err,error,*999)
           NULLIFY(vectorEquations)
           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+          !Check for sources
+          NULLIFY(equationsSource)
+          CALL EquationsSet_SourceExists(equationsSet,equationsSource,err,error,*999)
           !Create the equations mapping.
+          NULLIFY(vectorMapping)
           CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
           CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
           CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+          IF(esSpecification(3)==EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE.OR. &
+            & esSpecification(3)==EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE) THEN
+            CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
+            CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,1,err,error,*999)
+            CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)            
+          ENDIF
           CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-          CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-          CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+          IF(ASSOCIATED(equationsSource)) THEN
+            CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
+            CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+          ENDIF
           CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
           !Create the equations matrices
+          NULLIFY(vectorMatrices)
           CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
           CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
           SELECT CASE(sparsityType)
           CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
             IF(esSpecification(3)==EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE.OR. &
               & esSpecification(3)==EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE) THEN
               CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,1,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
             ENDIF
           CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-            CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+            CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
             IF(esSpecification(3)==EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE.OR. &
               & esSpecification(3)==EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE) THEN
-              CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,1,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+              CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,1,MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
                 & err,error,*999)
-              CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,1,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
+              CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,1,EQUATIONS_MATRIX_FEM_STRUCTURE, &
+                & err,error,*999)
             ENDIF
           CASE DEFAULT
             localError="The equations matrices sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))//" is invalid."
@@ -1746,6 +1764,7 @@ CONTAINS
           CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
           NULLIFY(rowBasis)
           CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+          NULLIFY(rowQuadratureScheme)
           CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
           CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowsElementParameters,err,error,*999)
           !Loop over element rows
@@ -1769,6 +1788,7 @@ CONTAINS
                 CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                 NULLIFY(columnBasis)
                 CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                NULLIFY(columnQuadratureScheme)
                 CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
                 CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColsElementParameters,err,error,*999)
                 DO columnElementParameterIdx=1,numberOfColsElementParameters
@@ -1921,6 +1941,7 @@ CONTAINS
                   CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                   NULLIFY(columnBasis)
                   CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                  NULLIFY(columnQuadratureScheme)
                   CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
                   CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColsElementParameters,err,error,*999)
                   DO columnElementParameterIdx=1,numberOfColsElementParameters
@@ -2122,6 +2143,9 @@ CONTAINS
     CALL JacobianMatrix_UpdateMatrixGet(jacobianMatrix,updateJacobian,err,error,*999)
     
     IF(updateJacobian) THEN
+      
+      NULLIFY(equationsInterpolation)
+      CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
       
       NULLIFY(lhsMapping)
       CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
@@ -2471,6 +2495,9 @@ CONTAINS
 
     IF(update) THEN
       
+      NULLIFY(equationsInterpolation)
+      CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+      
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       NULLIFY(dependentField)
@@ -2515,6 +2542,7 @@ CONTAINS
     
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
       
       NULLIFY(colsVariable)
@@ -2605,6 +2633,7 @@ CONTAINS
           CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
           NULLIFY(rowBasis)
           CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+          NULLIFY(rowQuadratureScheme)
           CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
           CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
           !Loop over element rows
@@ -2628,6 +2657,7 @@ CONTAINS
                 CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                 NULLIFY(columnBasis)
                 CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                NULLIFY(columnQuadratureScheme)
                 CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
                 CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
                 DO columnElementParameterIdx=1,numberOfColumnElementParameters
@@ -3310,7 +3340,8 @@ CONTAINS
       ELSE IF(solverGlobalNumber==2) THEN
         !Get the dependent field for the three component Laplace problem
         NULLIFY(solvers)
-        CALL Solver_SolversGet(solver,solvers,err,error,*999)        
+        CALL Solver_SolversGet(solver,solvers,err,error,*999)
+        NULLIFY(solverFitted)
         CALL Solvers_SolverGet(solvers,1,solverFitted,err,error,*999)
         NULLIFY(solverEquationsFitted)
         CALL Solver_SolverEquationsGet(solverFitted,solverEquationsFitted,err,error,*999)
@@ -3328,6 +3359,7 @@ CONTAINS
         NULLIFY(dependentVariableFitted)
         CALL Field_VariableGet(dependentFieldFitted,FIELD_U_VARIABLE_TYPE,dependentVariableFitted,err,error,*999)
         !Get the source field for the PPE problem
+        NULLIFY(solverPPE)
         CALL Solvers_SolverGet(solvers,2,solverPPE,err,error,*999)
         NULLIFY(solverEquationsPPE)
         CALL Solver_SolverEquationsGet(solverPPE,solverEquationsPPE,err,error,*999)
@@ -3842,6 +3874,7 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         END SELECT
         !Get the solvers
+        NULLIFY(solvers)
         CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
         !Finish the solvers creation
         CALL Solvers_CreateFinish(solvers,err,error,*999)

@@ -2553,7 +2553,7 @@ CONTAINS
           NULLIFY(fieldVariable)
           CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
           NULLIFY(inputParameterSet)
-          CALL FieldVariable_ParameterSetCheck(fieldVariable,FIELD_INPUT_DATA1_SET_TYPE,inputParameterSet,err,error,*999)
+          CALL FieldVariable_ParameterSetExists(fieldVariable,FIELD_INPUT_DATA1_SET_TYPE,inputParameterSet,err,error,*999)
           IF(.NOT.ASSOCIATED(inputParameterSet)) THEN
             CALL Field_ParameterSetCreate(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_INPUT_DATA1_SET_TYPE,err,error,*999)
             CALL Field_ParameterSetCreate(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_INPUT_DATA2_SET_TYPE,err,error,*999)
@@ -2565,7 +2565,7 @@ CONTAINS
 
           IF(iterationNumber == 1) THEN
             NULLIFY(upwindParameterSet)
-            CALL FieldVariable_ParameterSetCheck(fieldVariable,FIELD_UPWIND_VALUES_SET_TYPE,upwindParameterSet,err,error,*999)
+            CALL FieldVariable_ParameterSetExists(fieldVariable,FIELD_UPWIND_VALUES_SET_TYPE,upwindParameterSet,err,error,*999)
             IF(.NOT.ASSOCIATED(upwindParameterSet)) &
               & CALL Field_ParameterSetCreate(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_UPWIND_VALUES_SET_TYPE,err,error,*999)
             ! Extrapolate new W from Q,A if this is the first timestep (otherwise will be calculated based on Navier-Stokes
@@ -9707,7 +9707,7 @@ CONTAINS
       ENDDO !componentIdx
       !Update ghost and boundary values from local
       NULLIFY(pressureParameterSet)
-      CALL FieldVariable_ParameterSetCheck(dependentVariable,FIELD_PRESSURE_VALUES_SET_TYPE,pressureParameterSet, &
+      CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_PRESSURE_VALUES_SET_TYPE,pressureParameterSet, &
         & err,error,*999)
       IF(ASSOCIATED(pressureParameterSet)) THEN
         CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)

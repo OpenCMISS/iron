@@ -1685,6 +1685,8 @@ CONTAINS
     NULLIFY(dynamicMatrices)
     NULLIFY(linearMapping)
     NULLIFY(linearMatrices)
+    NULLIFY(stiffnessMatrix)
+    NULLIFY(dampingMatrix)
     updateStiffness=.FALSE.
     updateDamping=.FALSE.
     updateCoupling=.FALSE.
@@ -2161,6 +2163,7 @@ CONTAINS
           CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
           NULLIFY(rowsBasis)
           CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+          NULLIFY(rowsQuadratureScheme)          
           CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
           CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,error,*999)
           !Loop over element rows
@@ -2184,6 +2187,7 @@ CONTAINS
                 CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
                 NULLIFY(colsBasis)
                 CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+                NULLIFY(colsQuadratureScheme)
                 CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
                 CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
                 DO columnElementParameterIdx=1,numberOfColsElementParameters
@@ -2274,7 +2278,7 @@ CONTAINS
                       ELSE IF(rowComponentIdx==numberOfRowsComponents.AND.columnComponentIdx<numberOfColsComponents) THEN
 
                         sum = 0.0_DP
-                        DO columnXiIdx=1,dependentBasis2%numberOfXi
+                        DO columnXiIdx=1,colsBasis%numberOfXi
                           sum = sum + rowsPhi * colsdPhidXi(columnXiIdx) * dXidX(columnXiIdx,columnComponentIdx)
                         ENDDO !columnXiIdx
 
@@ -2359,12 +2363,12 @@ CONTAINS
                       ELSE IF(rowComponentIdx==numberOfVelPressComponents.AND.columnComponentIdx<numberOfVelPressComponents) THEN
                         
                         sum = 0.0_DP
-                        DO columnXiIdx=1,dependentBasis2%numberOfXi
+                        DO columnXiIdx=1,colsBasis%numberOfXi
                           sum = sum + rowsPhi * colsdPhidXi(columnXiIdx) * dXidX(columnXiIdx,columnComponentIdx)
                         ENDDO !columnXiIdx
                         
                         IF( stabilized ) THEN
-                          DO rowXiIdx=1,dependentBasis1%numberOfXi
+                          DO rowXiIdx=1,rowsBasis%numberOfXi
                             sum = sum + 0.5_DP * rowsdPhidXi(rowXiIdx) * colsPhi * dXidX(rowXiIdx,columnComponentIdx)
                           ENDDO !rowXiIdx
                         END IF
@@ -2487,7 +2491,7 @@ CONTAINS
                   sum = 0.0_DP
                   
                   !Term arising from the pressure / Lagrange Multiplier of elasticity (given):
-                  DO rowXiIdx=1,dependentBasis1%numberOfXi
+                  DO rowXiIdx=1,rowsBasis%numberOfXi
                     sum = sum - rowsPhi * gradientLMPressure(rowXiIdx) * dXidX(rowXiIdx,rowComponentIdx)
                   ENDDO !rowXiIdx
                   
@@ -2640,6 +2644,7 @@ CONTAINS
             CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
             NULLIFY(rowsBasis)
             CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+            NULLIFY(rowsQuadratureScheme)
             CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
             CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,error,*999)
 
@@ -2669,6 +2674,7 @@ CONTAINS
                       CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
                       NULLIFY(colsBasis)
                       CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+                      NULLIFY(colsQuadratureScheme)
                       CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme, &
                         & err,error,*999)
                       CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
@@ -2728,6 +2734,7 @@ CONTAINS
               CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
               NULLIFY(rowsBasis)
               CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+              NULLIFY(rowsQuadratureScheme)
               CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
               CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,error,*999)
               !Loop over element rows
@@ -2814,14 +2821,14 @@ CONTAINS
         !   DO rowComponentIdx=1,fieldVariable%numberOfComponents
 
         !     meshComponent1 = fieldVariable%COMPONENTS(rowComponentIdx)%meshComponentNumber
-        !     dependentBasis1 => dependentField%decomposition%DOMAIN(meshComponent1)%ptr% &
+        !     rowsBasis => dependentField%decomposition%DOMAIN(meshComponent1)%ptr% &
         !       & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-        !     quadratureScheme1 => dependentBasis1%QUADRATURE% &
+        !     quadratureScheme1 => rowsBasis%QUADRATURE% &
         !       & quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
         !     jacobianGaussWeight = equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian * &
         !       & quadratureScheme1%gaussWeights(gaussPointIdx)
 
-        !     DO rowElementParameterIdx=1,dependentBasis1%numberOfElementParameters
+        !     DO rowElementParameterIdx=1,rowsBasis%numberOfElementParameters
         !       rowElementDOFIdx=rowElementDOFIdx+1
 
         !       DO matrixIdx=1,numberOfCompartments
@@ -2834,15 +2841,15 @@ CONTAINS
         !           DO columnComponentIdx=1,fieldVariables(matrixIdx)%ptr%numberOfComponents
 
         !             meshComponent2 = fieldVariable%COMPONENTS(columnComponentIdx)%meshComponentNumber
-        !             dependentBasis2 => dependentField%decomposition%DOMAIN(meshComponent2)%ptr% &
+        !             colsBasis => dependentField%decomposition%DOMAIN(meshComponent2)%ptr% &
         !               & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
         !             !--- We cannot use two different quadrature schemes here !!!
-        !             quadratureScheme2 => dependentBasis2%QUADRATURE% &
+        !             quadratureScheme2 => colsBasis%QUADRATURE% &
         !               & quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
         !             !jacobianGaussWeight = equations%interpolation%geometricInterpPointMetrics%jacobian * &
         !             !  & quadratureScheme2%gaussWeights(gaussPointIdx)
 
-        !             DO columnElementParameterIdx=1,dependentBasis2%numberOfElementParameters
+        !             DO columnElementParameterIdx=1,colsBasis%numberOfElementParameters
         !               columnElementDOFIdx=columnElementDOFIdx+1
 
         !               !-------------------------------------------------------------------------------------------------------------
@@ -2875,7 +2882,7 @@ CONTAINS
 
       IF(updateRHS) THEN
         ! Integrate pressure over faces, and add to RHS vector
-        CALL Darcy_FiniteElementFaceIntegrate(equationsSet,elementNumber,fieldVariable,err,error,*999)
+        CALL Darcy_FiniteElementFaceIntegrate(equationsSet,elementNumber,colsVariable,err,error,*999)
       ENDIF !update RHS
 
       !Scale factor adjustment

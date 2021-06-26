@@ -566,6 +566,7 @@ CONTAINS
             CALL Field_DimensionCheck(equationsSetSetup%FIELD,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%FIELD,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,numberOfComponents,err,error,*999)
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
             SELECT CASE(solutionMethod)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               IF((esSpecification(2)==EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE.AND. &
@@ -649,7 +650,8 @@ CONTAINS
             CALL Field_DataTypeSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,numberOfDimensions+1, &
               & err,error,*999)
-            SELECT CASE(equationsSet%solutionMethod)
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+            SELECT CASE(solutionMethod)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !Specify fem solution method
               DO componentIdx=1,numberOfDimensions
@@ -674,8 +676,7 @@ CONTAINS
               CALL Field_ScalingTypeSet(equationsSource%sourceField,geometricScalingType,err,error,*999)
             CASE DEFAULT
               !Other solutions not defined yet
-              localError="The solution method of " &
-                & //TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// " is invalid."
+              localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           ELSE
@@ -688,21 +689,21 @@ CONTAINS
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             !calculate number of components with one component for each dimension and one for pressure
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfDimensions+1,err,error,*999)
-            SELECT CASE(equationsSet%solutionMethod)
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+            SELECT CASE(solutionMethod)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               DO componentIdx=1,numberOfDimensions+1
                 CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
             CASE DEFAULT
-              localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod, &
-                &"*",err,error))//" is invalid."
+              localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           ENDIF
         CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
           IF(equationsSource%sourceFieldAutoCreated) THEN
-            CALL Field_CreateFinish(equationsSet%SOURCE%sourceField,err,error,*999)
+            CALL Field_CreateFinish(equationsSource%sourceField,err,error,*999)
           ENDIF
         CASE DEFAULT
           localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
