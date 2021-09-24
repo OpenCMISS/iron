@@ -149,6 +149,8 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC ControlLoop_ContinueLoopSet
 
+  PUBLIC ControlLoop_CurrentFixedInformationGet
+
   PUBLIC ControlLoop_CurrentLoadIncrementInfoGet
 
   PUBLIC ControlLoop_CurrentTimesGet
@@ -638,6 +640,66 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_CurrentLoadIncrementInfoGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the current loop information for a fixed control loop. If the specified loop is not a fixed loop the next fixed loop up the chain will be used.
+  SUBROUTINE ControlLoop_CurrentFixedInformationGet(controlLoop,currentIteration,startIteration,stopIteration, &
+    & iterationIncrement,outputIteration,inputIteration,err,error,*)
+    
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the fixed loop information for
+    INTEGER(INTG), INTENT(OUT) :: currentIteration !<On exit, the current iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: startIteration !<On exit, the start iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: stopIteration !<On exit, the stop iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: iterationIncrement !<On exit, the iteration increment for the loop
+    INTEGER(INTG), INTENT(OUT) :: outputIteration !<On exit, the output iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: inputIteration !<On exit, the input iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables    
+    INTEGER(INTG) :: controlLoopLevel,levelIdx
+    TYPE(ControlLoopType), POINTER :: parentLoop
+    TYPE(ControlLoopFixedType), POINTER :: fixedLoop
+
+    ENTERS("ControlLoop_CurrentFixedInformationGet",err,error,*999)
+
+    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
+
+    !Find a fixed loop from either the specified control loop or the next fixed loop up the chain.
+    controlLoopLevel=controlLoop%controlLoopLevel
+    parentLoop=>controlLoop
+    DO levelIdx=controlLoopLevel,1,-1
+      IF(controlLoopLevel==0) THEN
+        CALL FlagError("Could not find a fixed loop for the specified control loop.",err,error,*999)
+      ELSE
+        IF(parentLoop%loopType==CONTROL_FIXED_LOOP_TYPE) THEN
+          fixedLoop=>parentLoop%fixedLoop
+#ifdef WITH_POSTCHECKS          
+          IF(.NOT.ASSOCIATED(fixedLoop)) &
+            & CALL FlagError("Control loop fixed loop is not associated.",err,error,*999)
+#endif          
+          currentIteration=fixedLoop%iterationNumber
+          startIteration=fixedLoop%startIteration
+          stopIteration=fixedLoop%stopIteration
+          iterationIncrement=fixedLoop%iterationIncrement
+          outputIteration=fixedLoop%outputNumber
+          inputIteration=fixedLoop%inputNumber
+          EXIT
+        ELSE
+          parentLoop=>parentLoop%parentLoop
+        ENDIF
+      ENDIF
+    ENDDO !levelIdx
+       
+    EXITS("ControlLoop_CurrentFixedInformationGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_CurrentFixedInformationGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_CurrentFixedInformationGet
   
   !
   !================================================================================================================================

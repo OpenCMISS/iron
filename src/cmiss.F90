@@ -284,6 +284,7 @@ CONTAINS
         !versionString=versionString//TRIM(CMFE_BUILD_VERSION(6:))
         !versionString=versionString//" )"        
         !WRITE(*,'(A)') CHAR(versionString)
+        versionString=""
       ENDIF
       !Set first initalised
       cmfeFirstInit = .TRUE.

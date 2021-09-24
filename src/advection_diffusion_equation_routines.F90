@@ -1419,7 +1419,7 @@ CONTAINS
         END SELECT
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
         IF(equationsAnalytic%analyticFieldAutoCreated) THEN
-          CALL Field_CreateFinish(equationsAnalytic%analyticField,err,error,*999)
+          !CALL Field_CreateFinish(equationsAnalytic%analyticField,err,error,*999)
         ENDIF
       CASE DEFAULT
         localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &

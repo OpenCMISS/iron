@@ -121,136 +121,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-
-
-  !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
-  !Calculates a one-dimensional dynamic solution to the burgers equation
-  SUBROUTINE Burgers_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: errOR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: componentIdx,derivativeIdx,dimensionIdx,localDOFIdx,nodeIdx,numberOfComponents,numberOfDimensions, &
-      & numberOfNodeDerivatives,numberOfNodes,numberOfVariables,numberOfVersions,variableIdx,variableType,versionIdx
-    REAL(DP) :: dependentValue,X(3),initialValue
-    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
-    LOGICAL :: boundaryNode
-    TYPE(DomainType), POINTER :: domain
-    TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField
-    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable,materialsVariable
-    INTEGER(INTG) :: globalDerivativeIndex,analyticFunctionType
-    !THESE ARE TEMPORARY VARIABLES - they need to be replace by constant field values and the current simulation time
-    REAL(DP) :: time,normal(3),tangents(3,3)
-    !CURRENT_TIME = 1.2_DP
-
-    ENTERS("Burgers_BoundaryConditionsAnalyticCalculate",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
-    
-    CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
-    NULLIFY(geometricField)
-    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-    NULLIFY(dependentField)
-    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-    NULLIFY(materialsField)
-    CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
-    NULLIFY(analyticField)
-    CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
-    NULLIFY(geometricVariable)
-    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
-    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
-    NULLIFY(geometricParameters)
-    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
-    NULLIFY(analyticVariable)
-    NULLIFY(analyticParameters)
-    IF(ASSOCIATED(analyticField)) THEN
-      CALL Field_VariableGet(analyticField,FIELD_U_VARIABLE_TYPE,analyticVariable,err,error,*999)
-      CALL FieldVariable_ParameterSetDataGet(analyticVariable,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
-    ENDIF
-    NULLIFY(materialsVariable)
-    NULLIFY(materialsParameters)
-    IF(ASSOCIATED(materialsField)) THEN
-      CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
-      CALL FieldVariable_ParameterSetDataGet(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
-    ENDIF
-    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
-    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
-    DO variableIdx=1,numberOfVariables
-      NULLIFY(dependentVariable)
-      CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
-      CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
-      DO componentIdx=1,numberOfComponents
-        CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
-          & err,error,*999)
-        NULLIFY(domain)
-        CALL FieldVariable_ComponentDomainGet(dependentVariable,componentIdx,domain,err,error,*999)
-        NULLIFY(domainTopology)
-        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-        NULLIFY(domainNodes)
-        CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-        !Loop over the local nodes excluding the ghosts.
-        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
-        DO nodeIdx=1,numberOfNodes
-!!TODO \todo We should interpolate the geometric field here and the node position.
-          DO dimensionIdx=1,numberOfDimensions
-            !Default to version 1 of each node derivative
-            CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
-            x(dimensionIdx)=geometricParameters(localDOFIdx)
-          ENDDO !dimensionIdx
-          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-          !Loop over the derivatives
-          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-          DO derivativeIdx=1,numberOfNodeDerivatives
-            CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-            CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,0.0_DP,variableType, &
-              & globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,initialValue,err,error,*999)
-            CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time,variableType, &
-              & globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,dependentValue,err,error,*999)
-            CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
-            DO versionIdx=1,numberOfVersions
-              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,versionIdx,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
-                & err,error,*999)
-              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
-                & dependentValue,err,error,*999)
-              IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
-                IF(boundaryNode) THEN
-                  !If we are a boundary node then set the analytic value on the boundary
-                  CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
-                    & dependentValue,err,error,*999)
-                ELSE
-                  !Set the initial condition.
-                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,localDOFIdx, &
-                    & initialValue,err,error,*999)
-                ENDIF
-              ENDIF
-            ENDDO !versionIdx
-          ENDDO !derivativeIdx
-        ENDDO !nodeIdx
-      ENDDO !componentIdx
-      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-    ENDDO !variableIdx
-    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
-
-    EXITS("Burgers_BoundaryConditionsAnalyticCalculate")
-    RETURN
-999 ERRORSEXITS("Burgers_BoundaryConditionsAnalyticCalculate",err,error)
-    RETURN 1
-
-  END SUBROUTINE Burgers_BoundaryConditionsAnalyticCalculate
-
-
-  !
-  !================================================================================================================================
-  !
+  
   !>Evaluate the analytic solutions for a Burgers equation
   SUBROUTINE Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time,variableType, &
     & globalDerivative,componentNumber,analyticParameters,materialsParameters,dependentValue,err,error,*)
@@ -406,6 +277,133 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Burgers_AnalyticFunctionsEvaluate
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
+  SUBROUTINE Burgers_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: componentIdx,derivativeIdx,dimensionIdx,localDOFIdx,nodeIdx,numberOfComponents,numberOfDimensions, &
+      & numberOfNodeDerivatives,numberOfNodes,numberOfVariables,numberOfVersions,variableIdx,variableType,versionIdx
+    REAL(DP) :: dependentValue,X(3),initialValue
+    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
+    LOGICAL :: boundaryNode
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField
+    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable,materialsVariable
+    INTEGER(INTG) :: globalDerivativeIndex,analyticFunctionType
+    !THESE ARE TEMPORARY VARIABLES - they need to be replace by constant field values and the current simulation time
+    REAL(DP) :: time,normal(3),tangents(3,3)
+    !CURRENT_TIME = 1.2_DP
+
+    ENTERS("Burgers_BoundaryConditionsAnalyticCalculate",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    
+    CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+    NULLIFY(geometricField)
+    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    NULLIFY(materialsField)
+    CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
+    NULLIFY(analyticField)
+    CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
+    NULLIFY(geometricVariable)
+    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+    NULLIFY(geometricParameters)
+    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+    NULLIFY(analyticVariable)
+    NULLIFY(analyticParameters)
+    IF(ASSOCIATED(analyticField)) THEN
+      CALL Field_VariableGet(analyticField,FIELD_U_VARIABLE_TYPE,analyticVariable,err,error,*999)
+      CALL FieldVariable_ParameterSetDataGet(analyticVariable,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
+    ENDIF
+    NULLIFY(materialsVariable)
+    NULLIFY(materialsParameters)
+    IF(ASSOCIATED(materialsField)) THEN
+      CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
+      CALL FieldVariable_ParameterSetDataGet(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
+    ENDIF
+    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
+    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+    DO variableIdx=1,numberOfVariables
+      NULLIFY(dependentVariable)
+      CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
+      CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
+      DO componentIdx=1,numberOfComponents
+        CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
+          & err,error,*999)
+        NULLIFY(domain)
+        CALL FieldVariable_ComponentDomainGet(dependentVariable,componentIdx,domain,err,error,*999)
+        NULLIFY(domainTopology)
+        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+        NULLIFY(domainNodes)
+        CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+        !Loop over the local nodes excluding the ghosts.
+        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+        DO nodeIdx=1,numberOfNodes
+!!TODO \todo We should interpolate the geometric field here and the node position.
+          DO dimensionIdx=1,numberOfDimensions
+            !Default to version 1 of each node derivative
+            CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
+            x(dimensionIdx)=geometricParameters(localDOFIdx)
+          ENDDO !dimensionIdx
+          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+          !Loop over the derivatives
+          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+          DO derivativeIdx=1,numberOfNodeDerivatives
+            CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
+            CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,0.0_DP,variableType, &
+              & globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,initialValue,err,error,*999)
+            CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time,variableType, &
+              & globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,dependentValue,err,error,*999)
+            CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
+            DO versionIdx=1,numberOfVersions
+              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,versionIdx,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
+                & err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
+                & dependentValue,err,error,*999)
+              IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
+                IF(boundaryNode) THEN
+                  !If we are a boundary node then set the analytic value on the boundary
+                  CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
+                    & dependentValue,err,error,*999)
+                ELSE
+                  !Set the initial condition.
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,localDOFIdx, &
+                    & initialValue,err,error,*999)
+                ENDIF
+              ENDIF
+            ENDDO !versionIdx
+          ENDDO !derivativeIdx
+        ENDDO !nodeIdx
+      ENDDO !componentIdx
+      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+    ENDDO !variableIdx
+    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+
+    EXITS("Burgers_BoundaryConditionsAnalyticCalculate")
+    RETURN
+999 ERRORSEXITS("Burgers_BoundaryConditionsAnalyticCalculate",err,error)
+    RETURN 1
+
+  END SUBROUTINE Burgers_BoundaryConditionsAnalyticCalculate
 
   !
   !================================================================================================================================
@@ -2265,7 +2263,7 @@ CONTAINS
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
     NULLIFY(residualVector)
     CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,1,residualVector,err,error,*999)
-    updateResidual=residualVector%updateResidual
+    CALL EquationsMatricesResidual_UpdateVectorGet(residualVector,updateResidual,err,error,*999)
     NULLIFY(dynamicMapping)
     NULLIFY(dynamicMatrices)
     NULLIFY(linearMapping)

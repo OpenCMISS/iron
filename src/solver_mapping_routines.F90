@@ -109,7 +109,7 @@ MODULE SolverMappingRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnIdx,columnListItem(5),columnRank,dofIdx,dofType,equationType, &
+    INTEGER(INTG) :: columnIdx,columnListItem(5),columnRank,dofIdx,dofType,dummyErr,equationType, &
       & equationsColumn,equationsIdx,equationsIdx2,equationMatrixIdx,equationsMatrixNumber,equationsRowNumber, &
       & equationsSetIdx,equationsSetUserNumber,equationsVariableListItem(3),globalColumn,globalDOF,globalDOFIdx,globalDOFsOffset, &
       & globalRow,globalRowIdx,interfaceColumn,interfaceColumnNumber,interfaceConditionIdx,interfaceConditionIdx2, &
@@ -196,7 +196,7 @@ MODULE SolverMappingRoutines
     TYPE(SolverRowToEquationsMapType), POINTER :: solverRowToEquationsMap
     TYPE(VariableDOFToSolverDOFsMapType), POINTER :: dependentVarDOFToSolverDOFsMap,lagrangeVarDOFToSolverDOFsMap, &
       & varDOFToSolverDOFsMap
-    TYPE(VARYING_STRING) :: localError
+    TYPE(VARYING_STRING) :: dummyError,localError
     TYPE(WorkGroupType), POINTER :: workGroup
 
     ENTERS("SolverMapping_Calculate",err,error,*999)
@@ -4013,8 +4013,8 @@ MODULE SolverMappingRoutines
     IF(ALLOCATED(dummyDofCoupling%globalDofs)) DEALLOCATE(dummyDofCoupling%globalDofs)
     IF(ALLOCATED(dummyDofCoupling%localDofs)) DEALLOCATE(dummyDofCoupling%localDofs)
     IF(ALLOCATED(dummyDofCoupling%coefficients)) DEALLOCATE(dummyDofCoupling%coefficients)
-    CALL SolverMappingDOFCouplings_Finalise(rowCouplings,err,error,*998)
-998 CALL SolverMappingDOFCouplings_Finalise(columnCouplings,err,error,*997)
+    CALL SolverMappingDOFCouplings_Finalise(rowCouplings,dummyErr,dummyError,*998)
+998 CALL SolverMappingDOFCouplings_Finalise(columnCouplings,dummyErr,dummyError,*997)
 997 ERRORSEXITS("SolverMapping_Calculate",err,error)
     RETURN 1
     

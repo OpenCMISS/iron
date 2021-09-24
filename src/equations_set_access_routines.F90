@@ -390,14 +390,15 @@ MODULE EquationsSetAccessRoutines
   !> \see EquationsSetRoutines
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR=1 !<Deformation gradient tensor \see EquationsSetRoutines_TensorTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR=2 !<Right Cauchy-Green deformation field \see EquationsSetRoutines_TensorTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR=3 !<Right Cauchy-Green deformation field \see EquationsSetRoutines_TensorTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR=4 !<Green-Lagrange strain tensor \see EquationsSetRoutines_TensorTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CAUCHY_STRESS_TENSOR=5 !<Cauchy stress tensor \see EquationsSetRoutines_TensorTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FIRST_PK_STRESS_TENSOR=6 !<First Piola Kirchhoff stress tensor \see EquationsSetRoutines_TensorEvaluateTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SECOND_PK_STRESS_TENSOR=7 !<Second Piola Kirchhoff stress tensor \see EquationsSetRoutines_TensorEvaluateTypes,EquationsSetRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DEFORMATION_GROWTH_TENSOR=2 !<Deformation growth tensor \see EquationsSetRoutines_TensorTypes,EquationsSetRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR=3 !<Right Cauchy-Green deformation field \see EquationsSetRoutines_TensorTypes,EquationsSetRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR=4 !<Right Cauchy-Green deformation field \see EquationsSetRoutines_TensorTypes,EquationsSetRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR=5 !<Green-Lagrange strain tensor \see EquationsSetRoutines_TensorTypes,EquationsSetRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CAUCHY_STRESS_TENSOR=6 !<Cauchy stress tensor \see EquationsSetRoutines_TensorTypes,EquationsSetRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FIRST_PK_STRESS_TENSOR=7 !<First Piola Kirchhoff stress tensor \see EquationsSetRoutines_TensorEvaluateTypes,EquationsSetRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SECOND_PK_STRESS_TENSOR=8 !<Second Piola Kirchhoff stress tensor \see EquationsSetRoutines_TensorEvaluateTypes,EquationsSetRoutines
   !>@}
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES=7
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES=8
 
   !> \addtogroup EquationsSetRoutines_OutputTypes EquationsSet::Constants::OutputTypes
   !> \brief The equations set output types
@@ -719,10 +720,10 @@ MODULE EquationsSetAccessRoutines
     & EQUATIONS_SET_FD_SOLUTION_METHOD,EQUATIONS_SET_FV_SOLUTION_METHOD,EQUATIONS_SET_GFEM_SOLUTION_METHOD, &
     & EQUATIONS_SET_GFD_SOLUTION_METHOD,EQUATIONS_SET_GFV_SOLUTION_METHOD,EQUATIONS_SET_NODAL_SOLUTION_METHOD
 
-  PUBLIC EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR,EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR, &
-    & EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR,EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR, &
-    & EQUATIONS_SET_CAUCHY_STRESS_TENSOR,EQUATIONS_SET_FIRST_PK_STRESS_TENSOR,EQUATIONS_SET_SECOND_PK_STRESS_TENSOR, &
-    & EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES
+  PUBLIC EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR,EQUATIONS_SET_DEFORMATION_GROWTH_TENSOR, &
+    & EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR,EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR, &
+    & EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR,EQUATIONS_SET_CAUCHY_STRESS_TENSOR,EQUATIONS_SET_FIRST_PK_STRESS_TENSOR, &
+    & EQUATIONS_SET_SECOND_PK_STRESS_TENSOR,EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES
 
   PUBLIC EQUATIONS_SET_NO_OUTPUT,EQUATIONS_SET_PROGRESS_OUTPUT
 

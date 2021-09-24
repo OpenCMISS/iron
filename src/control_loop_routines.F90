@@ -93,6 +93,8 @@ MODULE ControlLoopRoutines
   PUBLIC ControlLoop_Destroy
 
   PUBLIC ControlLoop_FieldVariablesCalculate
+
+  PUBLIC ControlLoop_FixedInputSet,ControlLoop_FixedOutputSet
   
   PUBLIC ControlLoop_IterationsSet
 
@@ -753,6 +755,8 @@ CONTAINS
     controlLoop%fixedLoop%startIteration=1
     controlLoop%fixedLoop%stopIteration=100
     controlLoop%fixedLoop%iterationIncrement=1
+    controlLoop%fixedLoop%outputNumber=1
+    controlLoop%fixedLoop%inputNumber=1
     
     EXITS("ControlLoop_FixedInitialise")
     RETURN
@@ -761,6 +765,68 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_FixedInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the input parameters for a fixed loop. \see OpenCMISS::Iron::cmfe_ControlLoop_FixedInputSet
+  SUBROUTINE ControlLoop_FixedInputSet(controlLoop,inputFrequency,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to set the input frequency for
+    INTEGER(INTG) :: inputFrequency !<The input iteration modulo to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables    
+    TYPE(ControlLoopFixedType), POINTER :: fixedLoop
+    
+    ENTERS("ControlLoop_FixedInputSet",err,error,*999)
+
+    CALL ControlLoop_AssertNotFinished(controlLoop,err,error,*999)
+    CALL ControlLoop_AssertIsFixedLoop(controlLoop,err,error,*999)
+    NULLIFY(fixedLoop)
+    CALL ControlLoop_FixedLoopGet(controlLoop,fixedLoop,err,error,*999)
+
+    fixedLoop%inputNumber=inputFrequency
+       
+    EXITS("ControlLoop_FixedInputSet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_FixedInputSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_FixedInputSet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output for a fixedcontrol loop identified by an object. \see OpenCMISS_cmfe_ControlLoop_FixedOutputSet
+  SUBROUTINE ControlLoop_FixedOutputSet(controlLoop,outputFrequency,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to the fixed control loop to set the output frequency for
+    INTEGER(INTG), INTENT(IN) :: outputFrequency !<The output frequency modulo to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(ControlLoopFixedType), POINTER :: fixedLoop
+ 
+    ENTERS("ControlLoop_FixedOutputSet",err,error,*999)
+
+    CALL ControlLoop_AssertNotFinished(controlLoop,err,error,*999)
+    CALL ControlLoop_AssertIsFixedLoop(controlLoop,err,error,*999)
+    
+    NULLIFY(fixedLoop)
+    CALL ControlLoop_FixedLoopGet(controlLoop,fixedLoop,err,error,*999)
+    fixedLoop%outputNumber=outputFrequency
+        
+    EXITS("ControlLoop_FixedOutputSet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_FixedOutputSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_FixedOutputSet
 
   !
   !================================================================================================================================
@@ -1731,12 +1797,12 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the input parameters for a time control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_TimeInputSet
-  SUBROUTINE ControlLoop_TimeInputSet(controlLoop,inputOption,err,error,*)
+  !>Sets the input frequency for a time control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_TimeInputSet
+  SUBROUTINE ControlLoop_TimeInputSet(controlLoop,inputFrequency,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to set the times for
-    INTEGER(INTG) :: inputOption !<The input option modulo to set
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to set the time input frequency for
+    INTEGER(INTG) :: inputFrequency !<The input frequency modulo to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables    
@@ -1749,7 +1815,7 @@ CONTAINS
     NULLIFY(timeLoop)
     CALL ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*999)
 
-    timeLoop%inputNumber=inputOption
+    timeLoop%inputNumber=inputFrequency
        
     EXITS("ControlLoop_TimeInputSet")
     RETURN

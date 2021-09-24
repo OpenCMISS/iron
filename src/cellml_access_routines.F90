@@ -128,6 +128,8 @@ MODULE CellMLAccessRoutines
 
   PUBLIC CellML_CellMLStateFieldGet
 
+  PUBLIC CellML_IntermediateFieldExists
+
   PUBLIC CellML_IntermediateFieldGet
 
   PUBLIC CellML_MaximumNumberOfIntermediateGet
@@ -136,14 +138,20 @@ MODULE CellMLAccessRoutines
 
   PUBLIC CellML_MaximumNumberOfStateGet
 
+  PUBLIC CellML_ModelsFieldExists
+
   PUBLIC CellML_ModelsFieldGet
 
   PUBLIC CellML_NumberOfModelsGet
+
+  PUBLIC CellML_ParametersFieldExists
 
   PUBLIC CellML_ParametersFieldGet
 
   PUBLIC CellML_RegionGet
 
+  PUBLIC CellML_StateFieldExists
+  
   PUBLIC CellML_StateFieldGet
   
   PUBLIC CellML_UserNumberFind
@@ -725,6 +733,42 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks if an intermediate field for the specified CellML environment exists.
+  SUBROUTINE CellML_IntermediateFieldExists(cellML,intermediateField,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to check the existance of the intermediate field for
+    TYPE(FieldType), POINTER :: intermediateField  !<On exit, a pointer to intermediate field for the CellML environment if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellML_IntermediateFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(intermediateField)) CALL FlagError("Intermediate field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif
+    
+    IF(ASSOCIATED(cellML%intermediateField)) THEN
+      CALL CellMLIntermediateField_AssertIsFinished(cellML%intermediateField,err,error,*999)    
+      intermediateField=>cellML%intermediateField%intermediateField
+    ELSE
+      NULLIFY(intermediateField)
+    ENDIF
+
+    EXITS("CellML_IntermediateFieldExists")
+    RETURN
+999 NULLIFY(intermediateField)
+998 ERRORSEXITS("CellML_IntermediateFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_IntermediateFieldExists
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the intermediate field for the specified CellML environment.
   SUBROUTINE CellML_IntermediateFieldGet(cellML,intermediateField,err,error,*)
 
@@ -866,6 +910,42 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks if the models field for the specified CellML environment exists.
+  SUBROUTINE CellML_ModelsFieldExists(cellML,modelsField,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to check the existance of the models field for
+    TYPE(FieldType), POINTER :: modelsField  !<On exit, a pointer to models field for the CellML environment if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellML_ModelsFieldGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(modelsField)) CALL FlagError("Models field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif
+
+    IF(ASSOCIATED(cellML%modelsField)) THEN
+      CALL CellMLModelsField_AssertIsFinished(cellML%modelsField,err,error,*999)
+      modelsField=>cellML%modelsField%modelsField
+    ELSE
+      NULLIFY(modelsField)
+    ENDIF
+
+    EXITS("CellML_ModelsFieldExists")
+    RETURN
+999 NULLIFY(modelsField)
+998 ERRORSEXITS("CellML_ModelsFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_ModelsFieldExists
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the models field for the specified CellML environment.
   SUBROUTINE CellML_ModelsFieldGet(cellML,modelsField,err,error,*)
 
@@ -944,6 +1024,42 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE CellML_NumberOfModelsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if a parameters field for the specified CellML environment exists.
+  SUBROUTINE CellML_ParametersFieldExists(cellML,parametersField,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to check the existance of the parameters field for
+    TYPE(FieldType), POINTER :: parametersField  !<On exit, a pointer to parameters field for the CellML environment if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellML_ParametersFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(parametersField)) CALL FlagError("Parameters field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif
+
+    IF(ASSOCIATED(cellML%parametersField)) THEN
+      CALL CellMLParametersField_AssertIsFinished(cellML%parametersField,err,error,*999)    
+      parametersField=>cellML%parametersField%parametersField
+    ELSE
+      NULLIFY(parametersField)
+    ENDIF
+
+    EXITS("CellML_ParametersFieldExists")
+    RETURN
+999 NULLIFY(parametersField)
+998 ERRORSEXITS("CellML_ParametersFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_ParametersFieldExists
 
   !
   !================================================================================================================================
@@ -1040,6 +1156,42 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE CellML_RegionGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the state field for the specified CellML environment exists.
+  SUBROUTINE CellML_StateFieldExists(cellML,stateField,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to check the existance of the state field for
+    TYPE(FieldType), POINTER :: stateField  !<On exit, a pointer to state field for the CellML environment if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellML_StateFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(stateField)) CALL FlagError("State field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif
+
+    IF(ASSOCIATED(cellML%stateField)) THEN
+      CALL CellMLStateField_AssertIsFinished(cellML%stateField,err,error,*999)    
+      stateField=>cellML%stateField%stateField
+    ELSE
+      NULLIFY(stateField)
+    ENDIF
+
+    EXITS("CellML_StateFieldExists")
+    RETURN
+999 NULLIFY(stateField)
+998 ERRORSEXITS("CellML_StateFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_StateFieldExists
 
   !
   !================================================================================================================================

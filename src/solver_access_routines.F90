@@ -471,10 +471,15 @@ MODULE SolverAccessRoutines
     MODULE PROCEDURE Solver_LabelGetVS
   END INTERFACE Solver_LabelGet
   
+  INTERFACE SolverDynamic_ThetaGet
+    MODULE PROCEDURE SolverDynamic_ThetaGet0
+    MODULE PROCEDURE SolverDynamic_ThetaGet1
+  END INTERFACE SolverDynamic_ThetaGet
+  
   PUBLIC SOLVER_NUMBER_OF_SOLVER_TYPES
   
   PUBLIC SOLVER_LINEAR_TYPE,SOLVER_NONLINEAR_TYPE,SOLVER_DYNAMIC_TYPE,SOLVER_DAE_TYPE,SOLVER_EIGENPROBLEM_TYPE, &
-    & SOLVER_OPTIMISER_TYPE,SOLVER_CELLML_EVALUATOR_TYPE,SOLVER_GEOMETRIC_TRANSFORMATION_TYPE
+    & SOLVER_OPTIMISER_TYPE,SOLVER_CELLML_EVALUATOR_TYPE,SOLVER_STATE_ITERATION_TYPE,SOLVER_GEOMETRIC_TRANSFORMATION_TYPE
 
   PUBLIC SOLVER_CMISS_LIBRARY,SOLVER_PETSC_LIBRARY,SOLVER_MUMPS_LIBRARY,SOLVER_SUPERLU_LIBRARY,SOLVER_SPOOLES_LIBRARY, &
     & SOLVER_UMFPACK_LIBRARY,SOLVER_LUSOL_LIBRARY,SOLVER_ESSL_LIBRARY,SOLVER_LAPACK_LIBRARY,SOLVER_HYPRE_LIBRARY, &
@@ -658,10 +663,14 @@ MODULE SolverAccessRoutines
   PUBLIC Solver_QuasiNewtonLinkedCellMLSolverGet
   
   PUBLIC Solver_QuasiNewtonLinkedLinearSolverGet
-  
+
   PUBLIC Solver_SolverEquationsExists
 
   PUBLIC Solver_SolverEquationsGet
+
+  PUBLIC Solver_SolverFinishedGet
+
+  PUBLIC Solver_SolverSetupGet,Solver_SolverSetupSet
 
   PUBLIC Solver_SolversGet
 
@@ -724,13 +733,25 @@ MODULE SolverAccessRoutines
   
   PUBLIC SolverDAEExternal_DAESolverGet
 
+  PUBLIC SolverDynamic_DegreeGet
+
   PUBLIC SolverDynamic_LibraryTypeGet
 
   PUBLIC SolverDynamic_LinkedLinearSolverGet
 
   PUBLIC SolverDynamic_LinkedNonlinearSolverGet
 
+  PUBLIC SolverDynamic_OrderGet
+
+  PUBLIC SolverDynamic_RestartGet
+
   PUBLIC SolverDynamic_SolverGet
+
+  PUBLIC SolverDynamic_SolverInitialisedGet
+
+  PUBLIC SolverDynamic_ThetaGet
+
+  PUBLIC SolverDynamic_TimesGet
 
   PUBLIC SolverEigenproblem_LibraryTypeGet
 
@@ -837,6 +858,8 @@ MODULE SolverAccessRoutines
   PUBLIC SolverNonlinearQuasiNewton_LibraryTypeGet
 
   PUBLIC SolverNonlinearQuasiNewton_LinesearchSolverGet
+
+  PUBLIC SolverNonlinearQuasiNewton_LinkedCellMLSolverExists
 
   PUBLIC SolverNonlinearQuasiNewton_LinkedCellMLSolverGet
 
@@ -3533,6 +3556,93 @@ CONTAINS
   !
   !================================================================================================================================
   !
+
+  !>Returns the finished status for a solver.
+  SUBROUTINE Solver_SolverFinishedGet(solver,solverFinished,err,error,*)
+
+    !Argument variables
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to get the solver finished status for
+    LOGICAL, INTENT(OUT) :: solverFinished !<On exit, the solver finished status.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_SolverFinishedGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+#endif    
+
+    solverFinished=solver%solverFinished
+     
+    EXITS("Solver_SolverFinishedGet")
+    RETURN
+999 ERRORSEXITS("Solver_SolverFinishedGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_SolverFinishedGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the setup status for a solver.
+  SUBROUTINE Solver_SolverSetupGet(solver,solverSetup,err,error,*)
+
+    !Argument variables
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to get the solver setup status for
+    LOGICAL, INTENT(OUT) :: solverSetup !<On exit, the solver setup status.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_SolverSetupGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+#endif    
+
+    solverSetup=solver%solverSetup
+     
+    EXITS("Solver_SolverSetupGet")
+    RETURN
+999 ERRORSEXITS("Solver_SolverSetupGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_SolverSetupGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the setup status for a solver.
+  SUBROUTINE Solver_SolverSetupSet(solver,solverSetup,err,error,*)
+
+    !Argument variables
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to get the solver setup status for
+    LOGICAL, INTENT(IN) :: solverSetup !<The solver setup status to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_SolverSetupSet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+#endif    
+
+    solver%solverSetup=solverSetup
+     
+    EXITS("Solver_SolverSetupSet")
+    RETURN
+999 ERRORSEXITS("Solver_SolverSetupSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_SolverSetupSet
+  
+  !
+  !================================================================================================================================
+  !
   
   !>Checks a solvers linking solver and returns a pointer to the linking solver for a solver if it exists
   SUBROUTINE Solver_LinkingSolverExists(solver,linkingSolver,err,error,*)
@@ -3945,6 +4055,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the degree of the polynomial used to interpolate time for a dynamic solver.
+  SUBROUTINE SolverDynamic_DegreeGet(dynamicSolver,degree,err,error,*)
+
+    !Argument variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver !<A pointer to the dynamic solver to get the degree for
+    INTEGER(INTG), INTENT(OUT) :: degree !<On return, the degree of the polynomial used for time interpolation in a dynamic solver \see SolverRoutines_DynamicDegreeTypes,SolverRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverDynamic_DegreeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+#endif
+    
+    degree=dynamicSolver%degree
+    
+    EXITS("SolverDynamic_DegreeGet")
+    RETURN
+999 ERRORSEXITS("SolverDynamic_DegreeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverDynamic_DegreeGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the type of library to use for a dynamic solver.
   SUBROUTINE SolverDynamic_LibraryTypeGet(dynamicSolver,solverLibraryType,err,error,*)
 
@@ -4042,6 +4181,64 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the order of the dynamic solver.
+  SUBROUTINE SolverDynamic_OrderGet(dynamicSolver,order,err,error,*)
+
+    !Argument variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver !<A pointer to the dynamic solver to get the order for
+    INTEGER(INTG), INTENT(OUT) :: order !<On return, the order of the dynamic solver \see SolverRoutines_DynamicOrderTypes,SolverRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverDynamic_OrderGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+#endif
+    
+    order=dynamicSolver%order
+    
+    EXITS("SolverDynamic_OrderGet")
+    RETURN
+999 ERRORSEXITS("SolverDynamic_OrderGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverDynamic_OrderGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the restart status of the dynamic solver.
+  SUBROUTINE SolverDynamic_RestartGet(dynamicSolver,restart,err,error,*)
+
+    !Argument variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver !<A pointer to the dynamic solver to get the restart status for
+    LOGICAL, INTENT(OUT) :: restart !<On return, the restart status of the dynamic solver 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverDynamic_RestartGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+#endif
+    
+    restart=dynamicSolver%restart
+    
+    EXITS("SolverDynamic_RestartGet")
+    RETURN
+999 ERRORSEXITS("SolverDynamic_RestartGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverDynamic_RestartGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the solver for a dynamic solver. 
   SUBROUTINE SolverDynamic_SolverGet(dynamicSolver,solver,err,error,*)
 
@@ -4073,6 +4270,131 @@ CONTAINS
 
   END SUBROUTINE SolverDynamic_SolverGet
      
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the solver initialised status of the dynamic solver.
+  SUBROUTINE SolverDynamic_SolverInitialisedGet(dynamicSolver,solverInitialised,err,error,*)
+
+    !Argument variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver !<A pointer to the dynamic solver to get the solver initialised status for
+    LOGICAL, INTENT(OUT) :: solverInitialised !<On return, the solver initialised status of the dynamic solver 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverDynamic_SolverInitialisedGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+#endif
+    
+    solverInitialised=dynamicSolver%solverInitialised
+    
+    EXITS("SolverDynamic_SolverInitialisedGet")
+    RETURN
+999 ERRORSEXITS("SolverDynamic_SolverInitialisedGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverDynamic_SolverInitialisedGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the theta value of a dynamic solver.
+  SUBROUTINE SolverDynamic_ThetaGet0(dynamicSolver,theta,err,error,*)
+
+    !Argument variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver !<A pointer to the dynamic solver to get the theta for
+    REAL(DP), INTENT(OUT) :: theta !<On return, the theta value of the dynamic solver 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    REAL(DP) :: thetas(1)
+    
+    ENTERS("SolverDynamic_ThetaGet0",err,error,*999)
+
+    CALL SolverDynamic_ThetaGet1(dynamicSolver,thetas,err,error,*999)
+    theta=thetas(1)
+     
+    EXITS("SolverDynamic_ThetaGet0")
+    RETURN
+999 ERRORSEXITS("SolverDynamic_ThetaGet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverDynamic_ThetaGet0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the theta values of a dynamic solver.
+  SUBROUTINE SolverDynamic_ThetaGet1(dynamicSolver,thetas,err,error,*)
+
+    !Argument variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver !<A pointer to the dynamic solver to get the thetas for
+    REAL(DP), INTENT(OUT) :: thetas(:) !<thetas(thetaIdx). On return, the theta value of the dynamic solver 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("SolverDynamic_ThetaGet1",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(dynamicSolver%theta)) CALL FlagError("Dynamic solver theta is not allocated.",err,error,*999)
+    IF(SIZE(thetas,1)<SIZE(dynamicSolver%theta,1)) THEN
+      localError="The size of the specified thetas array of "//TRIM(NumberToVString(SIZE(thetas,1),"*",err,error))// &
+        & " is invalid. The size must be >= "//TRIM(NumberToVString(SIZE(dynamicSolver%theta,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    thetas(1:SIZE(dynamicSolver%theta,1))=dynamicSolver%theta(1:SIZE(dynamicSolver%theta,1))
+     
+    EXITS("SolverDynamic_ThetaGet1")
+    RETURN
+999 ERRORSEXITS("SolverDynamic_ThetaGet1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverDynamic_ThetaGet1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the current times for a dynamic solver.
+  SUBROUTINE SolverDynamic_TimesGet(dynamicSolver,currentTime,timeIncrement,err,error,*)
+
+    !Argument variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver !<A pointer to the dynamic solver to get the solver times for
+    REAL(DP), INTENT(OUT) :: currentTime !<On return, the current time of the dynamic solver 
+    REAL(DP), INTENT(OUT) :: timeIncrement !<On return, the current time increment of the dynamic solver 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverDynamic_TimesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+#endif
+
+    currentTime=dynamicSolver%currentTime
+    timeIncrement=dynamicSolver%timeIncrement
+    
+    EXITS("SolverDynamic_TimesGet")
+    RETURN
+999 ERRORSEXITS("SolverDynamic_TimesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverDynamic_TimesGet
+
   !
   !================================================================================================================================
   !
@@ -6189,6 +6511,38 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE SolverNonlinearQuasiNewton_LinesearchSolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
+  !>Checkes if the linked CellML solver for a quasi Newton solver exists. 
+  SUBROUTINE SolverNonlinearQuasiNewton_LinkedCellMLSolverExists(quasiNewtonSolver,cellMLSolver,err,error,*)
+
+    !Argument variables
+    TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver !<A pointer to the quasi Newton nonlinear solver to check the existstance of the linked CellML solver for
+    TYPE(SolverType), POINTER :: cellMLSolver !<On exit, a pointer to the linked CellML solver for the specified quasi Newton nonlinear solver if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverNonlinearQuasiNewton_LinkedCellMLSolverExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(cellMLSolver)) CALL FlagError("CellML solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(quasiNewtonSolver)) CALL FlagError("Quasi Newton nonlinear solver is not associated.",err,error,*999)
+#endif    
+
+    cellMLSolver=>quasiNewtonSolver%cellMLEvaluatorSolver
+ 
+    EXITS("SolverNonlinearQuasiNewton_LinkedCellMLSolverExists")
+    RETURN
+999 NULLIFY(cellMLSolver)
+998 ERRORS("SolverNonlinearQuasiNewton_LinkedCellMLSolverExists",err,error)
+    EXITS("SolverNonlinearQuasiNewton_LinkedCellMLSolverExists")
+    RETURN 1
+
+  END SUBROUTINE SolverNonlinearQuasiNewton_LinkedCellMLSolverExists
      
   !
   !================================================================================================================================

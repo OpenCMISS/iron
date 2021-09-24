@@ -7329,6 +7329,7 @@ CONTAINS
     ENDDO !solverIdx
     solver%numberOfLinkedSolvers=0
     solver%solverFinished=.FALSE.
+    solver%solverSetup=.FALSE.
     solver%label=""
     solver%outputType=SOLVER_NO_OUTPUT
     NULLIFY(solver%linearSolver)

@@ -291,6 +291,7 @@ CONTAINS
 
     IF(diagOrTiming) THEN
       !$OMP CRITICAL(ENTERS_1)
+      NULLIFY(newRoutinePtr)
       ALLOCATE(newRoutinePtr,STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate new routine stack item.",err,error,*999)
       newRoutinePtr%diagnostics=.FALSE.
@@ -666,7 +667,7 @@ CONTAINS
 
     IF(err==0) err=1
     stringLength=LEN_TRIM(string)
-    ERROR=string(1:stringLength)
+    error=string(1:stringLength)
 
     RETURN 1
     

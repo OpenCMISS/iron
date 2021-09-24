@@ -1385,6 +1385,7 @@ int FieldExport_CoordinateVariable( const int handle, const char *variableName, 
 int FieldExport_Variable( const int handle, const char *variableName, const int variableNumber, const int fieldType, const int variableType,
     const int componentCount )
 {
+    int returnValue;
     SessionListEntry *session = FieldExport_GetSession( handle );
     
     if( session == NULL )
@@ -1398,7 +1399,10 @@ int FieldExport_Variable( const int handle, const char *variableName, const int 
         strcpy(escapedName, variableName);
         size_t i;
         for (i=0;i<strlen(escapedName);++i) if (escapedName[i] == '/') escapedName[i] = '_';
-        return FieldExport_File_Variable( &session->fileSession, escapedName, variableNumber, fieldType, variableType, componentCount );
+        returnValue=FieldExport_File_Variable( &session->fileSession, escapedName, variableNumber, fieldType, variableType, componentCount );
+	free(escapedName);
+	
+	return returnValue;
     }
     else
     {

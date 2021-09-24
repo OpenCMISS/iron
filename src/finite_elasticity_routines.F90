@@ -612,9 +612,81 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Calculates the deformation gradient tensor at a given interpolated point
+  SUBROUTINE FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics,&
+    & fibreInterpPoint,F,J,err,error,*)
+
+    !Argument variables
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: dependentInterpPointMetrics !<The interpolated point metrics of the deformed/spatial geometry
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The interpolated point metrics of the undeformed/reference geometry
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<A pointer to the fibre field interpolated at the point. If there is no fibre field defined this will be NULL.
+    REAL(DP), INTENT(OUT) :: F(3,3) !<F(coordinateIdx,coordinateIdx). On return, the deformation gradient tensor F
+    REAL(DP), INTENT(OUT) :: J !<On return, the Jacobian of the deformation i.e., determinant F
+    INTEGER(INTG), INTENT(OUT) :: err   !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfZDimensions
+    REAL(DP) :: dNudX(3,3),dXdNu(3,3),dNudXi(3,3),dXidNu(3,3)
+
+    ENTERS("FiniteElasticity_DeformationGradientTensorCalculate",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dependentInterpPointMetrics)) &
+      & CALL FlagError("Dependent interpolated point metrics is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
+      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
+#endif    
+    
+    numberOfXDimensions=geometricInterpPointMetrics%numberOfXDimensions
+    numberOfXiDimensions=geometricInterpPointMetrics%numberOfXiDimensions
+    numberOfZDimensions=dependentInterpPointMetrics%numberOfXDimensions
+
+    CALL CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu, &
+      & dNudXi(1:numberOfXDimensions,1:numberOfXiDimensions),dXidNu(1:numberOfXiDimensions,1:numberOfXDimensions), &
+      & err,error,*999)
+    !F = dZ/dNu = dZ/dXi * dXi/dNu  (deformation gradient tensor, F)
+    CALL MatrixProduct(dependentInterpPointMetrics%dXdXi(1:numberOfZDimensions,1:numberOfXiDimensions), &
+      & dXiDNu(1:numberOfXiDimensions,1:numberOfXDimensions),F(1:numberOfZDimensions,1:numberOfXDimensions), &
+      & err,error,*999)
+    
+    IF(numberOfZDimensions == 2) THEN
+      F(:,3) = [0.0_DP,0.0_DP,1.0_DP]
+      F(3,1:2) = 0.0_DP
+    ENDIF
+    
+    CALL Determinant(F,J,err,error,*999)
+
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Calculated deformation gradient tensor:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Z dimensions  = ",numberOfZDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of X wrt to Nu coordinates:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfXDimensions, &
+        & numberOfXDimensions,numberOfXDimensions,dXidNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    dX_dNu','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deformation gradient tensor wrt Nu coordinates:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfZDimensions,1,1,numberOfXDimensions, &
+        & numberOfXDimensions,numberOfXDimensions,F,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("         F','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant F  = ",J,err,error,*999)
+    ENDIF
+
+    EXITS("FiniteElasticity_DeformationGradientTensorCalculate")
+    RETURN
+999 ERRORS("FiniteElasticity_GaussDeformationGradientTensorCalculate",err,error)
+    EXITS("FiniteElasticity_GaussDeformationGradientTensorCalculate")
+    RETURN 1
+
+  END SUBROUTINE FiniteElasticity_DeformationGradientTensorCalculate
+
+  !
+  !================================================================================================================================
+  !
+
   !>Evaluates the modified second material elasticity tensor.
-  SUBROUTINE FiniteElasticity_CbarElasticityTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,Fbar,Cbar,Bbar,Ebar,Sbar,materialCbar,err,error,*)
+  SUBROUTINE FiniteElasticity_MaterialElasticityTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
+    & F,J,Fbar,Cbar,Bbar,EbarV,SbarV,materialCbarV,err,error,*)
     
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -625,24 +697,24 @@ CONTAINS
     REAL(DP), INTENT(IN) :: Fbar(:,:) !<The modified deformation gradient tensor
     REAL(DP), INTENT(IN) :: Cbar(:,:) !<The modified right Cauchy-Green deformation tensor
     REAL(DP), INTENT(IN) :: Bbar(:,:) !<The modified Piola deformation tensor
-    REAL(DP), INTENT(IN) :: Ebar(:) !<The modified Green-Lagrange strain tensor in Voigt form
-    REAL(DP), INTENT(IN) :: Sbar(:) !<The second Piola-Kirchoff stress tensor in Voigt form
-    REAL(DP), INTENT(OUT) :: materialCbar(:,:) !<On return, the modified second material elasticity tensor in Voigt form
+    REAL(DP), INTENT(IN) :: EbarV(:) !<The modified Green-Lagrange strain tensor in Voigt form
+    REAL(DP), INTENT(IN) :: SbarV(:) !<The second Piola-Kirchoff stress tensor in Voigt form
+    REAL(DP), INTENT(OUT) :: materialCbarV(:,:) !<On return, the modified second material elasticity tensor in Voigt form
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: columnIdx,esSpecification(3),rowIdx
-    REAL(DP) :: dQdEbar(6),I1bar,I3bar,tempTerm1,tempTerm2,materialsB(6)
+    REAL(DP) :: dQdEbarV(6),I1bar,I3bar,tempTerm1,tempTerm2,materialsB(6)
     REAL(DP), POINTER :: materialParameters(:)
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FiniteElasticity_CbarElasticityTensorCalculate",err,error,*999)
+    ENTERS("FiniteElasticity_MaterialElasticityTensorCalculate",err,error,*999)
 
     CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
 
     materialParameters=>materialInterpolatedPoint%values(:,NO_PART_DERIV)
 
-    materialCBar=0.0_DP
+    materialCBarV=0.0_DP
 
     SELECT CASE(numberOfDimensions)
     CASE(1)
@@ -656,20 +728,20 @@ CONTAINS
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-2)+c2*(I2bar-2) where I1bar and I2bar are the first and second invariants of Cbar
         
-        materialCbar(1,2)=4.0_DP*materialParameters(2)
-        materialCbar(2,1)=4.0_DP*materialParameters(2)
-        materialCbar(3,3)=-4.0_DP*materialParameters(2)
+        materialCbarV(1,2)=4.0_DP*materialParameters(2)
+        materialCbarV(2,1)=4.0_DP*materialParameters(2)
+        materialCbarV(3,3)=-4.0_DP*materialParameters(2)
         
       CASE(EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE, &
         & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
         
-        materialCbar(1,1)=materialParameters(1)+2.0_DP*materialParameters(2)      
-        materialCbar(1,2)=materialParameters(1)
-        materialCbar(2,1)=materialParameters(1)
-        materialCbar(2,2)=materialParameters(1)+2.0_DP*materialParameters(2)
-        materialCbar(3,3)=materialParameters(2)
+        materialCbarV(1,1)=materialParameters(1)+2.0_DP*materialParameters(2)      
+        materialCbarV(1,2)=materialParameters(1)
+        materialCbarV(2,1)=materialParameters(1)
+        materialCbarV(2,2)=materialParameters(1)+2.0_DP*materialParameters(2)
+        materialCbarV(3,3)=materialParameters(2)
             
        
       CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE, &
@@ -677,20 +749,20 @@ CONTAINS
         !Form of constitutive model is:
         ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
         
-        materialCbar(1,1)=materialParameters(2)+2.0_DP*materialParameters(3)      
-        materialCbar(1,2)=materialParameters(2)
-        materialCbar(2,1)=materialParameters(2)
-        materialCbar(2,2)=materialParameters(2)+2.0_DP*materialParameters(3)
-        materialCbar(3,3)=materialParameters(3)
+        materialCbarV(1,1)=materialParameters(2)+2.0_DP*materialParameters(3)      
+        materialCbarV(1,2)=materialParameters(2)
+        materialCbarV(2,1)=materialParameters(2)
+        materialCbarV(2,2)=materialParameters(2)+2.0_DP*materialParameters(3)
+        materialCbarV(3,3)=materialParameters(3)
             
       CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-2)+c2*(I2bar-2) where I1bar and I2bar are the first and second invariants of Cbar
         
-        materialCbar(1,2)=4.0_DP*materialParameters(3)
-        materialCbar(2,1)=4.0_DP*materialParameters(3)
-        materialCbar(3,3)=-4.0_DP*materialParameters(3)
+        materialCbarV(1,2)=4.0_DP*materialParameters(3)
+        materialCbarV(2,1)=4.0_DP*materialParameters(3)
+        materialCbarV(3,3)=-4.0_DP*materialParameters(3)
         
       CASE DEFAULT
         localError="The equation set third specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
@@ -710,23 +782,23 @@ CONTAINS
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
         
-        materialCbar(1,2)=4.0_DP*materialParameters(2)
-        materialCbar(1,3)=4.0_DP*materialParameters(2)
-        materialCbar(2,1)=4.0_DP*materialParameters(2)
-        materialCbar(2,3)=4.0_DP*materialParameters(2)
-        materialCbar(3,1)=4.0_DP*materialParameters(2)
-        materialCbar(3,2)=4.0_DP*materialParameters(2)
-        materialCbar(4,4)=-4.0_DP*materialParameters(2)
-        materialCbar(5,5)=-4.0_DP*materialParameters(2)
-        materialCbar(6,6)=-4.0_DP*materialParameters(2)
+        materialCbarV(1,2)=4.0_DP*materialParameters(2)
+        materialCbarV(1,3)=4.0_DP*materialParameters(2)
+        materialCbarV(2,1)=4.0_DP*materialParameters(2)
+        materialCbarV(2,3)=4.0_DP*materialParameters(2)
+        materialCbarV(3,1)=4.0_DP*materialParameters(2)
+        materialCbarV(3,2)=4.0_DP*materialParameters(2)
+        materialCbarV(4,4)=-4.0_DP*materialParameters(2)
+        materialCbarV(5,5)=-4.0_DP*materialParameters(2)
+        materialCbarV(6,6)=-4.0_DP*materialParameters(2)
         
       CASE(EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
         & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE)
         
         materialsB=[2.0_DP*materialParameters(2),2.0_DP*materialParameters(3),2.0_DP*materialParameters(3), &
           & materialParameters(4),materialParameters(4),materialParameters(3)] ![2*b_f,2*b_t,2*b_t,b_ft,b_ft,b_t]
-        dQdEbar=materialsB*Ebar
-        tempTerm1=0.5_DP*materialParameters(1)*EXP(0.5_DP*DOT_PRODUCT(Ebar,dQdEbar))
+        dQdEbarV=materialsB*EbarV
+        tempTerm1=0.5_DP*materialParameters(1)*EXP(0.5_DP*DOT_PRODUCT(EbarV,dQdEbarV))
         
         !\todo blas has routines specifically for symmetric matrices, so it would be worth to check if these could give some
         ! speedup.
@@ -735,16 +807,16 @@ CONTAINS
         ! First calculate lower part of 6X6 matrix
         DO columnIdx=1,6
           DO rowIdx=columnIdx,6
-            materialCbar(rowIdx,columnIdx)=tempTerm1*dQdEbar(rowIdx)*dQdEbar(columnIdx)
+            materialCbarV(rowIdx,columnIdx)=tempTerm1*dQdEbarV(rowIdx)*dQdEbarV(columnIdx)
           ENDDO !rowIdx
         ENDDO !columnIdx
         DO rowIdx=1,6
-          materialCbar(rowIdx,rowIdx)=materialCbar(rowIdx,rowIdx)+tempTerm1*materialsB(rowIdx)
+          materialCbarV(rowIdx,rowIdx)=materialCbarV(rowIdx,rowIdx)+tempTerm1*materialsB(rowIdx)
         ENDDO !rowIdx
         ! Then calculate upper part.
         DO columnIdx=2,6
           DO rowIdx=1,columnIdx-1
-            materialCbar(rowIdx,columnIdx)=materialCbar(columnIdx,rowIdx)
+            materialCbarV(rowIdx,columnIdx)=materialCbarV(columnIdx,rowIdx)
           ENDDO !rowIdx
         ENDDO !columnIdx
         
@@ -753,51 +825,51 @@ CONTAINS
         !Form of constitutive model is:
         ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
         
-        materialCbar(1,1)=materialParameters(1)+2.0_DP*materialParameters(2)      
-        materialCbar(1,2)=materialParameters(1)
-        materialCbar(1,3)=materialParameters(1)
-        materialCbar(2,1)=materialParameters(1)
-        materialCbar(2,2)=materialParameters(1)+2.0_DP*materialParameters(2)
-        materialCbar(2,3)=materialParameters(1)
-        materialCbar(3,1)=materialParameters(1)
-        materialCbar(3,2)=materialParameters(1)
-        materialCbar(3,3)=materialParameters(1)+2.0_DP*materialParameters(2)
-        materialCbar(4,4)=materialParameters(2)
-        materialCbar(5,5)=materialParameters(2)
-        materialCbar(6,6)=materialParameters(2)
+        materialCbarV(1,1)=materialParameters(1)+2.0_DP*materialParameters(2)      
+        materialCbarV(1,2)=materialParameters(1)
+        materialCbarV(1,3)=materialParameters(1)
+        materialCbarV(2,1)=materialParameters(1)
+        materialCbarV(2,2)=materialParameters(1)+2.0_DP*materialParameters(2)
+        materialCbarV(2,3)=materialParameters(1)
+        materialCbarV(3,1)=materialParameters(1)
+        materialCbarV(3,2)=materialParameters(1)
+        materialCbarV(3,3)=materialParameters(1)+2.0_DP*materialParameters(2)
+        materialCbarV(4,4)=materialParameters(2)
+        materialCbarV(5,5)=materialParameters(2)
+        materialCbarV(6,6)=materialParameters(2)
             
       CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE, &
         & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
         
-        materialCbar(1,1)=materialParameters(2)+2.0_DP*materialParameters(3)      
-        materialCbar(1,2)=materialParameters(2)
-        materialCbar(1,3)=materialParameters(2)
-        materialCbar(2,1)=materialParameters(2)
-        materialCbar(2,2)=materialParameters(2)+2.0_DP*materialParameters(3)
-        materialCbar(2,3)=materialParameters(2)
-        materialCbar(3,1)=materialParameters(2)
-        materialCbar(3,2)=materialParameters(2)
-        materialCbar(3,3)=materialParameters(2)+2.0_DP*materialParameters(3)
-        materialCbar(4,4)=materialParameters(3)
-        materialCbar(5,5)=materialParameters(3)
-        materialCbar(6,6)=materialParameters(3)
+        materialCbarV(1,1)=materialParameters(2)+2.0_DP*materialParameters(3)      
+        materialCbarV(1,2)=materialParameters(2)
+        materialCbarV(1,3)=materialParameters(2)
+        materialCbarV(2,1)=materialParameters(2)
+        materialCbarV(2,2)=materialParameters(2)+2.0_DP*materialParameters(3)
+        materialCbarV(2,3)=materialParameters(2)
+        materialCbarV(3,1)=materialParameters(2)
+        materialCbarV(3,2)=materialParameters(2)
+        materialCbarV(3,3)=materialParameters(2)+2.0_DP*materialParameters(3)
+        materialCbarV(4,4)=materialParameters(3)
+        materialCbarV(5,5)=materialParameters(3)
+        materialCbarV(6,6)=materialParameters(3)
             
       CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
         
-        materialCbar(1,2)=4.0_DP*materialParameters(3)
-        materialCbar(1,3)=4.0_DP*materialParameters(3)
-        materialCbar(2,1)=4.0_DP*materialParameters(3)
-        materialCbar(2,3)=4.0_DP*materialParameters(3)
-        materialCbar(3,1)=4.0_DP*materialParameters(3)
-        materialCbar(3,2)=4.0_DP*materialParameters(3)
-        materialCbar(4,4)=-4.0_DP*materialParameters(3)
-        materialCbar(5,5)=-4.0_DP*materialParameters(3)
-        materialCbar(6,6)=-4.0_DP*materialParameters(3)
+        materialCbarV(1,2)=4.0_DP*materialParameters(3)
+        materialCbarV(1,3)=4.0_DP*materialParameters(3)
+        materialCbarV(2,1)=4.0_DP*materialParameters(3)
+        materialCbarV(2,3)=4.0_DP*materialParameters(3)
+        materialCbarV(3,1)=4.0_DP*materialParameters(3)
+        materialCbarV(3,2)=4.0_DP*materialParameters(3)
+        materialCbarV(4,4)=-4.0_DP*materialParameters(3)
+        materialCbarV(5,5)=-4.0_DP*materialParameters(3)
+        materialCbarV(6,6)=-4.0_DP*materialParameters(3)
         
       CASE DEFAULT
         localError="The equation set third specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
@@ -814,26 +886,167 @@ CONTAINS
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Modified material elasticity tensor:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Jacobian = ",J,err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),1,1, &
-        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,materialCbar(1:NUMBER_OF_VOIGT(numberOfDimensions), &
+        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,materialCBarV(1:NUMBER_OF_VOIGT(numberOfDimensions), &
         & 1:NUMBER_OF_VOIGT(numberOfDimensions)),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
         & '("  CbarV','(",I1,",:)',':",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)
     ENDIF
 
-    EXITS("FiniteElasticity_CbarElasticityTensorCalculate")
+    EXITS("FiniteElasticity_MaterialElasticityTensorCalculate")
     RETURN
-999 ERRORS("FiniteElasticity_CbarElasticityTensorCalculate",err,error)
-    EXITS("FiniteElasticity_CbarElasticityTensorCalculate")
+999 ERRORS("FiniteElasticity_MaterialElasticityTensorCalculate",err,error)
+    EXITS("FiniteElasticity_MaterialElasticityTensorCalculate")
     RETURN 1
 
-  END SUBROUTINE FiniteElasticity_CbarElasticityTensorCalculate
+  END SUBROUTINE FiniteElasticity_MaterialElasticityTensorCalculate
   
   !
   !================================================================================================================================
   !
 
-  !>Evaluates the modified (psuedo) second Piola-Kirchoff stress tensor.
-  SUBROUTINE FiniteElasticity_SbarStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,haveHydrostaticPressure,Fbar,Cbar,Bbar,Ebar,Sbar,err,error,*)
+  !>Evaluates the material deformation tensors.
+  SUBROUTINE FiniteElasticity_MaterialDeformationTensorsCalculate(equationsSet,numberOfDimensions,F,J,haveHydrostaticPressure, &
+    & Fbar,C,Cbar,B,Bbar,EV,EbarV,err,error,*)
+    
+    !Argument variables
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions
+    REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
+    REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
+    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
+    REAL(DP), INTENT(OUT) :: FBar(:,:) !<On return, the modified deformation gradient tensor
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On return, the right Cauchy-Green deformation tensor
+    REAL(DP), INTENT(OUT) :: CBar(:,:) !<On return, the modified right Cauchy-Green deformation tensor
+    REAL(DP), INTENT(OUT) :: B(:,:) !<On return, the Piola deformation tensor
+    REAL(DP), INTENT(OUT) :: BBar(:,:) !<On return, the modified Piola deformation tensor
+    REAL(DP), INTENT(OUT) :: EV(:) !<On return, the Green-Lagrange strain tensor in Voigt form
+    REAL(DP), INTENT(OUT) :: EbarV(:) !<On return, the modified Green-Lagrange strain tensor in Voigt form
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    REAL(DP) :: FBarT(3,3),FT(3,3),I3,I3Bar
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FiniteElasticity_MaterialDeformationTensorsCalculate",err,error,*999)
+
+    !Form modified deformation gradient, Fbar
+    IF(haveHydrostaticPressure) THEN
+      FBar(1:numberOfDimensions,1:numberOfDimensions)=J**(-1.0_DP/REAL(numberOfDimensions,DP))* &
+        & F(1:numberOfDimensions,1:numberOfDimensions)
+    ELSE
+      FBar(1:numberOfDimensions,1:numberOfDimensions)=F(1:numberOfDimensions,1:numberOfDimensions)
+    ENDIF
+
+    !Evaluate the modified right Cauchy-Green strain tensor Cbar.
+    CALL MatrixTranspose(FBar(1:numberOfDimensions,1:numberOfDimensions),FBarT(1:numberOfDimensions,1:numberOfDimensions), &
+      & err,error,*999)
+    CALL MatrixProduct(FBarT(1:numberOfDimensions,1:numberOfDimensions),FBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & CBar(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
+
+    !!TODO : do we really need Bbar?
+    !Evaluate the modified Piola deformation tensor Bbar.
+    CALL Invert(CBar(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions),I3Bar, &
+      & err,error,*999)
+
+    IF(haveHydrostaticPressure) THEN
+      !Evaluate the right Cauchy-Green strain tensor Cbar.
+      CALL MatrixTranspose(F(1:numberOfDimensions,1:numberOfDimensions),FT(1:numberOfDimensions,1:numberOfDimensions), &
+        & err,error,*999)
+      CALL MatrixProduct(FT(1:numberOfDimensions,1:numberOfDimensions),F(1:numberOfDimensions,1:numberOfDimensions), &
+        & C(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
+      !Evaluate the Piola deformation tensor Bbar.
+      CALL Invert(C(1:numberOfDimensions,1:numberOfDimensions),B(1:numberOfDimensions,1:numberOfDimensions),I3, &
+        & err,error,*999)
+    ELSE
+      C(1:numberOfDimensions,1:numberOfDimensions)=CBar(1:numberOfDimensions,1:numberOfDimensions)
+      B(1:numberOfDimensions,1:numberOfDimensions)=BBar(1:numberOfDimensions,1:numberOfDimensions)
+    ENDIF
+    
+    SELECT CASE(numberOfDimensions)
+    CASE(1)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(2)      
+      !Evaluate modified Green-Lagrange strain tensor
+      EBarV(TENSOR_TO_VOIGT2(1,1))=0.5_DP*(CBar(1,1)-1.0_DP)
+      EBarV(TENSOR_TO_VOIGT2(2,2))=0.5_DP*(CBar(2,2)-1.0_DP)
+      EBarV(TENSOR_TO_VOIGT2(1,2))=0.5_DP*CBar(1,2)
+      !Evaluate Green-Lagrange strain tensor
+      IF(haveHydrostaticPressure) THEN
+        EV(TENSOR_TO_VOIGT2(1,1))=0.5_DP*(C(1,1)-1.0_DP)
+        EV(TENSOR_TO_VOIGT2(2,2))=0.5_DP*(C(2,2)-1.0_DP)
+        EV(TENSOR_TO_VOIGT2(1,2))=0.5_DP*C(1,2)
+      ELSE
+        EV(1:NUMBER_OF_VOIGT(2))=EBarV(1:NUMBER_OF_VOIGT(2))
+      ENDIF
+    CASE(3)
+      !Evaluate modified Green-Lagrange strain tensor
+      EBarV(TENSOR_TO_VOIGT3(1,1))=0.5_DP*(CBar(1,1)-1.0_DP)
+      EBarV(TENSOR_TO_VOIGT3(2,2))=0.5_DP*(CBar(2,2)-1.0_DP)
+      EBarV(TENSOR_TO_VOIGT3(3,3))=0.5_DP*(CBar(3,3)-1.0_DP)   
+      EBarV(TENSOR_TO_VOIGT3(1,2))=0.5_DP*CBar(1,2)
+      EBarV(TENSOR_TO_VOIGT3(1,3))=0.5_DP*CBar(1,3)
+      EBarV(TENSOR_TO_VOIGT3(2,3))=0.5_DP*CBar(2,3)
+      !Evaluate Green-Lagrange strain tensor
+      IF(haveHydrostaticPressure) THEN
+        EV(TENSOR_TO_VOIGT3(1,1))=0.5_DP*(C(1,1)-1.0_DP)
+        EV(TENSOR_TO_VOIGT3(2,2))=0.5_DP*(C(2,2)-1.0_DP)
+        EV(TENSOR_TO_VOIGT3(3,3))=0.5_DP*(C(3,3)-1.0_DP)   
+        EV(TENSOR_TO_VOIGT3(1,2))=0.5_DP*C(1,2)
+        EV(TENSOR_TO_VOIGT3(1,3))=0.5_DP*C(1,3)
+        EV(TENSOR_TO_VOIGT3(2,3))=0.5_DP*C(2,3)
+      ELSE
+        EV(1:NUMBER_OF_VOIGT(3))=EBarV(1:NUMBER_OF_VOIGT(3))
+      ENDIF
+    CASE DEFAULT
+      localError="The number of dimensions of "//TRIM(NumberToVstring(numberOfDimensions,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material Deformation:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Jacobian = ",J,err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,8,8, &
+        & F(1:numberOfDimensions,1:numberOfDimensions),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("     F','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)    
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Modified material tensors:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,8,8, &
+        & Fbar(1:numberOfDimensions,1:numberOfDimensions),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("  FBar','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)    
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,8,8, &
+        & C(1:numberOfDimensions,1:numberOfDimensions),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("     C','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)    
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,8,8, &
+        & Cbar(1:numberOfDimensions,1:numberOfDimensions),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("  CBar','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)    
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,8,8, &
+        & B(1:numberOfDimensions,1:numberOfDimensions),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("     B','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)    
+       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,8,8, &
+        & Bbar(1:numberOfDimensions,1:numberOfDimensions),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("  BBar','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)    
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
+        & EV(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  EV        :",8(X,E13.6))','(13X,8(X,E13.6))', &
+        & err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
+        & EbarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  EBarV     :",8(X,E13.6))','(13X,8(X,E13.6))', &
+        & err,error,*999)
+    ENDIF
+
+    EXITS("FiniteElasticity_MaterialDeformationTensorsCalculate")
+    RETURN
+999 ERRORS("FiniteElasticity_MaterialDeformationTensorsCalculate",err,error)
+    EXITS("FiniteElasticity_MaterialDeformationTensorsCalculate")
+    RETURN 1
+
+  END SUBROUTINE FiniteElasticity_MaterialDeformationTensorsCalculate
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Evaluates the deviatoric material stress tensors.
+  SUBROUTINE FiniteElasticity_MaterialStressDevTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
+    & F,J,haveHydrostaticPressure,FBar,C,CBar,B,BBar,EV,EBarV,SBarV,SDevV,err,error,*)
     
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -842,57 +1055,45 @@ CONTAINS
     REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
     LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
-    REAL(DP), INTENT(OUT) :: Fbar(:,:) !<On return, the modified deformation gradient tensor
-    REAL(DP), INTENT(OUT) :: Cbar(:,:) !<On return, the modified right Cauchy-Green deformation tensor
-    REAL(DP), INTENT(OUT) :: Bbar(:,:) !<On return, the modified Piola deformation tensor
-    REAL(DP), INTENT(OUT) :: Ebar(:) !<On return, the modified Green-Lagrange strain tensor in Voigt form
-    REAL(DP), INTENT(OUT) :: Sbar(:) !<On return, the modified (pseudo) second Piola-Kirchoff stress tensor in Voigt form
+    REAL(DP), INTENT(OUT) :: FBar(:,:) !<On return, the modified deformation gradient tensor
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On return, the right Cauchy-Green deformation tensor
+    REAL(DP), INTENT(OUT) :: CBar(:,:) !<On return, the modified right Cauchy-Green deformation tensor
+    REAL(DP), INTENT(OUT) :: B(:,:) !<On return, the Piola deformation tensor
+    REAL(DP), INTENT(OUT) :: BBar(:,:) !<On return, the modified Piola deformation tensor
+    REAL(DP), INTENT(OUT) :: EV(:) !<On return, the Green-Lagrange strain tensor
+    REAL(DP), INTENT(OUT) :: EBarV(:) !<On return, the modified Green-Lagrange strain tensor
+    REAL(DP), INTENT(OUT) :: SBarV(:) !<On return, the modified (pseudo) second Piola-Kirchoff stress tensor in Voigt form
+    REAL(DP), INTENT(OUT) :: SDevV(:) !<On return, the deviatoric second Piola-Kirchoff stress tensor in Voigt form
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: esSpecification(3)
-    REAL(DP) :: FbarT(3,3),I1bar,I3bar,tempTerm1,tempTerm2
+    REAL(DP) :: FBarT(3,3),I1Bar,I3Bar,tempTerm1,tempTerm2
     REAL(DP), POINTER :: materialParameters(:)
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FiniteElasticity_SbarStressTensorCalculate",err,error,*999)
+    ENTERS("FiniteElasticity_MaterialStressDevTensorsCalculate",err,error,*999)
 
+    !>Evaluates the material deformation tensors.
+    CALL FiniteElasticity_MaterialDeformationTensorsCalculate(equationsSet,numberOfDimensions,F,J,haveHydrostaticPressure, &
+      & FBar(1:numberOfDimensions,1:numberOfDimensions),C(1:numberOfDimensions,1:numberOfDimensions), &
+      & CBar(1:numberOfDimensions,1:numberOfDimensions),B(1:numberOfDimensions,1:numberOfDimensions), &
+      & BBar(1:numberOfDimensions,1:numberOfDimensions),EV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+      
     CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
     
-    Sbar=0.0_DP
+    SBarV=0.0_DP
+    SDevV=0.0_DP
     
-    !Form modified deformation gradient, Fbar
-    IF(haveHydrostaticPressure) THEN
-      Fbar(1:numberOfDimensions,1:numberOfDimensions)=J**(-1.0_DP/REAL(numberOfDimensions,DP))* &
-        & F(1:numberOfDimensions,1:numberOfDimensions)
-    ELSE
-      Fbar(1:numberOfDimensions,1:numberOfDimensions)=F(1:numberOfDimensions,1:numberOfDimensions)
-    ENDIF
-
-    !Evaluate the modified right Cauchy-Green strain tensor Cbar.
-    CALL MatrixTranspose(Fbar(1:numberOfDimensions,1:numberOfDimensions),FbarT(1:numberOfDimensions,1:numberOfDimensions), &
-      & err,error,*999)
-    CALL MatrixProduct(FbarT(1:numberOfDimensions,1:numberOfDimensions),Fbar(1:numberOfDimensions,1:numberOfDimensions), &
-      & Cbar(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
-
-    !!TODO : do we really need Bbar?
-    !Evaluate the modified Piola deformation tensor Bbar.
-    CALL Invert(Cbar(1:numberOfDimensions,1:numberOfDimensions),Bbar(1:numberOfDimensions,1:numberOfDimensions),I3bar, &
-      & err,error,*999)
-
     materialParameters=>materialInterpolatedPoint%values(:,NO_PART_DERIV)
 
     SELECT CASE(numberOfDimensions)
     CASE(1)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(2)
-      
-      !Evaluate modified Green-Lagrange strain tensor
-      Ebar(TENSOR_TO_VOIGT2(1,1))=0.5_DP*(Cbar(1,1)-1.0_DP)
-      Ebar(TENSOR_TO_VOIGT2(2,2))=0.5_DP*(Cbar(2,2)-1.0_DP)
-      Ebar(TENSOR_TO_VOIGT2(1,2))=0.5_DP*Cbar(1,2)
-      
-      !Form modified (psuedo) second Piola-Kirchoff stress tensor, Sbar
+            
+      !Form modified (psuedo) second Piola-Kirchoff stress tensor, SBar
       
       SELECT CASE(esSpecification(3))
       CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
@@ -900,72 +1101,62 @@ CONTAINS
         & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
         !Form of constitutive model is:
-        ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
+        ! WBar=c1*(I1Bar-3)+c2*(I2Bar-3) where I1Bar and I2Bar are the first and second invariants of CBar
 
-        I1bar=Cbar(1,1)+Cbar(2,2)
+        I1Bar=CBar(1,1)+CBar(2,2)
         tempTerm1=-2.0_DP*materialParameters(2)
-        tempTerm2=2.0_DP*(materialParameters(1)+I1bar*materialParameters(2))
-        Sbar(TENSOR_TO_VOIGT2(1,1))=tempTerm1*Cbar(1,1)+tempTerm2
-        Sbar(TENSOR_TO_VOIGT2(2,2))=tempTerm1*Cbar(2,2)+tempTerm2
-        Sbar(TENSOR_TO_VOIGT2(1,2))=tempTerm1*Cbar(1,2)
+        tempTerm2=2.0_DP*(materialParameters(1)+I1Bar*materialParameters(2))
+        SBarV(TENSOR_TO_VOIGT2(1,1))=tempTerm1*CBar(1,1)+tempTerm2
+        SBarV(TENSOR_TO_VOIGT2(2,2))=tempTerm1*CBar(2,2)+tempTerm2
+        SBarV(TENSOR_TO_VOIGT2(1,2))=tempTerm1*CBar(1,2)
         
        CASE(EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE, &
          & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         !Form of constitutive model is:
-        ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
-        ! Sbar = lambda.tr(Ebar).I + 2.mu.Ebar
+        ! WBar = lambda/2.[tr(EBar)]^2 + mu.tr(EBar^2)
+        ! SBar = lambda.tr(EBar).I + 2.mu.EBar
         
-        I1bar=Ebar(1)+Ebar(2)
-        tempTerm1=materialParameters(1)*I1bar
+        I1Bar=EBarV(TENSOR_TO_VOIGT2(1,1))+EBarV(TENSOR_TO_VOIGT2(2,2))
+        tempTerm1=materialParameters(1)*I1Bar
         tempTerm2=2.0_DP*materialParameters(2)
-        Sbar(TENSOR_TO_VOIGT2(1,1))=tempTerm1+tempTerm2*Ebar(1)      
-        Sbar(TENSOR_TO_VOIGT2(2,2))=tempTerm1+tempTerm2*Ebar(2)
-        Sbar(TENSOR_TO_VOIGT2(1,2))=tempTerm2*Ebar(3)
-      
-         
+        SBarV(TENSOR_TO_VOIGT2(1,1))=tempTerm1+tempTerm2*EBarV(TENSOR_TO_VOIGT2(1,1))      
+        SBarV(TENSOR_TO_VOIGT2(2,2))=tempTerm1+tempTerm2*EBarV(TENSOR_TO_VOIGT2(2,2))
+        SBarV(TENSOR_TO_VOIGT2(1,2))=tempTerm2*EBarV(TENSOR_TO_VOIGT2(1,2))
+               
       CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE, &
         & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         !Form of constitutive model is:
-        ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
-        ! Sbar = lambda.tr(Ebar).I + 2.mu.Ebar
+        ! WBar = lambda/2.[tr(EBar)]^2 + mu.tr(EBar^2)
+        ! SBar = lambda.tr(EBar).I + 2.mu.EBar
         
-        I1bar=Ebar(1)+Ebar(2)
-        tempTerm1=materialParameters(2)*I1bar
+        I1Bar=EBarV(TENSOR_TO_VOIGT2(1,1))+EBarV(TENSOR_TO_VOIGT2(2,2))
+        tempTerm1=materialParameters(2)*I1Bar
         tempTerm2=2.0_DP*materialParameters(3)
-        Sbar(TENSOR_TO_VOIGT2(1,1))=tempTerm1+tempTerm2*Ebar(1)      
-        Sbar(TENSOR_TO_VOIGT2(2,2))=tempTerm1+tempTerm2*Ebar(2)
-        Sbar(TENSOR_TO_VOIGT2(1,2))=tempTerm2*Ebar(3)
+        SBarV(TENSOR_TO_VOIGT2(1,1))=tempTerm1+tempTerm2*EBarV(TENSOR_TO_VOIGT2(1,1))      
+        SBarV(TENSOR_TO_VOIGT2(2,2))=tempTerm1+tempTerm2*EBarV(TENSOR_TO_VOIGT2(2,2))
+        SBarV(TENSOR_TO_VOIGT2(1,2))=tempTerm2*EBarV(TENSOR_TO_VOIGT2(1,2))
       
       CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
         !Form of constitutive model is:
-        ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
+        ! WBar=c1*(I1Bar-3)+c2*(I2Bar-3) where I1Bar and I2Bar are the first and second invariants of CBar
         
-        I1bar=Cbar(1,1)+Cbar(2,2)
+        I1Bar=CBar(1,1)+CBar(2,2)
         tempTerm1=-2.0_DP*materialParameters(3)
-        tempTerm2=2.0_DP*(materialParameters(2)+I1bar*materialParameters(3))
-        Sbar(TENSOR_TO_VOIGT2(1,1))=tempTerm1*Cbar(1,1)+tempTerm2
-        Sbar(TENSOR_TO_VOIGT2(2,2))=tempTerm1*Cbar(2,2)+tempTerm2
-        Sbar(TENSOR_TO_VOIGT2(1,2))=tempTerm1*Cbar(1,2)
+        tempTerm2=2.0_DP*(materialParameters(2)+I1Bar*materialParameters(3))
+        SBarV(TENSOR_TO_VOIGT2(1,1))=tempTerm1*CBar(1,1)+tempTerm2
+        SBarV(TENSOR_TO_VOIGT2(2,2))=tempTerm1*CBar(2,2)+tempTerm2
+        SBarV(TENSOR_TO_VOIGT2(1,2))=tempTerm1*CBar(1,2)
         
       CASE DEFAULT
-        localError="The equation set third specification of "// &
-          & TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
+        localError="The equation set third specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
           & " is invalid or not implemented."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       
     CASE(3)
 
-      !Evaluate modified Green-Lagrange strain tensor
-      Ebar(TENSOR_TO_VOIGT3(1,1))=0.5_DP*(Cbar(1,1)-1.0_DP)
-      Ebar(TENSOR_TO_VOIGT3(2,2))=0.5_DP*(Cbar(2,2)-1.0_DP)
-      Ebar(TENSOR_TO_VOIGT3(3,3))=0.5_DP*(Cbar(3,3)-1.0_DP)   
-      Ebar(TENSOR_TO_VOIGT3(1,2))=0.5_DP*Cbar(1,2)
-      Ebar(TENSOR_TO_VOIGT3(1,3))=0.5_DP*Cbar(1,3)
-      Ebar(TENSOR_TO_VOIGT3(2,3))=0.5_DP*Cbar(2,3)
-
-      !Form modified (psuedo) second Piola-Kirchoff stress tensor, Sbar
+      !Form modified (psuedo) second Piola-Kirchoff stress tensor, SBar
       
       SELECT CASE(esSpecification(3))
       CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
@@ -973,64 +1164,64 @@ CONTAINS
         & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
         !Form of constitutive model is:
-        ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
+        ! WBar=c1*(I1Bar-3)+c2*(I2Bar-3) where I1Bar and I2Bar are the first and second invariants of CBar
 
-        I1bar=Cbar(1,1)+Cbar(2,2)+Cbar(3,3)
+        I1Bar=CBar(1,1)+CBar(2,2)+CBar(3,3)
         tempTerm1=-2.0_DP*materialParameters(2)
-        tempTerm2=2.0_DP*(materialParameters(1)+I1bar*materialParameters(2))
-        Sbar(TENSOR_TO_VOIGT3(1,1))=tempTerm1*Cbar(1,1)+tempTerm2
-        Sbar(TENSOR_TO_VOIGT3(2,2))=tempTerm1*Cbar(2,2)+tempTerm2
-        Sbar(TENSOR_TO_VOIGT3(3,3))=tempTerm1*Cbar(3,3)+tempTerm2
-        Sbar(TENSOR_TO_VOIGT3(1,2))=tempTerm1*Cbar(1,2)
-        Sbar(TENSOR_TO_VOIGT3(1,3))=tempTerm1*Cbar(1,3)
-        Sbar(TENSOR_TO_VOIGT3(2,3))=tempTerm1*Cbar(2,3)        
+        tempTerm2=2.0_DP*(materialParameters(1)+I1Bar*materialParameters(2))
+        SBarV(TENSOR_TO_VOIGT3(1,1))=tempTerm1*CBar(1,1)+tempTerm2
+        SBarV(TENSOR_TO_VOIGT3(2,2))=tempTerm1*CBar(2,2)+tempTerm2
+        SBarV(TENSOR_TO_VOIGT3(3,3))=tempTerm1*CBar(3,3)+tempTerm2
+        SBarV(TENSOR_TO_VOIGT3(1,2))=tempTerm1*CBar(1,2)
+        SBarV(TENSOR_TO_VOIGT3(1,3))=tempTerm1*CBar(1,3)
+        SBarV(TENSOR_TO_VOIGT3(2,3))=tempTerm1*CBar(2,3)        
         
       CASE(EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE, &
         & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         !Form of constitutive model is:
-        ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
-        ! Sbar = lambda.tr(Ebar).I + 2.mu.Ebar
+        ! WBar = lambda/2.[tr(EBar)]^2 + mu.tr(EBar^2)
+        ! SBar = lambda.tr(EBar).I + 2.mu.EBar
         
-        I1bar=Ebar(TENSOR_TO_VOIGT3(1,1))+Ebar(TENSOR_TO_VOIGT3(2,2))+Ebar(TENSOR_TO_VOIGT3(3,3))
-        tempTerm1=materialParameters(1)*I1bar
+        I1Bar=EBarV(TENSOR_TO_VOIGT3(1,1))+EBarV(TENSOR_TO_VOIGT3(2,2))+EBarV(TENSOR_TO_VOIGT3(3,3))
+        tempTerm1=materialParameters(1)*I1Bar
         tempTerm2=2.0_DP*materialParameters(2)
-        Sbar(TENSOR_TO_VOIGT3(1,1))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,1))      
-        Sbar(TENSOR_TO_VOIGT3(2,2))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(2,2))
-        Sbar(TENSOR_TO_VOIGT3(3,3))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(3,3))
-        Sbar(TENSOR_TO_VOIGT3(1,2))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,2))
-        Sbar(TENSOR_TO_VOIGT3(1,3))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,3))
-        Sbar(TENSOR_TO_VOIGT3(2,3))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(2,3))
+        SBarV(TENSOR_TO_VOIGT3(1,1))=tempTerm1+tempTerm2*EBarV(TENSOR_TO_VOIGT3(1,1))      
+        SBarV(TENSOR_TO_VOIGT3(2,2))=tempTerm1+tempTerm2*EBarV(TENSOR_TO_VOIGT3(2,2))
+        SBarV(TENSOR_TO_VOIGT3(3,3))=tempTerm1+tempTerm2*EBarV(TENSOR_TO_VOIGT3(3,3))
+        SBarV(TENSOR_TO_VOIGT3(1,2))=tempTerm2*EBarV(TENSOR_TO_VOIGT3(1,2))
+        SBarV(TENSOR_TO_VOIGT3(1,3))=tempTerm2*EBarV(TENSOR_TO_VOIGT3(1,3))
+        SBarV(TENSOR_TO_VOIGT3(2,3))=tempTerm2*EBarV(TENSOR_TO_VOIGT3(2,3))
        
       CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE, &
         & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         !Form of constitutive model is:
-        ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
-        ! Sbar = lambda.tr(Ebar).I + 2.mu.Ebar
+        ! WBar = lambda/2.[tr(EBar)]^2 + mu.tr(EBar^2)
+        ! SBar = lambda.tr(EBar).I + 2.mu.EBar
         
-        I1bar=Ebar(TENSOR_TO_VOIGT3(1,1))+Ebar(TENSOR_TO_VOIGT3(2,2))+Ebar(TENSOR_TO_VOIGT3(3,3))
-        tempTerm1=materialParameters(2)*I1bar
+        I1Bar=EBarV(TENSOR_TO_VOIGT3(1,1))+EBarV(TENSOR_TO_VOIGT3(2,2))+EBarV(TENSOR_TO_VOIGT3(3,3))
+        tempTerm1=materialParameters(2)*I1Bar
         tempTerm2=2.0_DP*materialParameters(3)
-        Sbar(TENSOR_TO_VOIGT3(1,1))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,1))      
-        Sbar(TENSOR_TO_VOIGT3(2,2))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(2,2))
-        Sbar(TENSOR_TO_VOIGT3(3,3))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(3,3))
-        Sbar(TENSOR_TO_VOIGT3(1,2))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,2))
-        Sbar(TENSOR_TO_VOIGT3(1,3))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,3))
-        Sbar(TENSOR_TO_VOIGT3(2,3))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(2,3))
+        SBarV(TENSOR_TO_VOIGT3(1,1))=tempTerm1+tempTerm2*EBarV(TENSOR_TO_VOIGT3(1,1))      
+        SBarV(TENSOR_TO_VOIGT3(2,2))=tempTerm1+tempTerm2*EBarV(TENSOR_TO_VOIGT3(2,2))
+        SBarV(TENSOR_TO_VOIGT3(3,3))=tempTerm1+tempTerm2*EBarV(TENSOR_TO_VOIGT3(3,3))
+        SBarV(TENSOR_TO_VOIGT3(1,2))=tempTerm2*EBarV(TENSOR_TO_VOIGT3(1,2))
+        SBarV(TENSOR_TO_VOIGT3(1,3))=tempTerm2*EBarV(TENSOR_TO_VOIGT3(1,3))
+        SBarV(TENSOR_TO_VOIGT3(2,3))=tempTerm2*EBarV(TENSOR_TO_VOIGT3(2,3))
       
       CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
         !Form of constitutive model is:
-        ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
+        ! WBar=c1*(I1Bar-3)+c2*(I2Bar-3) where I1Bar and I2Bar are the first and second invariants of CBar
         
-        I1bar=Cbar(1,1)+Cbar(2,2)+Cbar(3,3)
+        I1Bar=CBar(1,1)+CBar(2,2)+CBar(3,3)
         tempTerm1=-2.0_DP*materialParameters(3)
-        tempTerm2=2.0_DP*(materialParameters(2)+I1bar*materialParameters(3))
-        Sbar(TENSOR_TO_VOIGT3(1,1))=tempTerm1*Cbar(1,1)+tempTerm2
-        Sbar(TENSOR_TO_VOIGT3(2,2))=tempTerm1*Cbar(2,2)+tempTerm2
-        Sbar(TENSOR_TO_VOIGT3(3,3))=tempTerm1*Cbar(3,3)+tempTerm2
-        Sbar(TENSOR_TO_VOIGT3(1,2))=tempTerm1*Cbar(1,2)
-        Sbar(TENSOR_TO_VOIGT3(1,3))=tempTerm1*Cbar(1,3)
-        Sbar(TENSOR_TO_VOIGT3(2,3))=tempTerm1*Cbar(2,3)
+        tempTerm2=2.0_DP*(materialParameters(2)+I1Bar*materialParameters(3))
+        SBarV(TENSOR_TO_VOIGT3(1,1))=tempTerm1*CBar(1,1)+tempTerm2
+        SBarV(TENSOR_TO_VOIGT3(2,2))=tempTerm1*CBar(2,2)+tempTerm2
+        SBarV(TENSOR_TO_VOIGT3(3,3))=tempTerm1*CBar(3,3)+tempTerm2
+        SBarV(TENSOR_TO_VOIGT3(1,2))=tempTerm1*CBar(1,2)
+        SBarV(TENSOR_TO_VOIGT3(1,3))=tempTerm1*CBar(1,3)
+        SBarV(TENSOR_TO_VOIGT3(2,3))=tempTerm1*CBar(2,3)
         
       CASE DEFAULT
         localError="The equation set third specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
@@ -1045,111 +1236,29 @@ CONTAINS
     
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Deformation:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Jacobian = ",J,err,error,*999)
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,8,8, &
-        & F(1:numberOfDimensions,1:numberOfDimensions),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("     F','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)    
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Modified material tensors:",err,error,*999)
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,8,8, &
-        & Fbar(1:numberOfDimensions,1:numberOfDimensions),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("  Fbar','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)    
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,8,8, &
-        & Cbar(1:numberOfDimensions,1:numberOfDimensions),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("  Cbar','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)    
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,8,8, &
-        & Bbar(1:numberOfDimensions,1:numberOfDimensions),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("  Bbar','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)    
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material stress tensors:",err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
-        & Ebar(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  EbarV     :",8(X,E13.6))','(13X,8(X,E13.6))', &
+        & SBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("      SBarV :",8(X,E13.6))','(13X,8(X,E13.6))', &
         & err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
-        & Sbar(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  SbarV     :",8(X,E13.6))','(13X,8(X,E13.6))', &
+        & SDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("      SDevV :",8(X,E13.6))','(13X,8(X,E13.6))', &
         & err,error,*999)
     ENDIF
 
-    EXITS("FiniteElasticity_SbarStressTensorCalculate")
+    EXITS("FiniteElasticity_MaterialStressDevTensorsCalculate")
     RETURN
-999 ERRORSEXITS("FiniteElasticity_SbarStressTensorCalculate",err,error)
+999 ERRORSEXITS("FiniteElasticity_MaterialStressDevTensorsCalculate",err,error)
     RETURN 1
 
-  END SUBROUTINE FiniteElasticity_SbarStressTensorCalculate
+  END SUBROUTINE FiniteElasticity_MaterialStressDevTensorsCalculate
   
   !
   !================================================================================================================================
   !
 
-  !>Evaluates the deviatoric Cauchy stress tensor.
-  SUBROUTINE FiniteElasticity_SigmadevStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,haveHydrostaticPressure,Fbar,Cbar,Bbar,Ebar,sigmabar,sigmadev,err,error,*)
-    
-    !Argument variables
-    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions
-    TYPE(FieldInterpolatedPointType), POINTER :: materialInterpolatedPoint !<A pointer to the materials parameters
-    REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
-    REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
-    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
-    REAL(DP), INTENT(OUT) :: Fbar(:,:) !<On return, the modified deformation gradient tensor
-    REAL(DP), INTENT(OUT) :: Cbar(:,:) !<On return, the modified right Cauchy-Green deformation tensor
-    REAL(DP), INTENT(OUT) :: Bbar(:,:) !<On return, the modified Piola deformation tensor
-    REAL(DP), INTENT(OUT) :: Ebar(:) !<On return, the modified Green-Lagrange strain tensor in Voigt form
-    REAL(DP), INTENT(OUT) :: sigmabar(:) !<On return, the modified (pseudo) Cauchy stress tensor in Voigt form
-    REAL(DP), INTENT(OUT) :: sigmadev(:) !<On return, the deviatoric Cauchy stress tensor in Voight form
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    REAL(DP) :: Sbar(6),traceSigmaBar
-
-    ENTERS("FiniteElasticity_SigmadevStressTensorCalculate",err,error,*999)
-
-    sigmadev=0.0_DP
-
-    !Calculate the modified (pseudo) second Piola-Kirchoff stress tensor
-    CALL FiniteElasticity_SbarStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-      & F,J,haveHydrostaticPressure,Fbar,Cbar,Bbar,Ebar,Sbar(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
-
-    !Push the modified (pseudo) second Piola-Kirchoff stress tensor forward to give the modified (pseudo) Cauchy stress tensor
-    CALL FiniteElasticity_PushStressTensorForward(numberOfDimensions,Fbar,J,Sbar(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
-      & sigmabar,err,error,*999)
-
-    !Calculate the deviatoric Cauchy stress tensor
-    IF(haveHydrostaticPressure) THEN
-      traceSigmaBar=SUM(sigmabar(1:numberOfDimensions))
-      sigmadev(1:numberOfDimensions)=-traceSigmaBar/REAL(numberOfDimensions,DP)
-      sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions))=J**(-2.0_DP/REAL(numberOfDimensions,DP))* &
-        & (sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions))+sigmabar(1:NUMBER_OF_VOIGT(numberOfDimensions)))
-    ELSE
-      sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions))=sigmabar(1:NUMBER_OF_VOIGT(numberOfDimensions))
-    ENDIF
-     
-    IF(diagnostics1) THEN
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Spatial stress tensors:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  tr sigmabar = ",traceSigmaBar,err,error,*999)
-      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
-        & sigmabar(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  sigmabarV :",8(X,E13.6))','(13X,8(X,E13.6))', &
-        & err,error,*999)
-      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
-        & sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  sigmadevV :",8(X,E13.6))','(13X,8(X,E13.6))', &
-        & err,error,*999)
-    ENDIF
-    
-    EXITS("FiniteElasticity_SigmadevStressTensorCalculate")    
-    RETURN
-999 ERRORS("FiniteElasticity_SigmadevStressTensorCalculate",err,error)
-    EXITS("FiniteElasticity_SigmadevStressTensorCalculate")
-    RETURN 1
-
-  END SUBROUTINE FiniteElasticity_SigmadevStressTensorCalculate
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Evaluates the spherical Cauchy stress tensor.
-  SUBROUTINE FiniteElasticity_SigmasphStressTensorCalculate(equationsSet,numberOfDimensions,J,p,haveHydrostaticPressure,&
-    & sigmasph,err,error,*)
+  !>Evaluates the material stress spherical tensors.
+  SUBROUTINE FiniteElasticity_MaterialStressSphTensorsCalculate(equationsSet,numberOfDimensions,J,p,haveHydrostaticPressure,&
+    & FBar,C,CBar,B,BBar,EV,EBarV,SSphV,err,error,*)
     
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -1157,45 +1266,69 @@ CONTAINS
     REAL(DP), INTENT(IN) :: J !<The Jacobian of the deformation
     REAL(DP), INTENT(IN) :: p !<The value of hydrostatic pressure
     LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
-    REAL(DP), INTENT(OUT) :: sigmasph(:) !<On return, the spherical Cauchy stress tensor in Voigt form
+    REAL(DP), INTENT(IN) :: FBar(:,:) !The modified deformation gradient tensor
+    REAL(DP), INTENT(IN) :: C(:,:) !<The right Cauchy-Green deformation tensor
+    REAL(DP), INTENT(IN) :: CBar(:,:) !<The modified right Cauchy-Green deformation tensor
+    REAL(DP), INTENT(IN) :: B(:,:) !The Piola deformation tensor
+    REAL(DP), INTENT(IN) :: BBar(:,:) !The modified Piola deformation tensor
+    REAL(DP), INTENT(IN) :: EV(:) !<The Green-Lagrange strain tensor in Voigt form
+    REAL(DP), INTENT(IN) :: EBarV(:) !<The modified Green-Lagrange strain tensor in Voigt form
+    REAL(DP), INTENT(OUT) :: SSphV(:) !<On return, the spherical second Piola-Kirchoff stress tensor in Voigt form
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FiniteElasticity_SigmasphStressTensorCalculate",err,error,*999)
+    ENTERS("FiniteElasticity_MaterialStressSphTensorsCalculate",err,error,*999)
 
-    !Calculate the spherical part of the Cauchy stress tensor
+    !Calculate the spherical part of the 2PK stress tensor
     IF(haveHydrostaticPressure) THEN
-      sigmasph(1:numberOfDimensions)=-p
-      sigmasph(numberOfDimensions+1:NUMBER_OF_VOIGT(numberOfDimensions))=0.0_DP
+      SELECT CASE(numberOfDimensions)
+      CASE(1)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(2)
+        SSphV(TENSOR_TO_VOIGT2(1,1))=-p*J*B(1,1)
+        SSphV(TENSOR_TO_VOIGT2(2,2))=-p*J*B(2,2)
+        SSphV(TENSOR_TO_VOIGT2(1,2))=-p*J*B(1,2)
+      CASE(3)
+        SSphV(TENSOR_TO_VOIGT3(1,1))=-p*J*B(1,1)
+        SSphV(TENSOR_TO_VOIGT3(2,2))=-p*J*B(2,2)
+        SSphV(TENSOR_TO_VOIGT3(3,3))=-p*J*B(3,3)
+        SSphV(TENSOR_TO_VOIGT3(1,2))=-p*J*B(1,2)
+        SSphV(TENSOR_TO_VOIGT3(1,3))=-p*J*B(1,3)
+        SSphV(TENSOR_TO_VOIGT3(2,3))=-p*J*B(2,3)
+      CASE DEFAULT
+        localError="The number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
     ELSE
-      sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions))=0.0_DP
+      SSphV(1:NUMBER_OF_VOIGT(numberOfDimensions))=0.0_DP
     ENDIF
    
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Spatial pressure tensor:",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material pressure tensor:",err,error,*999)
       IF(haveHydrostaticPressure) CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          p = ",p,err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
-        & sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  sigmasphV :",8(X,E13.6))','(13X,8(X,E13.6))', &
+        & SSphV(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("      SSphV :",8(X,E13.6))','(13X,8(X,E13.6))', &
         & err,error,*999)
     ENDIF
     
-    EXITS("FiniteElasticity_SigmasphStressTensorCalculate")    
+    EXITS("FiniteElasticity_MaterialStressSphTensorsCalculate")    
     RETURN
-999 ERRORS("FiniteElasticity_SigmasphStressTensorCalculate",err,error)
-    EXITS("FiniteElasticity_SigmasphStressTensorCalculate")
+999 ERRORS("FiniteElasticity_MaterialStressSphTensorsCalculate",err,error)
+    EXITS("FiniteElasticity_MaterialStressSphTensorsCalculate")
     RETURN 1
 
-  END SUBROUTINE FiniteElasticity_SigmasphStressTensorCalculate
+  END SUBROUTINE FiniteElasticity_MaterialStressSphTensorsCalculate
   
   !
   !================================================================================================================================
   !
 
-  !>Evaluates the Cauchy stress tensor.
-  SUBROUTINE FiniteElasticity_SigmaStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,p,haveHydrostaticPressure,sigma,err,error,*)
+  !>Evaluates the modified (psuedo) second Piola-Kirchoff stress tensor.
+  SUBROUTINE FiniteElasticity_MaterialStressTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
+    & F,J,p,haveHydrostaticPressure,SV,err,error,*)
     
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -1205,64 +1338,242 @@ CONTAINS
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
     REAL(DP), INTENT(IN) :: p !<The hydrostatic pressure
     LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
-    REAL(DP), INTENT(OUT) :: sigma(:) !<On return, the Cauchy stress tensor in Voight form
+    REAL(DP), INTENT(OUT) :: SV(:) !<On return, the second Piola-Kirchoff stress tensor in Voigt form
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: Fbar(3,3),Cbar(3,3),Bbar(3,3),Ebar(6),sigmabar(6),sigmadev(6),sigmasph(6)
+    REAL(DP) :: B(3,3),BBar(3,3),C(3,3),CBar(3,3),EV(6),EBarV(6),FBar(3,3),FBarT(3,3),I1Bar,I3Bar,SBarV(6),SDevV(6),SSphV(6), &
+      & tempTerm1,tempTerm2
 
-    ENTERS("FiniteElasticity_SigmaStressTensorCalculate",err,error,*999)
+    ENTERS("FiniteElasticity_MaterialStressTensorsCalculate",err,error,*999)
+
+    !Calculate the deviatoric material stress tensors
+    CALL FiniteElasticity_MaterialStressDevTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
+      & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,FBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & C(1:numberOfDimensions,1:numberOfDimensions),CBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & B(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & EV(1:NUMBER_OF_VOIGT(numberOfDimensions)),EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & SBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),SDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+    
+    !Calculate the spherical material stress tensors
+    CALL FiniteElasticity_MaterialStressSphTensorsCalculate(equationsSet,numberOfDimensions,J,p, &
+      & haveHydrostaticPressure,FBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & C(1:numberOfDimensions,1:numberOfDimensions),CBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & B(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & EV(1:NUMBER_OF_VOIGT(numberOfDimensions)),EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & SSphV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+
+    !Calculate the 2nd Piola Kirchoff stress tensor
+    SV(1:NUMBER_OF_VOIGT(numberOfDimensions))=SDevV(1:NUMBER_OF_VOIGT(numberOfDimensions))+ &
+      & SSphV(1:NUMBER_OF_VOIGT(numberOfDimensions))
+    
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Matrial 2nd Piola-Kirchoff stress tensor:",err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
+        & SV(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("          SV :",8(X,E13.6))','(13X,8(X,E13.6))', &
+        & err,error,*999)
+    ENDIF
+
+    EXITS("FiniteElasticity_MaterialStressTensorsCalculate")
+    RETURN
+999 ERRORSEXITS("FiniteElasticity_MaterialStressTensorsCalculate",err,error)
+    RETURN 1
+
+  END SUBROUTINE FiniteElasticity_MaterialStressTensorsCalculate
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Evaluates the deviatoric Cauchy stress tensor.
+  SUBROUTINE FiniteElasticity_SpatialStressDevTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
+    & F,J,haveHydrostaticPressure,FBar,CBar,BBar,EBarV,SBarDevV,sigmaBarV,sigmaDevV,err,error,*)
+    
+    !Argument variables
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions
+    TYPE(FieldInterpolatedPointType), POINTER :: materialInterpolatedPoint !<A pointer to the materials parameters
+    REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
+    REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
+    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not.
+    REAL(DP), INTENT(OUT) :: FBar(:,:) !<On return, the modified deformation gradient tensor
+    REAL(DP), INTENT(OUT) :: CBar(:,:) !<On return, the modified right Cauchy Green deformation tensor
+    REAL(DP), INTENT(OUT) :: BBar(:,:) !<On return, the modified left Cauchy Green deformation tensor
+    REAL(DP), INTENT(OUT) :: EBarV(:) !<On return, the modified Cauchy Green strain tensor in Voigt form.
+    REAL(DP), INTENT(OUT) :: SBarDevV(:) !<On return, the modified deviatoric second Piola Kirchoff stress tensor in Voight form.
+    REAL(DP), INTENT(OUT) :: sigmaBarV(:) !<On return, the modified (pseudo) Cauchy stress tensor in Voigt form
+    REAL(DP), INTENT(OUT) :: sigmaDevV(:) !<On return, the deviatoric Cauchy stress tensor in Voight form
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    REAL(DP) :: traceSigmaBar
+
+    ENTERS("FiniteElasticity_SpatialStressDevTensorsCalculate",err,error,*999)
+
+    sigmaBarV=0.0_DP
+    sigmaDevV=0.0_DP
+
+    !Calculate the modified (pseudo) second Piola-Kirchoff stress tensor
+    CALL FiniteElasticity_MaterialStressDevTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
+      & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,FBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & CBar(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),SBarDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+
+    !Push the modified (pseudo) second Piola-Kirchoff stress tensor forward to give the modified (pseudo) Cauchy stress tensor
+    CALL FiniteElasticity_PushStressTensorForward(numberOfDimensions,FBar(1:numberOfDimensions,1:numberOfDimensions),J, &
+      & SBarDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),sigmaBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
     !Calculate the deviatoric Cauchy stress tensor
-    CALL FiniteElasticity_SigmadevStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-      & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,Fbar(1:numberOfDimensions,1:numberOfDimensions), &
-      & Cbar(1:numberOfDimensions,1:numberOfDimensions),Bbar(1:numberOfDimensions,1:numberOfDimensions), &
-      & Ebar(1:NUMBER_OF_VOIGT(numberOfDimensions)),sigmabar(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
-      & sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+    IF(haveHydrostaticPressure) THEN
+      traceSigmaBar=SUM(sigmaBarV(1:numberOfDimensions))
+      sigmaDevV(1:numberOfDimensions)=-traceSigmaBar/REAL(numberOfDimensions,DP)
+      sigmaDevV(1:NUMBER_OF_VOIGT(numberOfDimensions))=J**(-2.0_DP/REAL(numberOfDimensions,DP))* &
+        & (sigmaDevV(1:NUMBER_OF_VOIGT(numberOfDimensions))+sigmaBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)))
+    ELSE
+      sigmaDevV(1:NUMBER_OF_VOIGT(numberOfDimensions))=sigmaBarV(1:NUMBER_OF_VOIGT(numberOfDimensions))
+    ENDIF
+     
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Spatial stress tensors:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  tr sigmaBar = ",traceSigmaBar,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
+        & sigmaBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  sigmaBarV :",8(X,E13.6))','(13X,8(X,E13.6))', &
+        & err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
+        & sigmaDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  sigmaDevV :",8(X,E13.6))','(13X,8(X,E13.6))', &
+        & err,error,*999)
+    ENDIF
+    
+    EXITS("FiniteElasticity_SpatialStressDevTensorsCalculate")    
+    RETURN
+999 ERRORS("FiniteElasticity_SpatialStressDevTensorsCalculate",err,error)
+    EXITS("FiniteElasticity_SpatialStressDevTensorsCalculate")
+    RETURN 1
+
+  END SUBROUTINE FiniteElasticity_SpatialStressDevTensorsCalculate
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Evaluates the spherical Cauchy stress tensor.
+  SUBROUTINE FiniteElasticity_SpatialStressSphTensorsCalculate(equationsSet,numberOfDimensions,J,p,haveHydrostaticPressure,&
+    & sigmaSphV,err,error,*)
+    
+    !Argument variables
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions
+    REAL(DP), INTENT(IN) :: J !<The Jacobian of the deformation
+    REAL(DP), INTENT(IN) :: p !<The value of hydrostatic pressure
+    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
+    REAL(DP), INTENT(OUT) :: sigmaSphV(:) !<On return, the spherical Cauchy stress tensor in Voigt form
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FiniteElasticity_SpatialStressSphTensorsCalculate",err,error,*999)
+
+    !Calculate the spherical part of the Cauchy stress tensor
+    IF(haveHydrostaticPressure) THEN
+      sigmaSphV(1:numberOfDimensions)=-p
+      sigmaSphV(numberOfDimensions+1:NUMBER_OF_VOIGT(numberOfDimensions))=0.0_DP
+    ELSE
+      sigmaSphV(1:NUMBER_OF_VOIGT(numberOfDimensions))=0.0_DP
+    ENDIF
+   
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Spatial pressure tensor:",err,error,*999)
+      IF(haveHydrostaticPressure) CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          p = ",p,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
+        & sigmaSphV(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  sigmaSphV :",8(X,E13.6))','(13X,8(X,E13.6))', &
+        & err,error,*999)
+    ENDIF
+    
+    EXITS("FiniteElasticity_SpatialStressSphTensorsCalculate")    
+    RETURN
+999 ERRORS("FiniteElasticity_SpatialStressSphTensorsCalculate",err,error)
+    EXITS("FiniteElasticity_SpatialStressSphTensorsCalculate")
+    RETURN 1
+
+  END SUBROUTINE FiniteElasticity_SpatialStressSphTensorsCalculate
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Evaluates the Cauchy stress tensor.
+  SUBROUTINE FiniteElasticity_SpatialStressTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
+    & F,J,p,haveHydrostaticPressure,sigmaV,err,error,*)
+    
+    !Argument variables
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions
+    TYPE(FieldInterpolatedPointType), POINTER :: materialInterpolatedPoint !<A pointer to the materials parameters
+    REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
+    REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
+    REAL(DP), INTENT(IN) :: p !<The hydrostatic pressure
+    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
+    REAL(DP), INTENT(OUT) :: sigmaV(:) !<On return, the Cauchy stress tensor in Voight form
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    REAL(DP) :: BBar(3,3),CBar(3,3),EBarV(6),FBar(3,3),SBarDevV(6),sigmaBarV(6),sigmaDevV(6),sigmaSphV(6)
+
+    ENTERS("FiniteElasticity_SpatialStressTensorsCalculate",err,error,*999)
+
+    !Calculate the deviatoric Cauchy stress tensor    
+    CALL FiniteElasticity_SpatialStressDevTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
+      & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,FBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & CBar(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),SBarDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & sigmaBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),sigmaDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
     
     !Calculate the spherical Cauchy stress tensor
-    CALL FiniteElasticity_SigmasphStressTensorCalculate(equationsSet,numberOfDimensions,J,p, &
-      & haveHydrostaticPressure,sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+    CALL FiniteElasticity_SpatialStressSphTensorsCalculate(equationsSet,numberOfDimensions,J,p, &
+      & haveHydrostaticPressure,sigmaSphV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
     !Calculate the Cauchy stress tensor
-    sigma(1:NUMBER_OF_VOIGT(numberOfDimensions))=sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions))+ &
-      & sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions))
+    sigmaV(1:NUMBER_OF_VOIGT(numberOfDimensions))=sigmaDevV(1:NUMBER_OF_VOIGT(numberOfDimensions))+ &
+      & sigmaSphV(1:NUMBER_OF_VOIGT(numberOfDimensions))
     
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Cauchy stress tensor:",err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
-        & sigma(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("     sigmaV :",8(X,E13.6))','(13X,8(X,E13.6))', &
+        & sigmaV(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("     sigmaV :",8(X,E13.6))','(13X,8(X,E13.6))', &
         & err,error,*999)
     ENDIF
     
-    EXITS("FiniteElasticity_SigmaStressTensorCalculate")    
+    EXITS("FiniteElasticity_SpatialStressTensorsCalculate")    
     RETURN
-999 ERRORS("FiniteElasticity_SigmaStressTensorCalculate",err,error)
-    EXITS("FiniteElasticity_SigmaStressTensorCalculate")
+999 ERRORS("FiniteElasticity_SpatialStressTensorsCalculate",err,error)
+    EXITS("FiniteElasticity_SpatialStressTensorsCalculate")
     RETURN 1
 
-  END SUBROUTINE FiniteElasticity_SigmaStressTensorCalculate
+  END SUBROUTINE FiniteElasticity_SpatialStressTensorsCalculate
   
   !
   !================================================================================================================================
   !
 
   !>Push an elasticity tensor forward from material/reference to spatial/current coordinates
-  SUBROUTINE FiniteElasticity_PushElasticityTensorForward(numberOfDimensions,F,J,materialElasticityTensor, &
-    & spatialElasticityTensor,err,error,*)
+  SUBROUTINE FiniteElasticity_PushElasticityTensorForward(numberOfDimensions,F,J,materialElasticityTensorV, &
+    & spatialElasticityTensorV,err,error,*)
     
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions
     REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
     REAL(DP), INTENT(IN) :: J !<The Jacobian of the deformation
-    REAL(DP), INTENT(IN) :: materialElasticityTensor(:,:) !<The elasticity tensor in material/reference coordinates in Voigt form to push forward
-    REAL(DP), INTENT(OUT) :: spatialElasticityTensor(:,:) !<On return, the elasticity tensor in spatial/current coordinates in Voigt form.
+    REAL(DP), INTENT(IN) :: materialElasticityTensorV(:,:) !<The elasticity tensor in material/reference coordinates in Voigt form to push forward
+    REAL(DP), INTENT(OUT) :: spatialElasticityTensorV(:,:) !<On return, the elasticity tensor in spatial/current coordinates in Voigt form.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: columnIdx,rowIdx
-    REAL(DP) :: temp(6,6),temptranspose(6,6)
+    REAL(DP) :: temp(6,6),tempTranspose(6,6)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FiniteElasticity_PushElasticityTensorForward",err,error,*999)
@@ -1287,9 +1598,9 @@ CONTAINS
     CALL MatrixTranspose(temp(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)), &
       & tempTranspose(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
     
-    spatialElasticityTensor(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
-      & (1.0_DP/J)*MATmuL(MATMUL(temp(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)), &
-      & materialElasticityTensor(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))), &
+    spatialElasticityTensorV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
+      & (1.0_DP/J)*MATMUL(MATMUL(temp(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & materialElasticityTensorV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))), &
       & tempTranspose(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)))
     
     EXITS("FiniteElasticity_PushElasticityTensorForward")    
@@ -1305,14 +1616,15 @@ CONTAINS
   !
 
   !>Push a stress tensor forward from material/reference to spatial/current coordinates
-  SUBROUTINE FiniteElasticity_PushStressTensorForward(numberOfDimensions,F,J,materialStressTensor,spatialStressTensor,err,error,*)
+  SUBROUTINE FiniteElasticity_PushStressTensorForward(numberOfDimensions,F,J,materialStressTensorV,spatialStressTensorV, &
+    & err,error,*)
     
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions
     REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
     REAL(DP), INTENT(IN) :: J !<The Jacobian of the deformation
-    REAL(DP), INTENT(IN) :: materialStressTensor(:) !<The stress tensor in material/reference coordinates in Voigt form to push forward
-    REAL(DP), INTENT(OUT) :: spatialStressTensor(:) !<On return, the stress tensor in spatial/current coordinates in Voigt form.
+    REAL(DP), INTENT(IN) :: materialStressTensorV(:) !<The stress tensor in material/reference coordinates in Voigt form to push forward
+    REAL(DP), INTENT(OUT) :: spatialStressTensorV(:) !<On return, the stress tensor in spatial/current coordinates in Voigt form.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1339,9 +1651,9 @@ CONTAINS
       ENDDO !rowIdx
     ENDDO !columnIdx
 
-    spatialStressTensor(1:NUMBER_OF_VOIGT(numberOfDimensions))= &
+    spatialStressTensorV(1:NUMBER_OF_VOIGT(numberOfDimensions))= &
       & MATMUL(temp(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)), &
-      & materialStressTensor(1:NUMBER_OF_VOIGT(numberOfDimensions)))/J
+      & materialStressTensorV(1:NUMBER_OF_VOIGT(numberOfDimensions)))/J
     
     EXITS("FiniteElasticity_PushStressTensorForward")    
     RETURN
@@ -1356,7 +1668,7 @@ CONTAINS
 
   !>Evaluates the spatial elasticity and stress tensor in Voigt form at a given Gauss point.
   SUBROUTINE FiniteElasticity_SpatialElasticityDevTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,haveHydrostaticPressure,sigmadev,spatialCdev,err,error,*)
+    & F,J,haveHydrostaticPressure,sigmaDevV,spatialCDevV,err,error,*)
     
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -1365,42 +1677,41 @@ CONTAINS
     REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
     LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
-    REAL(DP), INTENT(OUT) :: sigmadev(:) !<On return, the devaiatoric Cauchy stress tensor
-    REAL(DP), INTENT(OUT) :: spatialCdev(:,:) !<On return, the deviatoric part of the spatial elasticity tensor in Voigt form.
+    REAL(DP), INTENT(OUT) :: sigmaDevV(:) !<On return, the devaiatoric Cauchy stress tensor
+    REAL(DP), INTENT(OUT) :: spatialCDevV(:,:) !<On return, the deviatoric part of the spatial elasticity tensor in Voigt form.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: Bbar(3,3),Cbar(3,3),ce(6,6),ce1(6,6),ce2(6,6),Ebar(6),Fbar(3,3),m(6,6),materialCbar(6,6),Sbar(6), &
-      & sigmabar(6),spatialCbar(6,6),traceSigmaBar
+    REAL(DP) :: BBar(3,3),CBar(3,3),ce1V(6,6),ce2V(6,6),EBarV(6),FBar(3,3),m(6,6),materialCBarV(6,6),SBarV(6), &
+      & sigmaBarV(6),spatialCBarV(6,6),traceSigmaBar
     REAL(DP), POINTER :: materialParameters(:) !Parameters for constitutive laws
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FiniteElasticity_SpatialElasticityDevTensorCalculate",err,error,*999)
 
-    spatialCdev=0.0_DP
-    ce=0.0_DP
-    ce1=0.0_DP
-    ce2=0.0_DP
+    spatialCDevV=0.0_DP
+    ce1V=0.0_DP
+    ce2V=0.0_DP
 
     materialParameters=>materialInterpolatedPoint%values(:,NO_PART_DERIV)
 
-    CALL FiniteElasticity_SigmadevStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-      & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,Fbar(1:numberOfDimensions,1:numberOfDimensions), &
-      & Cbar(1:numberOfDimensions,1:numberOfDimensions),Bbar(1:numberOfDimensions,1:numberOfDimensions), &
-      & Ebar(1:NUMBER_OF_VOIGT(numberOfDimensions)),sigmabar(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
-      & sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+    CALL FiniteElasticity_SpatialStressDevTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
+      & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,FBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & CBar(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),SBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & sigmaBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),sigmaDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
-    traceSigmaBar=SUM(sigmabar(1:numberOfDimensions))
+    traceSigmaBar=SUM(sigmaBarV(1:numberOfDimensions))
 
-    CALL FiniteElasticity_CbarElasticityTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-      & F(1:numberOfDimensions,1:numberOfDimensions),J,Fbar(1:numberOfDimensions,1:numberOfDimensions), &
-      & Cbar(1:numberOfDimensions,1:numberOfDimensions),Bbar(1:numberOfDimensions,1:numberOfDimensions), &
-      & Ebar(1:NUMBER_OF_VOIGT(numberOfDimensions)),Sbar(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
-      & materialCbar(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+    CALL FiniteElasticity_MaterialElasticityTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
+      & F(1:numberOfDimensions,1:numberOfDimensions),J,FBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & CBar(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),SBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & materialCBarV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
-    CALL FiniteElasticity_PushElasticityTensorForward(numberOfDimensions,Fbar(1:numberOfDimensions,1:numberOfDimensions), &
-      & J,materialCbar(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)), &
-      & spatialCbar(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+    CALL FiniteElasticity_PushElasticityTensorForward(numberOfDimensions,FBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & J,materialCBarV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & spatialCBarV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
     IF(haveHydrostaticPressure) THEN
       SELECT CASE(numberOfDimensions)
@@ -1408,300 +1719,299 @@ CONTAINS
         CALL FlagError("Not implemented.",err,error,*999)
       CASE(2)
         
-        ce1(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))= &
-          &  0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
-          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
-          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
-          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
-        ce1(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))= &
-          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
-          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
-          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
-          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
-        ce1(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))= &
-          & +0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2)) &
-          & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+        ce1V(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))= &
+          &  0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
+          & -0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
+          & -0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
+          & +0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
+        ce1V(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))= &
+          & -0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
+          & +0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
+          & +0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
+          & -0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
+        ce1V(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))= &
+          & +0.50_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2)) &
+          & -0.50_DP*spatialCBarV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
         
-        ce1(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))= &
-          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
-          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
-          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
-          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
-        ce1(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))= &
-          &  0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
-          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
-          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
-          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
-        ce1(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))= &
-          & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2)) &
-          & +0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+        ce1V(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))= &
+          & -0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
+          & +0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
+          & +0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
+          & -0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
+        ce1V(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))= &
+          &  0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
+          & -0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
+          & -0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
+          & +0.25_DP*spatialCBarV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
+        ce1V(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))= &
+          & -0.50_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2)) &
+          & +0.50_DP*spatialCBarV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
         
-        ce1(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))= &
-          &  0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1)) &
-          & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))
-        ce1(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))= &
-          & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1)) &
-          & +0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))
-        ce1(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))= &
-          & 0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2)) 
+        ce1V(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))= &
+          &  0.50_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1)) &
+          & -0.50_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))
+        ce1V(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))= &
+          & -0.50_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1)) &
+          & +0.50_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))
+        ce1V(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))= &
+          & 0.50_DP*spatialCBarV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2)) 
         
-        ce1(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))=J**(-2.0_DP)*ce1(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))
+        ce1V(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))=J**(-2.0_DP)*ce1V(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))
         
-        ce2(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))=-2.0_DP*sigmabar(TENSOR_TO_VOIGT2(1,1))+1.5_DP*traceSigmaBar
-        ce2(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))=-0.5_DP*traceSigmaBar
-        ce2(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
-        ce2(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))=-0.5_DP*traceSigmaBar
-        ce2(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))=-2.0_DP*sigmabar(TENSOR_TO_VOIGT2(2,2))+1.5_DP*traceSigmaBar
-        ce2(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
-        ce2(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
-        ce2(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
-        ce2(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))=0.5_DP*traceSigmaBar
+        ce2V(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))=-2.0_DP*sigmaBarV(TENSOR_TO_VOIGT2(1,1))+1.5_DP*traceSigmaBar
+        ce2V(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))=-0.5_DP*traceSigmaBar
+        ce2V(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))=-sigmaBarV(TENSOR_TO_VOIGT2(1,2))
+        ce2V(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))=-0.5_DP*traceSigmaBar
+        ce2V(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))=-2.0_DP*sigmaBarV(TENSOR_TO_VOIGT2(2,2))+1.5_DP*traceSigmaBar
+        ce2V(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))=-sigmaBarV(TENSOR_TO_VOIGT2(1,2))
+        ce2V(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))=-sigmaBarV(TENSOR_TO_VOIGT2(1,2))
+        ce2V(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))=-sigmaBarV(TENSOR_TO_VOIGT2(1,2))
+        ce2V(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))=0.5_DP*traceSigmaBar
         
-        ce2(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))=(1.0_DP/2.0_DP)*J**(-1.0_DP)* &
-          & ce2(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))
+        ce2V(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))=(1.0_DP/2.0_DP)*J**(-1.0_DP)* &
+          & ce2V(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))
         
       CASE(3)
         
-        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))= &
-          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))= &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))= &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))= &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
-        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))= &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3)) 
-        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))= &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
+        ce1V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))= &
+          & +(4.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))= &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(4.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))= &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(4.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))= &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
+        ce1V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))= &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3)) 
+        ce1V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))= &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
         
-        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))= &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))= &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))= &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
-        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3)) 
-        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
+        ce1V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))= &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & +(4.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))= &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & +(4.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))= &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & +(4.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
+        ce1V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3)) 
+        ce1V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
         
-        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))= &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))= &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))= &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
-        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3)) 
-        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
+        ce1V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))= &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(4.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))= &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(4.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))= &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & +(4.0_DP/9.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
+        ce1V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3)) 
+        ce1V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
         
-        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))= &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))= &
-          & spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
-        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))= &
-          & spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
-        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))= &
-          & spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
+        ce1V(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))= &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))= &
+          & spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
+        ce1V(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))= &
+          & spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
+        ce1V(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))= &
+          & spatialCBarV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
         
-        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))= &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))= &
-          & spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
-        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))= &
-          & spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
-        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))= &
-          & spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
+        ce1V(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))= &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))= &
+          & spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
+        ce1V(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))= &
+          & spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
+        ce1V(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))= &
+          & spatialCBarV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
         
-        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))= &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))= &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
-          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
-        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))= &
-          & spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
-        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))= &
-          & spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
-        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))= &
-          & spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))              
+        ce1V(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))= &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(2.0_DP/3.0_DP)*spatialCBarV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+        ce1V(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))= &
+          & spatialCBarV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+        ce1V(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))= &
+          & spatialCBarV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+        ce1V(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))= &
+          & spatialCBarV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))              
         
-        ce1(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))=J**(-4.0_DP/3.0_DP)*ce1(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))
+        ce1V(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))=J**(-4.0_DP/3.0_DP)*ce1V(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))
         
-        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmabar(TENSOR_TO_VOIGT3(1,1))
-        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-          & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(2,2))
-        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-          & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(3,3))
-        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-          & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(2,2))
-        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmabar(TENSOR_TO_VOIGT3(2,2))
-        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-          & sigmadev(TENSOR_TO_VOIGT3(2,2))-sigmabar(TENSOR_TO_VOIGT3(3,3))
-        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-          & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(3,3))
-        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-          & sigmabar(TENSOR_TO_VOIGT3(2,2))-sigmabar(TENSOR_TO_VOIGT3(3,3))
-        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmabar(TENSOR_TO_VOIGT3(3,3))
-        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-        ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-        ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-        ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-        ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))=0.5_DP*traceSigmaBar
-        ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-        ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-        ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-        ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))=0.5_DP*traceSigmaBar
-        ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-        ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-        ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-        ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))=0.5_DP*traceSigmaBar
+        ce2V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmaBarV(TENSOR_TO_VOIGT3(1,1))
+        ce2V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmaBarV(TENSOR_TO_VOIGT3(1,1))-sigmaBarV(TENSOR_TO_VOIGT3(2,2))
+        ce2V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmaBarV(TENSOR_TO_VOIGT3(1,1))-sigmaBarV(TENSOR_TO_VOIGT3(3,3))
+        ce2V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))=-sigmaBarV(TENSOR_TO_VOIGT3(2,3))
+        ce2V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))=-sigmaBarV(TENSOR_TO_VOIGT3(1,3))
+        ce2V(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))=-sigmaBarV(TENSOR_TO_VOIGT3(1,2))
+        ce2V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmaBarV(TENSOR_TO_VOIGT3(1,1))-sigmaBarV(TENSOR_TO_VOIGT3(2,2))
+        ce2V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmaBarV(TENSOR_TO_VOIGT3(2,2))
+        ce2V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmaDevV(TENSOR_TO_VOIGT3(2,2))-sigmaBarV(TENSOR_TO_VOIGT3(3,3))
+        ce2V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))=-sigmaBarV(TENSOR_TO_VOIGT3(2,3))
+        ce2V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))=-sigmaBarV(TENSOR_TO_VOIGT3(1,3))
+        ce2V(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))=-sigmaBarV(TENSOR_TO_VOIGT3(1,2))
+        ce2V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmaBarV(TENSOR_TO_VOIGT3(1,1))-sigmaBarV(TENSOR_TO_VOIGT3(3,3))
+        ce2V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmaBarV(TENSOR_TO_VOIGT3(2,2))-sigmaBarV(TENSOR_TO_VOIGT3(3,3))
+        ce2V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmaBarV(TENSOR_TO_VOIGT3(3,3))
+        ce2V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))=-sigmaBarV(TENSOR_TO_VOIGT3(2,3))
+        ce2V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))=-sigmaBarV(TENSOR_TO_VOIGT3(1,3))
+        ce2V(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))=-sigmaBarV(TENSOR_TO_VOIGT3(1,2))
+        ce2V(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))=-sigmaBarV(TENSOR_TO_VOIGT3(2,3))
+        ce2V(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))=-sigmaBarV(TENSOR_TO_VOIGT3(2,3))
+        ce2V(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))=-sigmaBarV(TENSOR_TO_VOIGT3(2,3))
+        ce2V(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))=0.5_DP*traceSigmaBar
+        ce2V(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))=-sigmaBarV(TENSOR_TO_VOIGT3(1,3))
+        ce2V(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))=-sigmaBarV(TENSOR_TO_VOIGT3(1,3))
+        ce2V(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))=-sigmaBarV(TENSOR_TO_VOIGT3(1,3))
+        ce2V(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))=0.5_DP*traceSigmaBar
+        ce2V(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))=-sigmaBarV(TENSOR_TO_VOIGT3(1,2))
+        ce2V(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))=-sigmaBarV(TENSOR_TO_VOIGT3(1,2))
+        ce2V(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))=-sigmaBarV(TENSOR_TO_VOIGT3(1,2))
+        ce2V(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))=0.5_DP*traceSigmaBar
         
-        ce2(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))=(2.0_DP/3.0_DP)*J**(-2.0_DP/3.0_DP)* &
-          & ce2(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))      
+        ce2V(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))=(2.0_DP/3.0_DP)*J**(-2.0_DP/3.0_DP)* &
+          & ce2V(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))      
         
       CASE DEFAULT
-        localError="The number of dimensions of "//TRIM(NumberToVstring(numberOfDimensions,"*",err,error))// &
-          & " is invalid."
+        localError="The number of dimensions of "//TRIM(NumberToVstring(numberOfDimensions,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       
-      spatialCdev(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
-        & ce1(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)) + &
-        & ce2(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))
+      spatialCDevV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
+        & ce1V(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)) + &
+        & ce2V(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))
     ELSE
-      spatialCdev(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
-        & spatialCbar(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))
+      spatialCDevV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
+        & spatialCBarV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))
     ENDIF
     
     IF(diagnostics1) THEN
@@ -1709,19 +2019,19 @@ CONTAINS
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Spatial deviatoric elasticity tensors:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Jacobian = ",J,err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),1,1, &
-        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,spatialCbar(1:NUMBER_OF_VOIGT(numberOfDimensions), &
+        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,spatialCBarV(1:NUMBER_OF_VOIGT(numberOfDimensions), &
         & 1:NUMBER_OF_VOIGT(numberOfDimensions)),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("  cbarV','(",I1,",:)',':",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)
+        & '("  cBarV','(",I1,",:)',':",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),1,1, &
-        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,ce1(1:NUMBER_OF_VOIGT(numberOfDimensions), &
+        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,ce1V(1:NUMBER_OF_VOIGT(numberOfDimensions), &
         & 1:NUMBER_OF_VOIGT(numberOfDimensions)),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
         & '("  ce1V','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),1,1, &
-        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,ce2(1:NUMBER_OF_VOIGT(numberOfDimensions), &
+        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,ce2V(1:NUMBER_OF_VOIGT(numberOfDimensions), &
         & 1:NUMBER_OF_VOIGT(numberOfDimensions)),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
         & '("  ce2V','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),1,1, &
-        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,spatialCdev(1:NUMBER_OF_VOIGT(numberOfDimensions), &
+        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,spatialCDevV(1:NUMBER_OF_VOIGT(numberOfDimensions), &
         & 1:NUMBER_OF_VOIGT(numberOfDimensions)),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
         & '("   ceV','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)      
     ENDIF
@@ -1740,7 +2050,7 @@ CONTAINS
 
   !>Evaluates the spherical part of the spatial elasticity and stress tensor in Voigt form.
   SUBROUTINE FiniteElasticity_SpatialElasticitySphTensorCalculate(equationsSet,numberOfDimensions,J,p,haveHydrostaticPressure, &
-    & sigmasph,spatialCsph,err,error,*)
+    & sigmaSphV,spatialCSphV,err,error,*)
     
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -1748,8 +2058,8 @@ CONTAINS
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
     REAL(DP), INTENT(IN) :: p !<The hydrostatic pressure
     LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
-    REAL(DP), INTENT(OUT) :: sigmasph(:) !<On return, the spherical Cauchy stress tensor in Voigt form
-    REAL(DP), INTENT(OUT) :: spatialCsph(:,:) !<On return, the spherical part of the spatial elasticity tensor in Voigt form.
+    REAL(DP), INTENT(OUT) :: sigmaSphV(:) !<On return, the spherical Cauchy stress tensor in Voigt form
+    REAL(DP), INTENT(OUT) :: spatialCSphV(:,:) !<On return, the spherical part of the spatial elasticity tensor in Voigt form.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1757,45 +2067,44 @@ CONTAINS
     
     ENTERS("FiniteElasticity_SpatialElasticitySphTensorCalculate",err,error,*999)
 
-    sigmasph=0.0_DP
-    spatialCsph=0.0_DP
+    sigmaSphV=0.0_DP
+    spatialCSphV=0.0_DP
 
     IF(haveHydrostaticPressure) THEN
     
-      CALL FiniteElasticity_SigmasphStressTensorCalculate(equationsSet,numberOfDimensions,J,p, &
-        & haveHydrostaticPressure,sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+      CALL FiniteElasticity_SpatialStressSphTensorsCalculate(equationsSet,numberOfDimensions,J,p, &
+        & haveHydrostaticPressure,sigmaSphV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
       
       SELECT CASE(numberOfDimensions)
       CASE(1)
         
-        spatialCsph(TENSOR_TO_VOIGT1(1,1),TENSOR_TO_VOIGT1(1,1))=p
+        spatialCSphV(TENSOR_TO_VOIGT1(1,1),TENSOR_TO_VOIGT1(1,1))=p
         
       CASE(2)
         
-        spatialCsph(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))=p
-        spatialCsph(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))=-p
-        spatialCsph(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))=-p
-        spatialCsph(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))=p
-        spatialCsph(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))=p
+        spatialCSphV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))=p
+        spatialCSphV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))=-p
+        spatialCSphV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))=-p
+        spatialCSphV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))=p
+        spatialCSphV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))=p
         
       CASE(3)
         
-        spatialCsph(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))=p
-        spatialCsph(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))=-p
-        spatialCsph(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))=-p
-        spatialCsph(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))=-p
-        spatialCsph(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))=p
-        spatialCsph(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))=-p
-        spatialCsph(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))=-p
-        spatialCsph(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))=-p
-        spatialCsph(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))=p
-        spatialCsph(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))=p
-        spatialCsph(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))=p
-        spatialCsph(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))=p
+        spatialCSphV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))=p
+        spatialCSphV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))=-p
+        spatialCSphV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))=-p
+        spatialCSphV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))=-p
+        spatialCSphV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))=p
+        spatialCSphV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))=-p
+        spatialCSphV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))=-p
+        spatialCSphV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))=-p
+        spatialCSphV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))=p
+        spatialCSphV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))=p
+        spatialCSphV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))=p
+        spatialCSphV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))=p
       
       CASE DEFAULT
-        localError="The number of dimensions of "//TRIM(NumberToVstring(numberOfDimensions,"*",err,error))// &
-          & " is invalid."
+        localError="The number of dimensions of "//TRIM(NumberToVstring(numberOfDimensions,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
 
@@ -1805,7 +2114,7 @@ CONTAINS
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Spatial pressure elasticity tensor:",err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),1,1, &
-        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,spatialCsph(1:NUMBER_OF_VOIGT(numberOfDimensions), &
+        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,spatialCSphV(1:NUMBER_OF_VOIGT(numberOfDimensions), &
         & 1:NUMBER_OF_VOIGT(numberOfDimensions)),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
         & '("   cpV','(",I1,",:)',' :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)      
     ENDIF
@@ -1824,7 +2133,7 @@ CONTAINS
 
   !>Evaluates the spatial elasticity and stress tensor in Voigt form.
   SUBROUTINE FiniteElasticity_SpatialElasticityTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,p,haveHydrostaticPressure,sigma,spatialC,err,error,*)
+    & F,J,p,haveHydrostaticPressure,sigmaV,spatialCV,err,error,*)
     
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -1834,41 +2143,41 @@ CONTAINS
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
     REAL(DP), INTENT(IN) :: p !<The hydrostatic pressure
     LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
-    REAL(DP), INTENT(OUT) :: sigma(:) !<On return, the Cauchy stress tensor in Voigt form
-    REAL(DP), INTENT(OUT) :: spatialC(:,:) !<On return, the spatial elasticity tensor in Voigt form.
+    REAL(DP), INTENT(OUT) :: sigmaV(:) !<On return, the Cauchy stress tensor in Voigt form
+    REAL(DP), INTENT(OUT) :: spatialCV(:,:) !<On return, the spatial elasticity tensor in Voigt form.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: sigmadev(6),sigmasph(6),spatialCdev(6,6),spatialCsph(6,6)
+    REAL(DP) :: sigmaDevV(6),sigmaSphV(6),spatialCDevV(6,6),spatialCSphV(6,6)
     
     ENTERS("FiniteElasticity_SpatialElasticityTensorCalculate",err,error,*999)
 
-    sigma=0.0_DP
-    spatialC=0.0_DP
+    sigmaV=0.0_DP
+    spatialCV=0.0_DP
     
     CALL FiniteElasticity_SpatialElasticityDevTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-      & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
-      & spatialCdev(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDImensions)),err,error,*999)
+      & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,sigmaDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & spatialCDevV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
     
     CALL FiniteElasticity_SpatialElasticitySphTensorCalculate(equationsSet,numberOfDimensions,J,p,haveHydrostaticPressure, &
-      & sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions)),spatialCsph(1:NUMBER_OF_VOIGT(numberOfDimensions), &
+      & sigmaSphV(1:NUMBER_OF_VOIGT(numberOfDimensions)),spatialCSphV(1:NUMBER_OF_VOIGT(numberOfDimensions), &
       & 1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
-    sigma(1:NUMBER_OF_VOIGT(numberOfDimensions))=sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions))+ &
-      & sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions))
+    sigmaV(1:NUMBER_OF_VOIGT(numberOfDimensions))=sigmaDevV(1:NUMBER_OF_VOIGT(numberOfDimensions))+ &
+      & sigmaSphV(1:NUMBER_OF_VOIGT(numberOfDimensions))
 
-    spatialC(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
-      & spatialCdev(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))+ &
-      & spatialCsph(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))
+    spatialCV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
+      & spatialCDevV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))+ &
+      & spatialCSphV(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))
     
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Spatial stress and elasticity tensors:",err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
-        & sigma(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  sigmaV    :",8(X,E13.6))','(13X,8(X,E13.6))', &
+        & sigmaV(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  sigmaV    :",8(X,E13.6))','(13X,8(X,E13.6))', &
         & err,error,*999)
      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),1,1, &
-        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,spatialC(1:NUMBER_OF_VOIGT(numberOfDimensions), &
+        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,spatialCV(1:NUMBER_OF_VOIGT(numberOfDimensions), &
         & 1:NUMBER_OF_VOIGT(numberOfDimensions)),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
         & '("   cV','(",I1,",:)','  :",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)      
     ENDIF
@@ -2589,7 +2898,7 @@ CONTAINS
           & geometricInterpPointMetrics,fibreInterpPoint,F,J,err,error,*999)
         
         !Calculate any growth.
-        CALL FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,F,growthValues,Fg,Fe,Jg,Je,err,error,*999)
+        CALL FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,F,growthValues,Fg,Fe,Jg,Je,err,error,*999)
 
         !Calculate the Cauchy stress tensor and the spatial elasticity tensor
         CALL FiniteElasticity_SpatialElasticityTensorCalculate(equationsSet,numberOfDimensions,materialsInterpPoint, &
@@ -3454,34 +3763,37 @@ CONTAINS
   !
 
   !>Push-forward the rank 4 elasticity tensor.
-  SUBROUTINE FiniteElasticity_PushElasticityTensor(elasticityTensor,dZdNu,Jznu,err,error,*)
+  SUBROUTINE FiniteElasticity_PushElasticityTensor(elasticityTensor,F,J,err,error,*)
     
     !Argument variables
-    REAL(DP), INTENT(INOUT) :: elasticityTensor(6,6)
-    REAL(DP), INTENT(IN) :: dZdNu(3,3)
-    REAL(DP), INTENT(IN) :: Jznu
+    REAL(DP), INTENT(INOUT) :: elasticityTensor(6,6) !<The elasticity tensor to push forward in Voigt form
+    REAL(DP), INTENT(IN) :: F(3,3) !<The deformation gradient tensor
+    REAL(DP), INTENT(IN) :: J !<The Jacobian of the deformation i.e., J = det F.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: i,j
+    INTEGER(INTG) :: rowIdx,columnIdx
     REAL(DP) :: t(6,6),ttrans(6,6) 
 
     ENTERS("FiniteElasticity_PushElasticityTensor",err,error,*999)
 
-    DO j=1,3
-      DO i=1,6
-        t(i,j)=dZdNu(VOIGT_TO_TENSOR3(1,i),VOIGT_TO_TENSOR3(1,j))*dZdNu(VOIGT_TO_TENSOR3(2,i),VOIGT_TO_TENSOR3(2,j))
-      ENDDO !i
-    ENDDO !j
-    DO j=4,6
-      DO i=1,6
-        t(i,j)=dZdNu(VOIGT_TO_TENSOR3(1,i),VOIGT_TO_TENSOR3(1,j))*dZdNu(VOIGT_TO_TENSOR3(2,i),VOIGT_TO_TENSOR3(2,j))+ &
-          & dZdNu(VOIGT_TO_TENSOR3(1,i),VOIGT_TO_TENSOR3(2,j))*dZdNu(VOIGT_TO_TENSOR3(2,i),VOIGT_TO_TENSOR3(1,j))
-      ENDDO !i
-    ENDDO !j
+    DO columnIdx=1,3
+      DO rowIdx=1,6
+        t(rowIdx,columnIdx)=F(VOIGT_TO_TENSOR3(1,rowIdx),VOIGT_TO_TENSOR3(1,columnIdx))* &
+          & F(VOIGT_TO_TENSOR3(2,rowIdx),VOIGT_TO_TENSOR3(2,columnIdx))
+      ENDDO !rowIdx
+    ENDDO !columnIdx
+    DO columnIdx=4,6
+      DO rowIdx=1,6
+        t(rowIdx,columnIdx)=F(VOIGT_TO_TENSOR3(1,rowIdx),VOIGT_TO_TENSOR3(1,columnIdx))* &
+          & F(VOIGT_TO_TENSOR3(2,rowIdx),VOIGT_TO_TENSOR3(2,columnIdx))+ &
+          & F(VOIGT_TO_TENSOR3(1,rowIdx),VOIGT_TO_TENSOR3(2,columnIdx))* &
+          & F(VOIGT_TO_TENSOR3(2,rowIdx),VOIGT_TO_TENSOR3(1,columnIdx))
+      ENDDO !rowIdx
+    ENDDO !columnIdx
 
     CALL MatrixTranspose(t,ttrans,err,error,*999)
-    elasticityTensor=MATMUL(MATMUL(t,elasticityTensor),ttrans)/Jznu
+    elasticityTensor=MATMUL(MATMUL(t,elasticityTensor),ttrans)/J
 
     EXITS("FiniteElasticity_PushElasticityTensor")
     RETURN
@@ -3495,33 +3807,36 @@ CONTAINS
   !
 
   !>Push-forward the rank 2 Piola stress tensor.
-  SUBROUTINE FiniteElasticity_PushStressTensor(stressTensor,dZdNu,Jznu,err,error,*)
+  SUBROUTINE FiniteElasticity_PushStressTensor(stressTensor,F,J,err,error,*)
     
     !Argument variables
-    REAL(DP), INTENT(INOUT) :: stressTensor(6)
-    REAL(DP), INTENT(IN) :: dZdNu(3,3)
-    REAL(DP), INTENT(IN) :: Jznu
+    REAL(DP), INTENT(INOUT) :: stressTensor(6) !<The stress tensor in Voigt form to push forward
+    REAL(DP), INTENT(IN) :: F(3,3) !<The deformation gradient tensor
+    REAL(DP), INTENT(IN) :: J !<The Jacobian of the deformation i.e., J = det F
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: i,j
+    INTEGER(INTG) :: rowIdx,columnIdx
     REAL(DP) :: t(6,6)
 
     ENTERS("FiniteElasticity_PushStressTensor",err,error,*999)
 
-    DO j=1,3
-      DO i=1,6
-        t(i,j)=dZdNu(VOIGT_TO_TENSOR3(1,i),VOIGT_TO_TENSOR3(1,j))*dZdNu(VOIGT_TO_TENSOR3(2,i),VOIGT_TO_TENSOR3(2,j))
-      ENDDO !i
-    ENDDO !j
-    DO j=4,6
-      DO i=1,6
-        t(i,j)=dZdNu(VOIGT_TO_TENSOR3(1,i),VOIGT_TO_TENSOR3(1,j))*dZdNu(VOIGT_TO_TENSOR3(2,i),VOIGT_TO_TENSOR3(2,j))+ &
-          & dZdNu(VOIGT_TO_TENSOR3(1,i),VOIGT_TO_TENSOR3(2,j))*dZdNu(VOIGT_TO_TENSOR3(2,i),VOIGT_TO_TENSOR3(1,j))
-      ENDDO !i
-    ENDDO !j
+    DO columnIdx=1,3
+      DO rowIdx=1,6
+        t(rowIdx,columnIdx)=F(VOIGT_TO_TENSOR3(1,rowIdx),VOIGT_TO_TENSOR3(1,columnIdx))* &
+          & F(VOIGT_TO_TENSOR3(2,rowIdx),VOIGT_TO_TENSOR3(2,columnIdx))
+      ENDDO !rowIdx
+    ENDDO !columnIdx
+    DO columnIdx=4,6
+      DO rowIdx=1,6
+        t(rowIdx,columnIdx)=F(VOIGT_TO_TENSOR3(1,rowIdx),VOIGT_TO_TENSOR3(1,columnIdx))* &
+          & F(VOIGT_TO_TENSOR3(2,rowIdx),VOIGT_TO_TENSOR3(2,columnIdx))+ &
+          & F(VOIGT_TO_TENSOR3(1,rowIdx),VOIGT_TO_TENSOR3(2,columnIdx))* &
+          & F(VOIGT_TO_TENSOR3(2,rowIdx),VOIGT_TO_TENSOR3(1,columnIdx))
+      ENDDO !rowIdx
+    ENDDO !columnIdx
 
-    stressTensor=MATMUL(t,stressTensor)/Jznu
+    stressTensor=MATMUL(t,stressTensor)/J
 
     EXITS("FiniteElasticity_PushStressTensor")
     RETURN
@@ -3551,7 +3866,7 @@ CONTAINS
       & rowsVariableType,scalingType,timeDependence,totalNumberOfSurfacePressureConditions,xiIdx
     REAL(DP) :: bfact,cauchyTensor(3,3),columndPhidXi,columnPhi,darcyMassIncrease,darcyRho0F,darcyVolIncrease,density, &
       & dFdZ(3,64,3),dPhidZ(3,64,3),F(3,3),Fe(3,3),Fg(3,3),gaussWeight,growthValues(3),J,Je,Jg,JacobianGaussWeight,Jxxi,Jzxi, &
-      & Mfact,p,p0fact,rowPhi,sigma(6),spatialDensity,sum1,tempTerm1,thickness
+      & Mfact,p,p0fact,rowPhi,sigmaV(6),spatialDensity,sum1,tempTerm1,thickness
     LOGICAL :: boundaryElement,darcyDependent,darcyDensity,haveDensity,haveHydrostaticPressure,haveSurfacePressure,incompressible, &
       & updateResidual,updateMass,updateRHS
     TYPE(BasisType), POINTER :: columnComponentBasis,dependentBasis,rowComponentBasis
@@ -3924,8 +4239,8 @@ CONTAINS
             
             IF(haveHydrostaticPressure) p=dependentInterpPoint%values(pressureComponent,NO_PART_DERIV)
 
-            !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+            !Calculate F, the deformation gradient tensor at the gauss point
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,F,J,err,error,*999)
 
             IF(J<0.0_DP) THEN
@@ -3949,12 +4264,12 @@ CONTAINS
               ENDIF
             ENDIF
 
-            CALL FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,F,growthValues,Fg,Fe,Jg,Je,err,error,*999)
+            CALL FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,F,growthValues,Fg,Fe,Jg,Je,err,error,*999)
 
             IF(updateResidual) THEN
               !Calculate Cauchy stress
-              CALL FiniteElasticity_SigmaStressTensorCalculate(equationsSet,numberOfDimensions,materialsInterpPoint, &
-                & Fe,Je,p,haveHydrostaticPressure,sigma,err,error,*999)
+              CALL FiniteElasticity_SpatialStressTensorsCalculate(equationsSet,numberOfDimensions,materialsInterpPoint, &
+                & Fe,Je,p,haveHydrostaticPressure,sigmaV,err,error,*999)
 
               IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
                 !Parameters settings for coupled elasticity Darcy INRIA model:
@@ -3998,7 +4313,7 @@ CONTAINS
                 !Convert the Cauchy stress tensor from Voigt form to tensor form.
                 DO rowComponentIdx=1,numberOfDimensions
                   cauchyTensor(rowComponentIdx,columnComponentIdx)= &
-                    & sigma(TENSOR_TO_VOIGT(rowComponentIdx,columnComponentIdx,numberOfDimensions))
+                    & sigmaV(TENSOR_TO_VOIGT(rowComponentIdx,columnComponentIdx,numberOfDimensions))
                 ENDDO !rowComponentIdx
               ENDDO !columnComponentIdx
 
@@ -4925,7 +5240,7 @@ CONTAINS
             ENDIF
 
             !Calculate Jacobian of deformation.
-            CALL FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je, &
+            CALL FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je, &
               & err,error,*999)
 
             !Calculate strain tensors
@@ -5162,7 +5477,7 @@ CONTAINS
             ENDIF
 
             !Calculate Jacobian of deformation.
-            CALL FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je, &
+            CALL FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je, &
               & err,error,*999)
 
             !Calculate strain tensors
@@ -5403,7 +5718,7 @@ CONTAINS
 
             P=dependentInterpPoint%values(pressureComponent,1)
 
-            CALL FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je, &
+            CALL FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je, &
               & err,error,*999)
 
             CALL FiniteElasticity_ReferenceStrainTensors(numberOfDimensions,Fe,Jznu,C,I3,f,E,err,error,*999)
@@ -5754,7 +6069,8 @@ CONTAINS
 
             P=dependentInterpPoint%values(pressureComponent,1)
 
-            CALL FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je,err,error,*999)
+            CALL FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je, &
+              & err,error,*999)
 
             CALL FiniteElasticity_ReferenceStrainTensors(numberOfDimensions,Fe,Jznu,C,I3,f,E,err,error,*999)
 
@@ -7181,8 +7497,7 @@ CONTAINS
     
   END SUBROUTINE FiniteElasticity_PostLoop
 
-
-    !
+  !
   !================================================================================================================================
   !
 
@@ -7350,6 +7665,8 @@ CONTAINS
     ENDIF
  
     numberOfTimes=0
+    elementUserElapsed=0.0_SP
+    elementSystemElapsed=0.0_SP
     CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
 
     !Loop over the two parts: 1 - boundary and ghost elements, 2 - internal
@@ -7625,7 +7942,7 @@ CONTAINS
         IF(partIdx==1) THEN
           CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
           CALL Profiling_TimingsOutput(1,"Boundary+ghost elements calculation",userElapsed,systemElapsed,err,error,*999)
-       ELSE
+        ELSE
           CALL Profiling_TimingsOutput(1,"Internal elements calculation",userElapsed,systemElapsed,err,error,*999)
           IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element calculation", &
             & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
@@ -7688,10 +8005,11 @@ CONTAINS
     REAL(DP), INTENT(OUT) :: values(:,:) !<On exit, the interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
-    ! Local variables
-    INTEGER(INTG) :: componentIdx,columnComponentIdx,fieldInterpolation,rowComponentIdx
-    REAL(DP) :: b(3,3),C(3,3),dZdNu(3,3),Fe(3,3),Fg(3,3),Je,Jg,Jznu,dependentJacobian,geometricJacobian
-    REAL(DP) :: E(3,3),cauchyStressTensor(3,3),cauchyStressVoigt(6)
+    !Local variables
+    INTEGER(INTG) :: componentIdx,columnComponentIdx,esSpecification(3),fieldInterpolation,rowComponentIdx
+    REAL(DP) :: BBar(3,3),cauchyStressTensor(3,3),CBar(3,3),Ebar(3,3),EbarV(6),F(3,3),Fbar(3,3),Fe(3,3),Fg(3,3),J,Je,Jg,p, &
+      & SBarV(6),sigmaV(6)
+    LOGICAL :: haveHydrostaticPressure
     TYPE(FieldInterpolatedPointType), POINTER :: darcyInterpPoint
     TYPE(VARYING_STRING) :: localError
 
@@ -7700,83 +8018,95 @@ CONTAINS
     !Calculate field metrics
     CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
     CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,dependentInterpPointMetrics,err,error,*999)
+    
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    haveHydrostaticPressure=esSpecification(3)/=EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.AND. &
+      & esSpecification(3)/=EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE.AND. &
+      & esSpecification(3)/=EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.AND. &
+      & esSpecification(3)/=EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE
+    IF(haveHydrostaticPressure) THEN
+      p=dependentInterpPoint%values(numberOfDimensions+1,NO_PART_DERIV)
+    ELSE
+      p=0.0_DP
+    ENDIF
 
     !Calculate F=dZ/dNU, the deformation gradient tensor at the xi location
-    CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics, &
-      & geometricInterpPointMetrics,fibreInterpPoint,dZdNu,Jznu,err,error,*999)
+    CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+      & fibreInterpPoint,F,J,err,error,*999)
 
-    CALL FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je, &
-      & err,error,*999)
-    
-    IF(evaluateType==EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR .OR. &
-      & evaluateType==EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR) THEN
-      CALL MatrixTransposeProduct(Fe(1:numberOfDimensions,1:numberOfXi),Fe(1:numberOfDimensions,1:numberOfXi), &
-        & C(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
-    ENDIF
-    
-    IF(evaluateType==EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR) THEN
-      CALL MatrixProductTranspose(Fe(1:numberOfDimensions,1:numberOfXi),Fe(1:numberOfDimensions,1:numberOfXi), &
-        & b(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
-    ENDIF
+    !Calculate growth tensors
+    CALL FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,F,growthValues,Fg,Fe,Jg,Je,err,error,*999)
 
-    IF(evaluateType==EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR) THEN
-      !Calculate E
-      E(1:numberOfDimensions,1:numberOfDimensions)=0.5_DP*C(1:numberOfDimensions,1:numberOfDimensions)
-      DO componentIdx=1,numberOfDimensions
-        E(componentIdx,componentIdx)=E(componentIdx,componentIdx)-0.5_DP
-      ENDDO !componentIdx
-    ENDIF
-
-    IF(evaluateType==EQUATIONS_SET_CAUCHY_STRESS_TENSOR) THEN
-!!\TODO the whole stress thing needs to be looked at as the routines below do not take in the deformation gradient that
-!! is calculated above but rather they calculate it internally. This will lead to mismatches as things like growth are
-!! not taken into account. 
-      
-      SELECT CASE(equationsSet%specification(3))
+    SELECT CASE(evaluateType)
+    CASE(EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR, &
+      & EQUATIONS_SET_DEFORMATION_GROWTH_TENSOR)
+      !Do nothing, already calculated
+    CASE(EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR, &
+      & EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR, &
+      & EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR)
+      CALL FiniteElasticity_MaterialDeformationTensorsCalculate(equationsSet,numberOfDimensions,Fe,Jg,haveHydrostaticPressure, &
+        & Fbar,Cbar,BBar,EbarV,err,error,*999)
+    CASE(EQUATIONS_SET_FIRST_PK_STRESS_TENSOR)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_SECOND_PK_STRESS_TENSOR)
+      CALL FiniteElasticity_MaterialStressTensorsCalculate(equationsSet,numberOfDimensions,materialsInterpPoint, &
+        & Fe,Jg,p,haveHydrostaticPressure,SBarV,err,error,*999)
+    CASE(EQUATIONS_SET_CAUCHY_STRESS_TENSOR)
+      SELECT CASE(esSpecification(3))
       CASE(EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
-        !Calculate the Cauchy stress tensor (in Voigt form) at the gauss point.
-        CALL FieldInterpolatedPointMetrics_JacobianGet(dependentInterpPointMetrics,dependentJacobian,err,error,*999)
-        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,geometricJacobian,err,error,*999)
-        Jznu=dependentJacobian/geometricJacobian
-        ! Note that some problems, e.g. active contraction, require additonal fields to be evaluated at Gauss points. This is
-        ! currently achieved by providing the gausspoint number to the FiniteElasticity_GaussStressTensor routine.
-        ! However, the current  routine, FiniteElasticity_TensorInterpolateXi, aims to evaluate tensors as any xi, so the Gauss
-        ! point number has been set to 0, which will generate an error for such problems.
-        ! To address such issues, the FiniteElasticity_GaussStressTensor routine needs to be generalized to allow calculation
-        ! of stress at any xi position and the GaussPoint number argument needs to be replace with a set of xi coordinates.
-        CALL FiniteElasticity_GaussStressTensor(equationsSet,numberOfDimensions,dependentInterpPoint,materialsInterpPoint, &
-          & geometricInterpPoint,cauchyStressVoigt,dZdNu,Jznu,elementNumber,0,err,error,*999)
-        
-        !Convert from Voigt form to tensor form. \TODO needs to be generalised for 2D
-        DO columnComponentIdx=1,numberOfDimensions
-          DO rowComponentIdx=1,numberOfDimensions
-            cauchyStressTensor(rowComponentIdx,columnComponentIdx)= &
-              & cauchyStressVoigt(TENSOR_TO_VOIGT(rowComponentIdx,columnComponentIdx,numberOfDimensions))
-          ENDDO !rowComponentIdx
-        ENDDO !columnComponentIdx
-      CASE(EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE)
+        CALL FiniteElasticity_SpatialStressTensorsCalculate(equationsSet,numberOfDimensions,materialsInterpPoint, &
+          & Fe,Je,p,haveHydrostaticPressure,sigmaV,err,error,*999)
+      CASE(EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, &
+        & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE)
         CALL FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint,materialsInterpPoint, &
-          & geometricInterpPoint,darcyInterpPoint,independentInterpPoint, &
-          & cauchyStressTensor,Jznu,dZdNu,elementNumber,0,err,error,*999)
+          & geometricInterpPoint,darcyInterpPoint,independentInterpPoint,cauchyStressTensor,J,F,elementNumber,0,err,error,*999)
+        sigmaV(TENSOR_TO_VOIGT3(1,1))=cauchyStressTensor(1,1)
+        sigmaV(TENSOR_TO_VOIGT3(2,2))=cauchyStressTensor(2,2)
+        sigmaV(TENSOR_TO_VOIGT3(3,3))=cauchyStressTensor(3,3)
+        sigmaV(TENSOR_TO_VOIGT3(1,2))=cauchyStressTensor(1,2)
+        sigmaV(TENSOR_TO_VOIGT3(1,3))=cauchyStressTensor(1,3)
+        sigmaV(TENSOR_TO_VOIGT3(2,3))=cauchyStressTensor(2,3)
       CASE DEFAULT
+        localError="The third equations set specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+          & " is invalid or not implemented."
+        CALL FlagError(localError,err,error,*999)
         CALL FlagError("Not implemented.",err,error,*999)
       END SELECT
-    END IF
+    CASE DEFAULT
+      localError="The tensor evaluate type of "//TRIM(NumberToVString(evaluateType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     SELECT CASE(evaluateType)
     CASE(EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR)
       values(1:numberOfDimensions,1:numberOfDimensions)=Fe(1:numberOfDimensions,1:numberOfDimensions)
+    CASE(EQUATIONS_SET_DEFORMATION_GROWTH_TENSOR)
+      values(1:numberOfDimensions,1:numberOfDimensions)=Fg(1:numberOfDimensions,1:numberOfDimensions)      
     CASE(EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR)
-      values(1:numberOfDimensions,1:numberOfDimensions)=C(1:numberOfDimensions,1:numberOfDimensions)
+      values(1:numberOfDimensions,1:numberOfDimensions)=CBar(1:numberOfDimensions,1:numberOfDimensions)
     CASE(EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR)
-      values(1:numberOfDimensions,1:numberOfDimensions)=b(1:numberOfDimensions,1:numberOfDimensions)
+      values(1:numberOfDimensions,1:numberOfDimensions)=BBar(1:numberOfDimensions,1:numberOfDimensions)
     CASE(EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR)
-      values(1:numberOfDimensions,1:numberOfDimensions)=E(1:numberOfDimensions,1:numberOfDimensions)
+      DO columnComponentIdx=1,numberOfDimensions
+        DO rowComponentIdx=1,numberOfDimensions
+          values(rowComponentIdx,columnComponentIdx)=EbarV(TENSOR_TO_VOIGT(rowComponentIdx,columnComponentIdx,numberOfDimensions))
+        ENDDO !rowComponentIdx
+      ENDDO !columnComponentIdx
     CASE(EQUATIONS_SET_CAUCHY_STRESS_TENSOR)
-      values(1:numberOfDimensions,1:numberOfDimensions)=cauchyStressTensor(1:numberOfDimensions,1:numberOfDimensions)
-    CASE(EQUATIONS_SET_SECOND_PK_STRESS_TENSOR)
+      DO columnComponentIdx=1,numberOfDimensions
+        DO rowComponentIdx=1,numberOfDimensions
+          values(rowComponentIdx,columnComponentIdx)=sigmaV(TENSOR_TO_VOIGT(rowComponentIdx,columnComponentIdx,numberOfDimensions))
+        ENDDO !rowComponentIdx
+      ENDDO !columnComponentIdx
+    CASE(EQUATIONS_SET_FIRST_PK_STRESS_TENSOR)
       CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_SECOND_PK_STRESS_TENSOR)
+      DO columnComponentIdx=1,numberOfDimensions
+        DO rowComponentIdx=1,numberOfDimensions
+          values(rowComponentIdx,columnComponentIdx)=SBarV(TENSOR_TO_VOIGT(rowComponentIdx,columnComponentIdx,numberOfDimensions))
+        ENDDO !rowComponentIdx
+      ENDDO !columnComponentIdx
     CASE DEFAULT
       CALL FlagError("The tensor evalaute type of "//TRIM(NumberToVString(evaluateType,"*",err,error))//" is invalid "// &
         & "for finite elasticity equation sets.",err,error,*999)
@@ -7957,7 +8287,7 @@ CONTAINS
     CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
       & fibreInterpPoint,dZdNu,Jznu,err,error,*999)
 
-    CALL FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je,err,error,*999)
+    CALL FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je,err,error,*999)
     
     IF(tensorEvaluateType==EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR .OR. &
       & tensorEvaluateType==EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR) THEN
@@ -8215,7 +8545,7 @@ CONTAINS
     CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
       & fibreInterpPoint,dZdNu(1:numberOfDimensions,1:numberOfDimensions),Jznu,err,error,*999)
 
-    CALL FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je,err,error,*999)
+    CALL FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je,err,error,*999)
     
     IF(tensorEvaluateType==EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR .OR. &
       & tensorEvaluateType==EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR) THEN
@@ -9082,6 +9412,7 @@ CONTAINS
 
     CALL FiniteElasticity_ReferenceStrainTensors(numberOfDimensions,dZdNu,Jznu,rCauchyGreen,I3,piolaDeformation, &
       & greenLagrangeStrain,err,error,*999)
+    CALL MatrixTranspose(dZdNu,dZdNuT,err,error,*999)
 
     NULLIFY(dependentInterpParameters)
     CALL FieldInterpolatedPoint_InterpolationParametersGet(dependentInterpPoint,dependentInterpParameters, &
@@ -10879,7 +11210,7 @@ CONTAINS
   !
 
   !>Evaluates the growth tensor at a given Gauss point and calculates the elastic part of the deformation gradient tensor
-  SUBROUTINE FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,deformationGradientTensor,growthValues, &
+  SUBROUTINE FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,deformationGradientTensor,growthValues, &
     & growthTensor,elasticDeformationGradientTensor,Jg,Je,err,error,*)
 
     !Argument variables
@@ -10897,7 +11228,7 @@ CONTAINS
     INTEGER(INTG) :: esSpecification(3)
     REAL(DP) :: growthTensorInverse(SIZE(growthTensor,1),SIZE(growthTensor,2)),J
     
-    ENTERS("FiniteElasticity_GaussGrowthTensor",err,error,*999)
+    ENTERS("FiniteElasticity_GrowthTensorCalculate",err,error,*999)
 
     CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
     
@@ -10939,12 +11270,12 @@ CONTAINS
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant Fg, Jg = ",Jg,err,error,*999)
     ENDIF
    
-    EXITS("FiniteElasticity_GaussGrowthTensor")
+    EXITS("FiniteElasticity_GrowthTensorCalculate")
     RETURN
-    999 ERRORSEXITS("FiniteElasticity_GaussGrowthTensor",err,error)
+    999 ERRORSEXITS("FiniteElasticity_GrowthTensorCalculate",err,error)
     RETURN 1
     
-  END SUBROUTINE FiniteElasticity_GaussGrowthTensor
+  END SUBROUTINE FiniteElasticity_GrowthTensorCalculate
 
   !
   !================================================================================================================================
@@ -14655,7 +14986,9 @@ CONTAINS
               CASE(EQUATIONS_SET_FIRST_PK_STRESS_TENSOR)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_SECOND_PK_STRESS_TENSOR)
-                CALL FlagError("Not implemented.",err,error,*999)
+                CALL Field_DimensionSetAndLock(esDerived%derivedField,variableType,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+                CALL Field_VariableLabelSet(esDerived%derivedField,variableType,"Stress",err,error,*999)
+                CALL Field_NumberOfComponentsSetAndLock(esDerived%derivedField,variableType,numberOfTensorComponents,err,error,*999)
               CASE DEFAULT
                 CALL FlagError("The specified derived field type of "//TRIM(NumberToVString(derivedIdx,"*",err,error))// &
                   & " is not supported for a finite elasticity equations set type.",err,error,*999)
@@ -14671,7 +15004,7 @@ CONTAINS
           DO derivedIdx=1,EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES
             variableType=esDerived%variableTypes(derivedIdx)
             IF(variableType/=0) THEN
-              CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL Field_DataTypeCheck(equationsSetSetup%field,variableType,FIELD_DP_TYPE,err,error,*999)
               SELECT CASE(derivedidx)
               CASE(EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR)
                 CALL Field_DimensionCheck(esDerived%derivedField,variableType,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
@@ -14691,7 +15024,8 @@ CONTAINS
               CASE(EQUATIONS_SET_FIRST_PK_STRESS_TENSOR)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_SECOND_PK_STRESS_TENSOR)
-                CALL FlagError("Not implemented.",err,error,*999)
+                CALL Field_DimensionCheck(esDerived%derivedField,variableType,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+                CALL Field_NumberOfComponentsCheck(esDerived%derivedField,variableType,numberOfTensorComponents,err,error,*999)
               CASE DEFAULT
                 CALL FlagError("The specified derived field type of "//TRIM(NumberToVString(derivedIdx,"*",err,error))// &
                   & " is not supported for a finite elasticity equations set type.",err,error,*999)

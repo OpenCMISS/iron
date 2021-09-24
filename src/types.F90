@@ -3635,6 +3635,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(SolverPtrType), ALLOCATABLE :: linkedSolvers(:) !<linkedSolvers(linkedSolverIdx). A pointer to the linked solvers
     TYPE(SolverPtrType), ALLOCATABLE :: linkedSolverTypeMap(:) !<linkedSolverTypeMap(linkedSolverIdx). The map from the available linked solver types to the linked solver types that are defined for the solver. linked_solver_idx varies from 1 to SolverRoutines::SOLVER_NUMBER_OF_SOLVER_TYPES. If the particular linked solver type has not been defined on the solver then the linkedSolverTypeMap will be NULL. \see SolverRoutines_SolverTypes
     LOGICAL :: solverFinished !<Is .TRUE. if the solver has finished being created, .FALSE. if not.
+    LOGICAL :: solverSetup !<Is .TRUE. if the solver has been setup for the first time, .FALSE. if not.
     TYPE(VARYING_STRING) :: label !<A user defined label for the solver.     
     INTEGER(INTG) :: outputType !<The type of output required \see SolverRoutines_OutputTypes,SolverRoutines    
     INTEGER(INTG) :: solveType !<The type of the solver \see SolverRoutines_SolverTypes,SolverRoutines    
@@ -4166,10 +4167,12 @@ END TYPE GeneratedMeshEllipsoidType
   !>Contains information on a fixed iteration control loop
   TYPE ControlLoopFixedType
     TYPE(ControlLoopType), POINTER :: controlLoop
-    INTEGER(INTG) :: iterationNumber
-    INTEGER(INTG) :: startIteration
-    INTEGER(INTG) :: stopIteration
-    INTEGER(INTG) :: iterationIncrement
+    INTEGER(INTG) :: iterationNumber !<The iteration number for this fixed loop progress
+    INTEGER(INTG) :: startIteration !<The start iteration for the fixed loop
+    INTEGER(INTG) :: stopIteration !<The stop iteration for the fixed loop
+    INTEGER(INTG) :: iterationIncrement !<The iteration increment for the fixed loop
+    INTEGER(INTG) :: outputNumber !<The frequency of output
+    INTEGER(INTG) :: inputNumber !<The frequency of input
   END TYPE ControlLoopFixedType
 
   !>Contains information on a time iteration control loop

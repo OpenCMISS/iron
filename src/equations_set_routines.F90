@@ -2536,7 +2536,8 @@ CONTAINS
             CALL DomainElements_ElementDerivativeGet(domainElements,derivativeIdx,nodeIdx,elementNumber,globalDerivativeIndex, &
               & err,error,*999)
             CALL DomainElements_ElementVersionGet(domainElements,derivativeIdx,nodeIdx,elementNumber,version,err,error,*999)
-            CALL FieldVariable_LocalNodeDOFGet(columnVariable,version,derivative,node,componentIdx,localDOF,err,error,*999)
+            CALL FieldVariable_LocalNodeDOFGet(columnVariable,version,globalDerivativeIndex,node,componentIdx,localDOF, &
+              & err,error,*999)
             ! one-sided finite difference
             CALL DistributedVector_ValuesGet(parameters,localDOF,origDepVar,err,error,*999)
             CALL DistributedVector_ValuesSet(parameters,localDOF,origDepVar+delta,err,error,*999)

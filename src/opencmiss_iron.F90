@@ -392,7 +392,7 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_ContextType,cmfe_Context_Finalise,cmfe_Context_Initialise
 
- PUBLIC cmfe_ControlLoopType,cmfe_ControlLoop_Finalise,cmfe_ControlLoop_Initialise,cmfe_ControlLoop_LoadOutputSet
+ PUBLIC cmfe_ControlLoopType,cmfe_ControlLoop_Finalise,cmfe_ControlLoop_Initialise
 
  PUBLIC cmfe_CoordinateSystemType,cmfe_CoordinateSystem_Finalise,cmfe_CoordinateSystem_Initialise
 
@@ -1639,6 +1639,20 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_ControlLoop_ControlLoopGetObj1
  END INTERFACE cmfe_ControlLoop_ControlLoopGet
 
+ !>Sets/changes the input frequency for a fixed control loop.
+ INTERFACE cmfe_ControlLoop_FixedInputSet
+   MODULE PROCEDURE cmfe_ControlLoop_FixedInputSetNumber0
+   MODULE PROCEDURE cmfe_ControlLoop_FixedInputSetNumber1
+   MODULE PROCEDURE cmfe_ControlLoop_FixedInputSetObj
+ END INTERFACE cmfe_ControlLoop_FixedInputSet
+
+ !>Sets/changes the output frequency for a fixed control loop.
+ INTERFACE cmfe_ControlLoop_FixedOutputSet
+   MODULE PROCEDURE cmfe_ControlLoop_FixedOutputSetNumber0
+   MODULE PROCEDURE cmfe_ControlLoop_FixedOutputSetNumber1
+   MODULE PROCEDURE cmfe_ControlLoop_FixedOutputSetObj
+ END INTERFACE cmfe_ControlLoop_FixedOutputSet
+
  !>Sets/changes the iteration parameters for a fixed control loop. \todo need a get metod
  INTERFACE cmfe_ControlLoop_IterationsSet
    MODULE PROCEDURE cmfe_ControlLoop_IterationsSetNumber0
@@ -1786,17 +1800,21 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_ControlLoop_ControlLoopGet
 
+ PUBLIC cmfe_ControlLoop_FixedInputSet,cmfe_ControlLoop_FixedOutputSet
+
  PUBLIC cmfe_ControlLoop_IterationsSet
 
  PUBLIC cmfe_ControlLoop_IterationNumberGet
 
  PUBLIC cmfe_ControlLoop_LabelGet,cmfe_ControlLoop_LabelSet
 
+ PUBLIC cmfe_ControlLoop_LoadOutputSet
+
  PUBLIC cmfe_ControlLoop_MaximumIterationsSet
 
  PUBLIC cmfe_ControlLoop_AbsoluteToleranceGet,cmfe_ControlLoop_AbsoluteToleranceSet
 
- PUBLIC cmfe_ControlLoop_NumberOfIterationsGet, cmfe_ControlLoop_NumberOfIterationsSet
+ PUBLIC cmfe_ControlLoop_NumberOfIterationsGet,cmfe_ControlLoop_NumberOfIterationsSet
  
  PUBLIC cmfe_ControlLoop_NumberOfSubLoopsGet,cmfe_ControlLoop_NumberOfSubLoopsSet
 
@@ -3196,6 +3214,7 @@ MODULE OpenCMISS_Iron
   !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT = EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR !<Green strain tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_DEFORMATION_GROWTH = EQUATIONS_SET_DEFORMATION_GROWTH_TENSOR !<Growth deformation tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_R_CAUCHY_GREEN_DEFORMATION = &
     & EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR !<Right Cauchy-Green deformation field \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_L_CAUCHY_GREEN_DEFORMATION = &
@@ -18698,6 +18717,218 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets/changes the input frequency for a fixed control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_FixedInputSetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier,inputFrequency,err)
+    !DLLEXPORT(cmfe_ControlLoop_FixedInputSetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the input frequency for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
+    INTEGER(INTG), INTENT(IN) :: inputFrequency !<The input frequency modulo to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_FixedInputSetNumber0",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
+    CALL ControlLoop_FixedOutputSet(controlLoop,inputFrequency,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_FixedInputSetNumber0")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_FixedInputSetNumber0",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_FixedInputSetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the input frequency for a fixed control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_FixedInputSetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers,inputFrequency,err)
+    !DLLEXPORT(cmfe_ControlLoop_FixedInputSetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the input frequency for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifier.
+    INTEGER(INTG), INTENT(IN) :: inputFrequency !<The input frequency modulo to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_FixedInputSetNumber1",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
+    CALL ControlLoop_FixedInputSet(controlLoop,inputFrequency,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_FixedInputSetNumber1")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_FixedInputSetNumber1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_FixedInputSetNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the input frequency for a fixed control loop identified by an object.
+  SUBROUTINE cmfe_ControlLoop_FixedInputSetObj(controlLoop,inputFrequency,err)
+    !DLLEXPORT(cmfe_ControlLoop_FixedInputSetObj)
+
+    !Argument variables
+    TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the input frequency for.
+    INTEGER(INTG), INTENT(IN) ::  inputFrequency !<The input frequency modulo to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ControlLoop_FixedInputSetObj",err,error,*999)
+
+    CALL ControlLoop_FixedInputSet(controlLoop%controlLoop,inputFrequency,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_FixedInputSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_FixedInputSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE cmfe_ControlLoop_FixedInputSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output parameters for a fixed control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_FixedOutputSetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier,outputFrequency,err)
+    !DLLEXPORT(cmfe_ControlLoop_FixedOutputSetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the output parameters for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
+    INTEGER(INTG), INTENT(IN) :: outputFrequency !<The output frequency modulo to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_FixedOutputSetNumber0",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
+    CALL ControlLoop_FixedOutputSet(controlLoop,outputFrequency,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_FixedOutputSetNumber0")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_FixedOutputSetNumber0",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_FixedOutputSetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output parameters for a fixed control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_FixedOutputSetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers,outputFrequency,err)
+    !DLLEXPORT(cmfe_ControlLoop_FixedOutputSetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the output parameters for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifier.
+    INTEGER(INTG), INTENT(IN) :: outputFrequency !<The output frequency modulo to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_FixedOutputSetNumber1",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
+    CALL ControlLoop_FixedOutputSet(controlLoop,outputFrequency,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_FixedOutputSetNumber1")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_FixedOutputSetNumber1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_FixedOutputSetNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output parameters for a fixed control loop identified by an object.
+  SUBROUTINE cmfe_ControlLoop_FixedOutputSetObj(controlLoop,outputFrequency,err)
+    !DLLEXPORT(cmfe_ControlLoop_FixedOutputSetObj)
+
+    !Argument variables
+    TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the output parameters for.
+    INTEGER(INTG), INTENT(IN) ::  outputFrequency !<The output frequency modulo to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ControlLoop_FixedOutputSetObj",err,error,*999)
+
+    CALL ControlLoop_FixedOutputSet(controlLoop%controlLoop,outputFrequency,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_FixedOutputSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_FixedOutputSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE cmfe_ControlLoop_FixedOutputSetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Sets/changes the iteration parameters for a fixed control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_IterationsSetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier,startIteration, &
     & stopIteration,iterationIncrement,err)
@@ -20672,15 +20903,15 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the input parameters for a time control loop identified by user numbers.
-  SUBROUTINE cmfe_ControlLoop_TimeInputSetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier,inputOption,err)
+  !>Sets/changes the input frequency for a time control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_TimeInputSetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier,inputFrequency,err)
     !DLLEXPORT(cmfe_ControlLoop_TimeInputSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
-    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the output parameters for.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the input frequency for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
-    INTEGER(INTG), INTENT(IN) :: inputOption !<The input option modulo to set.
+    INTEGER(INTG), INTENT(IN) :: inputFrequency !<The input frequency modulo to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -20698,7 +20929,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL ControlLoop_TimeOutputSet(controlLoop,inputOption,err,error,*999)
+    CALL ControlLoop_TimeInputSet(controlLoop,inputFrequency,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimeInputSetNumber0")
     RETURN
@@ -20712,15 +20943,15 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the input parameters for a time control loop identified by user numbers.
-  SUBROUTINE cmfe_ControlLoop_TimeInputSetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers,inputOption,err)
+  !>Sets/changes the input frequency for a time control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_TimeInputSetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers,inputFrequency,err)
     !DLLEXPORT(cmfe_ControlLoop_TimeInputSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
-    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the output parameters for.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the input frequency for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifier.
-    INTEGER(INTG), INTENT(IN) :: inputOption !<The output frequency modulo to set.
+    INTEGER(INTG), INTENT(IN) :: inputFrequency !<The input frequency modulo to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -20738,7 +20969,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL ControlLoop_TimeOutputSet(controlLoop,inputOption,err,error,*999)
+    CALL ControlLoop_TimeInputSet(controlLoop,inputFrequency,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimeInputSetNumber1")
     RETURN
@@ -20752,19 +20983,19 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the input parameters for a time control loop identified by an object.
-  SUBROUTINE cmfe_ControlLoop_TimeInputSetObj(controlLoop,inputOption,err)
+  !>Sets/changes the input frequency for a time control loop identified by an object.
+  SUBROUTINE cmfe_ControlLoop_TimeInputSetObj(controlLoop,inputFrequency,err)
     !DLLEXPORT(cmfe_ControlLoop_TimeInputSetObj)
 
     !Argument variables
-    TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the output parameters for.
-    INTEGER(INTG), INTENT(IN) ::  inputOption !<The output frequency modulo to set.
+    TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the input frequency for.
+    INTEGER(INTG), INTENT(IN) ::  inputFrequency !<The input frequency modulo to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_ControlLoop_TimeInputSetObj",err,error,*999)
 
-    CALL ControlLoop_TimeInputSet(controlLoop%controlLoop,inputOption,err,error,*999)
+    CALL ControlLoop_TimeInputSet(controlLoop%controlLoop,inputFrequency,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimeInputSetObj")
     RETURN
@@ -20773,7 +21004,6 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_ControlLoop_TimeInputSetObj
-
 
   !
   !================================================================================================================================

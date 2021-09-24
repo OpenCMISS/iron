@@ -46,6 +46,7 @@ MODULE ProblemRoutines
 
   USE BaseRoutines
   USE BioelectricRoutines
+  USE CellMLAccessRoutines
   USE ClassicalFieldRoutines
   USE ComputationAccessRoutines
   USE ContextAccessRoutines
@@ -141,20 +142,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ProblemSetupType) :: PROBLEM_SETUP_INFO
+    TYPE(ProblemSetupType) :: problemSetupInfo
 
     ENTERS("Problem_CellMLEquationsCreateFinish",err,error,*999)
 
     IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
     
     !Initialise the problem setup information
-    CALL Problem_SetupInitialise(PROBLEM_SETUP_INFO,err,error,*999)
-    PROBLEM_SETUP_INFO%setupType=PROBLEM_SETUP_CELLML_EQUATIONS_TYPE
-    PROBLEM_SETUP_INFO%actionType=PROBLEM_SETUP_FINISH_ACTION
+    CALL Problem_SetupInitialise(problemSetupInfo,err,error,*999)
+    problemSetupInfo%setupType=PROBLEM_SETUP_CELLML_EQUATIONS_TYPE
+    problemSetupInfo%actionType=PROBLEM_SETUP_FINISH_ACTION
     !Finish problem specific startup
-    CALL Problem_Setup(problem,PROBLEM_SETUP_INFO,err,error,*999)
+    CALL Problem_Setup(problem,problemSetupInfo,err,error,*999)
     !Finalise the problem setup information
-    CALL Problem_SetupFinalise(PROBLEM_SETUP_INFO,err,error,*999)
+    CALL Problem_SetupFinalise(problemSetupInfo,err,error,*999)
       
     EXITS("Problem_CellMLEquationsCreateFinish")
     RETURN
@@ -175,20 +176,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ProblemSetupType) :: PROBLEM_SETUP_INFO
+    TYPE(ProblemSetupType) :: problemSetupInfo
 
     ENTERS("Problem_CellMLEquationsCreateStart",err,error,*999)
 
     IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
     
     !Initialise the problem setup information
-    CALL Problem_SetupInitialise(PROBLEM_SETUP_INFO,err,error,*999)
-    PROBLEM_SETUP_INFO%setupType=PROBLEM_SETUP_CELLML_EQUATIONS_TYPE
-    PROBLEM_SETUP_INFO%actionType=PROBLEM_SETUP_START_ACTION
+    CALL Problem_SetupInitialise(problemSetupInfo,err,error,*999)
+    problemSetupInfo%setupType=PROBLEM_SETUP_CELLML_EQUATIONS_TYPE
+    problemSetupInfo%actionType=PROBLEM_SETUP_START_ACTION
     !Start the problem specific control setup
-    CALL Problem_Setup(problem,PROBLEM_SETUP_INFO,err,error,*999)
+    CALL Problem_Setup(problem,problemSetupInfo,err,error,*999)
     !Finalise the problem setup information
-    CALL Problem_SetupFinalise(PROBLEM_SETUP_INFO,err,error,*999)
+    CALL Problem_SetupFinalise(problemSetupInfo,err,error,*999)
        
     EXITS("Problem_CellMLEquationsCreateStart")
     RETURN
@@ -209,6 +210,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: timeDependence,solverOutputType
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(SolverType), POINTER :: solver
@@ -220,12 +222,14 @@ CONTAINS
  
     NULLIFY(solver)
     CALL CellMLEquations_SolverGet(cellMLEquations,solver,err,error,*999)
-    IF(solver%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+    CALL Solver_OutputTypeGet(solver,solverOutputType,err,error,*999)
+    IF(solverOutputType>=SOLVER_PROGRESS_OUTPUT) THEN
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"CellML equations solve: ",solver%label,err,error,*999)
     ENDIF
 
-    SELECT CASE(cellMLEquations%timeDependence)
+    CALL CellMLEquations_TimeDependenceTypeGet(cellMLEquations,timeDependence,err,error,*999)
+    SELECT CASE(timeDependence)
     CASE(CELLML_EQUATIONS_STATIC)
       !Do nothing
     CASE(CELLML_EQUATIONS_QUASISTATIC,CELLML_EQUATIONS_DYNAMIC)
@@ -234,8 +238,8 @@ CONTAINS
       CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
       CALL CellMLEquations_TimeSet(cellMLEquations,currentTime,err,error,*999)
     CASE DEFAULT
-      localError="The CellML equations time dependence type of "// &
-        & TRIM(NumberToVString(cellMLEquations%timeDependence,"*",err,error))//" is invalid."
+      localError="The CellML equations time dependence type of "//TRIM(NumberToVString(timeDependence,"*",err,error))// &
+        & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
     
@@ -273,48 +277,45 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: modelsVariable
     
     ENTERS("Problem_SolverDAECellMLRHSEvaluate",err,error,*999)
+
+    NULLIFY(modelsField)
+    CALL CellML_ModelsFieldGet(cellML,modelsField,err,error,*999)
+
+    CALL CellML_MaximumNumberOfStateGet(cellML,maxNumberOfStates,err,error,*999)
+    CALL CellML_MaximumNumberOfIntermediateGet(cellML,maxNumberOfIntermediates,err,error,*999)
+    CALL CellML_MaximumNumberOfParametersGet(cellML,maxNumberOfParameters,err,error,*999)
     
-    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(cellML%modelsField)) CALL FlagError("CellML models field is not associated.",err,error,*999)
-    modelsField=>cellML%modelsField%modelsField
-    IF(.NOT.ASSOCIATED(modelsField)) CALL FlagError("Models field not associated.",err,error,*999)
-   
-    maxNumberOfStates=cellML%maximumNumberOfState
-    maxNumberOfIntermediates=cellML%maximumNumberOfIntermediate
-    maxNumberOfParameters=cellML%maximumNumberOfParameters
     !Make sure CellML fields have been updated to the current value of any mapped fields
     NULLIFY(modelsVariable)
     CALL Field_VariableGet(modelsField,FIELD_U_VARIABLE_TYPE,modelsVariable,err,error,*999)
     CALL Field_DOFOrderTypeGet(modelsField,FIELD_U_VARIABLE_TYPE,dofOrderType,err,error,*999)
     CALL Field_ParameterSetDataGet(modelsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,modelsData,err,error,*999)
     modelIdx=modelsData(dofIdx)
-    model=>cellML%models(modelIdx)%ptr
-    IF(.NOT.ASSOCIATED(model)) CALL FlagError("Model is not associated.",err,error,*999)
+    NULLIFY(model)
+    CALL CellML_CellMLModelGet(cellML,modelIdx,model,err,error,*999)
     IF(dofOrderType==FIELD_SEPARATED_COMPONENT_DOF_ORDER) THEN
-      parameterDataOffset=modelsVariable%totalNumberOfDofs
-      intermediateDataOffset=modelsVariable%totalNumberOfDofs
+      CALL FieldVariable_TotalNumberOfDOFsGet(modelsVariable,parameterDataOffset,err,error,*999)
+      CALL FieldVariable_TotalNumberOfDOFsGet(modelsVariable,intermediateDataOffset,err,error,*999)
     ELSE
       parameterDataOffset=maxNumberOfParameters
       intermediateDataOffset=maxNumberOfIntermediates
     ENDIF
-    NULLIFY(parameterData)
     !Get the parameters information if this environment has any.
-    IF(ASSOCIATED(cellML%parametersField)) THEN
-      parametersField=>cellML%parametersField%parametersField
-      IF(ASSOCIATED(parametersField)) THEN
-        CALL Field_ParameterSetDataGet(parametersField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,parameterData, &
-          & err,error,*999)
-      ENDIF
+    NULLIFY(parametersField)
+    NULLIFY(parameterData)
+    CALL CellML_ParametersFieldExists(cellML,parametersField,err,error,*999)
+    IF(ASSOCIATED(parametersField)) THEN
+      CALL Field_ParameterSetDataGet(parametersField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,parameterData, &
+        & err,error,*999)
     ENDIF
     !Get the intermediate information if this environment has any.
+    NULLIFY(intermediateField)
     NULLIFY(intermediateData)
-    IF(ASSOCIATED(cellML%intermediateField)) THEN
-      intermediateField=>cellml%intermediateField%intermediateField
-      IF(ASSOCIATED(intermediateField)) THEN
-        CALL Field_ParameterSetDataGet(intermediateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,intermediateData, &
-          & err,error,*999)
-      ENDIF
-    ENDIF!associated intermediate
+    CALL CellML_IntermediateFieldExists(cellML,intermediateField,err,error,*999)
+    IF(ASSOCIATED(intermediateField)) THEN
+      CALL Field_ParameterSetDataGet(intermediateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,intermediateData, &
+        & err,error,*999)
+     ENDIF!associated intermediate
     
     !Evaluate the CellML RHS
     CALL Solver_DAECellMLRHSEvaluate(model,time,1,1,stateData,dofIdx,parameterDataOffset,parameterData,dofIdx, &
@@ -339,7 +340,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: iterationIdx,loopIdx,solverIdx
+    INTEGER(INTG) :: controlOutputType,currentIteration,inputFrequency,iterationIdx,iterationIncrement,loopIdx,loopType, &
+      & numberOfSolvers,numberOfSubLoops,outputFrequency,solverIdx,startIteration,stopIteration
     TYPE(ControlLoopType), POINTER :: controlLoop2
     TYPE(ControlLoopFixedType), POINTER :: fixedLoop
     TYPE(ControlLoopSimpleType), POINTER :: simpleLoop
@@ -348,6 +350,7 @@ CONTAINS
     TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop
     TYPE(SolverType), POINTER :: solver
     TYPE(SolversType), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_ControlLoopSolve",err,error,*999)
@@ -355,7 +358,8 @@ CONTAINS
     CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
 
     !Solve this control loop
-    IF(controlLoop%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+    CALL ControlLoop_OutputTypeGet(controlLoop,controlOutputType,err,error,*999)
+    IF(controlOutputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Control loop: ",controlLoop%label,err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Control loop level = ",controlLoop%controlLoopLevel,err,error,*999)
@@ -367,11 +371,13 @@ CONTAINS
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Control loop level = ",controlLoop%controlLoopLevel,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Sub loop index     = ",controlLoop%subLoopIndex,err,error,*999)
     ENDIF
-    SELECT CASE(controlLoop%loopType)
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
+    CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
+    SELECT CASE(loopType)
     CASE(CONTROL_SIMPLE_TYPE)
       NULLIFY(simpleLoop)
       CALL ControlLoop_SimpleLoopGet(controlLoop,simpleLoop,err,error,*999)
-      IF(controlLoop%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+      IF(controlOutputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
         CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Simple control loop: ",err,error,*999)
       ENDIF
@@ -380,11 +386,12 @@ CONTAINS
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Simple control loop: ",err,error,*999)
       ENDIF
       CALL Problem_PreLoop(controlLoop,err,error,*999)
-      IF(controlLoop%numberOfSubLoops==0) THEN
+      IF(numberOfSubLoops==0) THEN
         !If there are no sub loops then solve.
         NULLIFY(solvers)
         CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-        DO solverIdx=1,solvers%numberOfSolvers
+        CALL Solvers_NumberOfSolversGet(solvers,numberOfSolvers,err,error,*999)
+        DO solverIdx=1,numberOfSolvers
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
           
@@ -393,7 +400,7 @@ CONTAINS
         ENDDO !solverIdx
       ELSE
         !If there are sub loops the recursively solve those control loops
-        DO loopIdx=1,controlLoop%numberOfSubLoops
+        DO loopIdx=1,numberOfSubLoops
           NULLIFY(controlLoop2)
           CALL ControlLoop_SubLoopGet(controlLoop,loopIdx,controlLoop2,err,error,*999)
           CALL Problem_ControlLoopSolve(controlLoop2,err,error,*999)
@@ -403,8 +410,10 @@ CONTAINS
     CASE(CONTROL_FIXED_LOOP_TYPE)
       NULLIFY(fixedLoop)
       CALL ControlLoop_FixedLoopGet(controlLoop,fixedLoop,err,error,*999)
-      DO iterationIdx=fixedLoop%startIteration,fixedLoop%stopIteration,fixedLoop%iterationIncrement
-        IF(controlLoop%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+      CALL ControlLoop_CurrentFixedInformationGet(controlLoop,currentIteration,startIteration,stopIteration,iterationIncrement, &
+        & outputFrequency,inputFrequency,err,error,*999)
+      DO iterationIdx=startIteration,stopIteration,iterationIncrement
+        IF(controlOutputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
           CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Fixed control loop iteration: ",iterationIdx,err,error,*999)
         ENDIF
@@ -414,11 +423,12 @@ CONTAINS
         ENDIF
         fixedLoop%iterationNumber=iterationIdx
         CALL Problem_PreLoop(controlLoop,err,error,*999)
-        IF(controlLoop%numberOfSubLoops==0) THEN
+        IF(numberOfSubLoops==0) THEN
           !If there are no sub loops then solve
           NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-          DO solverIdx=1,solvers%numberOfSolvers
+          CALL Solvers_NumberOfSolversGet(solvers,numberOfSolvers,err,error,*999)
+          DO solverIdx=1,numberOfSolvers
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
             
@@ -427,7 +437,7 @@ CONTAINS
           ENDDO !solverIdx
         ELSE
           !If there are sub loops the recursively solve those control loops
-          DO loopIdx=1,controlLoop%numberOfSubLoops
+          DO loopIdx=1,numberOfSubLoops
             NULLIFY(controlLoop2)
             CALL ControlLoop_SubLoopGet(controlLoop,loopIdx,controlLoop2,err,error,*999)
             CALL Problem_ControlLoopSolve(controlLoop2,err,error,*999)
@@ -444,7 +454,8 @@ CONTAINS
       !Precompute the number of iterations from total time span and time increment if it was not specified explicitely 
       IF(timeLoop%numberOfIterations==0) THEN
         timeLoop%numberOfIterations=CEILING((timeLoop%stopTime-timeLoop%startTime)/timeLoop%timeIncrement)
-        !If number of iterations was specified but does not match TIME_INCREMENT, e.g. TIME_INCREMENT is still at the default value, compute correct TIME_INCREMENT
+        !If number of iterations was specified but does not match timeIncrement, e.g. timeIncrement is still at the default
+        !value, compute correct timeIncrement.
       ELSE IF(CEILING((timeLoop%stopTime-timeLoop%startTime)/timeLoop%timeIncrement) /= timeLoop%numberOfIterations) THEN
         timeLoop%timeIncrement = (timeLoop%stopTime-timeLoop%startTime)/timeLoop%numberOfIterations
       ENDIF
@@ -452,7 +463,7 @@ CONTAINS
       timeLoop%iterationNumber=0
       
       DO WHILE(timeLoop%iterationNumber<timeLoop%numberOfIterations)
-        IF(controlLoop%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+        IF(controlOutputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
           CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Time control loop iteration: ",timeLoop%iterationNumber, &
             & err,error,*999)
@@ -474,11 +485,12 @@ CONTAINS
         ENDIF
         !Perform any pre-loop actions.
         CALL Problem_PreLoop(controlLoop,err,error,*999)
-        IF(controlLoop%numberOfSubLoops==0) THEN
+        IF(numberOfSubLoops==0) THEN
           !If there are no sub loops then solve.
           NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-          DO solverIdx=1,solvers%numberOfSolvers
+          CALL Solvers_NumberOfSolversGet(solvers,numberOfSolvers,err,error,*999)
+          DO solverIdx=1,numberOfSolvers
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
             
@@ -487,7 +499,7 @@ CONTAINS
           ENDDO !solverIdx
         ELSE
           !If there are sub loops the recursively solve those control loops
-          DO loopIdx=1,controlLoop%numberOfSubLoops
+          DO loopIdx=1,numberOfSubLoops
             NULLIFY(controlLoop2)
             CALL ControlLoop_SubLoopGet(controlLoop,loopIdx,controlLoop2,err,error,*999)
             CALL Problem_ControlLoopSolve(controlLoop2,err,error,*999)
@@ -507,7 +519,7 @@ CONTAINS
       whileLoop%continueLoop=.TRUE.
       DO WHILE(whileLoop%continueLoop.AND.whileLoop%iterationNumber<whileLoop%maximumNumberOfIterations)
         whileLoop%iterationNumber=whileLoop%iterationNumber+1
-        IF(controlLoop%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+        IF(controlOutputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
           CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"While control loop iteration: ",whileLoop%iterationNumber,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of iterations = ", &
@@ -520,22 +532,24 @@ CONTAINS
             & whileLoop%maximumNumberOfIterations,err,error,*999)
         ENDIF
         CALL Problem_PreLoop(controlLoop,err,error,*999)
-        IF(controlLoop%numberOfSubLoops==0) THEN
+        IF(numberOfSubLoops==0) THEN
           !If there are no sub loops then solve
           NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-          DO solverIdx=1,solvers%numberOfSolvers
+          CALL Solvers_NumberOfSolversGet(solvers,numberOfSolvers,err,error,*999)
+          DO solverIdx=1,numberOfSolvers
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-            IF(ASSOCIATED(solver%solverEquations)) &
-              & CALL Problem_SolverLoadIncrementApply(solver%solverEquations,1,1,err,error,*999)
+            NULLIFY(solverEquations)
+            CALL Solver_SolverEquationsExists(solver,solverEquations,err,error,*999)
+            IF(ASSOCIATED(solverEquations)) CALL Problem_SolverLoadIncrementApply(solverEquations,1,1,err,error,*999)
             
             CALL Problem_SolverSolve(solver,err,error,*999)
             
           ENDDO !solverIdx
         ELSE
           !If there are sub loops the recursively solve those control loops
-          DO loopIdx=1,controlLoop%numberOfSubLoops
+          DO loopIdx=1,numberOfSubLoops
             NULLIFY(controlLoop2)
             CALL ControlLoop_SubLoopGet(controlLoop,loopIdx,controlLoop2,err,error,*999)
             CALL Problem_ControlLoopSolve(controlLoop2,err,error,*999)
@@ -554,7 +568,7 @@ CONTAINS
         !Fixed number of steps
         DO WHILE(loadIncrementLoop%iterationNumber<loadIncrementLoop%maximumNumberOfIterations)
           loadIncrementLoop%iterationNumber=loadIncrementLoop%iterationNumber+1
-          IF(controlLoop%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+          IF(controlOutputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
             CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
             CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Load increment control loop iteration: ", &
               & loadIncrementLoop%iterationNumber,err,error,*999)
@@ -569,16 +583,19 @@ CONTAINS
               & loadIncrementLoop%maximumNumberOfIterations,err,error,*999)
           ENDIF
           CALL Problem_PreLoop(controlLoop,err,error,*999)
-          IF(controlLoop%numberOfSubLoops==0) THEN
+          IF(numberOfSubLoops==0) THEN
             !If there are no sub loops then solve
             NULLIFY(solvers)
             CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-            DO solverIdx=1,solvers%numberOfSolvers
+            CALL Solvers_NumberOfSolversGet(solvers,numberOfSolvers,err,error,*999)
+            DO solverIdx=1,numberOfSolvers
               NULLIFY(solver)
               CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-              !Apply incremented boundary conditions here => 
-              IF(ASSOCIATED(solver%solverEquations)) &
-                & CALL Problem_SolverLoadIncrementApply(solver%solverEquations,loadIncrementLoop%iterationNumber, &
+              !Apply incremented boundary conditions here =>
+              NULLIFY(solverEquations)
+              CALL Solver_SolverEquationsExists(solver,solverEquations,err,error,*999)
+              IF(ASSOCIATED(solverEquations)) &
+                & CALL Problem_SolverLoadIncrementApply(solverEquations,loadIncrementLoop%iterationNumber, &
                 & loadIncrementLoop%maximumNumberOfIterations,err,error,*999)
               
               CALL Problem_SolverSolve(solver,err,error,*999)
@@ -586,7 +603,7 @@ CONTAINS
             ENDDO !solverIdx
           ELSE
             !If there are sub loops the recursively solve those control loops
-            DO loopIdx=1,controlLoop%numberOfSubLoops
+            DO loopIdx=1,numberOfSubLoops
               NULLIFY(controlLoop2)
               CALL ControlLoop_SubLoopGet(controlLoop,loopIdx,controlLoop2,err,error,*999)
               CALL Problem_ControlLoopSolve(controlLoop2,err,error,*999)
@@ -596,8 +613,7 @@ CONTAINS
         ENDDO !while loop
       ENDIF
     CASE DEFAULT
-      localError="The control loop loop type of "//TRIM(NumberToVString(controlLoop%loopType,"*",err,error))// &
-        & " is invalid."
+      localError="The control loop loop type of "//TRIM(NumberToVString(loopType,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
        
@@ -607,6 +623,64 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Problem_ControlLoopSolve
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets up the solvers in a problem control loop
+  RECURSIVE SUBROUTINE Problem_ControlLoopSolversSetup(controlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to setup the solvers for.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: iterationIdx,loopIdx,numberOfSolvers,numberOfSubLoops,solverIdx
+    TYPE(ControlLoopType), POINTER :: controlLoop2
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Problem_ControlLoopSolversSetup",err,error,*999)
+
+    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
+
+    !Solve this control loop
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Control loop: ",controlLoop%label,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Control loop level = ",controlLoop%controlLoopLevel,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Sub loop index     = ",controlLoop%subLoopIndex,err,error,*999)
+    ENDIF
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
+    IF(numberOfSubLoops==0) THEN
+      !If there are no sub loops then setup the solvers.
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+      CALL Solvers_NumberOfSolversGet(solvers,numberOfSolvers,err,error,*999)
+      DO solverIdx=1,numberOfSolvers
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
+        
+        CALL Problem_SolverSetup(solver,err,error,*999)
+        
+      ENDDO !solverIdx
+    ELSE
+      !If there are sub loops then recursively setup the solvers in those control loops
+      DO loopIdx=1,numberOfSubLoops
+        NULLIFY(controlLoop2)
+        CALL ControlLoop_SubLoopGet(controlLoop,loopIdx,controlLoop2,err,error,*999)
+        CALL Problem_ControlLoopSolversSetup(controlLoop2,err,error,*999)
+      ENDDO !loopIdx
+    ENDIF
+       
+    EXITS("Problem_ControlLoopSolversSetup")
+    RETURN
+999 ERRORSEXITS("Problem_ControlLoopSolversSetup",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Problem_ControlLoopSolversSetup
 
   !
   !================================================================================================================================
@@ -1202,9 +1276,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,solverMatrixIdx
+    INTEGER(INTG) :: equationsLinearity,equationsSetIdx,interfaceConditionIdx,linkingSolveType,nonlinearSolveType,numberOfEquationsSets,numberOfInterfaceConditions,numberOfMatrices,outputType,solverMatrixIdx
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(NewtonSolverType), POINTER :: newtonSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
     TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
@@ -1215,9 +1290,6 @@ CONTAINS
     TYPE(SolverMatrixType), POINTER :: solverMatrix    
     TYPE(VARYING_STRING) :: localError
     
-    NULLIFY(cellMLSolver)
-    NULLIFY(linkingSolver)
-
     ENTERS("Problem_SolverResidualEvaluate",err,error,*999)
 
     CALL Solver_AssertIsFinished(solver,err,error,*999)
@@ -1227,53 +1299,67 @@ CONTAINS
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-    
-    IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) THEN
+    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+    CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+
+    CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
+    IF(outputType>=SOLVER_MATRIX_OUTPUT) THEN
       NULLIFY(solverMatrices)
       CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver vector values:",err,error,*999)
-      DO solverMatrixIdx=1,solverMatrices%numberOfMatrices
+      CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+      DO solverMatrixIdx=1,numberOfMatrices
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver matrix : ",solverMatrixIdx,err,error,*999)
         CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,solverMatrix%solverVector,err,error,*999)
       ENDDO !solverMatrixIdx
     ENDIF
-    !Check if the nonlinear solver is linked to a dynamic solver 
-    linkingSolver=>solver%linkingSolver
+    !Check if the nonlinear solver is linked to a dynamic solver
+    NULLIFY(linkingSolver)
+    CALL Solver_LinkingSolverExists(solver,linkingSolver,err,error,*999)
     IF(ASSOCIATED(linkingSolver)) THEN
-      IF(linkingSolver%solveType/=SOLVER_DYNAMIC_TYPE) &
+      CALL Solver_SolverTypeGet(linkingSolver,linkingSolveType,err,error,*999)
+      IF(linkingSolveType/=SOLVER_DYNAMIC_TYPE) &
         & CALL FlagError("Solver equations linking solver mapping is not dynamic.",err,error,*999)
       !Update the field values from the dynamic factor*current solver values AND add in predicted displacements
       CALL Solver_VariablesDynamicNonlinearUpdate(solver,err,error,*999)
       !Caculate the strain field for an CellML evaluator solver
       CALL Problem_PreResidualEvaluate(solver,err,error,*999)
+      !Evaluate residual
+      IF(outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver residual evaluate: ",solver%label,err,error,*999)
+      ENDIF
       !check for a linked CellML solver
       NULLIFY(nonlinearSolver)
       CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
-      SELECT CASE(nonlinearSolver%nonlinearSolveType)
+      NULLIFY(cellMLSolver)
+      CALL SolverNonlinear_SolverTypeGet(nonlinearSolver,nonlinearSolveType,err,error,*999)
+      SELECT CASE(nonlinearSolveType)
       CASE(SOLVER_NONLINEAR_NEWTON)
         NULLIFY(newtonSolver)
         CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
-        cellMLSolver=>newtonSolver%cellMLEvaluatorSolver
+        CALL SolverNonlinearNewton_LinkedCellMLSolverExists(newtonSolver,cellMLSolver,err,error,*999)
       CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
         NULLIFY(quasiNewtonSolver)
         CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*999)
-        cellMLSolver=>quasiNewtonSolver%cellMLEvaluatorSolver
+        CALL SolverNonlinearQuasiNewton_LinkedCellMLSolverExists(quasiNewtonSolver,cellMLSolver,err,error,*999)
       CASE DEFAULT
         localError="Linked CellML solver is not implemented for nonlinear solver type " &
-          & //TRIM(NumberToVString(nonlinearSolver%nonlinearSolveType,"*",err,error))//"."
+          & //TRIM(NumberToVString(nonlinearSolveType,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       IF(ASSOCIATED(cellMLSolver)) CALL Solver_Solve(cellMLSolver,err,error,*999)
       !Calculate the residual for each element (M, C, K and g)
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+      DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(equations)
         CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-        SELECT CASE(equations%linearity)
+        CALL Equations_LinearityTypeGet(equations,equationsLinearity,err,error,*999)
+        SELECT CASE(equationsLinearity)
         CASE(EQUATIONS_LINEAR)
           !Assemble the equations for linear equations
           CALL EquationsSet_Assemble(equationsSet,err,error,*999)
@@ -1281,7 +1367,8 @@ CONTAINS
           !Evaluate the residual for nonlinear equations
           CALL EquationsSet_ResidualEvaluate(equationsSet,err,error,*999)
         CASE DEFAULT
-          localError="The equations linearity of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+          localError="The equations linearity of "//TRIM(NumberToVString(equationsLinearity,"*",err,error))// &
+            & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ENDDO !equationsSetIdx
@@ -1293,31 +1380,39 @@ CONTAINS
       CALL Solver_VariablesFieldUpdate(solver,err,error,*999)
       !Caculate the strain field for an CellML evaluator solver
       CALL Problem_PreResidualEvaluate(solver,err,error,*999)
+      !Evaluate residual
+      IF(outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver residual evaluate: ",solver%label,err,error,*999)
+      ENDIF
       !check for a linked CellML solver
       NULLIFY(nonlinearSolver)
       CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
-      SELECT CASE(nonlinearSolver%nonlinearSolveType)
+      NULLIFY(cellMLSolver)
+      CALL SolverNonlinear_SolverTypeGet(nonlinearSolver,nonlinearSolveType,err,error,*999)
+      SELECT CASE(nonlinearSolveType)
       CASE(SOLVER_NONLINEAR_NEWTON)
         NULLIFY(newtonSolver)
         CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
-        cellMLSolver=>newtonSolver%cellMLEvaluatorSolver
+        CALL SolverNonlinearNewton_LinkedCellMLSolverExists(newtonSolver,cellMLSolver,err,error,*999)
       CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
         NULLIFY(quasiNewtonSolver)
         CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*999)
-        cellMLSolver=>quasiNewtonSolver%cellMLEvaluatorSolver
+        CALL SolverNonlinearQuasiNewton_LinkedCellMLSolverExists(quasiNewtonSolver,cellMLSolver,err,error,*999)
       CASE DEFAULT
         localError="Linked CellML solver is not implemented for nonlinear solver type " &
-          & //TRIM(NumberToVString(nonlinearSolver%nonlinearSolveType,"*",err,error))//"."
+          & //TRIM(NumberToVString(nonlinearSolveType,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       IF(ASSOCIATED(cellMLSolver)) CALL Solver_Solve(cellMLSolver,err,error,*999)
       !Make sure the equations sets are up to date
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+      DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(equations)
         CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-        SELECT CASE(equations%linearity)
+        CALL Equations_LinearityTypeGet(equations,equationsLinearity,err,error,*999)
+        SELECT CASE(equationsLinearity)
         CASE(EQUATIONS_LINEAR)
           !Assemble the equations for linear equations
           CALL EquationsSet_Assemble(equationsSet,err,error,*999)
@@ -1325,18 +1420,20 @@ CONTAINS
           !Evaluate the residual for nonlinear equations
           CALL EquationsSet_ResidualEvaluate(equationsSet,err,error,*999)
         CASE DEFAULT
-          localError="The equations linearity of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+          localError="The equations linearity of "//TRIM(NumberToVString(equationsLinearity,"*",err,error))// &
+            & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ENDDO !equationsSetIdx
-      !Note that the linear interface matrices are not required to be updated since these matrices do not change
       !Update interface matrices
-      !DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
-      !  interfaceCondition=>solverMapping%interfaceConditions(interfaceConditionIdx)%ptr
-      !  !Assemble the interface condition for the Jacobian LHS
-      !  CALL WriteString(GENERAL_OUTPUT_TYPE,"********************Residual evaluation******************",err,error,*999)
-      !  CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
-      !ENDDO
+      DO interfaceConditionIdx=1,numberOfInterfaceConditions
+        NULLIFY(interfaceCondition)
+        CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition, &
+          & err,error,*999)
+        interfaceCondition=>solverMapping%interfaceConditions(interfaceConditionIdx)%ptr
+        !Assemble the interface condition for the Jacobian LHS
+        CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
+      ENDDO !interfaceConditionIdx
       !Assemble the solver matrices
       CALL Solver_StaticAssemble(solver,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
     END IF
@@ -1674,6 +1771,7 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Problem_ControlLoopRootGet(problem,controlLoop,err,error,*999)
     CALL ControlLoop_FieldVariablesCalculate(controlLoop,err,error,*999)
+    CALL Problem_ControlLoopSolversSetup(controlLoop,err,error,*999)
     CALL Problem_ControlLoopSolve(controlLoop,err,error,*999)
        
     EXITS("Problem_Solve")
@@ -2308,19 +2406,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx
+    INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx,numberOfEquationsSets,numberOfInterfaceConditions
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverMappingType), POINTER :: solverMapping
     
-#ifdef TAUPROF
-    CHARACTER(12) :: CVAR
-    INTEGER :: PHASE(2) = [ 0, 0 ]
-    SAVE PHASE
-#endif
-
     ENTERS("Problem_SolverEquationsStaticLinearSolve",err,error,*999)
     
     IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
@@ -2330,51 +2422,31 @@ CONTAINS
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     !Make sure the equations sets are up to date
-    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-#ifdef TAUPROF
-      WRITE (CVAR,'(a8,i2)') 'Assemble',equationsSetIdx
-      CALL TAU_PHASE_CREATE_DYNAMIC(PHASE,CVAR)
-      CALL TAU_PHASE_START(PHASE)
-#endif
+    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+    DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !CALL EQUATIONS_SET_FIXED_CONDITIONS_APPLY(equationsSet,err,error,*999)
       !Assemble the equations for linear problems
       CALL EquationsSet_Assemble(equationsSet,err,error,*999)
-#ifdef TAUPROF
-      CALL TAU_PHASE_STOP(PHASE)
-#endif
     ENDDO !equationsSetIdx
     !Make sure the interface matrices are up to date
-    DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
-#ifdef TAUPROF
-      WRITE (CVAR,'(a8,i2)') 'Interface',interfaceConditionIdx
-      CALL TAU_PHASE_CREATE_DYNAMIC(PHASE,CVAR)
-      CALL TAU_PHASE_START(PHASE)
-#endif
+    CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+    DO interfaceConditionIdx=1,numberOfInterfaceConditions
       NULLIFY(interfaceCondition)
       CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
       CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
-#ifdef TAUPROF
-      CALL TAU_PHASE_STOP(PHASE)
-#endif
     ENDDO !interfaceConditionIdx
 
     !Solve
     CALL Solver_Solve(solver,err,error,*999)
 
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_START('EquationsSet_Backsubstitute()')
-#endif
     !Back-substitute to find flux values for linear problems
-    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-      NULLIFY(equations)
-      CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    DO equationsSetIdx=1,numberOfEquationsSets
+      NULLIFY(equationsSet)
+      CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%boundaryConditions,err,error,*999)
     ENDDO !equationsSetIdx
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP('EquationsSet_Backsubstitute()')
-#endif
     
     EXITS("Problem_SolverEquationsStaticLinearSolve")
     RETURN
@@ -2449,6 +2521,156 @@ CONTAINS
   !
 
 
+  !>Sets up a solver for a problem.
+  SUBROUTINE Problem_SolverSetup(solver,err,error,*)
+
+   !Argument variables
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to setup
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: equationsLinearity,equationsSetIdx,inputIterationNumber,interfaceConditionIdx,iterationNumber, &
+      & numberOfEquationsSets,numberOfInterfaceConditions,outputIterationNumber,solverDegree,solverEquationsLinearity, &
+      & solverEquationsTimeDependence,solverOrder,solveType
+    REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
+    LOGICAL :: initSolver,nonlinear,setup,setupFinished,solverInitialised
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(DistributedVectorType), POINTER :: solverVector
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Problem_SolverSetup",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+
+    CALL Solver_SolverSetupGet(solver,setupFinished,err,error,*999)
+    IF(.NOT.setupFinished) THEN
+      !Setup the solver
+      CALL Solver_SolverTypeGet(solver,solveType,err,error,*999)
+      SELECT CASE(solveType)
+      CASE(SOLVER_LINEAR_TYPE)
+        !Do nothing
+      CASE(SOLVER_NONLINEAR_TYPE)
+        !Do nothing
+      CASE(SOLVER_DYNAMIC_TYPE)
+        NULLIFY(dynamicSolver)
+        CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
+        CALL SolverDynamic_DegreeGet(dynamicSolver,solverDegree,err,error,*999)
+        CALL SolverDynamic_OrderGet(dynamicSolver,solverOrder,err,error,*999)
+        CALL SolverDynamic_SolverInitialisedGet(dynamicSolver,solverInitialised,err,error,*999)
+        !Get the solver equations linearity and time dependence.
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+        CALL SolverEquations_LinearityTypeGet(solverEquations,solverEquationsLinearity,err,error,*999)
+        CALL SolverEquations_TimeDependenceTypeGet(solverEquations,solverEquationsTimeDependence,err,error,*999)
+        initSolver=(.NOT.dynamicSolver%solverInitialised.AND. &
+          & ((dynamicSolver%order==SOLVER_DYNAMIC_FIRST_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE).OR. &
+          & (dynamicSolver%order==SOLVER_DYNAMIC_SECOND_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE)))
+        nonlinear=(solverEquationsLinearity==SOLVER_EQUATIONS_NONLINEAR)
+        setup=(initSolver.OR.nonlinear)
+        IF(setup) THEN
+          !Need to setup solvers as we have a residual to evaluate at the start time or the dynamic solver needs initialisation
+          !Find the start time
+          NULLIFY(controlLoop)
+          CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+          CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,startTime,stopTime,timeIncrement,iterationNumber, &
+            & outputIterationNumber,inputIterationNumber,err,error,*999)
+          CALL Solver_DynamicTimesSet(solver,startTime,timeIncrement,err,error,*999)
+          !Get solver matrices
+          NULLIFY(solverMatrices)
+          CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+          NULLIFY(solverMatrix)
+          CALL SolverMatrices_SolverMatrixGet(solverMatrices,1,solverMatrix,err,error,*999)
+          NULLIFY(solverVector)
+          CALL SolverMatrix_SolverDistributedVectorGet(solverMatrix,solverVector,err,error,*999)
+          !Nullify the solver vector so that alpha is zero.
+          CALL DistributedVector_AllValuesSet(solverVector,0.0_DP,err,error,*999)
+          !Get the solver mapping
+          NULLIFY(solverMapping)
+          CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+          CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+          !Loop over the equations sets
+          DO equationsSetIdx=1,numberOfEquationsSets
+            NULLIFY(equationsSet)
+            CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+            !Set the equations set times
+            CALL EquationsSet_TimesSet(equationsSet,startTime,timeIncrement,err,error,*999)
+            NULLIFY(equations)
+            CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+            CALL Equations_LinearityTypeGet(equations,equationsLinearity,err,error,*999)
+            SELECT CASE(equationsLinearity)
+            CASE(EQUATIONS_LINEAR)
+              !Assemble the equations for linear equations
+              CALL EquationsSet_Assemble(equationsSet,err,error,*999)
+            CASE(EQUATIONS_NONLINEAR)
+              !Evaluate the residual for nonlinear equations
+              CALL EquationsSet_ResidualEvaluate(equationsSet,err,error,*999)
+            CASE DEFAULT
+              localError="The equations linearity of "//TRIM(NumberToVString(equationsLinearity,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ENDDO !equationsSetIdx
+          CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+          DO interfaceConditionIdx=1,numberOfInterfaceConditions
+            NULLIFY(interfaceCondition)
+            CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
+            CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
+          ENDDO !interfaceConditionIdx
+          IF(initSolver) THEN
+            !Solve for the initial velocity/acceleration
+            CALL Solver_Solve(solver,err,error,*999)
+            !Back-substitute to find flux values for linear problems
+            NULLIFY(boundaryConditions)
+            CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
+            DO equationsSetIdx=1,numberOfEquationsSets
+              NULLIFY(equationsSet)
+              CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+              CALL EquationsSet_Backsubstitute(equationsSet,boundaryConditions,err,error,*999)
+            ENDDO !equationsSetIdx
+          ENDIF !init solver
+        ENDIF !setup  
+      CASE(SOLVER_DAE_TYPE)
+        !Do nothing
+      CASE(SOLVER_EIGENPROBLEM_TYPE)
+        !Do nothing
+      CASE(SOLVER_OPTIMISER_TYPE)
+        !Do nothing
+      CASE(SOLVER_CELLML_EVALUATOR_TYPE)
+        !Do nothing
+      CASE(SOLVER_STATE_ITERATION_TYPE)
+        !Do nothing
+      CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
+        !Do nothing
+      CASE DEFAULT
+        localError="The solver type of "//TRIM(NumberToVString(solveType,"*",err,error))// &
+          & " is invalid or not implemented."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      !Finish the setup
+      CALL Solver_SolverSetupSet(solver,.TRUE.,err,error,*999)      
+    ENDIF
+     
+    EXITS("Problem_SolverSetup")
+    RETURN
+999 ERRORSEXITS("Problem_SolverSetup",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Problem_SolverSetup
+
+  !
+  !================================================================================================================================
+  !
+
+
   !>Solves a solver for a problem.
   SUBROUTINE Problem_SolverSolve(solver,err,error,*)
 
@@ -2467,19 +2689,9 @@ CONTAINS
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver: ",solver%label,err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solver index = ",solver%globalNumber,err,error,*999)
     ENDIF
-      
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_START('Pre solve')
-#endif
-      
+           
     CALL Problem_SolverPreSolve(solver,err,error,*999)
-      
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP('Pre solve')
-    
-    CALL TAU_STATIC_PHASE_START('Solve')
-#endif
-    
+          
     IF(ASSOCIATED(solver%solverEquations)) THEN
       !A solver with solver equations.
       CALL Problem_SolverEquationsSolve(solver%solverEquations,err,error,*999)
@@ -2488,7 +2700,7 @@ CONTAINS
       IF(ASSOCIATED(solver%cellMLEquations)) THEN
         !A solver with CellML equations.
         CALL Problem_CellMLEquationsSolve(solver%cellMLEquations,err,error,*999)
-      ELSEIF(solver%solveType==SOLVER_GEOMETRIC_TRANSFORMATION_TYPE) THEN
+      ELSE IF(solver%solveType==SOLVER_GEOMETRIC_TRANSFORMATION_TYPE) THEN
         CALL Problem_SolverGeometricTransformationSolve(solver%geometricTransformationSolver,err,error,*999)
       ELSE
         !Do nothing now. 
@@ -2496,18 +2708,8 @@ CONTAINS
       ENDIF
     ENDIF
 
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP('Solve')
-      
-    CALL TAU_STATIC_PHASE_START('Post solve')
-#endif
-    
     CALL Problem_SolverPostSolve(solver,err,error,*999)
-    
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP('Post solve')
-#endif
-      
+         
     EXITS("Problem_SolverSolve")
     RETURN
 999 ERRORSEXITS("Problem_SolverSolve",err,error)
