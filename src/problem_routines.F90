@@ -332,6 +332,40 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets up a problem control loop
+  SUBROUTINE Problem_RootControlLoopSetup(rootControlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER :: rootControlLoop !<A pointer to the root control loop to setup.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Problem_RootControlLoopSetup",err,error,*999)
+
+    CALL ControlLoop_AssertIsFinished(rootControlLoop,err,error,*999)
+    CALL ControlLoop_AssertIsRootLoop(rootControlLoop,err,error,*999)
+
+    !Setup any variables involved in the control loop (and any subloops)   
+    CALL ControlLoop_FieldVariablesCalculate(rootControlLoop,err,error,*999)
+    
+    !Setup the times of any time control loops.
+    CALL ControlLoop_TimesSetup(rootControlLoop,0.0_DP,err,error,*999)
+    
+    !Initialise any solvers in the control loop
+    CALL Problem_ControlLoopSolversSetup(rootControlLoop,err,error,*999)
+       
+    EXITS("Problem_RootControlLoopSetup")
+    RETURN
+999 ERRORSEXITS("Problem_RootControlLoopSetup",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Problem_RootControlLoopSetup
+
+  !
+  !================================================================================================================================
+  !
+
   !>Solves a problem control loop.
   RECURSIVE SUBROUTINE Problem_ControlLoopSolve(controlLoop,err,error,*)
 
@@ -446,10 +480,9 @@ CONTAINS
         CALL Problem_PostLoop(controlLoop,err,error,*999)
       ENDDO !iterationIdx
     CASE(CONTROL_TIME_LOOP_TYPE)
+      !Get the time loop
       NULLIFY(timeLoop)
       CALL ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*999)
-      !Set the current time to be the start time. Solvers should use the first time step to do any initialisation.
-      timeLoop%currentTime=timeLoop%startTime
       
       !Precompute the number of iterations from total time span and time increment if it was not specified explicitely 
       IF(timeLoop%numberOfIterations==0) THEN
@@ -460,9 +493,16 @@ CONTAINS
         timeLoop%timeIncrement = (timeLoop%stopTime-timeLoop%startTime)/timeLoop%numberOfIterations
       ENDIF
       
+      !Initialise the current time and iteration number. Solvers have been initialised in Problem_ControlLoopSolversSetup for the
+      !start time.
+      CALL ControlLoop_CurrentTimeSetup(controlLoop,err,error,*999)
       timeLoop%iterationNumber=0
       
       DO WHILE(timeLoop%iterationNumber<timeLoop%numberOfIterations)
+        !Increment loop counter and time
+        timeLoop%iterationNumber=timeLoop%iterationNumber+1
+        timeLoop%globalIterationNumber=timeLoop%globalIterationNumber+1
+        timeLoop%currentTime=timeLoop%currentTime+timeLoop%timeIncrement
         IF(controlOutputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
           CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Time control loop iteration: ",timeLoop%iterationNumber, &
@@ -507,10 +547,6 @@ CONTAINS
         ENDIF
         !Perform any post loop actions.
         CALL Problem_PostLoop(controlLoop,err,error,*999)
-        !Increment loop counter and time
-        timeLoop%iterationNumber=timeLoop%iterationNumber+1
-        timeLoop%globalIterationNumber=timeLoop%globalIterationNumber+1
-        timeLoop%currentTime=timeLoop%currentTime+timeLoop%timeIncrement
       ENDDO !time loop
     CASE(CONTROL_WHILE_LOOP_TYPE)
       NULLIFY(whileLoop)
@@ -558,6 +594,7 @@ CONTAINS
         CALL Problem_PostLoop(controlLoop,err,error,*999)
       ENDDO !while loop
     CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+!!TODO: Should probably do something like the time loops for nested load increment loops and any upstream increment.
       NULLIFY(loadIncrementLoop)
       CALL ControlLoop_LoadIncrementLoopGet(controlLoop,loadIncrementLoop,err,error,*999)
       loadIncrementLoop%iterationNumber=0
@@ -1762,17 +1799,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ControlLoopType), POINTER :: rootControlLoop
     
     ENTERS("Problem_Solve",err,error,*999)
 
     CALL Problem_AssertIsFinished(problem,err,error,*999)
 
-    NULLIFY(controlLoop)
-    CALL Problem_ControlLoopRootGet(problem,controlLoop,err,error,*999)
-    CALL ControlLoop_FieldVariablesCalculate(controlLoop,err,error,*999)
-    CALL Problem_ControlLoopSolversSetup(controlLoop,err,error,*999)
-    CALL Problem_ControlLoopSolve(controlLoop,err,error,*999)
+    NULLIFY(rootControlLoop)
+    CALL Problem_ControlLoopRootGet(problem,rootControlLoop,err,error,*999)
+    CALL Problem_RootControlLoopSetup(rootControlLoop,err,error,*999)
+    CALL Problem_ControlLoopSolve(rootControlLoop,err,error,*999)
        
     EXITS("Problem_Solve")
     RETURN
@@ -2145,10 +2181,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx
+    INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx,numberOfEquationsSets,numberOfInterfaceConditions
     REAL(DP) :: currentTime,timeIncrement
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverMappingType), POINTER :: solverMapping
     
@@ -2165,7 +2203,8 @@ CONTAINS
     !Get current control loop times
     CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
     !Make sure the equations sets are up to date
-    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+    DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Set the equations set times
@@ -2173,15 +2212,24 @@ CONTAINS
       !Assemble the equations for linear problems
       CALL EquationsSet_Assemble(equationsSet,err,error,*999)
     ENDDO !equationsSetIdx
+    !Make sure the interface matrices are up to date
+    CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+    DO interfaceConditionIdx=1,numberOfInterfaceConditions
+      NULLIFY(interfaceCondition)
+      CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
+      CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
+    ENDDO !interfaceConditionIdx
     !Set the solver time
     CALL Solver_DynamicTimesSet(solver,currentTime,timeIncrement,err,error,*999)
     !Solve for the next time i.e., current time + time increment
     CALL Solver_Solve(solver,err,error,*999)
-    !Back-substitute to find flux values for linear problems
-    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+    !Back-substitute to find flux values
+    NULLIFY(boundaryConditions)
+    CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
+    DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%boundaryConditions,err,error,*999)
+      CALL EquationsSet_Backsubstitute(equationsSet,boundaryConditions,err,error,*999)
     ENDDO !equationsSetIdx
    
     EXITS("Problem_SolverEquationsDynamicLinearSolve")
@@ -2203,14 +2251,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx
+    INTEGER(INTG) :: equationsLinearity,equationsSetIdx,interfaceConditionIdx,numberOfEquationsSets,numberOfInterfaceConditions
     REAL(DP) :: currentTime,timeIncrement
+    LOGICAL :: restart,initialised
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SolverType), POINTER :: solver
-    TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
     
@@ -2222,22 +2272,26 @@ CONTAINS
     CALL SolverEquations_SolverGet(solverEquations,solver,err,error,*999)
     NULLIFY(dynamicSolver)
     CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
+    CALL SolverDynamic_RestartGet(dynamicSolver,restart,err,error,*999)
+    CALL SolverDynamic_SolverInitialisedGet(dynamicSolver,initialised,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     !Get current control loop times
     CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
-    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+    DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Set the equations set times
       CALL EquationsSet_TimesSet(equationsSet,currentTime,timeIncrement,err,error,*999)
-      IF(dynamicSolver%restart.OR..NOT.dynamicSolver%solverInitialised) THEN
+      IF(restart.OR..NOT.initialised) THEN
         !If we need to restart or we haven't initialised yet, make sure the equations sets are up to date
         NULLIFY(equations)
         CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-        SELECT CASE(equations%linearity)
+        CALL Equations_LinearityTypeGet(equations,equationsLinearity,err,error,*999)
+        SELECT CASE(equationsLinearity)
         CASE(EQUATIONS_LINEAR)
           !Assemble the equations
           CALL EquationsSet_Assemble(equationsSet,err,error,*999)
@@ -2248,13 +2302,14 @@ CONTAINS
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
           localError="The equations linearity type of "// &
-            & TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+            & TRIM(NumberToVString(equationsLinearity,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ENDIF
     ENDDO !equationsSetIdx
     !Make sure the interface matrices are up to date
-    DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+    CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+    DO interfaceConditionIdx=1,numberOfInterfaceConditions
       NULLIFY(interfaceCondition)
       CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
       CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
@@ -2263,6 +2318,14 @@ CONTAINS
     CALL Solver_DynamicTimesSet(solver,currentTime,timeIncrement,err,error,*999)
     !Solve for the next time i.e., current time + time increment
     CALL Solver_Solve(solver,err,error,*999)
+    !Back-substitute to find flux values
+    NULLIFY(boundaryConditions)
+    CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
+    DO equationsSetIdx=1,numberOfEquationsSets
+      NULLIFY(equationsSet)
+      CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+      CALL EquationsSet_Backsubstitute(equationsSet,boundaryConditions,err,error,*999)
+    ENDDO !equationsSetIdx
     
     EXITS("Problem_SolverEquationsDynamicNonlinearSolve")
     RETURN
@@ -2284,16 +2347,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx
+    INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx,numberOfEquationsSets,numberOfInterfaceConditions
     REAL(DP) :: currentTime,timeIncrement
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverMappingType), POINTER :: solverMapping
      
     ENTERS("Problem_SolverEquationsQuasistaticLinearSolve",err,error,*999)
-    
+
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
+#endif    
     
     NULLIFY(solver)
     CALL SolverEquations_SolverGet(solverEquations,solver,err,error,*999)
@@ -2304,7 +2371,8 @@ CONTAINS
     !Get current control loop times
     CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
     !Make sure the equations sets are up to date
-    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+    DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Set the current times
@@ -2313,13 +2381,22 @@ CONTAINS
       !Assemble the equations for linear problems
       CALL EquationsSet_Assemble(equationsSet,err,error,*999)
     ENDDO !equationsSetIdx
+    !Make sure the interface matrices are up to date
+    CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+    DO interfaceConditionIdx=1,numberOfInterfaceConditions
+      NULLIFY(interfaceCondition)
+      CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
+      CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
+    ENDDO !interfaceConditionIdx
     !Solve for the current time
     CALL Solver_Solve(solver,err,error,*999)
-    !Back-substitute to find flux values for linear problems
-    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+    !Back-substitute to find flux values
+    NULLIFY(boundaryConditions)
+    CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
+    DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%boundaryConditions,err,error,*999)
+      CALL EquationsSet_Backsubstitute(equationsSet,boundaryConditions,err,error,*999)
     ENDDO !equationsSetIdx
    
     EXITS("Problem_SolverEquationsQuasistaticLinearSolve")
@@ -2342,19 +2419,22 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,numberOfEquationsSets
+    INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx,numberOfEquationsSets,numberOfInterfaceConditions
     REAL(DP) :: currentTime,timeIncrement
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
    
     ENTERS("Problem_SolverEquationsQuasistaticNonlinearSolve",err,error,*999)
-    
+
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
+#endif    
     
     NULLIFY(solver)
     CALL SolverEquations_SolverGet(solverEquations,solver,err,error,*999)
@@ -2365,7 +2445,8 @@ CONTAINS
     !Get current control loop times
     CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
     !Make sure the equations sets are up to date
-    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+    DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Set the equations set times
@@ -2374,12 +2455,18 @@ CONTAINS
       !Assemble the equations for linear problems
       CALL EquationsSet_Assemble(equationsSet,err,error,*999)
     ENDDO !equationsSetIdx
+    !Make sure the interface matrices are up to date
+    CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+    DO interfaceConditionIdx=1,numberOfInterfaceConditions
+      NULLIFY(interfaceCondition)
+      CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
+      CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
+    ENDDO !interfaceConditionIdx
     !Solve for the next time i.e., current time + time increment
     CALL Solver_Solve(solver,err,error,*999)
     !Update the field variables with residuals or backsubstitute 
     NULLIFY(boundaryConditions)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
     DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -2407,6 +2494,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx,numberOfEquationsSets,numberOfInterfaceConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
@@ -2414,8 +2502,10 @@ CONTAINS
     TYPE(SolverMappingType), POINTER :: solverMapping
     
     ENTERS("Problem_SolverEquationsStaticLinearSolve",err,error,*999)
-    
+
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
+#endif    
     
     NULLIFY(solver)
     CALL SolverEquations_SolverGet(solverEquations,solver,err,error,*999)
@@ -2437,15 +2527,15 @@ CONTAINS
       CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
       CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
     ENDDO !interfaceConditionIdx
-
     !Solve
     CALL Solver_Solve(solver,err,error,*999)
-
     !Back-substitute to find flux values for linear problems
+    NULLIFY(boundaryConditions)
+    CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
     DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%boundaryConditions,err,error,*999)
+      CALL EquationsSet_Backsubstitute(equationsSet,boundaryConditions,err,error,*999)
     ENDDO !equationsSetIdx
     
     EXITS("Problem_SolverEquationsStaticLinearSolve")
@@ -2477,15 +2567,18 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_SolverEquationsStaticNonlinearSolve",err,error,*999)
-    
+
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
+#endif
     
     NULLIFY(solver)
     CALL SolverEquations_SolverGet(solverEquations,solver,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     !Apply boundary conditition
-    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+    DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Assemble the equations set
@@ -2502,7 +2595,6 @@ CONTAINS
     !Update the rhs field variables with residuals or backsubstitute
     NULLIFY(boundaryConditions)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
     DO equationsSetIdx=1,numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
@@ -2534,7 +2626,6 @@ CONTAINS
       & solverEquationsTimeDependence,solverOrder,solveType
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     LOGICAL :: initSolver,nonlinear,setup,setupFinished,solverInitialised
-    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DistributedVectorType), POINTER :: solverVector
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
@@ -2548,9 +2639,11 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_SolverSetup",err,error,*999)
-    
-    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+#endif
+    
     CALL Solver_SolverSetupGet(solver,setupFinished,err,error,*999)
     IF(.NOT.setupFinished) THEN
       !Setup the solver
@@ -2566,14 +2659,16 @@ CONTAINS
         CALL SolverDynamic_DegreeGet(dynamicSolver,solverDegree,err,error,*999)
         CALL SolverDynamic_OrderGet(dynamicSolver,solverOrder,err,error,*999)
         CALL SolverDynamic_SolverInitialisedGet(dynamicSolver,solverInitialised,err,error,*999)
+        CALL SolverDynamic_DegreeGet(dynamicSolver,solverDegree,err,error,*999)
+        CALL SolverDynamic_OrderGet(dynamicSolver,solverOrder,err,error,*999)
         !Get the solver equations linearity and time dependence.
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         CALL SolverEquations_LinearityTypeGet(solverEquations,solverEquationsLinearity,err,error,*999)
         CALL SolverEquations_TimeDependenceTypeGet(solverEquations,solverEquationsTimeDependence,err,error,*999)
-        initSolver=(.NOT.dynamicSolver%solverInitialised.AND. &
-          & ((dynamicSolver%order==SOLVER_DYNAMIC_FIRST_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE).OR. &
-          & (dynamicSolver%order==SOLVER_DYNAMIC_SECOND_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE)))
+        initSolver=(.NOT.solverInitialised.AND. &
+          & ((solverOrder==SOLVER_DYNAMIC_FIRST_ORDER.AND.solverDegree>SOLVER_DYNAMIC_FIRST_DEGREE).OR. &
+          & (solverOrder==SOLVER_DYNAMIC_SECOND_ORDER.AND.solverDegree>SOLVER_DYNAMIC_SECOND_DEGREE)))
         nonlinear=(solverEquationsLinearity==SOLVER_EQUATIONS_NONLINEAR)
         setup=(initSolver.OR.nonlinear)
         IF(setup) THEN
@@ -2593,50 +2688,8 @@ CONTAINS
           CALL SolverMatrix_SolverDistributedVectorGet(solverMatrix,solverVector,err,error,*999)
           !Nullify the solver vector so that alpha is zero.
           CALL DistributedVector_AllValuesSet(solverVector,0.0_DP,err,error,*999)
-          !Get the solver mapping
-          NULLIFY(solverMapping)
-          CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-          CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
-          !Loop over the equations sets
-          DO equationsSetIdx=1,numberOfEquationsSets
-            NULLIFY(equationsSet)
-            CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-            !Set the equations set times
-            CALL EquationsSet_TimesSet(equationsSet,startTime,timeIncrement,err,error,*999)
-            NULLIFY(equations)
-            CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-            CALL Equations_LinearityTypeGet(equations,equationsLinearity,err,error,*999)
-            SELECT CASE(equationsLinearity)
-            CASE(EQUATIONS_LINEAR)
-              !Assemble the equations for linear equations
-              CALL EquationsSet_Assemble(equationsSet,err,error,*999)
-            CASE(EQUATIONS_NONLINEAR)
-              !Evaluate the residual for nonlinear equations
-              CALL EquationsSet_ResidualEvaluate(equationsSet,err,error,*999)
-            CASE DEFAULT
-              localError="The equations linearity of "//TRIM(NumberToVString(equationsLinearity,"*",err,error))// &
-                & " is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          ENDDO !equationsSetIdx
-          CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
-          DO interfaceConditionIdx=1,numberOfInterfaceConditions
-            NULLIFY(interfaceCondition)
-            CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
-            CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
-          ENDDO !interfaceConditionIdx
-          IF(initSolver) THEN
-            !Solve for the initial velocity/acceleration
-            CALL Solver_Solve(solver,err,error,*999)
-            !Back-substitute to find flux values for linear problems
-            NULLIFY(boundaryConditions)
-            CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-            DO equationsSetIdx=1,numberOfEquationsSets
-              NULLIFY(equationsSet)
-              CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-              CALL EquationsSet_Backsubstitute(equationsSet,boundaryConditions,err,error,*999)
-            ENDDO !equationsSetIdx
-          ENDIF !init solver
+          !Solve the solver equations
+          CALL Problem_SolverEquationsSolve(solverEquations,err,error,*999)
         ENDIF !setup  
       CASE(SOLVER_DAE_TYPE)
         !Do nothing

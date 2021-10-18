@@ -910,7 +910,7 @@ CONTAINS
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
     INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions
-    REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
+    REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor7
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
     LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
     REAL(DP), INTENT(OUT) :: FBar(:,:) !<On return, the modified deformation gradient tensor
@@ -1388,7 +1388,7 @@ CONTAINS
 
   !>Evaluates the deviatoric Cauchy stress tensor.
   SUBROUTINE FiniteElasticity_SpatialStressDevTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,haveHydrostaticPressure,FBar,CBar,BBar,EBarV,SBarDevV,sigmaBarV,sigmaDevV,err,error,*)
+    & F,J,haveHydrostaticPressure,FBar,C,CBar,B,BBar,EV,EBarV,SBarV,SDevV,sigmaBarV,sigmaDevV,err,error,*)
     
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -1398,10 +1398,14 @@ CONTAINS
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
     LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not.
     REAL(DP), INTENT(OUT) :: FBar(:,:) !<On return, the modified deformation gradient tensor
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On return, the right Cauchy Green deformation tensor
     REAL(DP), INTENT(OUT) :: CBar(:,:) !<On return, the modified right Cauchy Green deformation tensor
+    REAL(DP), INTENT(OUT) :: B(:,:) !<On return, the left Cauchy Green deformation tensor
     REAL(DP), INTENT(OUT) :: BBar(:,:) !<On return, the modified left Cauchy Green deformation tensor
+    REAL(DP), INTENT(OUT) :: EV(:) !<On return, the Cauchy Green strain tensor in Voigt form.
     REAL(DP), INTENT(OUT) :: EBarV(:) !<On return, the modified Cauchy Green strain tensor in Voigt form.
-    REAL(DP), INTENT(OUT) :: SBarDevV(:) !<On return, the modified deviatoric second Piola Kirchoff stress tensor in Voight form.
+    REAL(DP), INTENT(OUT) :: SBarV(:) !<On return, the modified (pseudo) second Piola-Kirchoff stress tensor in Voigt form.
+    REAL(DP), INTENT(OUT) :: SDevV(:) !<On return, the deviatoric second Piola-Kirchoff stress tensor in Voigt form.
     REAL(DP), INTENT(OUT) :: sigmaBarV(:) !<On return, the modified (pseudo) Cauchy stress tensor in Voigt form
     REAL(DP), INTENT(OUT) :: sigmaDevV(:) !<On return, the deviatoric Cauchy stress tensor in Voight form
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -1417,12 +1421,14 @@ CONTAINS
     !Calculate the modified (pseudo) second Piola-Kirchoff stress tensor
     CALL FiniteElasticity_MaterialStressDevTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
       & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,FBar(1:numberOfDimensions,1:numberOfDimensions), &
-      & CBar(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions), &
-      & EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),SBarDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+      & C(1:numberOfDimensions,1:numberOfDimensions),CBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & B(1:numberOfDimensions,1:numberOfDimensions), BBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & EV(1:NUMBER_OF_VOIGT(numberOfDimensions)),EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & SBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),SDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
     !Push the modified (pseudo) second Piola-Kirchoff stress tensor forward to give the modified (pseudo) Cauchy stress tensor
     CALL FiniteElasticity_PushStressTensorForward(numberOfDimensions,FBar(1:numberOfDimensions,1:numberOfDimensions),J, &
-      & SBarDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),sigmaBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+      & SBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),sigmaBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
     !Calculate the deviatoric Cauchy stress tensor
     IF(haveHydrostaticPressure) THEN
@@ -1520,15 +1526,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: BBar(3,3),CBar(3,3),EBarV(6),FBar(3,3),SBarDevV(6),sigmaBarV(6),sigmaDevV(6),sigmaSphV(6)
+    REAL(DP) :: B(3,3),BBar(3,3),C(3,3),CBar(3,3),EV(6),EBarV(6),FBar(3,3),SBarV(6),SDevV(6),sigmaBarV(6),sigmaDevV(6),sigmaSphV(6)
 
     ENTERS("FiniteElasticity_SpatialStressTensorsCalculate",err,error,*999)
 
     !Calculate the deviatoric Cauchy stress tensor    
     CALL FiniteElasticity_SpatialStressDevTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
       & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,FBar(1:numberOfDimensions,1:numberOfDimensions), &
-      & CBar(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions), &
-      & EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),SBarDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & C(1:numberOfDimensions,1:numberOfDimensions),CBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & B(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & EV(1:NUMBER_OF_VOIGT(numberOfDimensions)),EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & SBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),SDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
       & sigmaBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),sigmaDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
     
     !Calculate the spherical Cauchy stress tensor
@@ -1682,8 +1690,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: BBar(3,3),CBar(3,3),ce1V(6,6),ce2V(6,6),EBarV(6),FBar(3,3),m(6,6),materialCBarV(6,6),SBarV(6), &
-      & sigmaBarV(6),spatialCBarV(6,6),traceSigmaBar
+    REAL(DP) :: B(3,3),BBar(3,3),C(3,3),CBar(3,3),ce1V(6,6),ce2V(6,6),EV(6),EBarV(6),FBar(3,3),m(6,6),materialCBarV(6,6),SBarV(6), &
+      & SDevV(6),sigmaBarV(6),spatialCBarV(6,6),traceSigmaBar
     REAL(DP), POINTER :: materialParameters(:) !Parameters for constitutive laws
     TYPE(VARYING_STRING) :: localError
 
@@ -1697,8 +1705,10 @@ CONTAINS
 
     CALL FiniteElasticity_SpatialStressDevTensorsCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
       & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,FBar(1:numberOfDimensions,1:numberOfDimensions), &
-      & CBar(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions), &
-      & EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),SBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & C(1:numberOfDimensions,1:numberOfDimensions),CBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & B(1:numberOfDimensions,1:numberOfDimensions),BBar(1:numberOfDimensions,1:numberOfDimensions), &
+      & EV(1:NUMBER_OF_VOIGT(numberOfDimensions)),EBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & SBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),SDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
       & sigmaBarV(1:NUMBER_OF_VOIGT(numberOfDimensions)),sigmaDevV(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
     traceSigmaBar=SUM(sigmaBarV(1:numberOfDimensions))
@@ -8007,8 +8017,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local variables
     INTEGER(INTG) :: componentIdx,columnComponentIdx,esSpecification(3),fieldInterpolation,rowComponentIdx
-    REAL(DP) :: BBar(3,3),cauchyStressTensor(3,3),CBar(3,3),Ebar(3,3),EbarV(6),F(3,3),Fbar(3,3),Fe(3,3),Fg(3,3),J,Je,Jg,p, &
-      & SBarV(6),sigmaV(6)
+    REAL(DP) :: B(3,3),BBar(3,3),cauchyStressTensor(3,3),C(3,3),CBar(3,3),E(3,3),Ebar(3,3),EbarV(6),EV(6),F(3,3), &
+      & Fbar(3,3),Fe(3,3),Fg(3,3),J,Je,Jg,p,SBarV(6),sigmaV(6)
     LOGICAL :: haveHydrostaticPressure
     TYPE(FieldInterpolatedPointType), POINTER :: darcyInterpPoint
     TYPE(VARYING_STRING) :: localError
@@ -8045,7 +8055,7 @@ CONTAINS
       & EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR, &
       & EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR)
       CALL FiniteElasticity_MaterialDeformationTensorsCalculate(equationsSet,numberOfDimensions,Fe,Jg,haveHydrostaticPressure, &
-        & Fbar,Cbar,BBar,EbarV,err,error,*999)
+        & Fbar,C,Cbar,B,BBar,EV,EbarV,err,error,*999)
     CASE(EQUATIONS_SET_FIRST_PK_STRESS_TENSOR)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_SECOND_PK_STRESS_TENSOR)

@@ -117,6 +117,12 @@ MODULE ControlLoopAccessRoutines
     MODULE PROCEDURE ControlLoop_Get1
   END INTERFACE ControlLoop_Get
 
+  !>Returns the label for a control loop 
+  INTERFACE ControlLoop_LabelGet
+    MODULE PROCEDURE ControlLoop_LabelGetC
+    MODULE PROCEDURE ControlLoop_LabelGetVS
+  END INTERFACE ControlLoop_LabelGet
+  
   PUBLIC CONTROL_LOOP_NODE
 
   PUBLIC CONTROL_SIMPLE_TYPE,CONTROL_FIXED_LOOP_TYPE,CONTROL_TIME_LOOP_TYPE,CONTROL_WHILE_LOOP_TYPE, &
@@ -138,6 +144,8 @@ MODULE ControlLoopAccessRoutines
   PUBLIC ControlLoop_AssertIsLoadIncrementLoop
 
   PUBLIC ControlLoop_AssertIsSimpleLoop
+
+  PUBLIC ControlLoop_AssertIsRootLoop,ControlLoop_AssertNotRootLoop
 
   PUBLIC ControlLoop_AssertIsTimeLoop
 
@@ -162,6 +170,8 @@ MODULE ControlLoopAccessRoutines
   PUBLIC ControlLoop_FixedLoopGet
 
   PUBLIC ControlLoop_IterationNumberGet
+
+  PUBLIC ControlLoop_LabelGet
 
   PUBLIC ControlLoop_LoadIncrementLoopGet
 
@@ -368,6 +378,64 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_AssertIsSimpleLoop
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a control loop is a root control loop
+  SUBROUTINE ControlLoop_AssertIsRootLoop(controlLoop,err,error,*)
+
+    !Argument Variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to assert the root loop for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_AssertIsRootLoop",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
+
+    IF(ASSOCIATED(controlLoop%parentLoop)) &
+      & CALL FlagError("The specified control loop is not a root control loop.",err,error,*999)
+          
+    EXITS("ControlLoop_AssertIsRootLoop")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AssertIsRootLoop",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_AssertIsRootLoop
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a control loop is not a root control loop
+  SUBROUTINE ControlLoop_AssertNotRootLoop(controlLoop,err,error,*)
+
+    !Argument Variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to assert the root loop for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_AssertNotRootLoop",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
+
+    IF(.NOT.ASSOCIATED(controlLoop%parentLoop)) &
+      & CALL FlagError("The specified control loop is a root control loop.",err,error,*999)
+    
+    EXITS("ControlLoop_AssertNotRootLoop")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AssertNotRootLoop",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_AssertNotRootLoop
 
   !
   !================================================================================================================================
@@ -734,7 +802,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the current loop information for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used.
+  !>Gets the current loop information for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS::Iron::cmfe_ControlLoop_TimesGet
   SUBROUTINE ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
     & outputIteration,inputIteration,err,error,*)
     
@@ -886,6 +954,71 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_FixedLoopGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the label of a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_LabelGet
+  SUBROUTINE ControlLoop_LabelGetC(controlLoop,label,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to get the label for
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the control loop label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: cLength,vsLength
+
+    ENTERS("ControlLoop_LabelGetC",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
+    
+    cLength=LEN(label)
+    vsLength=LEN_TRIM(controlLoop%label)
+    IF(cLength>vsLength) THEN
+      label=CHAR(controlLoop%label,vsLength)
+    ELSE
+      label=CHAR(controlLoop%label,cLength)
+    ENDIF
+    
+    EXITS("ControlLoop_LabelGetC")
+    RETURN
+999 ERRORSEXITS("ControlLoop_LabelGetC",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_LabelGetC
+
+   !
+  !================================================================================================================================
+  !
+
+  !>Returns the label of a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_LabelGet
+  SUBROUTINE ControlLoop_LabelGetVS(controlLoop,label,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to get the label for
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the control loop label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("ControlLoop_LabelGetVS",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
+    
+    label=VAR_STR(CHAR(controlLoop%label))
+     
+    EXITS("ControlLoop_LabelGetVS")
+    RETURN
+999 ERRORSEXITS("ControlLoop_LabelGetVS",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_LabelGetVS
 
   !
   !================================================================================================================================

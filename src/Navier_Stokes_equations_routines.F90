@@ -5022,19 +5022,23 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnMeshComponent, &
-      & columnXiIdx,componentIdx,coordinateIdx,derivativeIdx,elementVersionNumber,esSpecification(3),firstNode,gaussPointIdx, &
-      & lastNode,maxColumnElementDOFIdx,minColumnElementDOFIdx,maxRowElementDOFIdx,minRowElementDOFIdx,nodeNumber,nodeIdx, &
-      & numberOfColumnElementParameters,numberOfDimensions,numberOfElements,numberOfElementNodes,numberOfGauss,numberOfParameters, &
-      & numberOfResidualComponents,numberOfRowsComponents,numberOfRowElementParameters,numberOfVersions,numberOfXi, &
-      & residualVariableType,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowMeshComponent,rowXiIdx,rowsVariableType, &
-      & versionIdx,xiIdx
-    REAL(DP) :: aDeriv,a0Deriv,a0Param,alpha,area,AUpwind,aValue,beta,columnPhi,dColumnPhidXi(3),dRowPhidXi(3),dXidX(3,3), &
-      & eDeriv,eParam,g0Param,gaussWeight,hDeriv,hParam,jacobian,jacobianGaussWeight,kappa,Lref,mass,momentum,Mref,muParam, &
-      & muScale,normal,normalWave,pExternal,pressure,qDeriv,QUpwind,qValue,rhoParam,rowPhi,sum,Tref,uDeriv(3,3),uValue(3), &
-      & wValue(3),x(3)
-    LOGICAL :: firstAssemblyRHS,firstAssemblyStiffness,update,updateDamping,updateLinear,updateMatrices,updateResidual, &
-      & updateRHS,updateStiffness
-    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,independentBasis,rowBasis
+      & columnXiIdx,componentIdx,coordinateIdx,dependentInterpPartialOrder,derivativeIdx,dimensionIdx,dimensionIdx1, &
+      & dimensionIdx2,elementVersionNumber,esSpecification(3),firstNode,gaussPointIdx,lastNode,maxColumnElementDOFIdx, &
+      & minColumnElementDOFIdx,maxRowElementDOFIdx,minRowElementDOFIdx,nodeNumber,nodeIdx, &
+      & numberOfColumnElementParameters(4),numberOfDimensions,numberOfElements,numberOfElementNodes,numberOfGauss, &
+      & numberOfParameters,numberOfResidualComponents,numberOfRowsComponents,numberOfRowElementParameters(4),numberOfVersions, &
+      & numberOfXi,pressureComponent,residualVariableType,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx, &
+      & rowMeshComponent,rowXiIdx,rowsVariableType,stabilisationType,velocityInterpolationOrder(4),versionIdx,xiIdx,xiIdx1,xiIdx2
+    REAL(DP) :: aDeriv,a0Deriv,a0Param,alpha,area,AUpwind,aValue,beta,C1,columnPhi,crossStress,currentTime,dColumnPhidXi(3), &
+      & deltaTime,doubleDotG,dPhidX(3),dPhidXi,dRowPhidXi(3),dXidX(3,3),eDeriv,elementInverse,eParam,g0Param,gaussWeight, &
+      & hDeriv,hParam,jacobian,jacobianGaussWeight,kappa,Lref,LSIC,mass,meshVelocity(3),momentum,momentumTerm,Mref,muParam, &
+      & muScale,normal,normalWave,nuLSIC,pExternal,pressure,pressureDeriv(3),PSPG,qDeriv,QUpwind,qValue,residualContinuity, &
+      & residualMomentum(3),reynoldsStress,rhoParam,rowPhi,stabilisationValueDP,sum,sum2,SUPG,tauC,tauMp,tauMu,tauSUPS,traceG, &
+      & Tref,uDotGu,velocityDeriv(3,3),velocity2Deriv(3,3,3),velocity(3),velocityPrevious(3),x(3)
+    LOGICAL :: ALE,firstAssemblyDamping,firstAssemblyRHS,firstAssemblyStiffness,linearElement,RBSStabilisation,RBVMStabilisation, &
+      & stabilisation,static,update,updateDamping,updateLinear,updateMatrices,updateResidual,updateRHS,updateStiffness
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis,independentBasis
+    TYPE(BasisPtrType) :: columnBasis(4),rowBasis(4)
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition,independentDecomposition
     TYPE(DecompositionElementsType), POINTER :: dependentDecompositionElements
@@ -5063,15 +5067,16 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix,dampingMatrix,jacobianMatrix
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField,independentField
+    TYPE(FieldType), POINTER :: dependentField,equationsSetField,geometricField,materialsField,independentField
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,dependentInterpPoint,independentInterpPoint, &
-      & uMaterialsInterpPoint,vMaterialsInterpPoint
+      & prevDependentInterpPoint,uMaterialsInterpPoint,vMaterialsInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
     TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters,dependentInterpParameters, &
-      & independentInterpParameters,uMaterialsInterpParameters,vMaterialsInterpParameters
+      & independentInterpParameters,prevDependentInterpParameters,uMaterialsInterpParameters,vMaterialsInterpParameters
     TYPE(FieldVariableType), POINTER :: geometricVariable,residualVariable,rowsVariable,uDependentVariable, &
-      & uIndependentVariable,uMaterialsVariable,vMaterialsVariable
-    TYPE(QuadratureSchemeType), POINTER :: columnQuadratureScheme,dependentQuadratureScheme,quadratureScheme,rowQuadratureScheme
+      & u1EquationsVariable,uIndependentVariable,uMaterialsVariable,vEquationsVariable,vMaterialsVariable
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,quadratureScheme
+    TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(4),rowQuadratureScheme(4)
     TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
 
@@ -5143,10 +5148,17 @@ CONTAINS
 
     IF(update) THEN
 
-      uValue=0.0_DP
-      uDeriv=0.0_DP
       dXidX=0.0_DP
-    
+      IF(updateResidual) THEN
+        velocity=0.0_DP
+        velocityDeriv=0.0_DP
+        velocity2Deriv=0.0_DP
+        pressure=0.0_DP
+        pressureDeriv=0.0_DP
+      ENDIF
+
+      CALL EquationsSet_TimesGet(equationsSet,currentTime,deltaTime,err,error,*999)
+            
       !Set general and specific pointers
       NULLIFY(region)
       CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
@@ -5168,7 +5180,7 @@ CONTAINS
       NULLIFY(residualVariable)
       CALL EquationsMappingResidual_VariableGet(residualMapping,1,residualVariable,err,error,*999)
       CALL FieldVariable_VariableTypeGet(residualVariable,residualVariableType,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(residualVariable,numberOfResidualComponents,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(residualVariable,numberOfResidualComponents,err,error,*999)      
       
       NULLIFY(dependentField)
       CALL EquationsInterpolation_DependentFieldGet(equationsInterpolation,dependentField,err,error,*999)
@@ -5182,6 +5194,36 @@ CONTAINS
       CALL EquationsInterpolation_MaterialsFieldGet(equationsInterpolation,materialsField,err,error,*999)
       NULLIFY(uMaterialsVariable)
       CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,uMaterialsVariable,err,error,*999)
+
+      pressureComponent=numberOfDimensions+1
+
+      stabilisation=.FALSE.
+      RBSStabilisation=.FALSE.
+      RBVMStabilisation=.FALSE.
+      NULLIFY(equationsSetField)
+      NULLIFY(u1EquationsVariable)
+      NULLIFY(vEquationsVariable)
+      IF((esSpecification(3)==EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE).OR. &
+        & (esSpecification(3)==EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE).OR. &
+        & (esSpecification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE).OR. &
+        & (esSpecification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE).OR. &
+        & (esSpecification(3)==EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE)) THEN
+        CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
+        CALL Field_VariableGet(equationsSetField,FIELD_U1_VARIABLE_TYPE,u1EquationsVariable,err,error,*999)
+        CALL Field_VariableGet(equationsSetField,FIELD_V_VARIABLE_TYPE,vEquationsVariable,err,error,*999)        
+        !Get stabilisation type (0 for none, 1 for RBS, 2 for RBVM)
+        CALL FieldVariable_ParameterSetGetConstant(u1EquationsVariable,FIELD_VALUES_SET_TYPE,4,stabilisationValueDP, &
+          & err,error,*999)
+        stabilisationType=NINT(stabilisationValueDP)
+        stabilisation=(stabilisationType>0)
+        RBSStabilisation=(stabilisationType==1)
+        RBVMStabilisation=(stabilisationType==2)
+        !User specified or previously calculated C1
+        CALL FieldVariable_ParameterSetGetLocalElement(vEquationsVariable,FIELD_VALUES_SET_TYPE,elementNumber,10,elementInverse, &
+          & err,error,*999)
+        IF(.NOT.static.AND.(deltaTime<ZERO_TOLERANCE)) &
+          & CALL FlagError("Please set the equations set field time increment to a value > 0.0.",err,error,*999)
+      ENDIF
       
       NULLIFY(geometricDecomposition)
       CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
@@ -5194,7 +5236,7 @@ CONTAINS
       NULLIFY(geometricBasis)
       CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
-      
+
       NULLIFY(dependentDecomposition)
       CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
       NULLIFY(dependentDomain)
@@ -5210,55 +5252,33 @@ CONTAINS
       NULLIFY(dependentQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
       CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
-      
+ 
+      ALE=.FALSE.
+      static=.FALSE.
       NULLIFY(jacobianMatrix)
       SELECT CASE(esSpecification(3))
       CASE(EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE, &
         & EQUATIONS_SET_QUASISTATIC_NAVIER_STOKES_SUBTYPE)
-        NULLIFY(linearMatrices)
-        CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
         NULLIFY(linearMapping)
         CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
-        NULLIFY(stiffnessMatrix)
-        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)
-        CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)
         CALL EquationsMatrix_FirstAssemblyGet(stiffnessMatrix,firstAssemblyStiffness,err,error,*999)
+        static=.TRUE.
       CASE(EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE)
-        NULLIFY(linearMatrices)
-        CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
         NULLIFY(linearMapping)
         CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
-        NULLIFY(stiffnessMatrix)
-        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)
-        CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)
         CALL EquationsMatrix_FirstAssemblyGet(stiffnessMatrix,firstAssemblyStiffness,err,error,*999)
+        static=.TRUE.
       CASE(EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE)
-        NULLIFY(dynamicMatrices)
-        CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
         NULLIFY(dynamicMapping)
         CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
-        NULLIFY(stiffnessMatrix)
-        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffnessMatrix,err,error,*999)
-        CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)
         CALL EquationsMatrix_FirstAssemblyGet(stiffnessMatrix,firstAssemblyStiffness,err,error,*999)
-        NULLIFY(dampingMatrix)
-        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,2,dampingMatrix,err,error,*999)
-        CALL EquationsMatrix_UpdateMatrixGet(dampingMatrix,updateDamping,err,error,*999)
+        CALL EquationsMatrix_FirstAssemblyGet(dampingMatrix,firstAssemblyDamping,err,error,*999)
       CASE(EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
         & EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE)
-        NULLIFY(dynamicMatrices)
-        CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
         NULLIFY(dynamicMapping)
         CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
-        NULLIFY(dynamicMatrices)
-        CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
-        NULLIFY(stiffnessMatrix)
-        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffnessMatrix,err,error,*999)
-        CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)
         CALL EquationsMatrix_FirstAssemblyGet(stiffnessMatrix,firstAssemblyStiffness,err,error,*999)
-        NULLIFY(dampingMatrix)
-        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,2,dampingMatrix,err,error,*999)
-        CALL EquationsMatrix_UpdateMatrixGet(dampingMatrix,updateDamping,err,error,*999)
+        CALL EquationsMatrix_FirstAssemblyGet(dampingMatrix,firstAssemblyDamping,err,error,*999)
         NULLIFY(independentField)
         CALL EquationsInterpolation_IndependentFieldGet(equationsInterpolation,independentField,err,error,*999)
         NULLIFY(uIndependentVariable)
@@ -5273,19 +5293,10 @@ CONTAINS
       CASE(EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
         & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
         & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE)
-        NULLIFY(dynamicMatrices)
-        CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
         NULLIFY(dynamicMapping)
         CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
-        NULLIFY(dynamicMatrices)
-        CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
-        NULLIFY(stiffnessMatrix)
-        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffnessMatrix,err,error,*999)
-        CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)
         CALL EquationsMatrix_FirstAssemblyGet(stiffnessMatrix,firstAssemblyStiffness,err,error,*999)
-        NULLIFY(dampingMatrix)
-        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,2,dampingMatrix,err,error,*999)
-        CALL EquationsMatrix_UpdateMatrixGet(dampingMatrix,updateDamping,err,error,*999)
+        CALL EquationsMatrix_FirstAssemblyGet(dampingMatrix,firstAssemblyDamping,err,error,*999)
       CASE(EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE, &
         & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)
         NULLIFY(independentField)
@@ -5300,17 +5311,10 @@ CONTAINS
         CALL DomainTopology_DomainElementsGet(independentDomainTopology,independentDomainElements,err,error,*999)
         NULLIFY(independentBasis)
         CALL DomainElements_ElementBasisGet(independentDomainElements,elementNumber,independentBasis,err,error,*999)
-        NULLIFY(dynamicMatrices)
-        CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
         NULLIFY(dynamicMapping)
         CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
-        NULLIFY(stiffnessMatrix)
-        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffnessMatrix,err,error,*999)
-        CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)
         CALL EquationsMatrix_FirstAssemblyGet(stiffnessMatrix,firstAssemblyStiffness,err,error,*999)
-        NULLIFY(dampingMatrix)
-        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,2,dampingMatrix,err,error,*999)
-        CALL EquationsMatrix_UpdateMatrixGet(dampingMatrix,updateDamping,err,error,*999)
+        CALL EquationsMatrix_FirstAssemblyGet(dampingMatrix,firstAssemblyDamping,err,error,*999)
         NULLIFY(independentInterpParameters)
         CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
           & independentInterpParameters,err,error,*999)
@@ -5319,6 +5323,7 @@ CONTAINS
           & err,error,*999)        
         CALL Field_InterpolationParametersElementGet(FIELD_MESH_VELOCITY_SET_TYPE,elementNumber,independentInterpParameters, &
           & err,error,*999)
+        ALE=.TRUE.
       CASE DEFAULT
         localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
           & " is not valid for a Navier-Stokes fluid type of a fluid mechanics equations set class."
@@ -5331,6 +5336,14 @@ CONTAINS
       NULLIFY(dependentInterpPoint)
       CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,dependentInterpPoint, &
         & err,error,*999)
+      NULLIFY(prevDependentInterpParameters)
+      NULLIFY(prevDependentInterpPoint)
+      IF(stabilisation.AND..NOT.static) THEN
+        CALL EquationsInterpolation_PreviousDependentParametersGet(equationsInterpolation,residualVariableType, &
+          & prevDependentInterpParameters,err,error,*999)
+        CALL EquationsInterpolation_PreviousDependentPointGet(equationsInterpolation,residualVariableType, &
+          & prevDependentInterpPoint,err,error,*999)         
+      ENDIF
       
       NULLIFY(geometricInterpParameters)
       CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,geometricInterpParameters, &
@@ -5362,11 +5375,82 @@ CONTAINS
         CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
       ENDIF
       
+      DO rowComponentIdx=1,numberOfRowsComponents
+        CALL FieldVariable_ComponentMeshComponentGet(rowsVariable,rowComponentIdx,rowMeshComponent,err,error,*999)
+        NULLIFY(rowDomain)
+        CALL Decomposition_DomainGet(dependentDecomposition,rowMeshComponent,rowDomain,err,error,*999)
+        NULLIFY(rowDomainTopology)
+        CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
+        NULLIFY(rowDomainElements)
+        CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
+        NULLIFY(rowBasis(rowComponentIdx)%ptr)
+        CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis(rowComponentIdx)%ptr,err,error,*999)
+        CALL Basis_NumberOfElementParametersGet(rowBasis(rowComponentIdx)%ptr,numberOfRowElementParameters(rowComponentIdx), &
+          & err,error,*999)
+        NULLIFY(rowQuadratureScheme(rowComponentIdx)%ptr)
+        CALL Basis_QuadratureSchemeGet(rowBasis(rowComponentIdx)%ptr,BASIS_DEFAULT_QUADRATURE_SCHEME, &
+          & rowQuadratureScheme(rowComponentIdx)%ptr,err,error,*999)
+      ENDDO !rowComponentIdx
+      linearElement=.FALSE.
+      dependentInterpPartialOrder=FIRST_PART_DERIV
+      IF(updateMatrices.OR.stabilisation) THEN
+        DO columnComponentIdx=1,numberOfResidualComponents
+          CALL FieldVariable_ComponentMeshComponentGet(residualVariable,columnComponentIdx,columnMeshComponent, &
+            & err,error,*999)
+          NULLIFY(columnDomain)
+          CALL Decomposition_DomainGet(dependentDecomposition,columnMeshComponent,columnDomain,err,error,*999)
+          NULLIFY(columnDomainTopology)
+          CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
+          NULLIFY(columnDomainElements)
+          CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
+          NULLIFY(columnBasis(columnComponentIdx)%ptr)
+          CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis(columnComponentIdx)%ptr,err,error,*999)
+          IF(columnComponentIdx<=numberOfDimensions) THEN
+            CALL Basis_InterpolationOrderGet(columnBasis(columnComponentIdx)%ptr,velocityInterpolationOrder,err,error,*999)
+            linearElement=(linearElement.OR.ANY(velocityInterpolationOrder<=BASIS_LINEAR_INTERPOLATION_ORDER))
+          ENDIF
+          CALL Basis_NumberOfElementParametersGet(columnBasis(columnComponentIdx)%ptr, &
+            & numberOfColumnElementParameters(columnComponentIdx),err,error,*999)
+          NULLIFY(columnQuadratureScheme(columnComponentIdx)%ptr)
+          CALL Basis_QuadratureSchemeGet(columnBasis(columnComponentIdx)%ptr,BASIS_DEFAULT_QUADRATURE_SCHEME, &
+            & columnQuadratureScheme(columnComponentIdx)%ptr,err,error,*999)
+        ENDDO !columnComponentIdx
+        IF(stabilisation) THEN
+          IF(.NOT.linearElement) dependentInterpPartialOrder=SECOND_PART_DERIV
+          !Constant of element inverse inequality
+          IF(elementInverse > -ZERO_TOLERANCE) THEN
+            !Use user-defined value if specified (default -1)
+            C1=elementInverse
+          ELSE IF(linearElement) THEN
+            C1=3.0_DP
+          ELSE
+            IF(numberOfDimensions==2.AND.numberOfColumnElementParameters(1)==9.AND. &
+              & ANY(velocityInterpolationOrder==BASIS_QUADRATIC_INTERPOLATION_ORDER)) THEN
+              C1=24.0_DP
+            ELSE IF(numberOfDimensions==3.AND.numberOfColumnElementParameters(1)==27.AND. &
+              & ANY(velocityInterpolationOrder==BASIS_QUADRATIC_INTERPOLATION_ORDER)) THEN
+              C1=12.0_DP
+              !TODO: Expand C1 for more element types
+            ELSE
+              localError="Element inverse estimate undefined on element "//TRIM(NumberToVString(elementNumber,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ENDIF
+          !Update element inverse value if calculated
+          IF(ABS(C1-elementInverse) > ZERO_TOLERANCE) THEN
+            CALL FieldVariable_ParameterSetUpdateLocalElement(vEquationsVariable,FIELD_VALUES_SET_TYPE,elementNumber,10,C1, &
+              & err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateStart(vEquationsVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateFinish(vEquationsVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+          ENDIF
+        ENDIF !stabilistion
+      ENDIF !Update matrices or stabilisation
+      
       !Loop over Gauss points
       DO gaussPointIdx=1,numberOfGauss
         
-        CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,dependentInterpPoint, &
-          & err,error,*999)
+        CALL Field_InterpolateGauss(dependentInterpPartialOrder,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+          & dependentInterpPoint,err,error,*999)
         CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
           & err,error,*999)
         CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
@@ -5374,18 +5458,14 @@ CONTAINS
           & err,error,*999)
 
         CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
-        DO xiIdx=1,numberOfXi
-          DO coordinateIdx=1,numberOfDimensions
-            dXidX(xiIdx,coordinateIdx)=geometricInterpPointMetrics%dXidX(xiIdx,coordinateIdx)
-          ENDDO !coordinateIdx
-        ENDDO !xiIdx
         
-        wValue=0.0_DP
-        IF(esSpecification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
-          & esSpecification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
+        dXidX(1:numberOfXi,1:numberOfDimensions)=geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions)
+          
+        meshVelocity=0.0_DP
+        IF(ALE) THEN
           CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,independentInterpPoint, &
             & err,error,*999)
-          wValue(1:numberOfDimensions)=independentInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+          meshVelocity(1:numberOfDimensions)=independentInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
         ENDIF
 
         ! Get the constitutive law (non-Newtonian) viscosity based on shear rate
@@ -5415,55 +5495,31 @@ CONTAINS
           !Loop over field components
           rowElementDOFIdx=0
           DO rowComponentIdx=1,numberOfDimensions
-            CALL FieldVariable_ComponentMeshComponentGet(residualVariable,rowComponentIdx,rowMeshComponent,err,error,*999)
-            NULLIFY(rowDomain)
-            CALL Decomposition_DomainGet(dependentDecomposition,rowMeshComponent,rowDomain,err,error,*999)
-            NULLIFY(rowDomainTopology)
-            CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
-            NULLIFY(rowDomainElements)
-            CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
-            NULLIFY(rowBasis)
-            CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
-            CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
-            NULLIFY(rowQuadratureScheme)
-            CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
-            CALL BasisQuadratureScheme_GaussWeightGet(rowQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+            CALL BasisQuadratureScheme_GaussWeightGet(rowQuadratureScheme(rowComponentIdx)%ptr,gaussPointIdx,gaussWeight, &
+              & err,error,*999)
             jacobianGaussWeight=jacobian*gaussWeight
-            DO rowElementParameterIdx=1,numberOfRowElementParameters
+            DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
               rowElementDOFIdx=rowElementDOFIdx+1
               !Calculate some general values
-              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-                & gaussPointIdx,rowPhi,err,error,*999)
+              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr,rowElementParameterIdx, &
+                & NO_PART_DERIV,gaussPointIdx,rowPhi,err,error,*999)
               DO xiIdx=1,numberOfXi
-                CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx, &
+                CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr,rowElementParameterIdx, &
                   & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,dRowPhidXi(xiIdx),err,error,*999)
               ENDDO !xiIdx
               columnElementDOFIdx=0
               IF(updateMatrices) THEN
                 !Loop over element columns
                 DO columnComponentIdx=1,numberOfResidualComponents
-                  CALL FieldVariable_ComponentMeshComponentGet(residualVariable,columnComponentIdx,columnMeshComponent, &
-                    & err,error,*999)
-                  NULLIFY(columnDomain)
-                  CALL Decomposition_DomainGet(dependentDecomposition,columnMeshComponent,columnDomain,err,error,*999)
-                  NULLIFY(columnDomainTopology)
-                  CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
-                  NULLIFY(columnDomainElements)
-                  CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
-                  NULLIFY(columnBasis)
-                  CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
-                  CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
-                  NULLIFY(columnQuadratureScheme)
-                  CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
-                    & err,error,*999)
-                  DO columnElementParameterIdx=1,numberOfColumnElementParameters
+                  DO columnElementParameterIdx=1,numberOfColumnElementParameters(columnComponentIdx)
                     columnElementDOFIdx=columnElementDOFIdx+1
                     !Calculate some general values
-                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx, &
-                      & NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
+                      & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
                     DO xiIdx=1,numberOfXi
-                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx, &
-                        & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,dColumnPhidXi(xiIdx),err,error,*999)
+                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
+                        & columnElementParameterIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx, &
+                        & dColumnPhidXi(xiIdx),err,error,*999)
                     ENDDO !xiIdx
                     !Laplace only matrix
                     IF(updateStiffness) THEN
@@ -5486,7 +5542,7 @@ CONTAINS
                     ENDIF
                     !General matrix
                     IF(updateStiffness) THEN
-                      !GRADIENT TRANSPOSE TYPE
+                      !Gradient transpose type
                       IF(esSpecification(3)/=EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE) THEN
                         IF(columnComponentIdx<numberOfResidualComponents) THEN
                           sum=0.0_DP
@@ -5498,7 +5554,7 @@ CONTAINS
                                 & dRowPhidXi(columnXiIdx)*dXidX(columnXiIdx,columnComponentIdx)
                             ENDDO !columnXiIdx
                           ENDDO !rowXiIdx
-                          !Calculate MATRIX
+                          !Calculate matrix
                           stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                             & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) &
                             & +sum*jacobianGaussWeight
@@ -5507,18 +5563,17 @@ CONTAINS
                     ENDIF
                     !Contribution through ALE
                     IF(updateStiffness) THEN
-                      !GRADIENT TRANSPOSE TYPE
-                      IF(esSpecification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
-                        & esSpecification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
+                      !Gradient transpose type
+                      IF(ALE) THEN
                         IF(columnComponentIdx==rowComponentIdx) THEN
                           sum=0.0_DP
                           !Calculate sum
                           DO coordinateIdx=1,numberOfDimensions
                             DO xiIdx=1,numberOfXi
-                              sum=sum-rhoParam*wValue(coordinateIdx)*dColumnPhidXi(xiIdx)*dXidX(xiIdx,coordinateIdx)*rowPhi
+                              sum=sum-rhoParam*meshVelocity(coordinateIdx)*dColumnPhidXi(xiIdx)*dXidX(xiIdx,coordinateIdx)*rowPhi
                             ENDDO !xiIdx
                           ENDDO !coordinateIdx
-                          !Calculate MATRIX
+                          !Calculate matrix
                           stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                             & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)+ &
                             & sum*jacobianGaussWeight
@@ -5550,7 +5605,7 @@ CONTAINS
                         IF(columnComponentIdx==rowComponentIdx) THEN
                           sum=0.0_DP
                           !Calculate sum
-                          sum=rowPhi*columnPhi*rhoParam
+                          sum=rhoParam*rowPhi*columnPhi
                           !Calculate MATRIX
                           dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                             & dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)+sum*jacobianGaussWeight
@@ -5580,24 +5635,12 @@ CONTAINS
                   x(1:numberOfDimensions)=geometricInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
                   rowElementDOFIdx=0
                   DO rowComponentIdx=1,numberOfDimensions
-                    CALL FieldVariable_ComponentMeshComponentGet(residualVariable,rowComponentIdx,rowMeshComponent,err,error,*999)
-                    NULLIFY(rowDomain)
-                    CALL Decomposition_DomainGet(dependentDecomposition,rowMeshComponent,rowDomain,err,error,*999)
-                    NULLIFY(rowDomainTopology)
-                    CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
-                    NULLIFY(rowDomainElements)
-                    CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
-                    NULLIFY(rowBasis)
-                    CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
-                    CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
-                    NULLIFY(rowQuadratureScheme)
-                    CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
                     CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
                     jacobianGaussWeight=jacobian*gaussWeight
-                    DO rowElementParameterIdx=1,NumberOfRowElementParameters
+                    DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
                       rowElementDOFIdx=rowElementDOFIdx+1
-                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-                        & gaussPointIdx,rowPhi,err,error,*999)
+                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr, &
+                        & rowElementParameterIdx,NO_PART_DERIV,gaussPointIdx,rowPhi,err,error,*999)
                       !note rowComponentIdx value derivative
                       sum=0.0_DP
                       IF(analyticFunctionType==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1) THEN
@@ -5708,63 +5751,232 @@ CONTAINS
 
           !Calculate nonlinear vector
           IF(updateResidual) THEN
-            ! Get interpolated velocity and velocity gradient values for nonlinear term
-            uValue(1:numberOfDimensions)=dependentInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-            DO xiIdx=1,numberOfXi
-              uDeriv(1:numberOfDimensions,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx))= &
-                & dependentInterpPoint%values(1:numberOfDimensions,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx))
+            !Get interpolated velocity and velocity gradient values for nonlinear term
+            velocity(1:numberOfDimensions)=dependentInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+            pressure=dependentInterpPoint%values(pressureComponent,NO_PART_DERIV)
+            DO xiIdx1=1,numberOfXi
+              velocityDeriv(1:numberOfDimensions,xiIdx1)= &
+                & dependentInterpPoint%values(1:numberOfDimensions,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx1))
+              IF(stabilisation) THEN
+                pressureDeriv(xiIdx1)= &
+                  & dependentInterpPoint%values(pressureComponent,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx1))
+                IF(.NOT.linearElement) THEN
+                  DO xiIdx2=1,numberOfXi
+                    velocity2Deriv(1:numberOfDimensions,xiIdx1,xiIdx2)= &
+                      & dependentInterpPoint%values(1:numberOfDimensions,PARTIAL_DERIVATIVE_SECOND_DERIVATIVES_MAP(xiIdx1,xiIdx2))
+                  ENDDO !xiIdx2
+                ENDIF !Not a linear element
+              ENDIF !stabilisation
             ENDDO !xiIdx
-            !Here wValues must be ZERO if ALE part of linear matrix
-            wValue=0.0_DP
+            IF(stabilisation) THEN
+              !Calculate discrete residuals
+              residualMomentum=0.0_DP
+              residualContinuity=0.0_DP
+              !Calculate momentum residual
+              DO dimensionIdx1=1,numberOfDimensions
+                sum=0.0_DP
+                ! velocity time derivative
+                IF(.NOT.static) THEN
+!!TODO: Should interpolate previous mesh velocity so that the delta velocity should be
+!!      ((velocity - meshVelocity) - (previousVelocity - previousMeshVelocity)) however
+!!      mesh velocity doesn't really change that much and so previousMeshVelocity ~ meshVelocity
+!!      and so it will cancel out.
+                  sum=rhoParam*(velocity(dimensionIdx1)-velocityPrevious(dimensionIdx1))/deltaTime
+                ENDIF
+                DO xiIdx1=1,numberOfXi
+                  !Pressure gradient
+                  sum=sum+pressureDeriv(xiIdx1)*dXidX(xiIdx1,dimensionIdx1)
+                ENDDO ! xiIdx1
+                DO dimensionIdx2=1,numberOfDimensions
+                  DO xiIdx1=1,numberOfXi
+                    !Convective term
+                    sum=sum+rhoParam*((velocity(dimensionIdx2)-meshVelocity(dimensionIdx2))*(velocityDeriv(dimensionIdx1,xiIdx1)* &
+                      & dXidX(xiIdx1,dimensionIdx2)))
+                    IF(.NOT.linearElement) THEN
+                      DO xiIdx2=1,numberOfXi
+                        !Viscous stress: only if quadratic or higher basis defined for Laplacian
+                        sum=sum-muParam*(velocity2Deriv(dimensionIdx1,xiIdx1,xiIdx2)*dXidX(xiIdx1,dimensionIdx2)* &
+                          & dXidX(xiIdx2,dimensionIdx2))
+                      ENDDO !xiIdx2
+                    ENDIF
+                  ENDDO !xiIdx1
+                ENDDO !dimensionIdx2
+                residualMomentum(dimensionIdx1)=sum
+              ENDDO !dimensionIdx1
+              !Calculate continuity residual
+              sum=0.0_DP
+              DO dimensionIdx=1,numberOfDimensions
+                DO xiIdx=1,numberOfXi
+                  sum=sum+velocityDeriv(dimensionIdx,xiIdx)*dXidX(xiIdx,dimensionIdx)
+                ENDDO !xiIdx
+              ENDDO !dimensonIdx
+              residualContinuity=sum
+              
+              !Calculate stabilisation constants (Taus)
+              IF(.NOT.(RBSStabilisation.OR.RBVMStabilisation)) THEN
+                localError="A tau factor has not been defined for the stabilisation type of "// &
+                  & TRIM(NumberToVString(stabilisationType,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+              
+              !Bazilevs method for calculating tau
+              uDotGu=0.0_DP
+              DO dimensionIdx1=1,numberOfDimensions
+                DO dimensionIdx2=1,numberOfDimensions
+                  uDotGu=uDotGu+(velocity(dimensionIdx1)-meshVelocity(dimensionIdx1))* &
+                    & geometricInterpPointMetrics%gu(dimensionIdx1,dimensionIdx2)* &
+                    & (velocity(dimensionIdx2)-meshVelocity(dimensionIdx2))
+                ENDDO !dimensionIdx2
+              ENDDO !dimensionIdx1
+              doubleDotG=0.0_DP
+              DO dimensionIdx1=1,numberOfDimensions
+                DO dimensionIdx2=1,numberOfDimensions
+                  doubleDotG=doubleDotG+geometricInterpPointMetrics%gu(dimensionIdx1,dimensionIdx2)* &
+                    & geometricInterpPointMetrics%gu(dimensionIdx1,dimensionIdx2)
+                ENDDO !dimensionIdx2
+              ENDDO !dimensionIdx1
+              !Calculate tauSUPS (used for both PSPG and SUPG weights)
+              IF(esSpecification(3) == EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE) THEN
+                tauSUPS=(uDotGu+(C1*((muParam/rhoParam)**2.0_DP)*doubleDotG))**(-0.5_DP)
+              ELSE
+                tauSUPS=((4.0_DP/(deltaTime**2.0_DP))+uDotGu+(C1*((muParam/rhoParam)**2.0_DP)*doubleDotG))**(-0.5_DP)
+              ENDIF
+              
+              ! Calculate nu_LSIC (Least-squares incompressibility constraint)
+              CALL Trace(geometricInterpPointMetrics%gu(1:numberOfDimensions,1:numberOfDimensions),traceG,err,error,*999)
+              nuLSIC = 1.0_DP/(tauSUPS*traceG)
+              
+              tauMp = tauSUPS
+              tauMu = tauSUPS
+              tauC = nuLSIC
+              
+            ENDIF
             rowElementDOFIdx=0
             DO rowComponentIdx=1,numberOfDimensions
-              CALL FieldVariable_ComponentMeshComponentGet(residualVariable,rowComponentIdx,rowMeshComponent,err,error,*999)
-              NULLIFY(rowDomain)
-              CALL Decomposition_DomainGet(dependentDecomposition,rowMeshComponent,rowDomain,err,error,*999)
-              NULLIFY(rowDomainTopology)
-              CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
-              NULLIFY(rowDomainElements)
-              CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
-              NULLIFY(rowBasis)
-              CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
-              CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
-              NULLIFY(rowQuadratureScheme)
-              CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
-              CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+              CALL BasisQuadratureScheme_GaussWeightGet(rowQuadratureScheme(rowComponentIdx)%ptr,gaussPointIdx, &
+                & gaussWeight,err,error,*999)
               jacobianGaussWeight=jacobian*gaussWeight
-              DO rowElementParameterIdx=1,numberOfRowElementParameters
+              DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
                 rowElementDOFIdx=rowElementDOFIdx+1
-                CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-                  & gaussPointIdx,rowPhi,err,error,*999)
+                CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr, &
+                  & rowElementParameterIdx,NO_PART_DERIV,gaussPointIdx,rowPhi,err,error,*999)
                 !note rowComponentIdx value derivative
                 sum=0.0_DP
-                ! Convective form
-                DO xiIdx=1,numberOfXi
-                  sum=sum+rhoParam*rowPhi*( &
-                    & (uValue(1))*(uDeriv(rowComponentIdx,xiIdx)*dXidX(xiIdx,1))+ &
-                    & (uValue(2))*(uDeriv(rowComponentIdx,xiIdx)*dXidX(xiIdx,2))+ &
-                    & (uValue(3))*(uDeriv(rowComponentIdx,xiIdx)*dXidX(xiIdx,3)))
-                ENDDO !xiIdx
+                !Convective form
+                DO componentIdx=1,numberOfDimensions
+                  sum2=0.0_DP
+                  DO xiIdx=1,numberOfXi
+                    sum2=sum2+velocityDeriv(rowComponentIdx,xiIdx)*dXidX(xiIdx,componentIdx)
+                  ENDDO !xiIdx
+                  sum=sum+velocity(componentIdx)*sum2
+                ENDDO !componentIdx
+                sum=sum*rhoParam*rowPhi
 
                 residualVector%elementResidual%vector(rowElementDOFIdx)= &
                   & residualVector%elementResidual%vector(rowElementDOFIdx)+sum*jacobianGaussWeight
 
+                IF(stabilisation) THEN
+                  !SUPG: Streamline upwind/Petrov-Galerkin
+                  !LSIC: Least-squares incompressibility constraint
+                  SUPG=0.0_DP
+                  LSIC=0.0_DP
+                  
+                  dPhidX=0.0_DP
+                  DO xiIdx=1,numberOfXi
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr, &
+                      & rowElementParameterIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,dRowPhidXi(xiIdx), &
+                      & err,error,*999)
+                  ENDDO !xiIdx
+                  DO dimensionIdx=1,numberOfDimensions
+                    dPhidX(dimensionIdx)=0.0_DP
+                    DO xiIdx=1,numberOfXi
+                      dPhidX(dimensionIdx)=dPhidX(dimensionIdx)+dRowPhidXi(xiIdx)*dXidX(xiIdx,dimensionIdx)
+                    ENDDO !xiIdx
+                  ENDDO !dimensionIdx
+                  
+                  !u_i*Rm_mh*dv_mh/dx_i
+                  sum=0.0_DP
+                  DO dimensionIdx=1,numberOfDimensions
+                    sum=sum+(velocity(dimensionIdx)-meshVelocity(dimensionIdx))*dPhidX(dimensionIdx)
+                  ENDDO !dimensionIdx
+                  SUPG=tauMu*sum*residualMomentum(rowComponentIdx)
+                  
+                  LSIC=tauC*rhoParam*dPhidX(rowComponentIdx)*residualContinuity
+                  momentumTerm=(SUPG+LSIC)
+                  
+                  IF(RBVMStabilisation) THEN
+                    !Additional terms for RBVM
+                    crossStress=0.0_DP
+                    reynoldsStress=0.0_DP
+                    sum2=0.0_DP
+                    DO dimensionIdx=1,numberOfDimensions
+                      sum=0.0_DP
+                      !dU_mh/dX_i
+                      DO xiIdx=1,numberOfXi
+                        sum=sum+velocityDeriv(rowComponentIdx,xiIdx)*dXidX(xiIdx,dimensionIdx)
+                      ENDDO !xiIdx
+                      !Rm_i.dU_mh/dX_i
+                      sum2=sum2+residualMomentum(dimensionIdx)*sum
+                    ENDDO !dimensionIdx
+                    crossStress= -tauMu*rowPhi*sum2
+                    
+                    reynoldsStress=0.0_DP
+                    sum=0.0_DP
+                    !Rm_mh.Rm_i.dPhi/dX_i
+                    DO dimensionIdx=1,numberOfDimensions
+                      sum=sum+dPhidX(dimensionIdx)*residualMomentum(dimensionIdx)*residualMomentum(rowComponentIdx)
+                    ENDDO !dimensionIdx
+                    reynoldsStress = -sum*(tauMu*tauMu)/rhoParam
+                    momentumTerm=momentumTerm+(crossStress+reynoldsStress)
+                  ENDIF
+                    
+                  !Add stabilisation to element residual
+                  residualVector%elementResidual%vector(rowElementDOFIdx)= &
+                    & residualVector%elementResidual%vector(rowElementDOFIdx)+momentumTerm*jacobianGaussWeight
+                ENDIF !stabilisation
+                  
               ENDDO !rowElementParameterIdx
             ENDDO !rowComponentIdx
+            !Pressure component
+            IF(stabilisation) THEN
+              CALL BasisQuadratureScheme_GaussWeightGet(rowQuadratureScheme(pressureComponent)%ptr,gaussPointIdx, &
+                & gaussWeight,err,error,*999)
+              jacobianGaussWeight=jacobian*gaussWeight
+              DO rowElementParameterIdx=1,numberOfRowElementParameters(pressureComponent)
+                rowElementDOFIdx=rowElementDOFIdx+1
+                !PSPG: Pressure stabilising Petrov-Galerkin
+                DO xiIdx=1,numberOfXi
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(pressureComponent)%ptr, &
+                    & rowElementParameterIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,dRowPhidXi(xiIdx), &
+                    & err,error,*999)
+                ENDDO !xiIdx
+                sum=0.0_DP
+                DO dimensionIdx=1,numberOfDimensions
+                  sum2=0.0_DP
+                  DO xiIdx=1,numberOfXi
+                    sum2=sum2+dRowPhidXi(xiIdx)*dXidX(xiIdx,dimensionIdx)
+                  ENDDO !xiIdx
+                  sum=sum+sum2*residualMomentum(dimensionIdx)
+                ENDDO !dimensionIdx
+                PSPG=sum*(tauMp/rhoParam)
+                residualVector%elementResidual%vector(rowElementDOFIdx)= &
+                  & residualVector%elementResidual%vector(rowElementDOFIdx)+PSPG*jacobianGaussWeight
+              ENDDO !rowElementParameterIdx
+            ENDIF !RBS pressure component
           ENDIF
         ENDIF
 
         !------------------------------------------------------------------
         ! R e s i d u a l - b a s e d    S t a b i l i s a t i o n
         !------------------------------------------------------------------
-        IF(esSpecification(3)==EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE.OR. &
-          & esSpecification(3)==EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE.OR. &
-          & esSpecification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE.OR. &
-          & esSpecification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE.OR. &
-          & esSpecification(3)==EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE) THEN
-          CALL NavierStokes_ResidualBasedStabilisation(equationsSet,elementNumber,gaussPointIdx, &
-            & muParam,rhoParam,.FALSE.,err,error,*999)
-        ENDIF
+        !IF(esSpecification(3)==EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE.OR. &
+        !  & esSpecification(3)==EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE.OR. &
+        !  & esSpecification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE.OR. &
+        !  & esSpecification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE.OR. &
+        !  & esSpecification(3)==EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE) THEN
+        !  CALL NavierStokes_ResidualBasedStabilisation(equationsSet,elementNumber,gaussPointIdx, &
+        !    & muParam,rhoParam,.FALSE.,err,error,*999)
+        !ENDIF
         
         !------------------------------------------------------------------
         ! 1 D  T r a n s i e n t
@@ -5792,59 +6004,34 @@ CONTAINS
           ! If A goes negative during nonlinear iteration, give ZERO_TOLERANCE value to avoid segfault
           IF(aValue < a0Param*0.001_DP) aValue = a0Param*0.001_DP
  
+          !Calculate dXidX in 3D
+          dXidX=0.0_DP
+          DO xiIdx=1,numberOfXi
+            DO coordinateIdx=1,numberOfDimensions
+              dXidX(1,1)=dXidX(1,1)+(geometricInterpPointMetrics%dXidX(xiIdx,coordinateIdx))**2.0_DP
+            ENDDO !coordinateIdx
+          ENDDO !xiIdx
+          dXidX(1,1)=SQRT(dXidX(1,1))
           rowElementDOFIdx=0
           !Loop Over Element Rows
           DO rowComponentIdx=1,numberOfResidualComponents
-            CALL FieldVariable_ComponentMeshComponentGet(residualVariable,rowComponentIdx,rowMeshComponent,err,error,*999)
-            NULLIFY(rowDomain)
-            CALL Decomposition_DomainGet(dependentDecomposition,rowMeshComponent,rowDomain,err,error,*999)
-            NULLIFY(rowDomainTopology)
-            CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
-            NULLIFY(rowDomainElements)
-            CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
-            NULLIFY(rowBasis)
-            CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
-            CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
-            NULLIFY(rowQuadratureScheme)
-            CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
-            dXidX=0.0_DP
-            !Calculate dxi_dx in 3D
-            DO xiIdx=1,numberOfXi
-              DO coordinateIdx=1,numberOfDimensions
-                dXidX(1,1)=dXidX(1,1)+(geometricInterpPointMetrics%dXidX(xiIdx,coordinateIdx))**2.0_DP
-              ENDDO !coordinateIdx
-            ENDDO !xiIdx
-            dXidX(1,1)=SQRT(dXidX(1,1))
             !Loop Over Element rows
-            DO rowElementParameterIdx=1,numberOfRowElementParameters
+            DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
               rowElementDOFIdx=rowElementDOFIdx+1
-              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-                & gaussPointIdx,rowPhi,err,error,*999)
-              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx,FIRST_PART_DERIV, &
-                & gaussPointIdx,dRowPhidXi(1),err,error,*999)
+              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr,rowElementParameterIdx, &
+                & NO_PART_DERIV,gaussPointIdx,rowPhi,err,error,*999)
+              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr,rowElementParameterIdx, &
+                & FIRST_PART_DERIV,gaussPointIdx,dRowPhidXi(1),err,error,*999)
               columnElementDOFIdx=0
               IF(updateMatrices) THEN
                 !Loop Over Element Columns
                 DO columnComponentIdx=1,numberOfResidualComponents
-                  CALL FieldVariable_ComponentMeshComponentGet(residualVariable,columnComponentIdx,columnMeshComponent, &
-                    & err,error,*999)
-                  NULLIFY(columnDomain)
-                  CALL Decomposition_DomainGet(dependentDecomposition,columnMeshComponent,columnDomain,err,error,*999)
-                  NULLIFY(columnDomainTopology)
-                  CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
-                  NULLIFY(columnDomainElements)
-                  CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
-                  NULLIFY(columnBasis)
-                  CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
-                  NULLIFY(columnQuadratureScheme)
-                  CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
-                    & err,error,*999)
-                  DO columnElementParameterIdx=1,columnBasis%numberOfElementParameters
+                  DO columnElementParameterIdx=1,numberOfColumnElementParameters(columnComponentIdx)
                     columnElementDOFIdx=columnElementDOFIdx+1
-                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx, &
-                      & NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
-                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx, &
-                      & FIRST_PART_DERIV,gaussPointIdx,dColumnPhidXi(1),err,error,*999)
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
+                      & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
+                      & columnElementParameterIdx,FIRST_PART_DERIV,gaussPointIdx,dColumnPhidXi(1),err,error,*999)
                     !
                     !-- D A M P I N G  M A T R I X --
                     !
@@ -5974,7 +6161,6 @@ CONTAINS
             
             ! Find the branch node on this element
             IF(numberOfVersions>1) THEN
-              elementVersionNumber=dependentDomainElements%elements(elementNumber)%elementVersions(derivativeIdx,nodeIdx)
               CALL DomainElements_ElementVersionGet(dependentDomainElements,derivativeIdx,nodeIdx,elementNumber, &
                 & elementVersionNumber,err,error,*999) 
               
@@ -6030,7 +6216,7 @@ CONTAINS
               ENDIF
             ENDIF !version>1
           ENDDO !loop nodes
-          ! Update any distributed pressure field values
+          !Update any distributed pressure field values
           CALL Field_ParameterSetUpdateStart(dependentField,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
           CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
         ENDIF
@@ -6103,7 +6289,7 @@ CONTAINS
       & rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowMeshComponent,solverGlobalNumber,solveType,versionIdx,xiIdx
     REAL(DP) :: a0Deriv,a0Param,aDeriv,alpha,aValue,beta,columnPhi,dColumnPhidXi(3),dRowPhidXi(3),dXidX(3,3),eDeriv,eParam, &
       & gaussWeight,hDeriv,hParam,jacobian,jacobianGaussWeight,kappa,mass,momentum1,momentum2,muParam,muScale,normal,normalWave, &
-      & qDeriv,qValue,rhoParam,rowPhi,sum,uValue(3),uDeriv(3,3),wValue(3)
+      & qDeriv,qValue,rhoParam,rowPhi,sum,velocity(3),velocityDeriv(3,3),meshVelocity(3)
     LOGICAL  :: updateJacobian,updateResidual,updateRHS
     TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,independentBasis,rowBasis
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition,independentDecomposition
@@ -6194,9 +6380,9 @@ CONTAINS
       CALL FieldVariable_NumberOfComponentsGet(residualVariable,numberOfResidualComponents,err,error,*999)
 
       dXidX=0.0_DP
-      uValue=0.0_DP
-      uDeriv=0.0_DP
-      wValue=0.0_DP
+      velocity=0.0_DP
+      velocityDeriv=0.0_DP
+      meshVelocity=0.0_DP
 
       NULLIFY(equationsInterpolation)
       CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
@@ -6306,6 +6492,7 @@ CONTAINS
         CALL EquationsInterpolation_IndependentFieldGet(equationsInterpolation,independentField,err,error,*999)
         CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,independentVariable,err,error,*999)
         CALL Field_DecompositionGet(independentField,independentDecomposition,err,error,*999)
+        
         CALL Decomposition_DomainGet(independentDecomposition,0,independentDomain,err,error,*999)
         CALL Domain_DomainTopologyGet(independentDomain,independentDomainTopology,err,error,*999)
         CALL DomainTopology_DomainElementsGet(independentDomainTopology,independentDomainElements,err,error,*999)
@@ -6347,9 +6534,9 @@ CONTAINS
           & esSpecification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
           CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,independentInterpPoint, &
             & err,error,*999)
-          wValue(1:numberOfDimensions)=independentInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+          meshVelocity(1:numberOfDimensions)=independentInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
         ELSE
-          wValue(1:numberOfDimensions)=0.0_DP
+          meshVelocity(1:numberOfDimensions)=0.0_DP
         ENDIF
 
         !Get the constitutive law (non-Newtonian) viscosity based on shear rate
@@ -6376,14 +6563,14 @@ CONTAINS
           & esSpecification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
           & esSpecification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
 
-          uValue(1:numberOfDimensions)=dependentInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+          velocity(1:numberOfDimensions)=dependentInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
           DO xiIdx=1,numberOfXi
-            uDeriv(1:numberOfDimensions,xiIdx)= &
+            velocityDeriv(1:numberOfDimensions,xiIdx)= &
               & dependentInterpPoint%values(1:numberOfDimensions,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx))
           ENDDO !xiIdx
           !Start with calculation of partial matrices
-          !Here wValues must be ZERO if ALE part of linear matrix
-          wValue=0.0_DP
+          !Here meshVelocitys must be ZERO if ALE part of linear matrix
+          meshVelocity=0.0_DP
         ENDIF
 
         IF(esSpecification(3)==EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE.OR.  &
@@ -6423,7 +6610,7 @@ CONTAINS
               ENDDO !xiIdx
               columnElementDOFIdx=0
               !Loop over element columns
-              DO columnComponentIdx=1,numberOfResidualComponents
+              DO columnComponentIdx=1,numberOfDimensions
                 CALL FieldVariable_ComponentMeshComponentGet(residualVariable,columnComponentIdx,columnMeshComponent, &
                   & err,error,*999)
                 NULLIFY(columnDomain)
@@ -6448,7 +6635,7 @@ CONTAINS
                     CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx, &
                       & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,dColumnPhidXi(xiIdx),err,error,*999)
                     !Calculate J1 only
-                    sum=sum+(columnPhi*uDeriv(rowComponentIdx,xiIdx)*dXidX(xiIdx,columnComponentIdx)*rowPhi*rhoParam)
+                    sum=sum+(rhoParam*rowPhi*columnPhi*velocityDeriv(rowComponentIdx,xiIdx)*dXidX(xiIdx,columnComponentIdx))
                   ENDDO !xiIdx
                   !Calculate matrix
                   jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
@@ -6459,7 +6646,7 @@ CONTAINS
                     !Calculate sum
                     DO componentIdx=1,numberOfDimensions
                       DO xiIdx=1,numberOfXi
-                        sum=sum+rhoParam*(uValue(componentIdx)-wValue(componentIdx))*dColumnPhidXi(xiIdx)* &
+                        sum=sum+rhoParam*(velocity(componentIdx)-meshVelocity(componentIdx))*dColumnPhidXi(xiIdx)* &
                           & dXidX(xiIdx,componentIdx)*rowPhi
                       ENDDO !xiIdx
                     ENDDO !componentIdx
@@ -10823,7 +11010,7 @@ CONTAINS
           & independentInterpParameters,err,error,*999)
         CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
           & independentInterpPoint,err,error,*999)
-       ENDIF
+      ENDIF
 
       ! Stabilisation type (default 1 for RBS, 2 for RBVM, 0 for none)
       CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,4,stabilisationValueDP, &
@@ -10922,7 +11109,7 @@ CONTAINS
 
         !Get number of element parameters for each dependent component
         CALL Basis_NumberOfElementParametersGet(basisVelocity,numberOfElementParameters(1),err,error,*999)
-        numberOfElementParameters(numberOfDimensions+1:numberOfDimensions)=numberOfElementParameters(1)
+        numberOfElementParameters(2:numberOfDimensions)=numberOfElementParameters(1)
         CALL Basis_NumberOfElementParametersGet(basisPressure,numberOfElementParameters(numberOfDimensions+1),err,error,*999)
         !Calculate dPhi/dX
         dPhidXVelocity=0.0_DP

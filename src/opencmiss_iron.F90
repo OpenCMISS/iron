@@ -11725,15 +11725,7 @@ CONTAINS
 
     ENTERS("cmfe_DiagnosticsSetOn",err,error,*999)
 
-#ifdef WITH_DIAGNOSTICS
-
     CALL DiagnosticsSetOn(diagType,levelList,diagFilename,routineList,err,error,*999)
-
-#else
-
-    CALL FlagWarning("Can not turn diagnostics on as WITH_DIAGNOSTICS is set to OFF. Set WITH_DIAGNOSTICS to ON.",err,error,*999)
-
-#endif
 
     EXITS("cmfe_DiagnosticsSetOn")
     RETURN
@@ -11834,15 +11826,7 @@ CONTAINS
 
     ENTERS("cmfe_TimingSetOn",err,error,*999)
 
-#ifdef WITH_DIAGNOSTICS
-
     CALL TimingSetOn(timingType,timingSummaryFlag,timingFilename,routineList,err,error,*999)
-
-#else
-
-    CALL FlagWarning("Can not turn timing on as WITH_DIAGNOSTICS is set to OFF. Set WITH_DIAGNOSTICS to ON.",err,error,*999)
-
-#endif
 
     EXITS("cmfe_TimingSetOn")
     RETURN
@@ -21011,7 +20995,7 @@ CONTAINS
 
   !>Returns the time parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_TimesGetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier,startTime,stopTime, &
-    & timeIncrement,currentTime,currentLoopIteration,outputIterationNumber,err)
+    & timeIncrement,currentTime,currentLoopIteration,outputIterationNumber,inputIterationNumber,err)
     !DLLEXPORT(cmfe_ControlLoop_TimesGetNumber0)
 
     !Argument variables
@@ -21023,7 +21007,8 @@ CONTAINS
     REAL(DP), INTENT(OUT) :: timeIncrement !<On return, the time increment for the time control loop.
     REAL(DP), INTENT(OUT) :: currentTime !<On return, the current time for the time control loop.
     INTEGER(INTG), INTENT(OUT) :: currentLoopIteration !<On return, the iteration number for the current loop.
-    INTEGER(INTG), INTENT(OUT) :: outputIterationNumber !<On return, the iteration number for the time control loop.
+    INTEGER(INTG), INTENT(OUT) :: outputIterationNumber !<On return, the output iteration frequency for the time control loop.
+    INTEGER(INTG), INTENT(OUT) :: inputIterationNumber !<On return, the inputer iteration frequency for the time control loop.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -21041,8 +21026,8 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL ControlLoop_TimesGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
-      & currentLoopIteration,outputIterationNumber,err,error,*999)
+    CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
+      & currentLoopIteration,outputIterationNumber,inputIterationNumber,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimesGetNumber0")
     RETURN
@@ -21058,7 +21043,7 @@ CONTAINS
 
   !>Returns the time parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_TimesGetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers,startTime,stopTime, &
-    & timeIncrement,currentTime,currentLoopIteration,outputIterationNumber,err)
+    & timeIncrement,currentTime,currentLoopIteration,outputIterationNumber,inputIterationNumber,err)
     !DLLEXPORT(cmfe_ControlLoop_TimesGetNumber1)
 
     !Argument variables
@@ -21070,7 +21055,8 @@ CONTAINS
     REAL(DP), INTENT(OUT) :: timeIncrement !<On return, the time increment for the time control loop.
     REAL(DP), INTENT(OUT) :: currentTime !<On return, the current time for the time control loop.
     INTEGER(INTG), INTENT(OUT) :: currentLoopIteration !<On return, the iteration number for the current loop.
-    INTEGER(INTG), INTENT(OUT) :: outputIterationNumber !<On return, the iteration number for the time control loop.
+    INTEGER(INTG), INTENT(OUT) :: outputIterationNumber !<On return, the output iteration frequency for the time control loop.
+    INTEGER(INTG), INTENT(OUT) :: inputIterationNumber !<On return, the inputer iteration frequency for the time control loop.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -21088,8 +21074,8 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL ControlLoop_TimesGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
-      & currentLoopIteration,outputIterationNumber,err,error,*999)
+    CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
+      & currentLoopIteration,outputIterationNumber,inputIterationNumber,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimesGetNumber1")
     RETURN
@@ -21105,7 +21091,7 @@ CONTAINS
 
   !>Returns the time parameters for a time control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_TimesGetObj(controlLoop,startTime,stopTime,timeIncrement,currentTime, &
-    & currentLoopIteration,outputIterationNumber,err)
+    & currentLoopIteration,outputIterationNumber,inputIterationNumber,err)
     !DLLEXPORT(cmfe_ControlLoop_TimesGetObj)
 
     !Argument variables
@@ -21115,14 +21101,15 @@ CONTAINS
     REAL(DP), INTENT(OUT) :: timeIncrement !<On return, the time increment for the time control loop.
     REAL(DP), INTENT(OUT) :: currentTime !<On return, the current time for the time control loop.
     INTEGER(INTG), INTENT(OUT) :: currentLoopIteration !<On return, the iteration number for the current loop.
-    INTEGER(INTG), INTENT(OUT) :: outputIterationNumber !<On return, the iteration number for the time control loop.
+    INTEGER(INTG), INTENT(OUT) :: outputIterationNumber !<On return, the output iteration frequency for the time control loop.
+    INTEGER(INTG), INTENT(OUT) :: inputIterationNumber !<On return, the inputer iteration frequency for the time control loop.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_ControlLoop_TimesGetObj",err,error,*999)
 
-    CALL ControlLoop_TimesGet(controlLoop%controlLoop,startTime,stopTime,currentTime,timeIncrement, &
-      & currentLoopIteration,outputIterationNumber,err,error,*999)
+    CALL ControlLoop_CurrentTimeInformationGet(controlLoop%controlLoop,startTime,stopTime,currentTime,timeIncrement, &
+      & currentLoopIteration,outputIterationNumber,inputIterationNumber,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimesGetObj")
     RETURN

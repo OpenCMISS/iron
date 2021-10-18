@@ -747,7 +747,7 @@ MODULE SolverAccessRoutines
 
   PUBLIC SolverDynamic_SolverGet
 
-  PUBLIC SolverDynamic_SolverInitialisedGet
+  PUBLIC SolverDynamic_SolverInitialisedGet,SolverDynamic_SolverInitialisedSet
 
   PUBLIC SolverDynamic_ThetaGet
 
@@ -4274,7 +4274,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the solver initialised status of the dynamic solver.
+  !>Returns the solver initialised status of a dynamic solver.
   SUBROUTINE SolverDynamic_SolverInitialisedGet(dynamicSolver,solverInitialised,err,error,*)
 
     !Argument variables
@@ -4298,6 +4298,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE SolverDynamic_SolverInitialisedGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the solver initialised status of a dynamic solver.
+  SUBROUTINE SolverDynamic_SolverInitialisedSet(dynamicSolver,solverInitialised,err,error,*)
+
+    !Argument variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver !<A pointer to the dynamic solver to set the solver initialised status for
+    LOGICAL, INTENT(IN) :: solverInitialised !<The solver initialised status of the dynamic solver to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverDynamic_SolverInitialisedSet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+#endif
+    
+    dynamicSolver%solverInitialised=solverInitialised
+    
+    EXITS("SolverDynamic_SolverInitialisedSet")
+    RETURN
+999 ERRORSEXITS("SolverDynamic_SolverInitialisedSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverDynamic_SolverInitialisedSet
 
   !
   !================================================================================================================================

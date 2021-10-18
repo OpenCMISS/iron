@@ -1529,7 +1529,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: currentIteration,equationsSetIdx,numberOfEquationsSets,outputIteration,outputType,pSpecification(3)
+    INTEGER(INTG) :: currentIteration,equationsSetIdx,inputIteration,numberOfEquationsSets,outputIteration,outputType, &
+      & pSpecification(3)
     REAL(DP) :: currentTime,timeIncrement,startTime,stopTime
     CHARACTER(20) :: file,outputFile
     TYPE(ControlLoopType), POINTER :: controlLoop
@@ -1555,8 +1556,8 @@ CONTAINS
     CALL SYSTEM('mkdir -p ./output')
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STATIC_BURGERS_SUBTYPE)
-      CALL ControlLoop_TimesGet(controlLoop,startTime,stopTime,currentTime,timeIncrement,currentIteration,outputIteration, &
-        & err,error,*999)
+      CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement,currentIteration, &
+        & outputIteration,inputIteration,err,error,*999)
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)
@@ -1580,8 +1581,8 @@ CONTAINS
         CALL FIELD_IO_ELEMENTS_EXPORT(fields,filename,method,err,error,*999)
       ENDDO !equationsSetIdx
     CASE(PROBLEM_DYNAMIC_BURGERS_SUBTYPE)
-      CALL ControlLoop_TimesGet(controlLoop,startTime,stopTime,currentTime,timeIncrement,currentIteration,outputIteration, &
-        & err,error,*999)
+      CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement,currentIteration, &
+        & outputIteration,inputIteration,err,error,*999)
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)

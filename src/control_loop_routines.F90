@@ -76,11 +76,6 @@ MODULE ControlLoopRoutines
 
   !Interfaces
 
-  INTERFACE ControlLoop_LabelGet
-    MODULE PROCEDURE ControlLoop_LabelGetC
-    MODULE PROCEDURE ControlLoop_LabelGetVS
-  END INTERFACE ControlLoop_LabelGet
-  
   INTERFACE ControlLoop_LabelSet
     MODULE PROCEDURE ControlLoop_LabelSetC
     MODULE PROCEDURE ControlLoop_LabelSetVS
@@ -90,6 +85,8 @@ MODULE ControlLoopRoutines
   
   PUBLIC ControlLoop_CreateFinish,ControlLoop_CreateStart
 
+  PUBLIC ControlLoop_CurrentTimeSetup
+
   PUBLIC ControlLoop_Destroy
 
   PUBLIC ControlLoop_FieldVariablesCalculate
@@ -98,7 +95,7 @@ MODULE ControlLoopRoutines
   
   PUBLIC ControlLoop_IterationsSet
 
-  PUBLIC ControlLoop_LabelGet,ControlLoop_LabelSet
+  PUBLIC ControlLoop_LabelSet
 
   PUBLIC ControlLoop_LoadOutputSet
 
@@ -118,13 +115,15 @@ MODULE ControlLoopRoutines
 
   PUBLIC ControlLoop_SolverEquationsDestroy
 
-  PUBLIC ControlLoop_TimesGet,ControlLoop_TimesSet
+  PUBLIC ControlLoop_TimesSet
 
   PUBLIC ControlLoop_TypeSet
   
   PUBLIC ControlLoop_TimeInputSet
 
   PUBLIC ControlLoop_TimeOutputSet
+
+  PUBLIC ControlLoop_TimesSetup
 
 CONTAINS
 
@@ -195,6 +194,56 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_CreateStart
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets up the current time for a control loop.
+  SUBROUTINE ControlLoop_CurrentTimeSetup(controlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(INOUT) :: controlLoop !<A pointer to the control loop to setup the current time for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: controlLoopLevel
+    REAL(DP) :: upstreamCurrentTime
+    LOGICAL :: upstreamTimeLoopFound
+    TYPE(ControlLoopType), POINTER :: parentLoop
+    TYPE(ControlLoopTimeType), POINTER :: timeLoop
+ 
+    ENTERS("ControlLoop_CurrentTimeSetup",err,error,*999)
+    
+    CALL ControlLoop_AssertIsTimeLoop(controlLoop,err,error,*999)
+    
+    !Find the current time in the first upstream time loop.
+    upstreamCurrentTime=0.0_DP
+    upstreamTimeLoopFound=.FALSE.
+    CALL ControlLoop_LoopLevelGet(controlLoop,controlLoopLevel,err,error,*999)    
+    DO WHILE(controlLoopLevel>0.AND..NOT.upstreamTimeLoopFound)
+      NULLIFY(parentLoop)
+      CALL ControlLoop_ParentLoopExists(controlLoop,parentLoop,err,error,*999)
+      IF(ASSOCIATED(parentLoop)) THEN
+        IF(parentLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
+          NULLIFY(timeLoop)
+          CALL ControlLoop_TimeLoopGet(parentLoop,timeLoop,err,error,*999)        
+          upstreamCurrentTime=timeLoop%currenttime
+          upstreamTimeLoopFound=.TRUE.
+        ENDIF
+      ENDIF
+      controlLoopLevel=controlLoopLevel-1
+    ENDDO
+    NULLIFY(timeLoop)
+    CALL ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*999)
+    timeLoop%currentTime=upstreamCurrentTime+timeLoop%startTime
+    
+    EXITS("ControlLoop_CurrentTimeSetup")
+    RETURN
+999 ERRORSEXITS("ControlLoop_CurrentTimeSetup",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_CurrentTimeSetup
 
   !
   !================================================================================================================================
@@ -358,8 +407,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: loopIdx,numberOfSolverMatrices,numberOfVariables,solverIdx,solverMatrixIdx,variableIdx,variableLinearity, &
-      & variableTimeDependence
+    INTEGER(INTG) :: equationsLinearity,equationsTimeDependence,loopIdx,numberOfSolverMatrices,numberOfSolvers, &
+      & numberOfVariables,solverIdx,solverMatrixIdx,variableIdx,variableLinearity,variableTimeDependence
     TYPE(ControlLoopType), POINTER :: controlLoop2
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(FieldType), POINTER :: field
@@ -409,26 +458,30 @@ CONTAINS
       NULLIFY(solvers)
       CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
       !Loop over the solvers
-      DO solverIdx=1,solvers%numberOfSolvers
+      CALL Solvers_NumberOfSolversGet(solvers,numberOfSolvers,err,error,*999)
+      DO solverIdx=1,numberOfSolvers
         !Get the solver
         NULLIFY(solver)
         CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-        solverEquations=>solver%solverEquations
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsExists(solver,solverEquations,err,error,*999)
 !!TODO: Need to think about solvers that do not have solver equations.
         IF(ASSOCIATED(solverEquations)) THEN
           !If we have solver equations then find the variables.
 !!TODO: could flag the linearity and time dependence of variable in equations.
-          SELECT CASE(solverEquations%linearity)
+          CALL SolverEquations_LinearityTypeGet(solverEquations,equationsLinearity,err,error,*999)
+          SELECT CASE(equationsLinearity)
           CASE(SOLVER_EQUATIONS_LINEAR)
             variableLinearity=CONTROL_LOOP_FIELD_VARIABLE_LINEAR
           CASE(SOLVER_EQUATIONS_NONLINEAR)
             variableLinearity=CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR
           CASE DEFAULT
-            localError="The solver equations linearity type of "//TRIM(NumberToVString(solverEquations%linearity,"*",err,error))// &
+            localError="The solver equations linearity type of "//TRIM(NumberToVString(equationsLinearity,"*",err,error))// &
               & " is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
-          SELECT CASE(solverEquations%timeDependence)
+          CALL SolverEquations_TimeDependenceTypeGet(solverEquations,equationsTimeDependence,err,error,*999)
+          SELECT CASE(equationsTimeDependence)
           CASE(SOLVER_EQUATIONS_STATIC)
             variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_STATIC
           CASE(SOLVER_EQUATIONS_QUASISTATIC)
@@ -450,7 +503,7 @@ CONTAINS
             ENDIF
           CASE DEFAULT
             localError="The solver equations time dependence type of "// &
-              & TRIM(NumberToVString(solverEquations%timeDependence,"*",err,error))//" is invalid."
+              & TRIM(NumberToVString(equationsTimeDependence,"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
           !Get the solver mapping
@@ -892,67 +945,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_LabelGet
-  SUBROUTINE ControlLoop_LabelGetC(controlLoop,label,err,error,*)
-
-    !Argument variables
-    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to get the label for
-    CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the control loop label.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: cLength,vsLength
-
-    ENTERS("ControlLoop_LabelGetC",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
-    
-    cLength=LEN(label)
-    vsLength=LEN_TRIM(controlLoop%label)
-    IF(cLength>vsLength) THEN
-      label=CHAR(controlLoop%label,vsLength)
-    ELSE
-      label=CHAR(controlLoop%label,cLength)
-    ENDIF
-    
-    EXITS("ControlLoop_LabelGetC")
-    RETURN
-999 ERRORSEXITS("ControlLoop_LabelGetC",err,error)
-    RETURN 1
-    
-  END SUBROUTINE ControlLoop_LabelGetC
-
-   !
-  !================================================================================================================================
-  !
-
-  !>Returns the label of a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_LabelGet
-  SUBROUTINE ControlLoop_LabelGetVS(controlLoop,label,err,error,*)
-
-    !Argument variables
-    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to get the label for
-    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the control loop label.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("ControlLoop_LabelGetVS",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
-    
-    label=VAR_STR(CHAR(controlLoop%label))
-     
-    EXITS("ControlLoop_LabelGetVS")
-    RETURN
-999 ERRORSEXITS("ControlLoop_LabelGetVS",err,error)
-    RETURN 1
-    
-  END SUBROUTINE ControlLoop_LabelGetVS
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets the label of a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_LabelSet
   SUBROUTINE ControlLoop_LabelSetC(controlLoop,label,err,error,*)
 
@@ -1002,6 +994,69 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_LabelSetVS
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Finalises a load increment loop and deallocates all memory.
+  SUBROUTINE ControlLoop_LoadIncrementFinalise(loadIncrementLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopLoadIncrementType), POINTER, INTENT(INOUT) :: loadIncrementLoop !<A pointer to the load increment control loop to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_LoadIncrementFinalise",err,error,*999)
+
+    IF(ASSOCIATED(loadIncrementLoop)) THEN
+      DEALLOCATE(loadIncrementLoop)
+    ENDIF
+       
+    EXITS("ControlLoop_LoadIncrementFinalise")
+    RETURN
+999 ERRORSEXITS("ControlLoop_LoadIncrementFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_LoadIncrementFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a load increment loop for a control loop.
+  SUBROUTINE ControlLoop_LoadIncrementInitialise(controlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(INOUT) :: controlLoop !<A pointer to the control loop to initialise the load increment loop for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+ 
+    ENTERS("ControlLoop_LoadIncrementInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*998)
+    IF(ASSOCIATED(controlLoop%loadIncrementLoop)) &
+      & CALL FlagError("The load increment loop is already associated for this control loop.",err,error,*998)
+      
+    ALLOCATE(controlLoop%loadIncrementLoop,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate load increment loop for the control loop.",err,error,*999)
+    controlLoop%loadIncrementLoop%controlLoop=>controlLoop
+    controlLoop%loadIncrementLoop%iterationNumber=0
+    controlLoop%loadIncrementLoop%maximumNumberOfIterations=1 ! default is full load in one step
+    controlLoop%loadIncrementLoop%outputNumber=0
+    controlLoop%loadIncrementLoop%inputNumber=0
+      
+    EXITS("ControlLoop_LoadIncrementInitialise")
+    RETURN
+999 CALL ControlLoop_LoadIncrementFinalise(controlLoop%loadIncrementLoop,dummyErr,dummyError,*998)
+998 ERRORSEXITS("ControlLoop_LoadIncrementInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_LoadIncrementInitialise
 
   !
   !================================================================================================================================
@@ -1650,58 +1705,70 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
-  !>Gets the current time parameters for a time control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_CurrentTimesGet
-  SUBROUTINE ControlLoop_TimesGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
-    & currentLoopIteration,outputIterationNumber,err,error,*)
+
+  !>Sets the input frequency for a time control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_TimeInputSet
+  SUBROUTINE ControlLoop_TimeInputSet(controlLoop,inputFrequency,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop
-    REAL(DP), INTENT(OUT) :: startTime
-    REAL(DP), INTENT(OUT) :: stopTime
-    REAL(DP), INTENT(OUT) :: currentTime
-    REAL(DP), INTENT(OUT) :: timeIncrement
-    INTEGER(INTG), INTENT(OUT) :: currentLoopIteration
-    INTEGER(INTG), INTENT(OUT) :: outputIterationNumber
-    INTEGER(INTG), INTENT(OUT) :: err
-    TYPE(VARYING_STRING), INTENT(OUT) :: error
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to set the time input frequency for
+    INTEGER(INTG) :: inputFrequency !<The input frequency modulo to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables    
     TYPE(ControlLoopTimeType), POINTER :: timeLoop
-    TYPE(ControlLoopType), POINTER :: parentLoop
-    INTEGER(INTG), POINTER :: controlLoopLevel
-    INTEGER(INTG) :: i
-
-    ENTERS("ControlLoop_TimesGet",err,error,*999)
-
-    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
     
-    controlLoopLevel=>controlLoop%controlLoopLevel
-    parentLoop=>controlLoop
-    DO i=controlLoopLevel,1,-1
-      IF(controlLoopLevel==0) CALL FlagError("The specified control loop is not a time control loop.",err,error,*999)      
-      IF(parentLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
-        NULLIFY(timeLoop)
-        CALL ControlLoop_TimeLoopGet(parentLoop,timeLoop,err,error,*999)
-        startTime=timeLoop%startTime
-        stopTime=timeLoop%stopTime
-        currentTime=timeLoop%currentTime
-        timeIncrement=timeLoop%timeIncrement
-        currentLoopIteration=timeLoop%iterationNumber
-        outputIterationNumber=timeLoop%outputNumber
-        EXIT
-      ELSE
-        parentLoop=>parentLoop%parentLoop
-      ENDIF
-    ENDDO !i
-      
-    EXITS("ControlLoop_TimesGet")
+    ENTERS("ControlLoop_TimeInputSet",err,error,*999)
+
+    CALL ControlLoop_AssertNotFinished(controlLoop,err,error,*999)
+    CALL ControlLoop_AssertIsTimeLoop(controlLoop,err,error,*999)
+    NULLIFY(timeLoop)
+    CALL ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*999)
+
+    timeLoop%inputNumber=inputFrequency
+       
+    EXITS("ControlLoop_TimeInputSet")
     RETURN
-999 ERRORSEXITS("ControlLoop_TimesGet",err,error)
+999 ERRORSEXITS("ControlLoop_TimeInputSet",err,error)
     RETURN 1
     
-  END SUBROUTINE ControlLoop_TimesGet
-
+  END SUBROUTINE ControlLoop_TimeInputSet
+  
   !
+  !================================================================================================================================
+  !
+
+  !>Sets the output parameters for a time control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_TimeOutputSet
+  SUBROUTINE ControlLoop_TimeOutputSet(controlLoop,outputFrequency,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to set the times for
+    INTEGER(INTG) :: outputFrequency !<The output frequency modulo to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables    
+    TYPE(ControlLoopTimeType), POINTER :: timeLoop
+    
+    ENTERS("ControlLoop_TimeOutputSet",err,error,*999)
+
+    CALL ControlLoop_AssertNotFinished(controlLoop,err,error,*999)
+    CALL ControlLoop_AssertIsTimeLoop(controlLoop,err,error,*999)
+    NULLIFY(timeLoop)
+    CALL ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*999)
+    IF(outputFrequency<0) THEN
+      CALL FlagError("Invalid output frequency. The frequency should be greater than or equal to zero, but is "// &
+        & TRIM(NumberToVString(outputFrequency,"*",err,error))//".",err,error,*999)
+    END IF
+
+    timeLoop%outputNumber=outputFrequency
+      
+    EXITS("ControlLoop_TimeOutputSet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_TimeOutputSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_TimeOutputSet
+
+ !
   !================================================================================================================================
   !
 
@@ -1762,68 +1829,47 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the output parameters for a time control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_TimeOutputSet
-  SUBROUTINE ControlLoop_TimeOutputSet(controlLoop,outputFrequency,err,error,*)
+  !>Sets up the current time parameters for a control loop and all time loops under it.
+  RECURSIVE SUBROUTINE ControlLoop_TimesSetup(controlLoop,currentUpstreamTime,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to set the times for
-    INTEGER(INTG) :: outputFrequency !<The output frequency modulo to set
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to setup the times for
+    REAL(DP), INTENT(IN) :: currentUpstreamTime !<The current upstream time
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables    
+    !Local Variables
+    INTEGER(INTG) :: subLoopIdx
+    REAL(DP) :: myCurrentUpstreamTime
+    TYPE(ControlLoopType), POINTER :: subLoop
     TYPE(ControlLoopTimeType), POINTER :: timeLoop
     
-    ENTERS("ControlLoop_TimeOutputSet",err,error,*999)
+    ENTERS("ControlLoop_TimesSetup",err,error,*999)
 
-    CALL ControlLoop_AssertNotFinished(controlLoop,err,error,*999)
-    CALL ControlLoop_AssertIsTimeLoop(controlLoop,err,error,*999)
-    NULLIFY(timeLoop)
-    CALL ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*999)
-    IF(outputFrequency<0) THEN
-      CALL FlagError("Invalid output frequency. The frequency should be greater than or equal to zero, but is "// &
-        & TRIM(NumberToVString(outputFrequency,"*",err,error))//".",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
 
-    timeLoop%outputNumber=outputFrequency
-      
-    EXITS("ControlLoop_TimeOutputSet")
+    myCurrentUpstreamTime=currentUpstreamTime
+    !Handle this control loop
+    IF(controlLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
+      !Set this loops current time
+      NULLIFY(timeLoop)
+      CALL ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*999)
+      timeLoop%currentTime=currentUpstreamTime+timeLoop%startTime
+      !Set the current upstream time to this loops current time
+      myCurrentUpstreamTime=timeLoop%currentTime
+    ENDIF
+    !Now process all the downstream time loops.
+    DO subLoopIdx=1,controlLoop%numberOfSubLoops
+      subLoop=>controlLoop%subLoops(subLoopIdx)%ptr
+      CALL ControlLoop_TimesSetup(subLoop,myCurrentUpstreamTime,err,error,*999)
+    ENDDO !subLoopIdx
+          
+    EXITS("ControlLoop_TimesSetup")
     RETURN
-999 ERRORSEXITS("ControlLoop_TimeOutputSet",err,error)
+999 ERRORSEXITS("ControlLoop_TimesSetup",err,error)
     RETURN 1
     
-  END SUBROUTINE ControlLoop_TimeOutputSet
+  END SUBROUTINE ControlLoop_TimesSetup
 
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets the input frequency for a time control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_TimeInputSet
-  SUBROUTINE ControlLoop_TimeInputSet(controlLoop,inputFrequency,err,error,*)
-
-    !Argument variables
-    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to set the time input frequency for
-    INTEGER(INTG) :: inputFrequency !<The input frequency modulo to set
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables    
-    TYPE(ControlLoopTimeType), POINTER :: timeLoop
-    
-    ENTERS("ControlLoop_TimeInputSet",err,error,*999)
-
-    CALL ControlLoop_AssertNotFinished(controlLoop,err,error,*999)
-    CALL ControlLoop_AssertIsTimeLoop(controlLoop,err,error,*999)
-    NULLIFY(timeLoop)
-    CALL ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*999)
-
-    timeLoop%inputNumber=inputFrequency
-       
-    EXITS("ControlLoop_TimeInputSet")
-    RETURN
-999 ERRORSEXITS("ControlLoop_TimeInputSet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE ControlLoop_TimeInputSet
-  
   !
   !================================================================================================================================
   !
@@ -1948,69 +1994,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_WhileInitialise
-
-  !
-  !================================================================================================================================
-  !
-  
-  !>Finalises a load increment loop and deallocates all memory.
-  SUBROUTINE ControlLoop_LoadIncrementFinalise(loadIncrementLoop,err,error,*)
-
-    !Argument variables
-    TYPE(ControlLoopLoadIncrementType), POINTER, INTENT(INOUT) :: loadIncrementLoop !<A pointer to the load increment control loop to finalise
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
- 
-    ENTERS("ControlLoop_LoadIncrementFinalise",err,error,*999)
-
-    IF(ASSOCIATED(loadIncrementLoop)) THEN
-      DEALLOCATE(loadIncrementLoop)
-    ENDIF
-       
-    EXITS("ControlLoop_LoadIncrementFinalise")
-    RETURN
-999 ERRORSEXITS("ControlLoop_LoadIncrementFinalise",err,error)
-    RETURN 1
-    
-  END SUBROUTINE ControlLoop_LoadIncrementFinalise
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Initialises a load increment loop for a control loop.
-  SUBROUTINE ControlLoop_LoadIncrementInitialise(controlLoop,err,error,*)
-
-    !Argument variables
-    TYPE(ControlLoopType), POINTER, INTENT(INOUT) :: controlLoop !<A pointer to the control loop to initialise the load increment loop for
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dummyErr
-    TYPE(VARYING_STRING) :: dummyError
- 
-    ENTERS("ControlLoop_LoadIncrementInitialise",err,error,*998)
-
-    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*998)
-    IF(ASSOCIATED(controlLoop%loadIncrementLoop)) &
-      & CALL FlagError("The load increment loop is already associated for this control loop.",err,error,*998)
-      
-    ALLOCATE(controlLoop%loadIncrementLoop,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate load increment loop for the control loop.",err,error,*999)
-    controlLoop%loadIncrementLoop%controlLoop=>controlLoop
-    controlLoop%loadIncrementLoop%iterationNumber=0
-    controlLoop%loadIncrementLoop%maximumNumberOfIterations=1 ! default is full load in one step
-    controlLoop%loadIncrementLoop%outputNumber=0
-    controlLoop%loadIncrementLoop%inputNumber=0
-      
-    EXITS("ControlLoop_LoadIncrementInitialise")
-    RETURN
-999 CALL ControlLoop_LoadIncrementFinalise(controlLoop%loadIncrementLoop,dummyErr,dummyError,*998)
-998 ERRORSEXITS("ControlLoop_LoadIncrementInitialise",err,error)
-    RETURN 1
-    
-  END SUBROUTINE ControlLoop_LoadIncrementInitialise
 
   !
   !================================================================================================================================

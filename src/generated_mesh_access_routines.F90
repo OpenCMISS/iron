@@ -370,9 +370,7 @@ CONTAINS
     !Local Variables
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: region
-#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
-#endif    
 
     ENTERS("GeneratedMesh_CoordinateSystemGet",err,error,*998)
 
@@ -519,9 +517,7 @@ CONTAINS
     TYPE(GeneratedMeshCylinderType), POINTER :: cylinderMesh
     TYPE(GeneratedMeshEllipsoidType), POINTER :: ellipsoidMesh
     TYPE(GeneratedMeshRegularType), POINTER :: regularMesh
-#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
-#endif    
 
     ENTERS("GeneratedMesh_ExtentGet",err,error,*999)
 

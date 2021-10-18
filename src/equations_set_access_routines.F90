@@ -3814,9 +3814,7 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: specificationLength
-#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
-#endif    
 
     ENTERS("EquationsSet_SpecificationGet",err,error,*999)
    

@@ -910,10 +910,23 @@ CONTAINS
     INTEGER(INTG) :: i,level
     CHARACTER(LEN=MAXSTRLEN) :: filename
     TYPE(RoutineListItemType), POINTER :: nextRoutine,previousRoutine,routine
+#ifndef WITH_DIAGNOSTICS
+    TYPE(VARYING_STRING) :: localWarning
+#endif    
  
     NULLIFY(routine)
     
     ENTERS("DiagnosticsSetOn",err,error,*999)
+
+#ifndef WITH_DIAGNOSTICS
+    
+    IF(diagType/=ALL_DIAG_TYPE) THEN
+      localWarning="Can not turn diagnostics on as WITH_DIAGNOSTICS is set to OFF and the diagnostic type is not all "// &
+        & "routines. Set WITH_DIAGNOSTICS to ON or set the diagnostic type to all routines."
+      CALL FlagWarning(localWarning,err,error,*999)
+    ENDIF
+
+#endif    
 
     IF(LEN_TRIM(diagFilename)>=1) THEN
       IF(diagFileOpen) CLOSE(UNIT=DIAGNOSTICS_FILE_UNIT)
@@ -984,6 +997,7 @@ CONTAINS
       CLOSE(UNIT=DIAGNOSTICS_FILE_UNIT)
       diagFileOpen=.FALSE.
     ENDIF
+#ifdef WITH_DIAGNOSTICS    
     routine=>diagRoutineList%head
     DO WHILE(ASSOCIATED(routine))
       nextRoutine=>routine%nextRoutine
@@ -991,6 +1005,7 @@ CONTAINS
       routine=>nextRoutine
     ENDDO
     NULLIFY(diagRoutineList%head)
+#endif    
     diagAllSubroutines=.FALSE.
     diagFromSubroutine=.FALSE.
     diagnosticsLevel1=.FALSE.
@@ -1136,6 +1151,12 @@ CONTAINS
  
     ENTERS("TimingSetOn",err,error,*999)
 
+#ifndef WITH_DIAGNOSTICS
+    
+    CALL FlagWarning("Can not turn timing on as WITH_DIAGNOSTICS is set to OFF. Set WITH_DIAGNOSTICS to ON.",err,error,*999)
+    
+#else
+   
     NULLIFY(routine)
     IF(LEN_TRIM(timingFilename)>=1) THEN
       IF(timingFileOpen) CLOSE(UNIT=TIMING_FILE_UNIT)
@@ -1193,6 +1214,8 @@ CONTAINS
     timingSummary=timingSummaryFlag
     timing=.TRUE.
     diagOrTiming=.TRUE.
+    
+#endif    
 
     EXITS("TimingSetOn")
     RETURN
@@ -1200,6 +1223,9 @@ CONTAINS
       CLOSE(UNIT=TIMING_FILE_UNIT)
       timingFileOpen=.FALSE.
     ENDIF
+    
+#ifdef WITH_DIAGNOSTICS
+    
     routine=>timingRoutineList%head
     DO WHILE(ASSOCIATED(routine))
       nextRoutine=>routine%nextRoutine
@@ -1207,6 +1233,9 @@ CONTAINS
       routine=>nextRoutine
     ENDDO
     NULLIFY(timingRoutineList%head)
+    
+#endif
+    
     timingAllSubroutines=.FALSE.
     timingFromSubroutine=.FALSE.
     timing=.FALSE.

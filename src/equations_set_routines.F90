@@ -2588,7 +2588,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx,numberOfDynamicMatrices,numberOfLinearMatrices,numberOfResiduals,numberOfSources,outputType,residualIdx,sourceIdx
+    INTEGER(INTG) :: matrixIdx,numberOfDynamicMatrices,numberOfLinearMatrices,numberOfResiduals,numberOfSources,outputType, &
+      & residualIdx,sourceIdx
     LOGICAL :: updateMatrix,updateVector
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -2643,6 +2644,8 @@ CONTAINS
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"Finite element matrices and vectors:",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Element number = ",elementNumber,err,error,*999)
+      NULLIFY(dynamicMatrices)
+      CALL EquationsMatricesVector_DynamicMatricesExists(vectorMatrices,dynamicMatrices,err,error,*999)
       IF(ASSOCIATED(dynamicMatrices)) THEN
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Dynamic matrices:",err,error,*999)
         CALL EquationsMatricesDynamic_NumberOfDynamicMatricesGet(dynamicMatrices,numberOfDynamicMatrices,err,error,*999)
