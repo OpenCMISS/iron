@@ -6382,8 +6382,13 @@ CONTAINS
       dXidX=0.0_DP
       velocity=0.0_DP
       velocityDeriv=0.0_DP
+      velocity2Deriv=0.0_DP
+      pressure=0.0_DP
+      pressureDeriv=0.0_DP
       meshVelocity=0.0_DP
 
+      CALL EquationsSet_TimesGet(equationsSet,currentTime,deltaTime,err,error,*999)
+      
       NULLIFY(equationsInterpolation)
       CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
 
@@ -6581,34 +6586,59 @@ CONTAINS
         CALL Basis_QuadratureSchemeGet(columnBasis(columnComponentIdx)%ptr,BASIS_DEFAULT_QUADRATURE_SCHEME, &
           & columnQuadratureScheme(columnComponentIdx)%ptr,err,error,*999)
       ENDDO !columnComponentIdx
+      IF(stabilisation) THEN
+        IF(.NOT.linearElement) dependentInterpPartialOrder=SECOND_PART_DERIV
+        !Constant of element inverse inequality
+        IF(elementInverse > -ZERO_TOLERANCE) THEN
+          !Use user-defined value if specified (default -1)
+          C1=elementInverse
+        ELSE IF(linearElement) THEN
+          C1=3.0_DP
+        ELSE
+          IF(numberOfDimensions==2.AND.numberOfColumnElementParameters(1)==9.AND. &
+            & ANY(velocityInterpolationOrder==BASIS_QUADRATIC_INTERPOLATION_ORDER)) THEN
+            C1=24.0_DP
+          ELSE IF(numberOfDimensions==3.AND.numberOfColumnElementParameters(1)==27.AND. &
+            & ANY(velocityInterpolationOrder==BASIS_QUADRATIC_INTERPOLATION_ORDER)) THEN
+            C1=12.0_DP
+            !TODO: Expand C1 for more element types
+          ELSE
+            localError="Element inverse estimate undefined on element "//TRIM(NumberToVString(elementNumber,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDIF
+        !Update element inverse value if calculated
+        IF(ABS(C1-elementInverse) > ZERO_TOLERANCE) THEN
+          CALL FieldVariable_ParameterSetUpdateLocalElement(vEquationsVariable,FIELD_VALUES_SET_TYPE,elementNumber,10,C1, &
+            & err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateStart(vEquationsVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateFinish(vEquationsVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+        ENDIF
+      ENDIF !stabilistion
 
       !Loop over all Gauss points
       CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
       DO gaussPointIdx=1,numberOfGauss
 
-        CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,dependentInterpPoint, &
-          & err,error,*999)
+        CALL Field_InterpolateGauss(dependentInterpPartialOrder,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+          & dependentInterpPoint,err,error,*999)
         CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
           & err,error,*999)
-        CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi,geometricInterpPointMetrics,err,error,*999)
+        CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
         
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,uMaterialsInterpPoint, &
           & err,error,*999)
 
         CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
-        DO xiIdx=1,numberOfXi
-          DO coordinateIdx=1,numberOfDimensions
-            dXidX(xiIdx,coordinateIdx)=geometricInterpPointMetrics%dXidX(xiIdx,coordinateIdx)
-          ENDDO !coordinateIdx
-        ENDDO !xiIdx
+        
+        dXidX(1:numberOfXi,1:numberOfDimensions)=geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions)
 
         !Get ALE velocity, w 
+        meshVelocity=0.0_DP
         IF(ALE) THEN
           CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,independentInterpPoint, &
             & err,error,*999)
           meshVelocity(1:numberOfDimensions)=independentInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-        ELSE
-          meshVelocity(1:numberOfDimensions)=0.0_DP
         ENDIF
 
         !Get the constitutive law (non-Newtonian) viscosity based on shear rate
@@ -6636,9 +6666,19 @@ CONTAINS
           & esSpecification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
 
           velocity(1:numberOfDimensions)=dependentInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-          DO xiIdx=1,numberOfXi
-            velocityDeriv(1:numberOfDimensions,xiIdx)= &
-              & dependentInterpPoint%values(1:numberOfDimensions,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx))
+          DO xiIdx1=1,numberOfXi
+            velocityDeriv(1:numberOfDimensions,xiIdx1)= &
+              & dependentInterpPoint%values(1:numberOfDimensions,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx1))
+            IF(stabilisation) THEN
+              pressureDeriv(xiIdx1)= &
+                & dependentInterpPoint%values(pressureComponent,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx1))
+              IF(.NOT.linearElement) THEN
+                DO xiIdx2=1,numberOfXi
+                  velocity2Deriv(1:numberOfDimensions,xiIdx1,xiIdx2)= &
+                    & dependentInterpPoint%values(1:numberOfDimensions,PARTIAL_DERIVATIVE_SECOND_DERIVATIVES_MAP(xiIdx1,xiIdx2))
+                ENDDO !xiIdx2
+              ENDIF !Not a linear element
+            ENDIF !stabilisation
           ENDDO !xiIdx
           !Start with calculation of partial matrices
           !Here meshVelocitys must be ZERO if ALE part of linear matrix
