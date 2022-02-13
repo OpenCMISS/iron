@@ -6283,15 +6283,20 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnMeshComponent,componentIdx, &
-      & coordinateIdx,derivativeIdx,elementVersionNumber,esSpecification(3),firstNode,gaussPointIdx,lastNode,nodeIdx,nodeNumber, &
-      & numberOfColumnElementParameters,numberOfDimensions,numberOfElementNodes,numberOfGauss,numberOfParameters, &
-      & numberOfResidualComponents,numberOfRowElementParameters,numberOfVersions,numberOfXi,residualVariableType, &
-      & rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowMeshComponent,solverGlobalNumber,solveType,versionIdx,xiIdx
-    REAL(DP) :: a0Deriv,a0Param,aDeriv,alpha,aValue,beta,columnPhi,dColumnPhidXi(3),dRowPhidXi(3),dXidX(3,3),eDeriv,eParam, &
-      & gaussWeight,hDeriv,hParam,jacobian,jacobianGaussWeight,kappa,mass,momentum1,momentum2,muParam,muScale,normal,normalWave, &
-      & qDeriv,qValue,rhoParam,rowPhi,sum,velocity(3),velocityDeriv(3,3),meshVelocity(3)
-    LOGICAL  :: updateJacobian,updateResidual,updateRHS
-    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,independentBasis,rowBasis
+      & coordinateIdx,dependentInterpPartialOrder,derivativeIdx,dimensionIdx,dimensionIdx2,elementVersionNumber, &
+      & esSpecification(3),firstNode,gaussPointIdx,lastNode,nodeIdx,nodeNumber,numberOfColumnElementParameters(4), &
+      & numberOfDimensions,numberOfElementNodes,numberOfGauss,numberOfParameters, &
+      & numberOfResidualComponents,numberOfRowsComponents,numberOfRowElementParameters(4),numberOfVersions,numberOfXi, &
+      & pressureComponent,residualVariableType,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowMeshComponent, &
+      & solverGlobalNumber,solveType,stabilisationType,velocityInterpolationOrder(3),versionIdx,xiIdx,xiIdx1,xiIdx2
+    REAL(DP) :: a0Deriv,a0Param,aDeriv,alpha,aValue,beta,C1,columnPhi,columndPhi2dXi(3,3),currentTime,dColumnPhidXi(3), &
+      & deltaTime,dPhidXPressure(3,3),dPhidXVelocity(3,3),dRowPhidXi(3),dXidX(3,3),eDeriv,elementInverse, &
+      & eParam,gaussWeight,hDeriv,hParam,jacobian,jacobianContinuity,jacobianGaussWeight,jacobianMomentum(3),kappa,mass, &
+      & momentum1,momentum2,muParam,muScale,normal,normalWave,pressure,pressureDeriv(3),qDeriv,qValue,rhoParam,rowPhi, &
+      & stabilisationValueDP,sum,velocity(3),velocityDeriv(3,3),velocity2Deriv(3,3,3),meshVelocity(3)
+    LOGICAL  :: ALE,linearElement,RBSStabilisation,RBVMStabilisation,stabilisation,static,updateJacobian,updateResidual,updateRHS
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis,independentBasis
+    TYPE(BasisPtrType) :: columnBasis(4),rowBasis(4)
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition,independentDecomposition
     TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,independentDomain,rowDomain
     TYPE(DomainElementsType), POINTER :: columnDomainElements,dependentDomainElements,geometricDomainElements, &
@@ -6320,10 +6325,11 @@ CONTAINS
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
     TYPE(FieldInterpolationParametersType), POINTER :: dependentInterpParameters,geometricInterpParameters, &
       & independentInterpParameters,uMaterialsInterpParameters,vMaterialsInterpParameters
-    TYPE(FieldVariableType), POINTER :: geometricVariable,independentVariable,residualVariable,uMaterialsVariable, &
-      & vMaterialsVariable
+    TYPE(FieldVariableType), POINTER :: geometricVariable,independentVariable,residualVariable,rowsVariable,uMaterialsVariable, &
+      & u1EquationsVariable,vEquationsVariable,vMaterialsVariable
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
-    TYPE(QuadratureSchemeType), POINTER :: columnQuadratureScheme,dependentQuadratureScheme,quadratureScheme,rowQuadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,quadratureScheme
+    TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(4),rowQuadratureScheme(4)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("NavierStokes_FiniteElementJacobianEvaluate",err,error,*999)
@@ -6508,7 +6514,7 @@ CONTAINS
       SELECT CASE(esSpecification(3))
       CASE(EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE, &
         & EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE)
-        static=.TRUE
+        static=.TRUE.
       CASE(EQUATIONS_SET_QUASISTATIC_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE)
         !Do nothing
       CASE(EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
@@ -6716,7 +6722,7 @@ CONTAINS
                   columnElementDOFIdx=columnElementDOFIdx+1
                   CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
                     & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
-                  IF(columnComponent<=numberOfDimensions) THEN
+                  IF(columnComponentIdx<=numberOfDimensions) THEN
                     !Calculate some general values needed below
                     sum=0.0_DP
                     DO xiIdx=1,numberOfXi
@@ -6756,10 +6762,10 @@ CONTAINS
                     ELSE
                       columndPhi2dXi=0.0_DP
                       IF(.NOT. linearElement) THEN
-                        DO xi1=1,numberOfXi
-                          DO xi2=1,numberOfXi
-                            CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureVelocity,columnElementParameterIdx, &
-                              & PARTIAL_DERIVATIVE_SECOND_DERIVATIVE_MAP(xiIdx1,xiIdx2),gaussPointIdx, &
+                        DO xiIdx1=1,numberOfXi
+                          DO xiIdx2=1,numberOfXi
+                            CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
+                              & columnElementParameterIdx,PARTIAL_DERIVATIVE_SECOND_DERIVATIVES_MAP(xiIdx1,xiIdx2),gaussPointIdx, &
                               & columndPhi2dXi(xiIdx1,xiIdx2),err,error,*999)
                           ENDDO !xi2
                         ENDDO !xi1
