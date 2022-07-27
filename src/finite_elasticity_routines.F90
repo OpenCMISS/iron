@@ -1714,7 +1714,7 @@ CONTAINS
            !Calculate the Cauchy stress tensor (in Voigt form) at the gauss point.
            CALL FINITE_ELASTICITY_GAUSS_STRESS_TENSOR(EQUATIONS_SET,DEPENDENT_INTERPOLATED_POINT, &
              & MATERIALS_INTERPOLATED_POINT,GEOMETRIC_INTERPOLATED_POINT,STRESS_TENSOR,DZDNU,Jznu, &
-             & elementNumber,gauss_idx,err,error,*999)
+             & elementNumber,gauss_idx,numberOfDimensions,err,error,*999)
             
             ! Convert from Voigt form to tensor form and multiply with Jacobian and Gauss weight.
             DO nh=1,numberOfDimensions
@@ -2065,7 +2065,7 @@ CONTAINS
             !Calculate the Cauchy stress tensor (in Voigt form) at the gauss point.
             CALL FINITE_ELASTICITY_GAUSS_STRESS_TENSOR(EQUATIONS_SET,DEPENDENT_INTERPOLATED_POINT, &
              & MATERIALS_INTERPOLATED_POINT,GEOMETRIC_INTERPOLATED_POINT,STRESS_TENSOR,Fe,Jznu, &
-             & elementNumber,gauss_idx,err,error,*999)
+             & elementNumber,gauss_idx,numberOfDimensions,err,error,*999)
             ! Convert from Voigt form to tensor form and multiply with Jacobian and Gauss weight.
             
             JGW=Jzxi*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
@@ -3741,6 +3741,7 @@ CONTAINS
     NULLIFY(coordinateSystem)
     CALL EquationsSet_CoordinateSystemGet(equationsSet,coordinateSystem,err,error,*999)
     numberOfDimensions=coordinateSystem%NUMBER_OF_DIMENSIONS
+
     !Check the provided strain field variable has appropriate components and interpolation
     SELECT CASE(numberOfDimensions)
     CASE(3)
@@ -4271,8 +4272,8 @@ CONTAINS
         ! of stress at any xi position and the GaussPoint number argument needs to be replace with a set of xi coordinates.
         CALL FINITE_ELASTICITY_GAUSS_STRESS_TENSOR(equationsSet,dependentInterpolatedPoint, &
           & materialsInterpolatedPoint,geometricInterpolatedPoint,cauchyStressVoigt,dZdNu,Jznu, &
-          & elementNumber,0,ERR,ERROR,*999)
-        
+          & elementNumber,0,numberOfDimensions,ERR,ERROR,*999)
+  
         !Convert from Voigt form to tensor form. \TODO needs to be generalised for 2D
         DO nh=1,numberOfDimensions
           DO mh=1,numberOfDimensions
@@ -4522,8 +4523,8 @@ CONTAINS
         ! of stress at any xi position and the GaussPoint number argument needs to be replace with a set of xi coordinates.
         CALL FINITE_ELASTICITY_GAUSS_STRESS_TENSOR(equationsSet,dependentInterpolatedPoint, &
           & materialsInterpolatedPoint,geometricInterpolatedPoint,cauchyStressVoigt,dZdNu,Jznu, &
-          & localElementNumber,0,ERR,ERROR,*999)
-        
+          & localElementNumber,0,numberOfDimensions,ERR,ERROR,*999)
+
         !Convert from Voigt form to tensor form. \TODO needs to be generalised for 2D
         DO nh=1,numberOfDimensions
           DO mh=1,numberOfDimensions
@@ -4734,11 +4735,11 @@ CONTAINS
         ! of stress at any xi position and the GaussPoint number argument needs to be replace with a set of xi coordinates.
         CALL FINITE_ELASTICITY_GAUSS_STRESS_TENSOR(equationsSet,dependentInterpolatedPoint, &
           & materialsInterpolatedPoint,geometricInterpolatedPoint,cauchyStressVoigt,dZdNu,Jznu, &
-          & localElementNumber,0,ERR,ERROR,*999)
+          & localElementNumber,0,numberOfDimensions,ERR,ERROR,*999)
         
         !Convert from Voigt form to tensor form.
-        DO nh=1,3
-          DO mh=1,3
+        DO nh=1,3 
+          DO mh=1,3 
             cauchyStressTensor(mh,nh)=cauchyStressVoigt(TENSOR_TO_VOIGT3(mh,nh))
           ENDDO
         ENDDO
@@ -6984,7 +6985,7 @@ CONTAINS
   !>Evaluates the Cauchy stress tensor at a given Gauss point
   SUBROUTINE FINITE_ELASTICITY_GAUSS_STRESS_TENSOR(EQUATIONS_SET,DEPENDENT_INTERPOLATED_POINT, &
       & MATERIALS_INTERPOLATED_POINT,GEOMETRIC_INTERPOLATED_POINT,STRESS_TENSOR,DZDNU,Jznu, &
-      & ELEMENT_NUMBER,GAUSS_POINT_NUMBER,err,error,*)
+      & ELEMENT_NUMBER,GAUSS_POINT_NUMBER,numberOfDimensions,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: EQUATIONS_SET !<A pointer to the equations set
@@ -6994,28 +6995,32 @@ CONTAINS
     REAL(DP), INTENT(IN) :: DZDNU(3,3) !Deformation gradient tensor at the gauss point
     REAL(DP), INTENT(IN) :: Jznu !Determinant of deformation gradient tensor (AZL)
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER,GAUSS_POINT_NUMBER !<Element/Gauss point number
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: PRESSURE_COMPONENT,component_idx,dof_idx
     REAL(DP) :: P
+    REAL(DP) :: numberOfDimensions_DP
     REAL(DP) :: I1 !Invariants, if needed
     REAL(DP) :: TEMPTERM1,TEMPTERM2,VALUE !Temporary variables
     REAL(DP) :: ONETHIRD_TRACE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    REAL(DP) :: MOD_DZDNU(3,3),MOD_DZDNUT(3,3),AZL(3,3)
-    REAL(DP) :: B(6),E(6),DQ_DE(6)
+    REAL(DP) :: MOD_DZDNU(3,3),MOD_DZDNUT(3,3),AZL(3,3), DZDNUInv(3,3), PK2Tensor(3,3), sigmaTensor(3,3)
+    REAL(DP) :: B(6),E(6),DQ_DE(6), PK2(6), Jznu_dummy
     REAL(DP), POINTER :: C(:) !Parameters for constitutive laws
 
     ENTERS("FINITE_ELASTICITY_GAUSS_STRESS_TENSOR",err,error,*999)
 
     NULLIFY(FIELD_VARIABLE,C)
 
-    !AZL = F'*F (deformed covariant or right cauchy deformation tensor, C)
+    !AZL = Jznu^(-2/numberOfDim)*F'*F (deformed covariant or right cauchy deformation tensor, C)
     !AZU - deformed contravariant tensor; I3 = det(C)
+ 
+    numberOfDimensions_DP = numberOfDimensions + 0.0_DP
 
-    MOD_DZDNU=DZDNU*Jznu**(-1.0_DP/3.0_DP)
+    MOD_DZDNU=DZDNU*Jznu**(-1.0_DP/numberOfDimensions_DP) 
     CALL MatrixTranspose(MOD_DZDNU,MOD_DZDNUT,err,error,*999)
     CALL MatrixProduct(MOD_DZDNUT,MOD_DZDNU,AZL,err,error,*999)
     C=>MATERIALS_INTERPOLATED_POINT%VALUES(:,NO_PART_DERIV)
@@ -7029,16 +7034,25 @@ CONTAINS
       !Form of constitutive model is:
       !W=c1*(I1-3)+c2*(I2-3)+p/2*(I3-1)
 
+      ! This function needs a 2D test-case for Mooney-Rivlin!!! (i.e. c2=/0)
+      ! Therefore, add a warning.
+      IF ((CEILING(C(2))/=0) .AND. numberOfDimensions==2) THEN
+        CALL FlagWarning("Mooney-Rivlin material (c1,c2\=0) not verified for 2D-case.",err,error,*999)
+      END IF
+
       !Calculate isochoric fictitious 2nd Piola tensor (in Voigt form)
-      I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
+      I1 = 0.0_DP
+      DO component_idx=1,numberOfDimensions
+        I1=I1+AZL(component_idx,component_idx) 
+      END DO
       TEMPTERM1=-2.0_DP*C(2)
       TEMPTERM2=2.0_DP*(C(1)+I1*C(2))
       STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2
       STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2
-      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2
-      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)
-      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)
-      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)
+      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2 ! meaningless if 2D
+      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1) 
+      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1) ! meaningless if 2D
+      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2) ! meaningless if 2D
 
       IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE) THEN
         !add active contraction stress values
@@ -7057,8 +7071,52 @@ CONTAINS
       !Do push-forward of 2nd Piola tensor. 
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,MOD_DZDNU,Jznu,err,error,*999)
       !Calculate isochoric Cauchy tensor (the deviatoric part) and add the volumetric part (the hydrostatic pressure).
-      ONETHIRD_TRACE=SUM(STRESS_TENSOR(1:3))/3.0_DP
-      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)-ONETHIRD_TRACE+P
+      ONETHIRD_TRACE=SUM(STRESS_TENSOR(1:numberOfDimensions))/numberOfDimensions_DP 
+      STRESS_TENSOR(1:numberOfDimensions)=STRESS_TENSOR(1:numberOfDimensions)-ONETHIRD_TRACE+P 
+
+      ! Compute PK2 (just for comparison)
+      PK2 = STRESS_TENSOR
+      Jznu_dummy = Jznu
+      CALL INVERT(DZDNU,DZDNUInv,Jznu_dummy,err,error,*999)
+      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(PK2,DZDNUInv,1.0_DP/Jznu,err,error,*999)
+
+      ! PK2 and sigma from Voigt to tensor
+      DO component_idx =1,numberOfDimensions
+        DO dof_idx =1, numberOfDimensions
+          PK2Tensor(component_idx, dof_idx) = PK2(TENSOR_TO_VOIGT(component_idx,dof_idx, 3))
+          sigmaTensor(component_idx, dof_idx) = STRESS_TENSOR(TENSOR_TO_VOIGT(component_idx,dof_idx, 3))
+        END DO
+      END DO      
+
+      ! Write out PK2
+      IF(DIAGNOSTICS1) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Second PK Tensor (S):",err,error,*999)
+        IF (numberOfDimensions == 3) THEN
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+            & 3,3,PK2Tensor,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("            S','(",I1,",:)',' :",3(X,E13.6))', &
+            & '(16X,3(X,E13.6))',err,error,*999)
+        ELSE ! must be 2
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,1,1,2, &
+            & 3,3,PK2Tensor(1:2,1:2),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("            S','(",I1,",:)',' :",2(X,E13.6))', &
+            & '(16X,2(X,E13.6))',err,error,*999)
+        END IF
+      END IF
+
+      ! Write out Cauchy Stress Tensor
+      IF(DIAGNOSTICS1) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Cauchy Stress Tensor (\sigma):",err,error,*999)
+        IF (numberOfDimensions == 3) THEN
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+            & 3,3,sigmaTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES,         '("        \sigma','(",I1,",:)',' :",3(X,E13.6))', &
+            & '(16X,3(X,E13.6))',err,error,*999)
+        ELSE ! must be 2
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,1,1,2, &
+            & 3,3,sigmaTensor(1:2,1:2),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("        \sigma','(",I1,",:)',' :",2(X,E13.6))', &
+            & '(16X,2(X,E13.6))',err,error,*999)
+        END IF
+      END IF
 
     CASE(EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
       & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE)
@@ -7093,6 +7151,11 @@ CONTAINS
       !Calculate isochoric Cauchy tensor (the deviatoric part) and add the volumetric part (the hydrostatic pressure).
       ONETHIRD_TRACE=SUM(STRESS_TENSOR(1:3))/3.0_DP
       STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)-ONETHIRD_TRACE+P
+
+      IF (numberOfDimensions==2) THEN
+        CALL FlagWarning("This case has not been verified for the 2D-case!!!",err,error,*999)
+      END IF
+
     CASE DEFAULT
       LOCAL_ERROR="The third equations set specification of "// &
         & TRIM(NumberToVString(EQUATIONS_SET%specification(3),"*",err,error))// &
