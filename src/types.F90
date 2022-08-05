@@ -288,7 +288,9 @@ MODULE Types
   TYPE DataProjectionResultType
     INTEGER(INTG) :: userNumber !<The user number of the data point to which the projection result corresponds to.   
     REAL(DP) :: distance !<The distances between the data point and the projection. Assigned only if dataPointsProjected is .TRUE.
-    INTEGER(INTG) :: elementNumber !<The element of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE.
+    INTEGER(INTG) :: elementLocalNumber !<The local element of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE.
+    
+    INTEGER(INTG) :: elementGlobalNumber !<The global element of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE.
     INTEGER(INTG) :: elementLineFaceNumber !<The element line/face of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE. and DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE or DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE is chosen    
     INTEGER(INTG) :: exitTag !<The exit tag of the data projection. Assigned only if dataPointsProjected is .TRUE. \See DataProtectionRoutines,DataProjectionRoutines_DataProjectionTypes 
     REAL(DP), ALLOCATABLE :: xi(:) !<The xi coordinate of the projection. Assigned only if dataPointsProjected is .TRUE.
@@ -324,7 +326,7 @@ MODULE Types
     INTEGER(INTG) :: numberOfClosestElements !<The number of closest elements to perform full projection on. The algorithm first find the distance of the data point to each elements base on starting xi, full projection is only performed on the first few elements sorted by the distance
     REAL(DP) :: absoluteTolerance !<The absolute tolerance of the iteration update
     REAL(DP) :: relativeTolerance !<The relative tolerance of the iteration update
-    REAL(DP), ALLOCATABLE :: startingXi(:) !<The starting value of the element xi
+    REAL(DP), ALLOCATABLE :: startingXi(:,:) !<The starting value of the element xi
     INTEGER(INTG) :: maxNumberOfCandidates !<The maximum number of projection candidate elements.
     TYPE(DataProjectionCandidateType), ALLOCATABLE :: dataProjectionCandidates(:) !<projectionCandidates(dataIdx). The projection candidates for the dataIdx'th data point. The 0'th index contains the default projection candidates which can then be overridden for specific data points.
     TYPE(DataProjectionResultType), ALLOCATABLE :: dataProjectionResults(:) !<dataProjectionResults(dataIdx). The data projection results for the dataIdx'th data point.

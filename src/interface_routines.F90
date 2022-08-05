@@ -2194,7 +2194,7 @@ CONTAINS
             InterfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIndex)%reducedXi(:)= &
               & dataProjectionResult%xi
             InterfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIndex)%coupledMeshElementNumber= &
-              & dataProjectionResult%elementNumber
+              & dataProjectionResult%elementLocalNumber
             InterfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIndex)%elementLineFaceNumber= &
               & dataProjectionResult%elementLineFaceNumber
           ENDDO !dataPointIdx

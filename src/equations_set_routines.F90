@@ -2772,6 +2772,8 @@ CONTAINS
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
           CALL ClassicalField_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*999)
+        CASE(EQUATIONS_SET_FITTING_CLASS)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_MODAL_CLASS)
@@ -2907,6 +2909,10 @@ CONTAINS
       ! so let's just loop over component, node/el, derivative
       column=0  ! element jacobian matrix column number
       DO componentIdx=1,columnVariable%NUMBER_OF_COMPONENTS
+        ! adjusts the pertubation for the hydrostatic pressure to not use the L2Norm
+        IF(componentIdx==4) THEN
+          delta=(1.0_DP)*nonlinearMatrices%jacobians(jacobianNumber)%ptr%jacobianFiniteDifferenceStepSize
+        ENDIF
         elementsTopology=>columnVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%ELEMENTS
         componentInterpolationType=columnVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE
         SELECT CASE(componentInterpolationType)
@@ -3012,6 +3018,8 @@ CONTAINS
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
       CALL ClassicalField_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_FITTING_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_MODAL_CLASS)
