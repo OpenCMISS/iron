@@ -3114,19 +3114,21 @@ CONTAINS
     
     ENTERS("Basis_LocalNodeXiCalculate",err,error,*999)
 
-    CALL Basis_AssertIsFinished(basis,err,error,*999)   
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+#ifdef WITH_PRECHECKS    
     IF(localNodeNumber<1.OR.localNodeNumber>basis%numberOfNodes) THEN
       localError="The specified local node number of "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
         & " is invalid. The local node number must be >= 1 and <= "// &
         & TRIM(NumberToVString(basis%numberOfNodes,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF      
-    IF(SIZE(xi,1)>=basis%numberOfXi) THEN
-      localError="The size of the specified xic array of "//TRIM(NumberToVString(SIZE(xi,1),"*",err,error))// &
+    IF(SIZE(xi,1)<basis%numberOfXi) THEN
+      localError="The size of the specified xi array of "//TRIM(NumberToVString(SIZE(xi,1),"*",err,error))// &
         & " is invalid. The size of the xi array must be >= "// &
         & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//"."            
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     SELECT CASE(basis%type)
     CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
@@ -3149,8 +3151,7 @@ CONTAINS
     CASE(BASIS_EXTENDED_LAGRANGE_TP_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The basis type of "//TRIM(NumberToVString(basis%type,"*",err,error))// &
-        & " is invalid."
+      localError="The basis type of "//TRIM(NumberToVString(basis%type,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
     

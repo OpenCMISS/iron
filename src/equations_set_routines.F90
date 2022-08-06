@@ -1655,7 +1655,7 @@ CONTAINS
 
           rhsVariableDOF=equationsRowToRHSDOFMap(equationsRowNumber)
 
-          SELECT CASE(lhsBoundaryCondition)
+          SELECT CASE(rowCondition)
           CASE(BOUNDARY_CONDITION_FREE_ROW)
             !OK, do nothing
           CASE(BOUNDARY_CONDITION_DIRICHLET_ROW)

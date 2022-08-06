@@ -332,10 +332,8 @@ PROGRAM NonlinearPoissonExample
   !Create the equations set analytic field variables
   CALL cmfe_Field_Initialise(AnalyticField,Err)
   IF(NUMBER_DIMENSIONS==2) THEN
-    CALL cmfe_EquationsSet_AnalyticCreateStart(EquationsSet,CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1, &
-      & AnalyticFieldUserNumber, &
-      & AnalyticField, &
-      & Err)
+    CALL cmfe_EquationsSet_AnalyticCreateStart(EquationsSet,CMFE_EQUATIONS_SET_EXPONENTIAL_POISSON_EQUATION_TWO_DIM_1, &
+      & AnalyticFieldUserNumber,AnalyticField,Err)
   ELSE
     WRITE(*,'(A)') "One and three dimensions are not implemented."
     STOP

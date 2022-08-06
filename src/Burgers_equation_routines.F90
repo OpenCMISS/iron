@@ -355,13 +355,7 @@ CONTAINS
         !Loop over the local nodes excluding the ghosts.
         CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         DO nodeIdx=1,numberOfNodes
-!!TODO \todo We should interpolate the geometric field here and the node position.
-          DO dimensionIdx=1,numberOfDimensions
-            !Default to version 1 of each node derivative
-            CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
-            x(dimensionIdx)=geometricParameters(localDOFIdx)
-          ENDDO !dimensionIdx
-          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+         CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
           !Loop over the derivatives
           CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
           DO derivativeIdx=1,numberOfNodeDerivatives
@@ -1556,30 +1550,7 @@ CONTAINS
     CALL SYSTEM('mkdir -p ./output')
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STATIC_BURGERS_SUBTYPE)
-      CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement,currentIteration, &
-        & outputIteration,inputIteration,err,error,*999)
-      NULLIFY(solverEquations)
-      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-      NULLIFY(solverMapping)
-      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-      !Make sure the equations sets are up to date
-      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
-      DO equationsSetIdx=1,numberOfEquationsSets
-        NULLIFY(equationsSet)
-        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-        NULLIFY(region)
-        CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
-        NULLIFY(fields)
-        CALL Region_FieldsGet(region,fields,err,error,*999)
-        filename="./output/"//"StaticSolution"
-        method="FORTRAN"
-        IF(outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-          CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-          CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-        ENDIF
-        CALL FIELD_IO_NODES_EXPORT(fields,filename,method,err,error,*999)
-        CALL FIELD_IO_ELEMENTS_EXPORT(fields,filename,method,err,error,*999)
-      ENDDO !equationsSetIdx
+      !Do nothing
     CASE(PROBLEM_DYNAMIC_BURGERS_SUBTYPE)
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement,currentIteration, &
         & outputIteration,inputIteration,err,error,*999)

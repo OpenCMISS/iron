@@ -2044,7 +2044,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds a coupled distributed matrix to a distributed matrix i.e., A = A + alpha.C(B)
+  !>Adds a (transposed) coupled distributed matrix to a distributed matrix i.e., A = A + alpha.C(B) or A = A + alpha.C(B^T)
   SUBROUTINE DistributedMatrix_MatrixCoupleAdd(aMatrix,rowSelectionType,rowCoupling,columnCoupling,alpha,bMatrix,transposeB, &
     & err,error,*)
 
@@ -2060,11 +2060,12 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: aColumn,aColumnIdx,aRow,aRowIdx,bBlockSize,bColumn,bColumnBlock,bColumnIdx,bColumnBlockIdx,blockColumnIdx, &
-      & blockRowIdx,bRowBlockIdx,bNumberOfColumnBlocks,bNumberOfRowBlocks,bMaxNumberOfRows,bStorageType,bRow, &
+      & blockRowIdx,bRowBlockIdx,bNumberOfColumnBlocks,bNumberOfRowBlocks,bMaxNumberOfRows,bRow,bStorageType,bSymmetryType, &
       & dataIdx,numberOfBColumns,numberOfBRows
     INTEGER(INTG), POINTER :: bColumnIndices(:),bRowIndices(:)
     REAL(DP) :: aValue,columnCouplingCoefficient,rowCouplingCoefficient,matrixValue
     REAL(DP), POINTER :: bMatrixData(:)
+    LOGICAL :: bSymmetric
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedMatrix_MatrixCoupleAdd",err,error,*999)
@@ -2092,6 +2093,8 @@ CONTAINS
         & " does not match the number of columns in the B matrix of "//TRIM(NumberToVString(numberOfBColumns,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+    CALL DistributedMatrix_SymmetryTypeGet(bMatrix,bSymmetryType,err,error,*999)
+    bSymmetric=(bSymmetryType==DISTRIBUTED_MATRIX_SYMMETRIC_TYPE)
 
     SELECT CASE(bMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -2100,129 +2103,129 @@ CONTAINS
       CALL DistributedMatrix_DataGet(bMatrix,bMatrixData,err,error,*999)
       SELECT CASE(bStorageType)
       CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-        CALL DistributedMatrix_MaxNumberOfRowsGet(bMatrix,bMaxNumberOfRows,err,error,*999)
-        !Loop over the rows of the b matrix
-        DO bRow=1,numberOfBRows
-          !Loop over the rows this row is mapped to
-          DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
-            aRow=rowCoupling(bRow)%rowCols(aRowIdx)
-            rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
-            !Loop over the columns of the b matrix
-            DO bColumn=1,numberOfBColumns
-              !Loop over the columns this column is mapped to
-              DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
-                aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
-                columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
-                !Add in the matrix value
-                aValue=alpha*bMatrixData(bRow+(bColumn-1)*bMaxNumberOfRows)*rowCouplingCoefficient*columnCouplingCoefficient
-                IF(transposeB) THEN
-                 CALL DistributedMatrix_ValuesAdd(aMatrix,aColumn,aRow,aValue,err,error,*999)
-                 ELSE
-                  CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
-                ENDIF
-              ENDDO !aColumnIdx
-            ENDDO !bColumn
-          ENDDO !aRowIdx
-        ENDDO !bRow
-      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-        !Loop over the rows of the b matrix
-        DO bRow=1,numberOfBRows
-          !Loop over the rows this row is mapped to
-          DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
-            aRow=rowCoupling(bRow)%rowCols(aRowIdx)
-            rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
-            bColumn=bRow
-            !Loop over the columns this column is mapped to
-            DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
-              aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
-              columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
-              !Add in the solver matrix value
-              aValue=alpha*bMatrixData(bRow)*rowCouplingCoefficient*columnCouplingCoefficient
-              IF(transposeB) THEN
-                CALL DistributedMatrix_ValuesAdd(aMatrix,aColumn,aRow,aValue,err,error,*999)
-              ELSE
-                CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
-              ENDIF
-            ENDDO !aColumnIdx
-          ENDDO !aRowIdx
-        ENDDO !bRow
-      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-        NULLIFY(bRowIndices)
-        NULLIFY(bColumnIndices)
-        CALL DistributedMatrix_StorageLocationsGet(bMatrix,bRowIndices,bColumnIndices,err,error,*999)
-        !Loop over the rows of the b matrix
-        DO bRow=1,numberOfBRows
-          !Loop over the rows this row is mapped to
-          DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
-            aRow=rowCoupling(bRow)%rowCols(aRowIdx)
-            rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
-            !Loop over the columns of the b matrix
-            DO bColumnIdx=bRowIndices(bRow),bRowIndices(bRow+1)-1
-              bColumn=bColumnIndices(bColumnIdx)
-              !Loop over the columns this column is mapped to
-              DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
-                aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
-                columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
-                !Add in the solver matrix value
-                aValue=alpha*bMatrixData(bColumnIdx)*rowCouplingCoefficient*columnCouplingCoefficient
-                IF(transposeB) THEN
-                  CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
-                ELSE
-                  CALL DistributedMatrix_ValuesAdd(aMatrix,aColumn,aRow,aValue,err,error,*999)
-                ENDIF
-              ENDDO !aColumnIdx
-            ENDDO !bColumnIdx
-          ENDDO !aRowIdx
-        ENDDO !bRow
-      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
-        CALL DistributedMatrix_NumberOfBlocksGet(bMatrix,bNumberOfRowBlocks,bNumberOfColumnBlocks,err,error,*999)
-        CALL DistributedMatrix_BlockSizeGet(bMatrix,bBlockSize,err,error,*999)
-        NULLIFY(bRowIndices)
-        NULLIFY(bColumnIndices)
-        CALL DistributedMatrix_StorageLocationsGet(bMatrix,bRowIndices,bColumnIndices,err,error,*999)
-        !Loop over the rows blocks of the b matrix
-        DO bRowBlockIdx=1,bNumberOfRowBlocks
-          !Loop over rows in the block
-          DO blockRowIdx=1,bBlockSize
-            bRow=blockRowIdx+(bRowBlockIdx-1)*bBlockSize
+        IF(.NOT.transposeB.OR.bSymmetric) THEN
+          CALL DistributedMatrix_MaxNumberOfRowsGet(bMatrix,bMaxNumberOfRows,err,error,*999)
+          !Loop over the rows of the b matrix
+          DO bRow=1,numberOfBRows
             !Loop over the rows this row is mapped to
             DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
               aRow=rowCoupling(bRow)%rowCols(aRowIdx)
               rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
               !Loop over the columns of the b matrix
-              DO bColumnBlockIdx=bRowIndices(bRowBlockIdx),bRowIndices(bRowBlockIdx+1)-1
-                bColumnBlock=bColumnIndices(bColumnBlockIdx)
-                DO blockColumnIdx=1,bBlockSize
-                  bColumn=blockColumnIdx+(bColumnBlock-1)*bBlockSize
-                  !Loop over the columns this column is mapped to
-                  DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
-                    aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
-                    columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
-                    !Add in the solver matrix value
-                    dataIdx=blockRowIdx+(blockColumnIdx-1)*bBlockSize+(bColumnBlockIdx-1)*bBlockSize*bBlockSize
-                    matrixValue=bMatrixData(dataIdx)
-                    IF(ABS(matrixValue)>ZERO_TOLERANCE) THEN
-                      aValue=alpha*matrixValue*rowCouplingCoefficient*columnCouplingCoefficient
-                      IF(transposeB) THEN
-                        CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
-                      ELSE
+              DO bColumn=1,numberOfBColumns
+                !Loop over the columns this column is mapped to
+                DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
+                  aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
+                  columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
+                  !Add in the matrix value
+                  aValue=alpha*bMatrixData(bRow+(bColumn-1)*bMaxNumberOfRows)*rowCouplingCoefficient*columnCouplingCoefficient
+                  CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
+                ENDDO !aColumnIdx
+              ENDDO !bColumn
+            ENDDO !aRowIdx
+          ENDDO !bRow
+        ELSE
+          CALL FlagError("Not implemented.",err,error,*999)
+        ENDIF
+      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+        IF(.NOT.transposeB.OR.bSymmetric) THEN
+          !Loop over the rows of the b matrix
+          DO bRow=1,numberOfBRows
+            !Loop over the rows this row is mapped to
+            DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
+              aRow=rowCoupling(bRow)%rowCols(aRowIdx)
+              rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
+              bColumn=bRow
+              !Loop over the columns this column is mapped to
+              DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
+                aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
+                columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
+                !Add in the solver matrix value
+                aValue=alpha*bMatrixData(bRow)*rowCouplingCoefficient*columnCouplingCoefficient
+                CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
+              ENDDO !aColumnIdx
+            ENDDO !aRowIdx
+          ENDDO !bRow
+        ELSE
+          CALL FlagError("Not implemented.",err,error,*999)
+        ENDIF
+      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        IF(.NOT.transposeB.OR.bSymmetric) THEN
+          NULLIFY(bRowIndices)
+          NULLIFY(bColumnIndices)
+          CALL DistributedMatrix_StorageLocationsGet(bMatrix,bRowIndices,bColumnIndices,err,error,*999)
+          !Loop over the rows of the b matrix
+          DO bRow=1,numberOfBRows
+            !Loop over the rows this row is mapped to
+            DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
+              aRow=rowCoupling(bRow)%rowCols(aRowIdx)
+              rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
+              !Loop over the columns of the b matrix
+              DO bColumnIdx=bRowIndices(bRow),bRowIndices(bRow+1)-1
+                bColumn=bColumnIndices(bColumnIdx)
+                !Loop over the columns this column is mapped to
+                DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
+                  aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
+                  columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
+                  !Add in the solver matrix value
+                  aValue=alpha*bMatrixData(bColumnIdx)*rowCouplingCoefficient*columnCouplingCoefficient
+                  CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
+                ENDDO !aColumnIdx
+              ENDDO !bColumnIdx
+            ENDDO !aRowIdx
+          ENDDO !bRow
+        ELSE
+          CALL FlagError("Not implemented.",err,error,*999)
+        ENDIF
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+        IF(.NOT.transposeB.OR.bSymmetric) THEN
+          CALL DistributedMatrix_NumberOfBlocksGet(bMatrix,bNumberOfRowBlocks,bNumberOfColumnBlocks,err,error,*999)
+          CALL DistributedMatrix_BlockSizeGet(bMatrix,bBlockSize,err,error,*999)
+          NULLIFY(bRowIndices)
+          NULLIFY(bColumnIndices)
+          CALL DistributedMatrix_StorageLocationsGet(bMatrix,bRowIndices,bColumnIndices,err,error,*999)
+          !Loop over the rows blocks of the b matrix
+          DO bRowBlockIdx=1,bNumberOfRowBlocks
+            !Loop over rows in the block
+            DO blockRowIdx=1,bBlockSize
+              bRow=blockRowIdx+(bRowBlockIdx-1)*bBlockSize
+              !Loop over the rows this row is mapped to
+              DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
+                aRow=rowCoupling(bRow)%rowCols(aRowIdx)
+                rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
+                !Loop over the columns of the b matrix
+                DO bColumnBlockIdx=bRowIndices(bRowBlockIdx),bRowIndices(bRowBlockIdx+1)-1
+                  bColumnBlock=bColumnIndices(bColumnBlockIdx)
+                  DO blockColumnIdx=1,bBlockSize
+                    bColumn=blockColumnIdx+(bColumnBlock-1)*bBlockSize
+                    !Loop over the columns this column is mapped to
+                    DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
+                      aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
+                      columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
+                      !Add in the solver matrix value
+                      dataIdx=blockRowIdx+(blockColumnIdx-1)*bBlockSize+(bColumnBlockIdx-1)*bBlockSize*bBlockSize
+                      matrixValue=bMatrixData(dataIdx)
+                      IF(ABS(matrixValue)>ZERO_TOLERANCE) THEN
+                        aValue=alpha*matrixValue*rowCouplingCoefficient*columnCouplingCoefficient
                         CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
                       ENDIF
-                    ENDIF
-                  ENDDO !aColumnIdx
-                ENDDO !blockColumnIdx
-              ENDDO !bColumnBlockIdx
-            ENDDO !aRowIdx
-          ENDDO !blockRowIdx
-        ENDDO !bBlockRowIdx
+                    ENDDO !aColumnIdx
+                  ENDDO !blockColumnIdx
+                ENDDO !bColumnBlockIdx
+              ENDDO !aRowIdx
+            ENDDO !blockRowIdx
+          ENDDO !bBlockRowIdx
+        ELSE
+          CALL FlagError("Not implemented.",err,error,*999)
+        ENDIF
       CASE DEFAULT
         localError="The B matrix storage type of "//TRIM(NumberToVString(bStorageType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)

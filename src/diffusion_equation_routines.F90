@@ -99,7 +99,9 @@ MODULE DiffusionEquationsRoutines
 
   !Interfaces
 
-  PUBLIC Diffusion_AnalyticFunctionsEvaluate,Diffusion_BoundaryConditionAnalyticCalculate
+  PUBLIC Diffusion_AnalyticFunctionsEvaluate
+
+  PUBLIC Diffusion_BoundaryConditionAnalyticCalculate
 
   PUBLIC Diffusion_EquationsSetSetup
 
@@ -131,204 +133,6 @@ MODULE DiffusionEquationsRoutines
 
 
 CONTAINS
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
-  !Calculates a two-dimensional unsteady heat equation solution (diffusion coefficient is 1)
-  SUBROUTINE Diffusion_BoundaryConditionAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to calculate the boundary conditions for
-    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to calculate
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentIdx,derivativeIdx,dimensionIdx,esSpecification(3),globalDerivativeIndex, &
-      & imyMatrixIdx,localDofIdx,nodeIdx,numberOfComponents,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives, &
-      & numberOfVariables,numberOfVersions,variableIdx,variableType,versionIdx
-    INTEGER(INTG), POINTER :: equationsSetParameters(:)
-    REAL(DP) :: initialValue,normal(3),tangents(3,3),time,analyticValue,x(3)
-    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
-    LOGICAL :: boundaryNode
-    TYPE(DomainType), POINTER :: domain
-    TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FieldType), POINTER :: analyticField,dependentField,equationsSetField,geometricField,materialsField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable
- 
-    ENTERS("Diffusion_BoundaryConditionAnalyticCalculate",err,error,*999)
-    
-    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
-    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
-    CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
-    CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
-    
-    NULLIFY(dependentField)
-    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-    NULLIFY(geometricField)
-    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-    NULLIFY(geometricVariable)
-    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
-    CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-    NULLIFY(geometricParameters)
-    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
-    NULLIFY(analyticField)
-    NULLIFY(analyticParameters)    
-    CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
-    IF(ASSOCIATED(analyticField)) &
-      & CALL Field_ParameterSetDataGet(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
-    NULLIFY(materialsField)
-    NULLIFY(materialsParameters)
-    CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
-    IF(ASSOCIATED(materialsField)) &
-      CALL Field_ParameterSetDataGet(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,materialsParameters, &
-      & err,error,*999)           
-    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
-    IF(equationsSet%specification(3)==EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE)THEN
-      !If a multi-comp model, we will use the equations set field information to assign only the appropriate
-      !field variable boundary conditions. Use predetermined mapping from equations set field compartment number
-      !to field variable type
-      NULLIFY(equationsSetField)
-      CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
-      NULLIFY(equationsSetParameters)
-      CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,equationsSetParameters, &
-        & err,error,*999)
-      imyMatrixIdx = equationsSetParameters(1)
-      DO variableIdx=0,1
-        variableType=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(imyMatrixIdx-1))+variableIdx
-        NULLIFY(dependentVariable)
-        CALL Field_VariableGet(dependentField,variableType,dependentVariable,err,error,*999)
-        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
-        DO componentIdx=1,numberOfComponents
-          CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
-            & err,error,*999)
-          NULLIFY(domain)
-          CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
-          NULLIFY(domainTopology)
-          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-          NULLIFY(domainNodes)
-          CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-          !Loop over the local nodes excluding the ghosts.
-          CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
-          DO nodeIdx=1,numberOfNodes
-!!TODO \todo We should interpolate the geometric field here and the node position.
-            DO dimensionIdx=1,numberOfDimensions
-              !Default to version 1 of each node derivative
-              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDofIdx,err,error,*999)
-              x(dimensionIdx)=geometricParameters(localDofIdx)
-            ENDDO !dimensionIdx
-            CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-            !Loop over the derivatives
-            CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-            DO derivativeIdx=1,numberOfNodeDerivatives
-              CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-              CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time,variableType, &
-                & globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,analyticValue,err,error,*999)
-              !Default to version 1 of each node derivative
-              CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,dimensionIdx,localDofIdx,err,error,*999)
-              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDofIdx, &
-                & analyticValue,err,error,*999)
-              IF(MOD(variableType,FIELD_NUMBER_OF_VARIABLE_SUBTYPES)==FIELD_U_VARIABLE_TYPE) THEN
-                IF(boundaryNode) THEN
-                  !If we are a boundary node then set the analytic value on the boundary
-                  CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDofIdx,BOUNDARY_CONDITION_FIXED, &
-                    & analyticValue,err,error,*999)
-                ELSE
-                  CALL FieldVariable_ParameterSetUpdateLocalDof(dependentVariable,FIELD_VALUES_SET_TYPE,localDofIdx, &
-                    & analyticValue,err,error,*999)
-                ENDIF
-              ENDIF
-            ENDDO !derivativeIdx
-          ENDDO !nodeIdx
-        ENDDO !component_idx
-        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-      ENDDO !variableIdx
-    ELSE
-      !for single physics diffusion problems use standard analytic calculate
-      CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
-      DO variableIdx=1,numberOfVariables
-        NULLIFY(dependentVariable)
-        CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
-        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
-        DO componentIdx=1,numberOfComponents
-          CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
-            & err,error,*999)
-          NULLIFY(domain)
-          CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
-          NULLIFY(domainTopology)
-          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-          NULLIFY(domainNodes)
-          CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-          !Loop over the local nodes excluding the ghosts.
-          CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
-          DO nodeIdx=1,numberOfNodes
-!!TODO \todo We should interpolate the geometric field here and the node position.
-            DO dimensionIdx=1,numberOfDimensions
-              !Default to version 1 of each node derivative
-              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,componentIdx,localDofIdx,err,error,*999)
-              x(dimensionIdx)=geometricParameters(localDofIdx)
-            ENDDO !dimensionIdx
-            CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-            !Loop over the derivatives
-            CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-            DO derivativeIdx=1,numberOfNodeDerivatives
-              CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-              CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,0.0_DP, &
-                & variableType,globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,initialValue, &
-                & err,error,*999)
-              CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time, &
-                & variableType,globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,analyticValue, &
-                & err,error,*999)
-              CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
-              DO versionIdx=1,numberOfVersions
-                CALL FieldVariable_LocalNodeDOFGet(dependentVariable,versionIdx,derivativeIdx,nodeIdx,componentIdx,localDofIdx, &
-                  & err,error,*999)
-                CALL Field_ParameterSetUpdateLocalDof(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE, &
-                  & localDofIdx,analyticValue,err,error,*999)
-                IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
-                  IF(boundaryNode) THEN
-                    !If we are a boundary node then set the analytic value on the boundary
-                    CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDofIdx, &
-                      & BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
-                  ELSE
-                    !Set the initial condition.
-                    CALL FieldVariable_ParameterSetUpdateLocalDof(dependentVariable,FIELD_VALUES_SET_TYPE,localDofIdx, &
-                      & initialValue,err,error,*999)
-                  ENDIF
-                ENDIF
-              ENDDO !versionIdx
-            ENDDO !derivativeIdx
-          ENDDO !nodeIdx
-        ENDDO !component_idx
-        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-      ENDDO !variableIdx
-    ENDIF
-    IF(ASSOCIATED(materialsField)) &
-      & CALL Field_ParameterSetDataRestore(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,materialsParameters, &
-      & err,error,*999)
-    IF(ASSOCIATED(analyticField)) &
-      & CALL Field_ParameterSetDataRestore(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,analyticParameters, &
-      & err,error,*999)            
-    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)            
-
-    EXITS("Diffusion_BoundaryConditionAnalyticCalculate")
-    RETURN
-999 ERRORS("Diffusion_BoundaryConditionAnalyticCalculate",err,error)
-    EXITS("Diffusion_BoundaryConditionAnalyticCalculate")
-    RETURN 1
-    
-  END SUBROUTINE Diffusion_BoundaryConditionAnalyticCalculate
 
   !
   !================================================================================================================================
@@ -928,6 +732,203 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Diffusion_AnalyticFunctionsEvaluate
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
+  SUBROUTINE Diffusion_BoundaryConditionAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to calculate the boundary conditions for
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to calculate
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,derivativeIdx,dimensionIdx,esSpecification(3),globalDerivativeIndex, &
+      & imyMatrixIdx,localDofIdx,nodeIdx,numberOfComponents,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives, &
+      & numberOfVariables,numberOfVersions,variableIdx,variableType,versionIdx
+    INTEGER(INTG), POINTER :: equationsSetParameters(:)
+    REAL(DP) :: initialValue,normal(3),tangents(3,3),time,analyticValue,x(3)
+    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
+    LOGICAL :: boundaryNode
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(FieldType), POINTER :: analyticField,dependentField,equationsSetField,geometricField,materialsField
+    TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable
+ 
+    ENTERS("Diffusion_BoundaryConditionAnalyticCalculate",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
+    CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+    
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    NULLIFY(geometricField)
+    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+    NULLIFY(geometricVariable)
+    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+    CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+    NULLIFY(geometricParameters)
+    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+    NULLIFY(analyticField)
+    NULLIFY(analyticParameters)    
+    CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
+    IF(ASSOCIATED(analyticField)) &
+      & CALL Field_ParameterSetDataGet(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
+    NULLIFY(materialsField)
+    NULLIFY(materialsParameters)
+    CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
+    IF(ASSOCIATED(materialsField)) &
+      CALL Field_ParameterSetDataGet(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,materialsParameters, &
+      & err,error,*999)           
+    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
+    IF(equationsSet%specification(3)==EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE)THEN
+      !If a multi-comp model, we will use the equations set field information to assign only the appropriate
+      !field variable boundary conditions. Use predetermined mapping from equations set field compartment number
+      !to field variable type
+      NULLIFY(equationsSetField)
+      CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
+      NULLIFY(equationsSetParameters)
+      CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,equationsSetParameters, &
+        & err,error,*999)
+      imyMatrixIdx = equationsSetParameters(1)
+      DO variableIdx=0,1
+        variableType=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(imyMatrixIdx-1))+variableIdx
+        NULLIFY(dependentVariable)
+        CALL Field_VariableGet(dependentField,variableType,dependentVariable,err,error,*999)
+        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
+        DO componentIdx=1,numberOfComponents
+          CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
+            & err,error,*999)
+          NULLIFY(domain)
+          CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
+          NULLIFY(domainTopology)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+          NULLIFY(domainNodes)
+          CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+          !Loop over the local nodes excluding the ghosts.
+          CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+          DO nodeIdx=1,numberOfNodes
+!!TODO \todo We should interpolate the geometric field here and the node position.
+            DO dimensionIdx=1,numberOfDimensions
+              !Default to version 1 of each node derivative
+              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDofIdx,err,error,*999)
+              x(dimensionIdx)=geometricParameters(localDofIdx)
+            ENDDO !dimensionIdx
+            CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+            !Loop over the derivatives
+            CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+            DO derivativeIdx=1,numberOfNodeDerivatives
+              CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
+              CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time,variableType, &
+                & globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,analyticValue,err,error,*999)
+              !Default to version 1 of each node derivative
+              CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,dimensionIdx,localDofIdx,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDofIdx, &
+                & analyticValue,err,error,*999)
+              IF(MOD(variableType,FIELD_NUMBER_OF_VARIABLE_SUBTYPES)==FIELD_U_VARIABLE_TYPE) THEN
+                IF(boundaryNode) THEN
+                  !If we are a boundary node then set the analytic value on the boundary
+                  CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDofIdx,BOUNDARY_CONDITION_FIXED, &
+                    & analyticValue,err,error,*999)
+                ELSE
+                  CALL FieldVariable_ParameterSetUpdateLocalDof(dependentVariable,FIELD_VALUES_SET_TYPE,localDofIdx, &
+                    & analyticValue,err,error,*999)
+                ENDIF
+              ENDIF
+            ENDDO !derivativeIdx
+          ENDDO !nodeIdx
+        ENDDO !component_idx
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+      ENDDO !variableIdx
+    ELSE
+      !for single physics diffusion problems use standard analytic calculate
+      CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+      DO variableIdx=1,numberOfVariables
+        NULLIFY(dependentVariable)
+        CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
+        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
+        DO componentIdx=1,numberOfComponents
+          CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
+            & err,error,*999)
+          NULLIFY(domain)
+          CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
+          NULLIFY(domainTopology)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+          NULLIFY(domainNodes)
+          CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+          !Loop over the local nodes excluding the ghosts.
+          CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+          DO nodeIdx=1,numberOfNodes
+!!TODO \todo We should interpolate the geometric field here and the node position.
+            DO dimensionIdx=1,numberOfDimensions
+              !Default to version 1 of each node derivative
+              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,componentIdx,localDofIdx,err,error,*999)
+              x(dimensionIdx)=geometricParameters(localDofIdx)
+            ENDDO !dimensionIdx
+            CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+            !Loop over the derivatives
+            CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+            DO derivativeIdx=1,numberOfNodeDerivatives
+              CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
+              CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,0.0_DP, &
+                & variableType,globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,initialValue, &
+                & err,error,*999)
+              CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time, &
+                & variableType,globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,analyticValue, &
+                & err,error,*999)
+              CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
+              DO versionIdx=1,numberOfVersions
+                CALL FieldVariable_LocalNodeDOFGet(dependentVariable,versionIdx,derivativeIdx,nodeIdx,componentIdx,localDofIdx, &
+                  & err,error,*999)
+                CALL Field_ParameterSetUpdateLocalDof(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE, &
+                  & localDofIdx,analyticValue,err,error,*999)
+                IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
+                  IF(boundaryNode) THEN
+                    !If we are a boundary node then set the analytic value on the boundary
+                    CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDofIdx, &
+                      & BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
+                  ELSE
+                    !Set the initial condition.
+                    CALL FieldVariable_ParameterSetUpdateLocalDof(dependentVariable,FIELD_VALUES_SET_TYPE,localDofIdx, &
+                      & initialValue,err,error,*999)
+                  ENDIF
+                ENDIF
+              ENDDO !versionIdx
+            ENDDO !derivativeIdx
+          ENDDO !nodeIdx
+        ENDDO !component_idx
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+      ENDDO !variableIdx
+    ENDIF
+    IF(ASSOCIATED(materialsField)) &
+      & CALL Field_ParameterSetDataRestore(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,materialsParameters, &
+      & err,error,*999)
+    IF(ASSOCIATED(analyticField)) &
+      & CALL Field_ParameterSetDataRestore(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,analyticParameters, &
+      & err,error,*999)            
+    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)            
+
+    EXITS("Diffusion_BoundaryConditionAnalyticCalculate")
+    RETURN
+999 ERRORS("Diffusion_BoundaryConditionAnalyticCalculate",err,error)
+    EXITS("Diffusion_BoundaryConditionAnalyticCalculate")
+    RETURN 1
+    
+  END SUBROUTINE Diffusion_BoundaryConditionAnalyticCalculate
 
   !
   !================================================================================================================================
@@ -2256,18 +2257,23 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG), PARAMETER :: MAXIMUM_COUPLING_MATRICES=99
-    INTEGER(INTG) colsVariableType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnXiIdx,compartmentCount, &
-      & compartmentIdx,componentIdx,couplingVariableTypes(MAXIMUM_COUPLING_MATRICES),esSpecification(3),gaussPointIdx, &
-      & myCompartment,meshCompartment1,meshCompartment2,numberOfColsComponents,numberOfColumnElementParameters, &
-      & numberOfCompartments,numberOfCouplingComponents,numberOfDimensions,numberOfGauss,numberOfRowElementParameters, &
+    INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_COMPONENTS=3
+    INTEGER(INTG) colsVariableType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnXiIdx, &
+      & compartmentCount,compartmentIdx,componentIdx,couplingVariableTypes(MAXIMUM_COUPLING_MATRICES), &
+      & esSpecification(3),gaussPointIdx,myCompartment,meshCompartment1,meshCompartment2,numberOfColsComponents, &
+      & numberOfColumnElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfCoupledColumnElementParameters,numberOfCompartments, &
+      & numberOfCouplingComponents,numberOfDimensions,numberOfGauss,numberOfRowElementParameters(MAX_NUMBER_OF_COMPONENTS), &
       & numberOfRowsComponents,numberOfXi,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowXiIdx,rowsVariableType, &
       & scalingType,xiIdx
     INTEGER(INTG), POINTER :: equationsSetFieldData(:)
-    REAL(DP) :: aParam,bParam,cParam,columnComponentPhi(3),columnPhi,columndPhidXi(3),compartmentParam,conductivity(3,3), &
-      & couplingParam,gaussWeight,jacobian,jacobianGaussWeight,kParam,rowComponentPhi(3),rowPhi,rowdPhidXi(3),sourceParam,sum
+    REAL(DP) :: aParam,bParam,cParam,columnComponentPhi(MAX_NUMBER_OF_COMPONENTS),columnPhi, &
+      & columndPhidXi(MAX_NUMBER_OF_COMPONENTS),compartmentParam,conductivity(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS), &
+      & couplingParam,gaussWeight,jacobian,jacobianGaussWeight,kParam,rowComponentPhi(MAX_NUMBER_OF_COMPONENTS),rowPhi, &
+      & rowdPhidXi(MAX_NUMBER_OF_COMPONENTS),sourceParam,sum
     LOGICAL :: update,updateCoupling,updateCouplingMatrices(MAXIMUM_COUPLING_MATRICES),updateDamping,updateMatrices,updateRHS, &
       & updateSource,updateStiffness
-    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,rowBasis
+    TYPE(BasisType), POINTER :: coupledColumnBasis,dependentBasis,geometricBasis
+    TYPE(BasisPtrType) :: columnBasis(MAX_NUMBER_OF_COMPONENTS),rowBasis(MAX_NUMBER_OF_COMPONENTS)
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,rowDomain
     TYPE(DomainElementsType), POINTER :: columnDomainElements,dependentDomainElements,geometricDomainElements,rowDomainElements
@@ -2301,8 +2307,8 @@ CONTAINS
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
     TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,geometricVariable,rowsVariable
     TYPE(FieldVariablePtrType) :: couplingVariables(MAXIMUM_COUPLING_MATRICES)
-    TYPE(QuadratureSchemeType), POINTER :: columnQuadratureScheme,dependentQuadratureScheme,geometricQuadratureScheme, &
-      & rowQuadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: coupledColumnQuadratureScheme,dependentQuadratureScheme,geometricQuadratureScheme
+    TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAX_NUMBER_OF_COMPONENTS),rowQuadratureScheme(MAX_NUMBER_OF_COMPONENTS)
     TYPE(VARYING_STRING) :: localError
      
     ENTERS("Diffusion_FiniteElementCalculate",err,error,*999)
@@ -2544,6 +2550,39 @@ CONTAINS
       CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999) 
       
+      DO rowComponentIdx=1,numberOfRowsComponents
+        NULLIFY(rowDomain)
+        CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
+        NULLIFY(rowDomainTopology)
+        CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
+        NULLIFY(rowDomainElements)
+        CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
+        NULLIFY(rowBasis(rowComponentIdx)%ptr)
+        CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis(rowComponentIdx)%ptr,err,error,*999)
+        CALL Basis_NumberOfElementParametersGet(rowBasis(rowComponentIdx)%ptr,numberOfRowElementParameters(rowComponentIdx), &
+          & err,error,*999)
+        NULLIFY(rowQuadratureScheme(rowComponentIdx)%ptr)
+        CALL Basis_QuadratureSchemeGet(rowBasis(rowComponentIdx)%ptr,BASIS_DEFAULT_QUADRATURE_SCHEME, &
+          & rowQuadratureScheme(rowComponentIdx)%ptr,err,error,*999)
+      ENDDO !rowComponentIdx
+      IF(updateMatrices) THEN
+        DO columnComponentIdx=1,numberOfColsComponents
+          NULLIFY(columnDomain)
+          CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,columnDomain,err,error,*999)
+          NULLIFY(columnDomainTopology)
+          CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
+          NULLIFY(columnDomainElements)
+          CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
+          NULLIFY(columnBasis(columnComponentIdx)%ptr)
+          CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis(columnComponentIdx)%ptr,err,error,*999)
+          CALL Basis_NumberOfElementParametersGet(columnBasis(columnComponentIdx)%ptr, &
+            & numberOfColumnElementParameters(columnComponentIdx),err,error,*999)
+          NULLIFY(columnQuadratureScheme(columnComponentIdx)%ptr)
+          CALL Basis_QuadratureSchemeGet(columnBasis(columnComponentIdx)%ptr,BASIS_DEFAULT_QUADRATURE_SCHEME, &
+            & columnQuadratureScheme(columnComponentIdx)%ptr,err,error,*999)
+        ENDDO !columnComponentIdx
+      ENDIF
+      
       !Loop over gauss points
       DO gaussPointIdx=1,numberOfGauss
         CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
@@ -2601,54 +2640,33 @@ CONTAINS
         !Calculate jacobianGaussWeight.
 !!TODO: Think about symmetric problems. 
         CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
-        CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+        CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         
         !Loop over field components
         rowElementDOFIdx=0          
         DO rowComponentIdx=1,numberOfRowsComponents
-          NULLIFY(rowDomain)
-          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
-          NULLIFY(rowDomainTopology)
-          CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
-          NULLIFY(rowDomainElements)
-          CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
-          NULLIFY(rowBasis)
-          CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
-          NULLIFY(rowQuadratureScheme)
-          CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
-          CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
           !Loop over element rows
-          DO rowElementParameterIdx=1,numberOfRowElementParameters
+          DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
             rowElementDOFIdx=rowElementDOFIdx+1
-            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-              & gaussPointIdx,rowPhi,err,error,*999)
+            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr,rowElementParameterIdx, &
+              & NO_PART_DERIV,gaussPointIdx,rowPhi,err,error,*999)
             DO xiIdx=1,numberOfXi
-              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx, &
+              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr,rowElementParameterIdx, &
                 & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,rowdPhidXi(xiIdx),err,error,*999)
             ENDDO !xiIdx
             IF(updateMatrices) THEN
               !Loop over element columns
               columnElementDOFIdx=0
               DO columnComponentIdx=1,numberOfColsComponents
-                NULLIFY(columnDomain)
-                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,columnDomain,err,error,*999)
-                NULLIFY(columnDomainTopology)
-                CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
-                NULLIFY(columnDomainElements)
-                CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
-                NULLIFY(columnBasis)
-                CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
-                NULLIFY(columnQuadratureScheme)
-                CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
-                CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
-                DO columnElementParameterIdx=1,numberOfColumnElementParameters
+                 DO columnElementParameterIdx=1,numberOfColumnElementParameters(columnComponentIdx)
                   columnElementDOFIdx=columnElementDOFIdx+1
-                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
-                    & gaussPointIdx,columnPhi,err,error,*999)
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
+                    & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
                   DO xiIdx=1,numberOfXi
-                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx, &
-                      & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,columndPhidXi(xiIdx),err,error,*999)
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
+                      & columnElementParameterIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx, &
+                      & columndPhidXi(xiIdx),err,error,*999)
                   ENDDO !xiIdx
                   IF(updateStiffness) THEN
                     sum=0.0_DP
@@ -2688,6 +2706,9 @@ CONTAINS
                   !the coupling terms then needs to be added into the stiffness matrix
                   IF(updateCouplingMatrices(compartmentCount)) THEN
                     compartmentParam=vMaterialsInterpPoint%values(compartmentIdx,NO_PART_DERIV)
+
+!! TODO: Cache the quadrature schemes etc.
+                    
                     !Loop over element columns
                     columnElementDOFIdx=0
                     NULLIFY(couplingVariables(compartmentCount)%ptr)
@@ -2701,15 +2722,16 @@ CONTAINS
                       CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
                       NULLIFY(columnDomainElements)
                       CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
-                      NULLIFY(columnBasis)
-                      CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
-                      NULLIFY(columnQuadratureScheme)
-                      CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
+                      NULLIFY(coupledColumnBasis)
+                      CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,coupledColumnBasis,err,error,*999)
+                      NULLIFY(coupledColumnQuadratureScheme)
+                      CALL Basis_QuadratureSchemeGet(coupledColumnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME, &
+                        & coupledColumnQuadratureScheme,err,error,*999)
+                      CALL Basis_NumberOfElementParametersGet(coupledColumnBasis,numberOfCoupledColumnElementParameters, &
                         & err,error,*999)
-                      CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
-                      DO columnElementParameterIdx=1,numberOfColumnElementParameters
+                      DO columnElementParameterIdx=1,numberOfCoupledColumnElementParameters
                         columnElementDOFIdx=columnElementDOFIdx+1
-                        CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx, &
+                        CALL BasisQuadratureScheme_GaussBasisFunctionGet(coupledColumnQuadratureScheme,columnElementParameterIdx, &
                           & NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)                        
                         sum=compartmentParam*rowPhi*columnPhi                        
                         couplingMatrices(compartmentCount)%ptr%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
@@ -2751,31 +2773,13 @@ CONTAINS
         !Loop over element rows
         rowElementDOFIdx=0          
         DO rowComponentIdx=1,numberOfRowsComponents
-          NULLIFY(rowDomain)
-          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
-          NULLIFY(rowDomainTopology)
-          CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
-          NULLIFY(rowDomainElements)
-          CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
-          NULLIFY(rowBasis)
-          CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
-          CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
-          DO rowElementParameterIdx=1,numberOfRowElementParameters
+          DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
             rowElementDOFIdx=rowElementDOFIdx+1                    
             IF(updateMatrices) THEN
               !Loop over element columns
               columnElementDOFIdx=0
               DO columnComponentIdx=1,numberOfColsComponents
-                NULLIFY(columnDomain)
-                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,columnDomain,err,error,*999)
-                NULLIFY(columnDomainTopology)
-                CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
-                NULLIFY(columnDomainElements)
-                CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
-                NULLIFY(columnBasis)
-                CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
-                CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
-                DO columnElementParameterIdx=1,numberOfColumnElementParameters
+                DO columnElementParameterIdx=1,numberOfColumnElementParameters(columnComponentIdx)
                   columnElementDOFIdx=columnElementDOFIdx+1
                   IF(updateStiffness) THEN
                     stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
@@ -2798,6 +2802,9 @@ CONTAINS
                 IF(compartmentIdx/=myCompartment) THEN
                   compartmentCount=compartmentCount+1
                   IF(updateCouplingMatrices(compartmentCount)) THEN
+
+!!TODO : Cache number of parameters etc.
+                    
                     !Loop over element columns
                     columnElementDOFIdx=0
                     CALL FieldVariable_NumberOfComponentsGet(couplingVariables(compartmentCount)%ptr,numberOfCouplingComponents, &
@@ -2814,10 +2821,11 @@ CONTAINS
                       CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
                       NULLIFY(columnDomainElements)
                       CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
-                      NULLIFY(columnBasis)
-                      CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
-                      CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
-                      DO columnElementParameterIdx=1,numberOfColumnElementParameters
+                      NULLIFY(coupledColumnBasis)
+                      CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,coupledColumnBasis,err,error,*999)
+                      CALL Basis_NumberOfElementParametersGet(coupledColumnBasis,numberOfCoupledColumnElementParameters, &
+                        & err,error,*999)
+                      DO columnElementParameterIdx=1,numberOfCoupledColumnElementParameters
                         columnElementDOFIdx=columnElementDOFIdx+1
                         couplingMatrices(compartmentCount)%ptr%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
                           & couplingMatrices(compartmentCount)%ptr%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + & 
@@ -2862,13 +2870,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_COMPONENTS=3
     INTEGER(INTG) colsVariableType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,esSpecification(3), &
-      & gaussPointIdx,numberOfColsComponents,numberOfColumnElementParameters,numberOfDimensions,numberOfGauss, &
-      & numberOfRowElementParameters,numberOfRowsComponents,numberOfXi,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx, &
-      & rowsVariableType,scalingType
+      & gaussPointIdx,numberOfColsComponents,numberOfColumnElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfDimensions, &
+      & numberOfGauss,numberOfRowElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfRowsComponents,numberOfXi,rowComponentIdx, &
+      & rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,scalingType
     REAL(DP) :: bParam,cParam,columnPhi,gaussWeight,jacobian,jacobianGaussWeight,rowPhi,sum,uValue,VALUE
     LOGICAL :: updateJacobian
-    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,rowBasis
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
+    TYPE(BasisPtrType) :: columnBasis(MAX_NUMBER_OF_COMPONENTS),rowBasis(MAX_NUMBER_OF_COMPONENTS)
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,rowDomain
     TYPE(DomainElementsType), POINTER :: columnDomainElements,dependentDomainElements,geometricDomainElements,rowDomainElements
@@ -2890,8 +2900,8 @@ CONTAINS
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
     TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,geometricVariable,rowsVariable
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
-    TYPE(QuadratureSchemeType), POINTER :: columnQuadratureScheme,dependentQuadratureScheme,geometricQuadratureScheme, &
-      & rowQuadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,geometricQuadratureScheme
+    TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAX_NUMBER_OF_COMPONENTS),rowQuadratureScheme(MAX_NUMBER_OF_COMPONENTS)
     TYPE(VARYING_STRING) :: localError
    
     ENTERS("Diffusion_FiniteElementJacobianEvaluate",err,error,*999)
@@ -2978,6 +2988,7 @@ CONTAINS
       
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
       
       NULLIFY(colsVariable)
@@ -3018,6 +3029,50 @@ CONTAINS
         & err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,materialsInterpParameters,err,error,*999)
       
+      !Cache row and column bases and quadrature schemes to avoid repeated calculations
+      IF(numberOfRowsComponents>MAX_NUMBER_OF_COMPONENTS) THEN
+        localError="The number of rows components of "//TRIM(NumberToVString(numberOfRowsComponents,"*",err,error))// &
+          & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAX_NUMBER_OF_COMPONENTS,"*", &
+          & err,error))//". Increase MAX_NUMBER_OF_COMPONENTS."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      DO rowComponentIdx=1,numberOfRowsComponents
+        NULLIFY(rowDomain)
+        CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
+        NULLIFY(rowDomainTopology)
+        CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
+        NULLIFY(rowDomainElements)
+        CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
+        NULLIFY(rowBasis(rowComponentIdx)%ptr)
+        CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis(rowComponentIdx)%ptr,err,error,*999)
+        CALL Basis_NumberOfElementParametersGet(rowBasis(rowComponentIdx)%ptr,numberOfRowElementParameters(rowComponentIdx), &
+          & err,error,*999)
+        NULLIFY(rowQuadratureScheme(rowComponentIdx)%ptr)
+        CALL Basis_QuadratureSchemeGet(rowBasis(rowComponentIdx)%ptr,BASIS_DEFAULT_QUADRATURE_SCHEME, &
+          & rowQuadratureScheme(rowComponentIdx)%ptr,err,error,*999)
+      ENDDO !rowComponentIdx
+      IF(numberOfColsComponents>MAX_NUMBER_OF_COMPONENTS) THEN
+        localError="The number of columns components of "//TRIM(NumberToVString(numberOfColsComponents,"*",err,error))// &
+          & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAX_NUMBER_OF_COMPONENTS,"*", &
+          & err,error))//". Increase MAX_NUMBER_OF_COMPONENTS."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      DO columnComponentIdx=1,numberOfColsComponents
+        NULLIFY(columnDomain)
+        CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,columnDomain,err,error,*999)
+        NULLIFY(columnDomainTopology)
+        CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
+        NULLIFY(columnDomainElements)
+        CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
+        NULLIFY(columnBasis(columnComponentIdx)%ptr)
+        CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis(columnComponentIdx)%ptr,err,error,*999)
+        CALL Basis_NumberOfElementParametersGet(columnBasis(columnComponentIdx)%ptr, &
+          & numberOfColumnElementParameters(columnComponentIdx),err,error,*999)
+        NULLIFY(columnQuadratureScheme(columnComponentIdx)%ptr)
+        CALL Basis_QuadratureSchemeGet(columnBasis(columnComponentIdx)%ptr,BASIS_DEFAULT_QUADRATURE_SCHEME, &
+          & columnQuadratureScheme(columnComponentIdx)%ptr,err,error,*999)
+      ENDDO !columnComponentIdx
+      
       !Loop over gauss points
       DO gaussPointIdx=1,numberOfGauss
         CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
@@ -3035,41 +3090,23 @@ CONTAINS
 
         !Calculate jacobianGaussWeight.
         CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
-        CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+        CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
          
         !Loop over field components
         rowElementDOFIdx=0
         DO rowComponentIdx=1,numberOfRowsComponents
-          NULLIFY(rowDomain)
-          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
-          NULLIFY(rowDomainTopology)
-          CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
-          NULLIFY(rowDomainElements)
-          CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
-          NULLIFY(rowBasis)
-          CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
-          CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
-          DO rowElementParameterIdx=1,numberOfRowElementParameters
+          DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
             rowElementDOFIdx=rowElementDOFIdx+1                    
-            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-              & gaussPointIdx,rowPhi,err,error,*999)
+            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr,rowElementParameterIdx, &
+              & NO_PART_DERIV,gaussPointIdx,rowPhi,err,error,*999)
             !Loop over element columns
             columnElementDOFIdx=0
             DO columnComponentIdx=1,numberOfColsComponents
-              NULLIFY(columnDomain)
-              CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,columnDomain,err,error,*999)
-              NULLIFY(columnDomainTopology)
-              CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
-              NULLIFY(columnDomainElements)
-              CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
-              NULLIFY(columnBasis)
-              CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
-              CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
-              DO columnElementParameterIdx=1,numberOfColumnElementParameters
+              DO columnElementParameterIdx=1,numberOfColumnElementParameters(columnComponentIdx)
                 columnElementDOFIdx=columnElementDOFIdx+1
-                CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
-                  & gaussPointIdx,columnPhi,err,error,*999)
+                CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
+                  & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
                 SELECT CASE(esSpecification(3))
                 CASE(EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE)
                   sum=-2.0_DP*bParam*rowPhi*columnPhi*uValue
@@ -3105,30 +3142,12 @@ CONTAINS
         !Loop over element rows
         rowElementDOFIdx=0          
         DO rowComponentIdx=1,numberOfRowsComponents
-          NULLIFY(rowDomain)
-          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
-          NULLIFY(rowDomainTopology)
-          CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
-          NULLIFY(rowDomainElements)
-          CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
-          NULLIFY(rowBasis)
-          CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
-          CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
-          DO rowElementParameterIdx=1,numberOfRowElementParameters
+          DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
             rowElementDOFIdx=rowElementDOFIdx+1                    
             !Loop over element columns
             columnElementDOFIdx=0
             DO columnComponentIdx=1,numberOfColsComponents
-              NULLIFY(columnDomain)
-              CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,columnDomain,err,error,*999)
-              NULLIFY(columnDomainTopology)
-              CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
-              NULLIFY(columnDomainElements)
-              CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
-              NULLIFY(columnBasis)
-              CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
-              CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
-              DO columnElementParameterIdx=1,numberOfColumnElementParameters
+              DO columnElementParameterIdx=1,numberOfColumnElementParameters(columnComponentIdx)
                 columnElementDOFIdx=columnElementDOFIdx+1
                 jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                   & jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
@@ -3162,14 +3181,19 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_COMPONENTS=3
     INTEGER(INTG) :: colsVariableType,componentIdx,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx, &
-      & columnXiIdx,esSpecification(3),gaussPointIdx,numberOfColsComponents,numberOfColumnElementParameters,numberOfDimensions, &
-      & numberOfGauss,numberOfRowsComponents,numberOfRowElementParameters,numberOfXi,rowComponentIdx,rowElementDOFIdx, &
+      & columnXiIdx,esSpecification(3),gaussPointIdx,numberOfColsComponents, &
+      & numberOfColumnElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfDimensions,numberOfGauss,numberOfRowsComponents, &
+      & numberOfRowElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfXi,rowComponentIdx,rowElementDOFIdx, &
       & rowElementParameterIdx,rowsVariableType,rowXiIdx,scalingType,xiIdx
-    REAL(DP) :: aParam,bParam,cParam,columnPhi,columndPhidXi(3),conductivity(3,3),gaussWeight,jacobian,jacobianGaussWeight, &
-      & kParam,rowPhi,rowdPhidXi(3),sourceValue,sum,rowComponentPhi(3),columnComponentPhi(3),uValue
+    REAL(DP) :: aParam,bParam,cParam,columnPhi,columndPhidXi(MAX_NUMBER_OF_COMPONENTS), &
+      & conductivity(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS),gaussWeight,jacobian,jacobianGaussWeight, &
+      & kParam,rowPhi,rowdPhidXi(MAX_NUMBER_OF_COMPONENTS),sourceValue,sum,rowComponentPhi(MAX_NUMBER_OF_COMPONENTS), &
+      & columnComponentPhi(3),uValue
     LOGICAL :: update,updateDamping,updateMatrices,updateResidual,updateRHS,updateSource,updateStiffness
-    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,rowBasis
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
+    TYPE(BasisPtrType) :: columnBasis(MAX_NUMBER_OF_COMPONENTS),rowBasis(MAX_NUMBER_OF_COMPONENTS)
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,rowDomain
     TYPE(DomainElementsType), POINTER :: columnDomainElements,dependentDomainElements,geometricDomainElements,rowDomainElements
@@ -3200,9 +3224,9 @@ CONTAINS
     TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpPoint,fibreInterpPoint,geometricInterpPoint,materialsInterpPoint, &
       & sourceInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-   TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,geometricVariable,rowsVariable
-    TYPE(QuadratureSchemeType), POINTER :: columnQuadratureScheme,dependentQuadratureScheme,geometricQuadratureScheme, &
-      & rowQuadratureScheme
+    TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,geometricVariable,rowsVariable
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,geometricQuadratureScheme
+    TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAX_NUMBER_OF_COMPONENTS),rowQuadratureScheme(MAX_NUMBER_OF_COMPONENTS)
     TYPE(VARYING_STRING) :: localError
      
     ENTERS("Diffusion_FiniteElementResidualEvaluate",err,error,*999)
@@ -3383,6 +3407,52 @@ CONTAINS
         CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,fibreInterpParameters,err,error,*999)
       ENDIF
       
+      !Cache row and column bases and quadrature schemes to avoid repeated calculations
+      IF(numberOfRowsComponents>MAX_NUMBER_OF_COMPONENTS) THEN
+        localError="The number of rows components of "//TRIM(NumberToVString(numberOfRowsComponents,"*",err,error))// &
+          & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAX_NUMBER_OF_COMPONENTS,"*", &
+          & err,error))//". Increase MAX_NUMBER_OF_COMPONENTS."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      DO rowComponentIdx=1,numberOfRowsComponents
+        NULLIFY(rowDomain)
+        CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
+        NULLIFY(rowDomainTopology)
+        CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
+        NULLIFY(rowDomainElements)
+        CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
+        NULLIFY(rowBasis(rowComponentIdx)%ptr)
+        CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis(rowComponentIdx)%ptr,err,error,*999)
+        CALL Basis_NumberOfElementParametersGet(rowBasis(rowComponentIdx)%ptr,numberOfRowElementParameters(rowComponentIdx), &
+          & err,error,*999)
+        NULLIFY(rowQuadratureScheme(rowComponentIdx)%ptr)
+        CALL Basis_QuadratureSchemeGet(rowBasis(rowComponentIdx)%ptr,BASIS_DEFAULT_QUADRATURE_SCHEME, &
+          & rowQuadratureScheme(rowComponentIdx)%ptr,err,error,*999)
+      ENDDO !rowComponentIdx
+      IF(updateMatrices) THEN
+        IF(numberOfColsComponents>MAX_NUMBER_OF_COMPONENTS) THEN
+          localError="The number of columns components of "//TRIM(NumberToVString(numberOfColsComponents,"*",err,error))// &
+            & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAX_NUMBER_OF_COMPONENTS,"*", &
+            & err,error))//". Increase MAX_NUMBER_OF_COMPONENTS."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        DO columnComponentIdx=1,numberOfColsComponents
+          NULLIFY(columnDomain)
+          CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,columnDomain,err,error,*999)
+          NULLIFY(columnDomainTopology)
+          CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
+          NULLIFY(columnDomainElements)
+          CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
+          NULLIFY(columnBasis(columnComponentIdx)%ptr)
+          CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis(columnComponentIdx)%ptr,err,error,*999)
+          CALL Basis_NumberOfElementParametersGet(columnBasis(columnComponentIdx)%ptr, &
+            & numberOfColumnElementParameters(columnComponentIdx),err,error,*999)
+          NULLIFY(columnQuadratureScheme(columnComponentIdx)%ptr)
+          CALL Basis_QuadratureSchemeGet(columnBasis(columnComponentIdx)%ptr,BASIS_DEFAULT_QUADRATURE_SCHEME, &
+            & columnQuadratureScheme(columnComponentIdx)%ptr,err,error,*999)
+        ENDDO !columnComponentIdx
+      ENDIF
+      
       !Loop over gauss points
       DO gaussPointIdx=1,numberOfGauss
         
@@ -3415,54 +3485,33 @@ CONTAINS
         !Calculate jacobianGaussWeight.
 !!TODO: Think about symmetric problems. 
         CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
-        CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+        CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         
         !Loop over field components
         rowElementDOFIdx=0          
         DO rowComponentIdx=1,numberOfRowsComponents
-          NULLIFY(rowDomain)
-          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
-          NULLIFY(rowDomainTopology)
-          CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
-          NULLIFY(rowDomainElements)
-          CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
-          NULLIFY(rowBasis)
-          CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
-          NULLIFY(rowQuadratureScheme)
-          CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
-          CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
           !Loop over element rows
-          DO rowElementParameterIdx=1,numberOfRowElementParameters
+          DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
             rowElementDOFIdx=rowElementDOFIdx+1
-            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-              & gaussPointIdx,rowPhi,err,error,*999)
+            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr,rowElementParameterIdx, &
+              & NO_PART_DERIV,gaussPointIdx,rowPhi,err,error,*999)
             DO xiIdx=1,numberOfXi
-              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx, &
+              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr,rowElementParameterIdx, &
                 & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,rowdPhidXi(xiIdx),err,error,*999)
             ENDDO !xiIdx
             IF(updateMatrices) THEN
               !Loop over element columns
               columnElementDOFIdx=0
               DO columnComponentIdx=1,numberOfColsComponents
-                NULLIFY(columnDomain)
-                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,columnDomain,err,error,*999)
-                NULLIFY(columnDomainTopology)
-                CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
-                NULLIFY(columnDomainElements)
-                CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
-                NULLIFY(columnBasis)
-                CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
-                NULLIFY(columnQuadratureScheme)
-                CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
-                CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
-                DO columnElementParameterIdx=1,numberOfColumnElementParameters
+                DO columnElementParameterIdx=1,numberOfColumnElementParameters(columnComponentIdx)
                   columnElementDOFIdx=columnElementDOFIdx+1
-                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
-                    & gaussPointIdx,columnPhi,err,error,*999)
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
+                    & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
                   DO xiIdx=1,numberOfXi
-                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx, &
-                      & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,columndPhidXi(xiIdx),err,error,*999)
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
+                      & columnElementParameterIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx, &
+                      & columndPhidXi(xiIdx),err,error,*999)
                   ENDDO !xiIdx
                   IF(updateStiffness) THEN
                     sum=0.0_DP
@@ -3528,31 +3577,13 @@ CONTAINS
         !Loop over element rows
         rowElementDOFIdx=0          
         DO rowComponentIdx=1,numberOfRowsComponents
-          NULLIFY(rowDomain)
-          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
-          NULLIFY(rowDomainTopology)
-          CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
-          NULLIFY(rowDomainElements)
-          CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
-          NULLIFY(rowBasis)
-          CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
-          CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
-          DO rowElementParameterIdx=1,numberOfRowElementParameters
+          DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
             rowElementDOFIdx=rowElementDOFIdx+1                    
             IF(updateMatrices) THEN
               !Loop over element columns
               columnElementDOFIdx=0
               DO columnComponentIdx=1,numberOfColsComponents
-                NULLIFY(columnDomain)
-                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,columnDomain,err,error,*999)
-                NULLIFY(columnDomainTopology)
-                CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
-                NULLIFY(columnDomainElements)
-                CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
-                NULLIFY(columnBasis)
-                CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
-                CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
-                DO columnElementParameterIdx=1,numberOfColumnElementParameters
+                DO columnElementParameterIdx=1,numberOfColumnElementParameters(columnComponentIdx)
                   columnElementDOFIdx=columnElementDOFIdx+1
                   IF(updateStiffness) THEN
                     stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &

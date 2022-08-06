@@ -9781,6 +9781,7 @@ CONTAINS
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+    CALL SolverMapping_NumberOfSolverMatricesGet(solverMapping,numberOfSolverMatrices,err,error,*999)
     CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
     CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
 
@@ -9802,7 +9803,6 @@ CONTAINS
         ENDIF
         !Just deal with one solver matrix for now. 
         solverMatrixIdx=1
-        CALL SolverMapping_NumberOfSolverMatricesGet(solverMapping,numberOfSolverMatrices,err,error,*999)
         IF(numberOfSolverMatrices/=solverMatrixIdx) CALL FlagError("Invalid number of solver matrices.",err,error,*999)
 
         NULLIFY(solverMatrix)
@@ -10311,6 +10311,7 @@ CONTAINS
                 NULLIFY(solverMappingVariables)
                 CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
                 DO residualVariableIdx=1,numberOfResidualVariables
+                  NULLIFY(residualVariable)
                   CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
                   NULLIFY(solverMappingVariable)
                   CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,residualVariable,solverMappingVariable, &
@@ -10582,6 +10583,8 @@ CONTAINS
               rhsValue=0.0_DP
             ENDIF
 
+!! TODO: CHECK THIS. THE DOF TYPE IS THE TYPE OF VALUE SET ON THE DOF. IT IS THE LHS VARIABLE ROW CONDITION TYPE THAT IS THE BC.
+            
             !Get the dynamic contribution to the the RHS values
             lhsVariableDOF=equationsRowToLHSDOFMap(equationsRowNumber)
             CALL DomainMapping_LocalToGlobalGet(lhsDomainMapping,lhsVariableDOF,lhsGlobalDOF,err,error,*999)
@@ -10589,7 +10592,7 @@ CONTAINS
               & err,error,*999)
 
             !Apply boundary conditions
-            SELECT CASE(lhsBoundaryCondition)
+            SELECT CASE(rowCondition)
             CASE(BOUNDARY_CONDITION_FREE_ROW)
               solverRHSValue=solverRHSValue+rhsValue
               !Loop over the solver rows associated with this equations set row
@@ -11358,8 +11361,9 @@ CONTAINS
       & numberOfEquationsMatrices,numberOfEquationsSets,numberOfInterfaceConditions,numberOfInterfaceMatrices, &
       & numberOfJacobianMatrices,numberOfLinearMatrices,numberOfLinearVariables,numberOfResiduals,numberOfResidualVariables, &
       & numberOfRows,numberOfSolverMatrices,numberOfSources,penaltyMatrixIdx,residualIdx,residualVariableIdx, &
-      & rhsBoundaryCondition,rhsGlobalDOF,rhsVariableDOF,rhsVariableType,rowCondition,solverMatrixIdx,solverRowNumber, &
-      & sourceIdx,totalNumberOfRows,variableDOF,variableGlobalDOF,variableBoundaryCondition,variableIdx,variableType
+      & rhsBoundaryCondition,rhsGlobalDOF,rhsVariableDOF,rhsVariableType,rowCondition,solverMatrixIdx,solverOutputType, &
+      & solverRowNumber,sourceIdx,totalNumberOfRows,variableDOF,variableGlobalDOF,variableBoundaryCondition,variableIdx, &
+      & variableType
     INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToRHSDOFMap(:)
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
     REAL(DP) :: alphaValue,currentRHSValue,dependentValue,dofValue,linearValue,linearValueSum,matrixCoefficient, &
@@ -11442,8 +11446,11 @@ CONTAINS
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     NULLIFY(solverMatrices)
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMapping_NumberOfSolverMatricesGet(solverMapping,numberOfSolverMatrices,err,error,*999)
     CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
     CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+
+    CALL Solver_OutputTypeGet(solver,solverOutputType,err,error,*999)
     
     !Assemble the solver matrices
     NULLIFY(previousSolverDistributedMatrix)
@@ -11453,12 +11460,11 @@ CONTAINS
       & selectionType==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
       & selectionType==SOLVER_MATRICES_JACOBIAN_ONLY) THEN
       !Assemble solver matrices
-      IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
+      IF(solverOutputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
       ENDIF
       !Loop over the solver matrices
-      CALL SolverMapping_NumberOfSolverMatricesGet(solverMapping,numberOfSolverMatrices,err,error,*999)
       DO solverMatrixIdx=1,numberOfSolverMatrices
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
@@ -11484,7 +11490,8 @@ CONTAINS
             CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap,solverMatrixIdx, &
               & equationsMatricesToSolverMatrixMap,err,error,*999)
             IF(selectionType==SOLVER_MATRICES_ALL.OR. &
-              & selectionType==SOLVER_MATRICES_LINEAR_ONLY) THEN
+              & selectionType==SOLVER_MATRICES_LINEAR_ONLY.OR. &
+              & selectionType==SOLVER_MATRICES_JACOBIAN_ONLY) THEN
               CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap, &
                 & numberOfLinearMatrices,err,error,*999)
               DO linearMatrixIdx=1,numberOfLinearMatrices
@@ -11611,7 +11618,7 @@ CONTAINS
       & selectionType==SOLVER_MATRICES_RHS_ONLY.OR. &
       & selectionType==SOLVER_MATRICES_RHS_RESIDUAL_ONLY) THEN
       !Assemble rhs vector
-      IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
+      IF(solverOutputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
       ENDIF
@@ -11629,11 +11636,11 @@ CONTAINS
         NULLIFY(boundaryConditions)
         CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
         
-        subtractFixedBCsFromResidual=.FALSE.
+        subtractFixedBCsFromResidual=.FALSE.        
         IF(selectionType==SOLVER_MATRICES_ALL.OR. &
           & selectionType==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
           & selectionType==SOLVER_MATRICES_RHS_RESIDUAL_ONLY) THEN
-          IF(solverMatrices%updateResidual) subtractFixedBCsFromResidual=.TRUE.
+          CALL SolverMatrices_UpdateResidualGet(solverMatrices,subtractFixedBCsFromResidual,err,error,*999)
         ENDIF
         
         !Loop over the equations sets
@@ -11689,6 +11696,7 @@ CONTAINS
                 NULLIFY(solverMappingVariables)
                 CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
                 DO residualVariableIdx=1,numberOfResidualVariables
+                  NULLIFY(residualVariable)
                   CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
                   NULLIFY(solverMappingVariable)
                   CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,residualVariable,solverMappingVariable, &
@@ -11858,6 +11866,8 @@ CONTAINS
               rhsValue=0.0_DP
             ENDIF
 
+!! TODO: CHECK THIS. THE DOF TYPE IS THE TYPE OF VALUE SET ON THE DOF. IT IS THE LHS VARIABLE ROW CONDITION TYPE THAT IS THE BC.
+            
             !Get the dynamic contribution to the the RHS values
             lhsVariableDOF=equationsRowToLHSDOFMap(equationsRowNumber)
             CALL DomainMapping_LocalToGlobalGet(lhsDomainMapping,lhsVariableDOF,lhsGlobalDOF,err,error,*999)
@@ -11865,7 +11875,7 @@ CONTAINS
               & err,error,*999)
 
             !Apply boundary conditions
-            SELECT CASE(lhsBoundaryCondition)
+            SELECT CASE(rowCondition)
             CASE(BOUNDARY_CONDITION_FREE_ROW)
               solverRHSValue=solverRHSValue+rhsValue
               !Loop over the solver rows associated with this equations set row
@@ -11999,12 +12009,12 @@ CONTAINS
         CALL DistributedVector_DataRestore(solverRHSVector,solverRHSCheckData,err,error,*999)            
       ENDIF !Update RHS
 
-      IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
+      IF(solverOutputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
         userElapsed=userTime2(1)-userTime1(1)
         systemElapsed=systemTime2(1)-systemTime1(1)
-        IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+        IF(solverOutputType>=SOLVER_MATRIX_OUTPUT) &
           & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
         CALL Profiling_TimingsOutput(1,"Solver RHS assembly",userElapsed,systemElapsed,err,error,*999)
       ENDIF
@@ -12021,7 +12031,7 @@ CONTAINS
       !We assemble residual vector before RHS vector, then when assembling the RHS vector we subtract
       !the RHS terms for fixed BCs from the residual vector as this residual evaluation uses a matrix
       !vector product of the full equations matrix rather than the reduced solver matrix
-      IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
+      IF(solverOutputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
       ENDIF
@@ -12253,7 +12263,7 @@ CONTAINS
       ENDIF !update residual
       IF(ASSOCIATED(solverResidualVector)) CALL DistributedVector_UpdateFinish(solverResidualVector,err,error,*999)
       
-      IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
+      IF(solverOutputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
         userElapsed=userTime2(1)-userTime1(1)
@@ -12266,7 +12276,7 @@ CONTAINS
     ENDIF !Calculate residual
 
     !If required output the solver matrices
-    IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+    IF(solverOutputType>=SOLVER_MATRIX_OUTPUT) &
       & CALL SolverMatrices_Output(GENERAL_OUTPUT_TYPE,selectionType,solverMatrices,err,error,*999)
 
     EXITS("Solver_StaticAssemble")

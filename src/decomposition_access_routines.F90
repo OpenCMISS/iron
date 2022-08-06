@@ -293,8 +293,10 @@ MODULE DecompositionAccessRoutines
   PUBLIC DomainElement_ElementNodeGet
 
   PUBLIC DomainElement_ElementVersionGet
+
+  PUBLIC DomainElement_NodeLocalNodeGet
   
-  PUBLIC DomainElements_DomainElementGet
+  PUBLIC DomainElements_ElementGet
 
   PUBLIC DomainElements_ElementBasisGet
 
@@ -408,7 +410,7 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DomainNodes_DerivativeVersionNumberGet
 
- PUBLIC DomainNodes_LocalNumberGet
+  PUBLIC DomainNodes_LocalNumberGet
 
   PUBLIC DomainNodes_NodeBoundaryNodeGet
 
@@ -4591,6 +4593,56 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Get the local element node number in an element for a given local domain node number. If the local domain node is not in the element then a local element node number of zero is returned. 
+  SUBROUTINE DomainElement_NodeLocalNodeGet(domainElement,domainNodeNumber,elementLocalNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementType), POINTER :: domainElement !<A pointer to the domain element to get the local element node number for
+    INTEGER(INTG), INTENT(IN) :: domainNodeNumber !<The local domain node number to get the local element node number number for
+    INTEGER(INTG), INTENT(OUT) :: elementLocalNodeNumber !<On return, the local element node number corrresponding to the domain local node number. If the domain local node number is not withing the element then zero will be returned for the element local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localNodeIdx
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainElement_NodeLocalNodeGet",err,error,*999)
+
+    elementLocalNodeNumber=0
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainElement)) CALL FlagError("Domain element is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(domainElement%basis)) CALL FlagError("Domain element basis is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainElement%elementNodes)) &
+      & CALL FlagError("The element nodes array is not allocated for the domain element.",err,error,*999)
+    IF(domainElement%basis%numberOfNodes>SIZE(domainElement%elementNodes,1)) THEN
+      localError="The number of local nodes of "//TRIM(NumberToVString(domainElement%basis%numberOfNodes,"*",err,error))// &
+        & " for the basis for the domain element is greater than the size of the domain element element nodes array of "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementNodes,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    DO localNodeIdx=1,domainElement%basis%numberOfNodes
+      IF(domainElement%elementNodes(localNodeIdx)==domainNodeNumber) THEN
+        elementLocalNodeNumber=localNodeIdx
+        EXIT
+      ENDIF
+    ENDDO !localNodeIdx
+        
+    EXITS("DomainElement_NodeLocalNodeGet")
+    RETURN
+999 ERRORSEXITS("DomainElement_NodeLocalNodeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainElement_NodeLocalNodeGet
+  
+  !  
+  !================================================================================================================================
+  !
+
   !>Get the basis for an element in the domain elements identified by its local number
   SUBROUTINE DomainElements_ElementBasisGet(domainElements,localElementNumber,basis,err,error,*)
 
@@ -4613,7 +4665,7 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
     NULLIFY(domainElement)
-    CALL DomainElements_DomainElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+    CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
 #endif    
       
     basis=>domainElements%elements(localElementNumber)%basis
@@ -4639,7 +4691,7 @@ CONTAINS
   !
 
   !>Get a domain element for a local element number in the domain elements
-  SUBROUTINE DomainElements_DomainElementGet(domainElements,localElementNumber,domainElement,err,error,*)
+  SUBROUTINE DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*)
 
     !Argument variables
     TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the domain element for
@@ -4652,7 +4704,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
 
-    ENTERS("DomainElements_DomainElementGet",err,error,*998)
+    ENTERS("DomainElements_ElementGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(domainElement)) CALL FlagError("Domain element is already associated.",err,error,*998)
@@ -4676,13 +4728,13 @@ CONTAINS
     ENDIF
 #endif    
     
-    EXITS("DomainElements_DomainElementGet")
+    EXITS("DomainElements_ElementGet")
     RETURN
 999 NULLIFY(domainElement)
-998 ERRORSEXITS("DomainElements_DomainElementGet",err,error)
+998 ERRORSEXITS("DomainElements_ElementGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DomainElements_DomainElementGet
+  END SUBROUTINE DomainElements_ElementGet
 
   !  
   !================================================================================================================================
@@ -4710,7 +4762,7 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS
     NULLIFY(domainElement)
-    CALL DomainElements_DomainElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+    CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
     IF(.NOT.ALLOCATED(domainElement%elementDerivatives)) THEN
       localError="The element derivatives array is not allocated for element number "// &
         & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the domain elements."
@@ -4765,7 +4817,7 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS
     NULLIFY(domainElement)
-    CALL DomainElements_DomainElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+    CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
     IF(.NOT.ALLOCATED(domainElement%elementNodes)) THEN
       localError="The element nodes array is not allocated for element number "// &
         & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the domain elements."
@@ -4793,6 +4845,68 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Get the local element node number in an element for a given local domain node number. If the local domain node is not in the element then a local element node number of zero is returned. 
+  SUBROUTINE DomainElements_ElementNodeLocalNodeGet(domainElements,localElementNumber,domainNodeNumber,elementLocalNodeNumber, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the local element node number for
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The element local number to get the local element node for
+    INTEGER(INTG), INTENT(IN) :: domainNodeNumber !<The local domain node number to get the local element node number number for
+    INTEGER(INTG), INTENT(OUT) :: elementLocalNodeNumber !<On return, the local element node number corrresponding to the domain local node number. If the domain local node number is not withing the element then zero will be returned for the element local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localNodeIdx
+#ifdef WITH_PRECHECKS
+    TYPE(DomainElementType), POINTER :: domainElement
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainElements_ElementNodeLocalNodeGet",err,error,*999)
+
+    elementLocalNodeNumber=0
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainElement)
+    CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+    IF(.NOT.ASSOCIATED(domainElement%basis)) THEN
+      localError="The basis is not associated for element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the domain elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainElement%elementNodes)) THEN
+      localError="The element nodes array is not allocated for element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the domain elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(domainElement%basis%numberOfNodes>SIZE(domainElement%elementNodes,1)) THEN
+      localError="The number of nodes of "//TRIM(NumberToVString(domainElement%basis%numberOfNodes,"*",err,error))// &
+        & " for the basis for the domain element is greater than the size of the domain element element nodes array of "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementNodes,1),"*",err,error))//" for element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the domain elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    DO localNodeIdx=1,domainElements%elements(localElementNumber)%basis%numberOfNodes
+      IF(domainElements%elements(localElementNumber)%elementNodes(localNodeIdx)==domainNodeNumber) THEN
+        elementLocalNodeNumber=localNodeIdx
+        EXIT
+      ENDIF
+    ENDDO !localNodeIdx
+        
+    EXITS("DomainElements_ElementNodeLocalNodeGet")
+    RETURN
+999 ERRORSEXITS("DomainElements_ElementsNodeLocalNodeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainElements_ElementNodeLocalNodeGet
+  
+  !  
+  !================================================================================================================================
+  !
+
   !>Get the element version number for the local node and derivative index of an element in the domain.
   SUBROUTINE DomainElements_ElementVersionGet(domainElements,localDerivativeIdx,localNodeIdx,localElementNumber, &
     & versionNumber,err,error,*)
@@ -4815,7 +4929,7 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS
     NULLIFY(domainElement)
-    CALL DomainElements_DomainElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+    CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
     IF(.NOT.ALLOCATED(domainElement%elementVersions)) THEN
       localError="The element versions array is not allocated for element number "// &
         & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the domain elements."

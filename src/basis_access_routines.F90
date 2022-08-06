@@ -254,6 +254,8 @@ MODULE BasisAccessRoutines
 
   PUBLIC Basis_NodeNumberOfDerivativesGet
 
+  PUBLIC Basis_NodePositionIndexGet
+
   PUBLIC Basis_NumberOfElementParametersGet
 
   PUBLIC Basis_NumberOfLocalFacesGet
@@ -265,6 +267,8 @@ MODULE BasisAccessRoutines
   PUBLIC Basis_NumberOfNodesXiCGet
 
   PUBLIC Basis_NumberOfXiGet
+
+  PUBLIC Basis_NumberOfXiCoordinatesGet
 
   PUBLIC Basis_PartialDerivativeGet
 
@@ -1827,6 +1831,57 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the node position index for a local node and xi coordinate direction in the specified basis 
+  SUBROUTINE Basis_NodePositionIndexGet(basis,localNodeIdx,xiCoordinateIdx,nodePositionIdx,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the node position index for
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the node position index for
+    INTEGER(INTG), INTENT(IN) :: xiCoordinateIdx !<The xi coordinate index to get the node position index for
+    INTEGER(INTG), INTENT(OUT) :: nodePositionIdx !<On return, the node position index
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("Basis_NodePositionIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(localNodeIdx<1.OR.localNodeIdx>basis%numberOfNodes) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid for basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The local node index should be >= 1 and <= "//TRIM(NumberToVString(basis%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)     
+    ENDIF
+    IF(xiCoordinateIdx<1.OR.xiCoordinateIdx>basis%numberOfXiCoordinates) THEN
+      localError="The specified xi coordinate index of "//TRIM(NumberToVString(xiCoordinateIdx,"*",err,error))// &
+        & " is invalid for basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The xi coordinate index should be >= 1 and <= "//TRIM(NumberToVString(basis%numberOfXiCoordinates,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)     
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%nodePositionIndex)) THEN
+      localError="The node position index array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+   
+    nodePositionIdx=basis%nodePositionIndex(localNodeIdx,xiCoordinateIdx)
+    
+    EXITS("Basis_NodePositionIndexGet")
+    RETURN
+999 ERRORSEXITS("Basis_NodePositionIndexGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_NodePositionIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the maximum number of derivatives for the specified basis 
   SUBROUTINE Basis_MaximumNumberOfDerivativesGet(basis,maximumNumberOfDerivatives,err,error,*)
 
@@ -2039,6 +2094,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_NumberOfXiGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the number of xi coordinate directions for a basis.
+  SUBROUTINE Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis function to get the number of xi coordinates for
+    INTEGER(INTG), INTENT(OUT) :: numberOfXiCoordinates !<On return, the number of Xi coordinate directions for the specified basis.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Basis_NumberOfXiCoordinatesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+#endif    
+    
+    numberOfXiCoordinates=basis%numberOfXiCoordinates
+   
+    EXITS("Basis_NumberOfXiCoordinatesGet")
+    RETURN
+999 ERRORSEXITS("Basis_NumberOfXiCoordinatesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_NumberOfXiCoordinatesGet
 
   !
   !================================================================================================================================

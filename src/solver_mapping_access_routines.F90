@@ -2218,6 +2218,7 @@ CONTAINS
       localError="The specified solver matrix index of "//TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " is invalid. The solver matrix index should be >= 1 and <= "// &
         & TRIM(NumberToVString(solverMapping%numberOfSolverMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(solverMapping%solverMatricesToEquationsMaps)) &
       & CALL FlagError("The solver matrices to equations maps is not allocated for the solver mapping.",err,error,*999)

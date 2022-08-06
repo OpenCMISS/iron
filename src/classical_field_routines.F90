@@ -577,24 +577,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: esSpecification(2)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("ClassicalField_BoundaryConditionsAnalyticCalculate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
-    IF(.NOT.ALLOCATED(equationsSet%specification)) &
-      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    IF(SIZE(equationsSet%specification,1)<2) &
-      & CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
-      & err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,2,esSpecification,err,error,*999)
     
-    SELECT CASE(equationsSet%specification(2))
+    SELECT CASE(esSpecification(2))
     CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
       CALL Laplace_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
     CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
       CALL HamiltonJacobi_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-      CALL Poisson_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+      CALL Poisson_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,.FALSE.,err,error,*999)
     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
       CALL Helmholtz_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
     CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
@@ -608,7 +604,7 @@ CONTAINS
     CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="Equations set equation type of "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+      localError="Equations set equation type of "//TRIM(NumberToVString(esSpecification(2),"*",err,error))// &
         & " is not valid for a classical field equations set class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
