@@ -106,14 +106,16 @@ PROGRAM AnalyticLaplaceExample
   IF(.NOT.QUICKWIN_STATUS) QUICKWIN_STATUS=SETWINDOWCONFIG(QUICKWIN_WINDOW_CONFIG)
 #endif
   
-  !Intialise cmiss
+  !Intialise OpenCMISS
+  CALL cmfe_Initialise(Err)
+  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,err)
+  
+  !Create a context
   CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,Err)
+  CALL cmfe_Context_Create(1_CMISSIntg,context,Err)
 
   CALL cmfe_Region_Initialise(worldRegion,err)
   CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
-
-  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,err)
 
   CALL cmfe_Context_RandomSeedsSet(context,9999,err)
     
@@ -148,7 +150,8 @@ PROGRAM AnalyticLaplaceExample
     CALL ANALYTICLAPLACE_TESTCASE_CUBIC_HERMITE_EXPORT(2,2,0)
   ENDIF
 
-  CALL cmfe_Finalise(context,Err)
+  CALL cmfe_Context_Destroy(context,Err)
+  CALL cmfe_Finalise(Err)
 
   WRITE(*,'(A)') "Program successfully completed."
   
@@ -536,9 +539,9 @@ CONTAINS
 
     !Create the equations set analytic field variables
     IF(NUMBER_GLOBAL_Z_ELEMENTS/=0) THEN
-      ANALYTIC_FUNCTION=CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2
+      ANALYTIC_FUNCTION=CMFE_EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_2
     ELSE
-      ANALYTIC_FUNCTION=CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2
+      ANALYTIC_FUNCTION=CMFE_EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_2
     ENDIF
     CALL cmfe_Field_Initialise(ANALYTIC_FIELD,Err)
     CALL cmfe_EquationsSet_AnalyticCreateStart(EQUATIONS_SET,ANALYTIC_FUNCTION,3,ANALYTIC_FIELD,Err)

@@ -72,6 +72,7 @@ PROGRAM CantileverBeamExample
   REAL(CMISSRP), PARAMETER :: WIDTH=2.0_CMISSRP
   REAL(CMISSRP), PARAMETER :: HEIGHT=2.0_CMISSRP
 
+  INTEGER(CMISSIntg), PARAMETER :: ContextUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: BasisUserNumber=1
@@ -119,13 +120,14 @@ PROGRAM CantileverBeamExample
   IF(.NOT.QUICKWIN_STATUS) QUICKWIN_STATUS=SETWINDOWCONFIG(QUICKWIN_WINDOW_CONFIG)
 #endif
 
-  !Intialise cmiss
+  !Intialise OpenCMISS
+  CALL cmfe_Initialise(Err)  
+  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
+  !Create a context
   CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,Err)  
+  CALL cmfe_Context_Create(ContextUserNumber,context,Err)  
   CALL cmfe_Region_Initialise(worldRegion,err)
   CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
-
-  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
 
   WRITE(*,'(A)') "Program starting."
 
@@ -134,7 +136,8 @@ PROGRAM CantileverBeamExample
 
   CALL ANALYTIC_LINEAR_ELASTICITY_TESTCASE_LINEAR_LAGRANGE_EXPORT(2,2,2,"TriLinearLagrange")
 
-  CALL cmfe_Finalise(context,Err)
+  CALL cmfe_Context_Destroy(context,Err)
+  CALL cmfe_Finalise(Err)
 
   WRITE(*,'(A)') "Program successfully completed."
   

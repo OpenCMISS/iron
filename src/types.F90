@@ -3971,7 +3971,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: totalNumberOfDofs !<The number of local dofs (including ghost values) in the solver vector associated with this solver matrix
     INTEGER(INTG) :: numberOfGlobalDofs !<The number of global dofs in the solver vector associated with this solver matrix.
 !!TODO: should this be index by solver dof rather than column???
-    TYPE(SolverDOFToVariableDOFsMapType), ALLOCATABLE :: solverDOFToVariableDOFsMap(:) !<solverDOFToVariableDOFsMap(dofIdx). The mappings from the dofIdx'th solver dof to the field variables in the equations set.
+    TYPE(SolverDOFToVariableDOFsMapType), ALLOCATABLE :: solverDOFToVariableDOFsMap(:) !<solverDOFToVariableDOFsMap(dofIdx). The mappings from the dofIdx'th local solver dof to the field variables in the equations set.
     TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<The domain mapping for solver matrix column dofs
   END TYPE SolverColsToEquationsMapType
   
@@ -4433,13 +4433,19 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(ContextType), POINTER :: ptr !<A pointer to the context
   END TYPE ContextPtrType
 
+  !Having a problem with Heap corruption so for now just allocate a fixed number of contexts until corruption found.
+  INTEGER(INTG), PARAMETER :: MAXIMUM_NUMBER_OF_CONTEXTS=99
+  
   !>Contains information on the OpenCMISS contexts. 
   TYPE ContextsType
     INTEGER(INTG) :: numberOfContexts !<The number of contexts
-    INTEGER(INTG) :: lastContextUserNumber !<The user number of the last context created.
-    TYPE(ContextPtrType), ALLOCATABLE :: contexts(:) !<contexts(contexIdx)%ptr is a pointer to the contextIdx'th context.
+    !Set aside a fixed number of contexts rather than allocate to avoid Heap corruption for now
+    !TYPE(ContextPtrType), ALLOCATABLE :: contexts(:) !<contexts(contexIdx)%ptr is a pointer to the contextIdx'th context.
+    TYPE(ContextPtrType) :: contexts(MAXIMUM_NUMBER_OF_CONTEXTS) !<contexts(contexIdx)%ptr is a pointer to the contextIdx'th context.
   END TYPE ContextsType
 
+  PUBLIC MAXIMUM_NUMBER_OF_CONTEXTS
+  
   PUBLIC ContextType,ContextPtrType,ContextsType
   
   !  

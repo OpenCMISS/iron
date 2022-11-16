@@ -76,8 +76,6 @@ MODULE ComputationRoutines
   
   !Module variables
 
-  LOGICAL, SAVE :: cmissMPIInitialised !<Is .TRUE. if OpenCMISS has initialised MPI
-
   !Interfaces
 
   INTERFACE WorkGroup_LabelSet
@@ -291,8 +289,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: mpiIError
-    LOGICAL :: mpiFinalised
 
     ENTERS("Computation_Finalise",err,error,*999)
 
@@ -301,17 +297,7 @@ CONTAINS
     !Finalise PETSc
     !Call this after MPI_COMM_FREE as PETSc routines are called when some MPI comm attributes are freed.
     !CALL Petsc_LogView(PETSC_COMM_WORLD,"OpenCMISSTest.petsc",err,error,*999)
-    CALL Petsc_Finalise(err,error,*999)
-
-    IF(cmissMPIInitialised) THEN
-      !Check if MPI has been finalised
-      CALL MPI_FINALIZED(mpiFinalised,mpiIError)
-      CALL MPI_ErrorCheck("MPI_FINALIZED",mpiIError,err,error,*999)
-      IF(.NOT.mpiFinalised) THEN
-        CALL MPI_FINALIZE(mpiIError)
-        CALL MPI_ErrorCheck("MPI_FINALIZE",mpiIError,err,error,*999)
-      ENDIF
-    ENDIF
+    !CALL Petsc_Finalise(err,error,*999)
 
     EXITS("Computation_Finalise")
     RETURN
@@ -332,25 +318,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,mpiIError
-    LOGICAL :: mpiInitialised
+    INTEGER(INTG) :: dummyErr
     TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("Computation_Initialise",err,error,*999)
 
     IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
     
-    !Check if MPI has been initialised
-    cmissMPIInitialised=.FALSE.
-    CALL MPI_INITIALIZED(mpiInitialised,mpiIError)
-    CALL MPI_ErrorCheck("MPI_INITIALIZED",mpiIError,err,error,*999)
-    IF(.NOT.mpiInitialised) THEN
-      !Initialise the MPI environment
-      CALL MPI_INIT(mpiIError)
-      CALL MPI_ErrorCheck("MPI_INIT",mpiIError,err,error,*999)
-      cmissMPIInitialised=.TRUE.
-    ENDIF
-
     CALL ComputationEnvironment_Initialise(context,err,error,*999)
 
     !Initialise node numbers in base routines.
@@ -358,12 +332,8 @@ CONTAINS
       & context%computationEnvironment%numberOfWorldComputationNodes,err,error,*999)
     
     !Initialise PETSc
-    CALL Petsc_Initialise(PETSC_NULL_CHARACTER,err,error,*999)
-    
-    IF(diagnostics1) THEN
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"OpenCMISS MPI initialised = ",cmissMPIInitialised,err,error,*999)
-    ENDIF
-    
+    !CALL Petsc_Initialise(PETSC_NULL_CHARACTER,err,error,*999)
+        
     EXITS("Computation_Initialise")        
     RETURN
 999 CALL Computation_Finalise(context%computationEnvironment,dummyErr,dummyError,*998)

@@ -3042,7 +3042,7 @@ CONTAINS
                       DO rowXiIdx=1,numberOfXi
                         DO columnXiIdx=1,numberOfXi
                           DO xiIdx=1,numberOfXi
-                            sum=sum+intraConductivity(rowXiIdx,xiIdx)*rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
+                            sum=sum+intraConductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                               & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                           ENDDO !xiIdx
                         ENDDO !columnXiIdx

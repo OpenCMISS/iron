@@ -63,7 +63,11 @@ MODULE ContextAccessRoutines
 
   !Module variables
 
+  TYPE(ContextsType), SAVE, TARGET :: contexts !<The contexts for OpenCMISS
+ 
   !Interfaces
+
+  PUBLIC contexts
 
   PUBLIC Context_BasisFunctionsGet
 
@@ -441,9 +445,6 @@ CONTAINS
 #endif
     
     IF(contexts%numberOfContexts>0) THEN
-#ifdef WITH_PRECHECKS      
-      IF(.NOT.ALLOCATED(contexts%contexts)) CALL FlagError("Contexts contexts is not allocated.",err,error,*999)
-#endif      
       NULLIFY(context)
       DO contextIdx=1,contexts%numberOfContexts
 #ifdef WITH_PRECHECKS        

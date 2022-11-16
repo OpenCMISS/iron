@@ -55,6 +55,8 @@ MODULE Cmiss
   USE ISO_C_BINDING
   
   USE BaseRoutines
+  USE CMISSMPI
+  USE CMISSPETSc
   USE Constants
   USE ContextRoutines
   USE ComputationAccessRoutines
@@ -109,8 +111,8 @@ MODULE Cmiss
 
   INTEGER(INTG), SAVE :: cmfe_ErrorHandlingMode !<The current error handling mode for OpenCMISS \see cmfe_ErrorHandlingModes
 
-  TYPE(ContextsType), SAVE, TARGET :: contexts !<The contexts for OpenCMISS
- 
+  LOGICAL, SAVE :: cmissMPIInitialised=.FALSE. !<Is .TRUE. if OpenCMISS has initialised MPI
+
   !Interfaces
 
   INTERFACE
@@ -129,8 +131,6 @@ MODULE Cmiss
   PUBLIC CMFE_MAJOR_VERSION,CMFE_MINOR_VERSION,CMFE_REVISION_VERSION,CMFE_BUILD_VERSION
 
   PUBLIC CMFE_RETURN_ERROR_CODE,CMFE_OUTPUT_ERROR,CMFE_TRAP_ERROR
-
-  PUBLIC contexts
 
   PUBLIC cmfe_ErrorHandlingModeGet_,cmfe_ErrorHandlingModeSet_
   
@@ -211,22 +211,34 @@ CONTAINS
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
   
   !>Finalises OpenCMISS. \see OpenCMISS::Iron::cmfe_Finalise
-  SUBROUTINE cmfe_Finalise_(context,err,error,*)
+  SUBROUTINE cmfe_Finalise_(err,error,*)
   
     !Argument variables
-    TYPE(ContextType), POINTER :: context !<The context to finalise
     INTEGER(INTG), INTENT(INOUT) :: err !<The error string
     TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
     !Local Variables
+    INTEGER(INTG) :: mpiIError
+    LOGICAL :: mpiFinalised
 
-    !Destroy context
-    CALL Context_Destroy(context,err,error,*999)
-
-    IF(contexts%numberOfContexts==0) THEN
+    IF(cmfeFirstInit) THEN
       !Reset the signal handler
       CALL cmfe_ResetFatalHandler()
       !Finalise contexts
-      CALL Contexts_Finalise(contexts,err,error,*999)
+      CALL Contexts_Finalise(err,error,*999)
+      !Finalise PETSc
+      !Call this after MPI_COMM_FREE as PETSc routines are called when some MPI comm attributes are freed.
+      !CALL Petsc_LogView(PETSC_COMM_WORLD,"OpenCMISSTest.petsc",err,error,*999)
+      CALL Petsc_Finalise(err,error,*999)
+      !Finalise MPI
+      IF(cmissMPIInitialised) THEN
+        !Check if MPI has been finalised
+        CALL MPI_FINALIZED(mpiFinalised,mpiIError)
+        CALL MPI_ErrorCheck("MPI_FINALIZED",mpiIError,err,error,*999)
+        IF(.NOT.mpiFinalised) THEN
+          CALL MPI_FINALIZE(mpiIError)
+          CALL MPI_ErrorCheck("MPI_FINALIZE",mpiIError,err,error,*999)
+        ENDIF
+      ENDIF
       !Finalise the base routines
       CALL BaseRoutines_Finalise(err,error,*999)
       !Reset first init
@@ -245,14 +257,14 @@ CONTAINS
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
   !>Initialises OpenCMISS. \see OpenCMISS::Iron::cmfe_Initialise
-  SUBROUTINE cmfe_Initialise_(newContext,err,error,*)
+  SUBROUTINE cmfe_Initialise_(err,error,*)
   
     !Argument variables
-    TYPE(ContextType), POINTER :: newContext !<On return, a pointer to the new context. Must not be associated on entry.
     INTEGER(INTG), INTENT(INOUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: myWorldComputationNodeNumber
+    INTEGER(INTG) :: mpiIError
+    LOGICAL :: mpiInitialised    
     TYPE(VARYING_STRING) :: versionString
 
     IF(.NOT.cmfeFirstInit) THEN
@@ -260,22 +272,27 @@ CONTAINS
       cmfe_ErrorHandlingMode = CMFE_OUTPUT_ERROR !Default for now, maybe make CMFE_RETURN_ERROR_CODE the default
       !Initialise the base routines
       CALL BaseRoutines_Initialise(err,error,*999)
+      !Initialise MPI
+      cmissMPIInitialised=.FALSE.
+      CALL MPI_INITIALIZED(mpiInitialised,mpiIError)
+      CALL MPI_ErrorCheck("MPI_INITIALIZED",mpiIError,err,error,*999)
+      IF(.NOT.mpiInitialised) THEN
+        !Initialise the MPI environment
+        CALL MPI_INIT(mpiIError)
+        CALL MPI_ErrorCheck("MPI_INIT",mpiIError,err,error,*999)
+        cmissMPIInitialised=.TRUE.
+      ENDIF
       !Initialise contexts
-      CALL Contexts_Initialise(contexts,err,error,*999)
+      CALL Contexts_Initialise(err,error,*999)
+      !Initialise PETSc
+      CALL Petsc_Initialise(PETSC_NULL_CHARACTER,err,error,*999)
       !Setup signal handling
       CALL cmfe_InitFatalHandler()
       CALL cmfe_SetFatalHandler()
-    ENDIF
-    
-    !Create new context
-    CALL Context_Create(contexts,newContext,err,error,*999)
 
-    IF(.NOT.cmfeFirstInit) THEN
-      !Write out the CMISS version
-      CALL ComputationEnvironment_WorldNodeNumberGet(newContext%computationEnvironment,myWorldComputationNodeNumber, &
-        & err,error,*999)
-      IF(myWorldComputationNodeNumber==0) THEN
-        versionString="OpenCMISS(Iron) version "//TRIM(NumberToVString(CMFE_MAJOR_VERSION,"*",err,error))
+      !Write out the OpenCMISS version???
+      IF(.FALSE.) THEN
+        versionString="OpenCMISS version "//TRIM(NumberToVString(CMFE_MAJOR_VERSION,"*",err,error))
         versionString=versionString//"."
         versionString=versionString//TRIM(NumberToVString(CMFE_MINOR_VERSION,"*",err,error))
         versionString=versionString//"."
@@ -286,6 +303,7 @@ CONTAINS
         !WRITE(*,'(A)') CHAR(versionString)
         versionString=""
       ENDIF
+
       !Set first initalised
       cmfeFirstInit = .TRUE.
     ENDIF

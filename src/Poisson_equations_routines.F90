@@ -122,7 +122,7 @@ CONTAINS
   
   !>Evaluate the analytic solutions for a Poisson equation
   SUBROUTINE Poisson_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,time,componentNumber,analyticParameters, &
-    & materialsParameters,sourceParameters,analyticValue,gradAnalyticValue,err,error,*)
+    & materialsParameters,sourceParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to evaluate
@@ -134,7 +134,8 @@ CONTAINS
     REAL(DP), POINTER, INTENT(IN) :: materialsParameters(:) !<A pointer to any materials field parameters
     REAL(DP), POINTER, INTENT(IN) :: sourceParameters(:) !<A pointer to any source field parameters
     REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analytic function value.
-    REAL(DP), INTENT(OUT) :: gradAnalyticValue(:) !<On return, the gradient of the analytic function value.
+    REAL(DP), INTENT(OUT) :: gradientAnalyticValue(:) !<On return, the gradient of the analytic function value.
+    REAL(DP), INTENT(OUT) :: hessianAnalyticValue(:,:) !<On return, the Hessian of the analytic function value.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
@@ -149,9 +150,13 @@ CONTAINS
         & " is invalid. The component number should be 1 for a Poisson equation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+
+    analyticValue=0.0_DP
+    gradientAnalyticValue=0.0_DP
+    hessianAnalyticValue=0.0_DP
     
     CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
-     
+    
     equationsSubType=esSpecification(3)
     SELECT CASE(equationsSubType)
     CASE(EQUATIONS_SET_GENERALISED_POISSON_SUBTYPE)
@@ -159,17 +164,30 @@ CONTAINS
       CASE(EQUATIONS_SET_CONSTANT_POISSON_EQUATION_TWO_DIM_1)
         !u=ln(4/((x+y+1)^2)
         analyticValue=LOG(4.0_DP/((x(1)+x(2)+1.0_DP)**2))
-        gradAnalyticValue(1)=(x(1)+x(2)+1.0_DP)**3/2.0_DP
-        gradAnalyticValue(2)=(x(1)+x(2)+1.0_DP)**3/2.0_DP
+        gradientAnalyticValue(1)=(x(1)+x(2)+1.0_DP)**3/2.0_DP
+        gradientAnalyticValue(2)=(x(1)+x(2)+1.0_DP)**3/2.0_DP
+        hessianAnalyticValue(1,1)=3.0_DP*(x(1)+x(2)+1.0_DP)**2/2.0_DP
+        hessianAnalyticValue(1,2)=3.0_DP*(x(1)+x(2)+1.0_DP)**2/2.0_DP
+        hessianAnalyticValue(2,1)=3.0_DP*(x(1)+x(2)+1.0_DP)**2/2.0_DP
+        hessianAnalyticValue(2,2)=3.0_DP*(x(1)+x(2)+1.0_DP)**2/2.0_DP
       CASE(EQUATIONS_SET_CONSTANT_POISSON_EQUATION_TWO_DIM_2)
         CALL FlagError("The analytic function type is not implemented yet.",err,error,*999)
       CASE(EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_1)
         !u=ln(6/(x+y+z+1^2))
         analyticValue=LOG(6.0_DP/((x(1)+x(2)+x(3)+1.0_DP)**2))
-        gradAnalyticValue(1)=(x(1)+x(2)+x(3)+1.0_DP)**3.0_DP/3.0_DP
-        gradAnalyticValue(2)=(x(1)+x(2)+x(3)+1.0_DP)**3.0_DP/3.0_DP
-        gradAnalyticValue(3)=(x(1)+x(2)+x(3)+1.0_DP)**3.0_DP/3.0_DP
-      CASE(EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_2)
+        gradientAnalyticValue(1)=(x(1)+x(2)+x(3)+1.0_DP)**3.0_DP/3.0_DP
+        gradientAnalyticValue(2)=(x(1)+x(2)+x(3)+1.0_DP)**3.0_DP/3.0_DP
+        gradientAnalyticValue(3)=(x(1)+x(2)+x(3)+1.0_DP)**3.0_DP/3.0_DP
+        hessianAnalyticValue(1,1)=(x(1)+x(2)+x(3)+1.0_DP)**2.0_DP
+        hessianAnalyticValue(1,2)=(x(1)+x(2)+x(3)+1.0_DP)**2.0_DP
+        hessianAnalyticValue(1,3)=(x(1)+x(2)+x(3)+1.0_DP)**2.0_DP
+        hessianAnalyticValue(2,1)=(x(1)+x(2)+x(3)+1.0_DP)**2.0_DP
+        hessianAnalyticValue(2,2)=(x(1)+x(2)+x(3)+1.0_DP)**2.0_DP
+        hessianAnalyticValue(2,3)=(x(1)+x(2)+x(3)+1.0_DP)**2.0_DP
+        hessianAnalyticValue(3,1)=(x(1)+x(2)+x(3)+1.0_DP)**2.0_DP
+        hessianAnalyticValue(3,2)=(x(1)+x(2)+x(3)+1.0_DP)**2.0_DP
+        hessianAnalyticValue(3,3)=(x(1)+x(2)+x(3)+1.0_DP)**2.0_DP
+     CASE(EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_2)
         CALL FlagError("The analytic function type is not implemented yet.",err,error,*999)
       CASE(EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_3)
         CALL FlagError("The analytic function type is not implemented yet.",err,error,*999)
@@ -180,10 +198,23 @@ CONTAINS
     CASE(EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE)
       CALL FlagError("No analytic function types are implemented for a linear source Poisson equation.",err,error,*999)
     CASE(EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE)
-      CALL FlagError("No analytic function types are implemented for a quadratic source Poisson equation.",err,error,*999)
+      !\deltwosqby{u}{x}+\deltwosqby{u}{y}+aw+bw^{2}=0
+      SELECT CASE(analyticFunctionType)
+      CASE(EQUATIONS_SET_QUADRATIC_POISSON_EQUATION_TWO_DIM_1)
+        !From https://eqworld.ipmnet.ru/en/solutions/npde/npde3101.pdf
+        !z=-1/2.\sqrt{\abs{a}}(x.sin C_{1}+ y.cos C_{1})+C_{2}
+        !For a>0, b<0; u=
+        !u=3a/(2b.sinh^2 z)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
     CASE(EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE)
+      !\deltwosqby{u}{x}+\deltwosqby{u}{y}+a.e^{bu}=0
       SELECT CASE(analyticFunctionType)
       CASE(EQUATIONS_SET_EXPONENTIAL_POISSON_EQUATION_TWO_DIM_1)
+        !From https://eqworld.ipmnet.ru/en/solutions/npde/npde3103.pdf
         !u=(1/beta).ln((sign(alpha.beta).2(A^2+B^2))/(alpha.beta.cos^2(Ax+By+C)))
         AParam=analyticParameters(1)
         BParam=analyticParameters(2)
@@ -197,8 +228,16 @@ CONTAINS
         ENDIF
         analyticValue=(1.0_DP/betaParam)*LOG((signFactor*2.0_DP*(AParam**2.0_DP+BParam**2.0_DP))/ &
           & (alphaParam*betaParam*(COS(AParam*x(1)+BParam*x(2)+CParam)**2.0_DP)))
-        gradAnalyticValue(1)=signFactor*2.0_DP*AParam*TAN(AParam*x(1)+BParam*x(2)+CParam)/betaParam
-        gradAnalyticValue(2)=signFactor*2.0_DP*BParam*TAN(AParam*x(1)+BParam*x(2)+CParam)/betaParam
+        gradientAnalyticValue(1)=signFactor*2.0_DP*AParam*TAN(AParam*x(1)+BParam*x(2)+CParam)/betaParam
+        gradientAnalyticValue(2)=signFactor*2.0_DP*BParam*TAN(AParam*x(1)+BParam*x(2)+CParam)/betaParam
+        hessianAnalyticValue(1,1)=signFactor*2.0_DP*AParam*AParam/ &
+          & (betaParam*COS(AParam*x(1)+BParam*x(2)+CParam)*COS(AParam*x(1)+BParam*x(2)+CParam))
+        hessianAnalyticValue(1,2)=signFactor*2.0_DP*AParam*BParam/ &
+          & (betaParam*COS(AParam*x(1)+BParam*x(2)+CParam)*COS(AParam*x(1)+BParam*x(2)+CParam))
+        hessianAnalyticValue(2,1)=signFactor*2.0_DP*AParam*BParam/ &
+          & (betaParam*COS(AParam*x(1)+BParam*x(2)+CParam)*COS(AParam*x(1)+BParam*x(2)+CParam))
+        hessianAnalyticValue(2,2)=signFactor*2.0_DP*BParam*BParam/ &
+          & (betaParam*COS(AParam*x(1)+BParam*x(2)+CParam)*COS(AParam*x(1)+BParam*x(2)+CParam))
       CASE DEFAULT
         localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
@@ -213,9 +252,13 @@ CONTAINS
         !\todo: This test case has been set up for the Pressure Poisson equation - needs to be formulated in a more general way
         !u=SIN(2.pi.x/10)*(2.pi.y/10)*(2.pi.z/10)
         analyticValue=SIN(2.0_DP*PI*x(1)/10.0_DP)*SIN(2.0_DP*PI*x(2)/10.0_DP)*SIN(2.0_DP*PI*x(3)/10.0_DP)
-        gradAnalyticValue(1)=(2.0_DP*PI/10.0_DP)*COS(2.0_DP*PI*x(1)/10.0_DP)*SIN(2.0_DP*PI*x(2)/10.0_DP)*SIN(2.0_DP*PI*x(3)/10.0_DP)
-        gradAnalyticValue(2)=(2.0_DP*PI/10.0_DP)*SIN(2.0_DP*PI*x(1)/10.0_DP)*COS(2.0_DP*PI*x(2)/10.0_DP)*SIN(2.0_DP*PI*x(3)/10.0_DP)
-        gradAnalyticValue(3)=(2.0_DP*PI/10.0_DP)*SIN(2.0_DP*PI*x(1)/10.0_DP)*SIN(2.0_DP*PI*x(2)/10.0_DP)*COS(2.0_DP*PI*x(3)/10.0_DP)
+        gradientAnalyticValue(1)=(2.0_DP*PI/10.0_DP)*COS(2.0_DP*PI*x(1)/10.0_DP)*SIN(2.0_DP*PI*x(2)/10.0_DP)* &
+          & SIN(2.0_DP*PI*x(3)/10.0_DP)
+        gradientAnalyticValue(2)=(2.0_DP*PI/10.0_DP)*SIN(2.0_DP*PI*x(1)/10.0_DP)*COS(2.0_DP*PI*x(2)/10.0_DP)* &
+          & SIN(2.0_DP*PI*x(3)/10.0_DP)
+        gradientAnalyticValue(3)=(2.0_DP*PI/10.0_DP)*SIN(2.0_DP*PI*x(1)/10.0_DP)*SIN(2.0_DP*PI*x(2)/10.0_DP)* &
+          & COS(2.0_DP*PI*x(3)/10.0_DP)
+        !TODO: Hessian
       CASE DEFAULT
         localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
           & " is invalid."
@@ -249,10 +292,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentIdx,derivativeIdx,derivativeGlobalIndex,dimensionIdx,esSpecification(3), &
-      & localDOFIdx,nodeIdx, &
-      & numberOfComponents,numberOfDimensions,numberOfNodeDerivatives,numberOfNodes,numberOfVariables,variableIdx,variableType
-    REAL(DP) :: analyticNormalValue,analyticValue,gradAnalyticValue(3),normal(3),position(3),tangents(3,3),time
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,dimensionIdx,esSpecification(3),nodeIdx,numberOfComponents, &
+      & numberOfDimensions,numberOfNodeDerivatives,numberOfNodes,numberOfVariables,variableIdx,variableType
+    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3),position(3),tangents(3,3),time
     REAL(DP), POINTER :: analyticParameters(:),materialsParameters(:),sourceParameters(:),geometricParameters(:)
     LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
@@ -326,35 +368,11 @@ CONTAINS
             CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,1,nodeIdx, &
               & position,normal,tangents,err,error,*999)
             CALL Poisson_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
-              & analyticParameters,materialsParameters,sourceParameters,analyticValue,gradAnalyticValue,err,error,*999)
-            CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-            !Loop over the derivatives
-            DO derivativeIdx=1,numberOfNodeDerivatives
-              CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,derivativeGlobalIndex,err,error,*999)
-              !Default to version 1 of each node derivative
-              CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx,err,error,*999)
-              IF(boundaryNode) THEN
-                SELECT CASE(variableType)
-                CASE(FIELD_U_VARIABLE_TYPE) !Dirichlet
-                  CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
-                    & analyticValue,err,error,*999)
-                CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                  !If we are a boundary node then set the analytic value on the boundary
-                  analyticNormalValue=0.0_DP
-                  DO dimensionIdx=1,numberOfDimensions
-                    analyticNormalValue=analyticNormalValue+gradAnalyticValue(dimensionIdx)*normal(dimensionIdx)
-                  ENDDO !dimensionIdx
-                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
-                    & analyticNormalValue,err,error,*999)
-                  !Do nothing at present
-                CASE DEFAULT
-                  !Do nothing
-                END SELECT
-              ELSE
-                CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
-                  & analyticValue,err,error,*999)
-              ENDIF
-            ENDDO !derivativeIdx
+              & analyticParameters,materialsParameters,sourceParameters,analyticValue,gradientAnalyticValue, &
+              & hessianAnalyticValue,err,error,*999)
+            CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
+              & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+              & .FALSE.,0.0_DP,.FALSE.,0.0_DP,err,error,*999)
           ENDIF !boundary only test
         ENDDO !nodeIdx
       ENDDO !componentIdx
@@ -2094,7 +2112,7 @@ CONTAINS
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi
                         DO xiIdx=1,numberOfXi
-                          sum=sum+conductivity(rowXiIdx,xiIdx)*rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum=sum+conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
@@ -2103,7 +2121,7 @@ CONTAINS
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi
                         DO xiIdx=1,numberOfXi
-                          sum=sum+conductivity(rowXiIdx,xiIdx)*rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum=sum+conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
@@ -2121,7 +2139,7 @@ CONTAINS
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi
                         DO xiIdx=1,numberOfXi
-                          sum=sum+conductivity(rowXiIdx,xiIdx)*rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum=sum+conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
@@ -2233,9 +2251,8 @@ CONTAINS
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi
                         DO xiIdx=1,numberOfXi
-                          sum2=sum2+intraConductivity(rowXiIdx,xiIdx)*rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum2=sum2+intraConductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
-                          
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
                     ENDDO !rowXiIdx
@@ -2935,7 +2952,7 @@ CONTAINS
         bParam=materialsInterpPoint%values(2,NO_PART_DERIV)
         
         CALL CoordinateSystem_MaterialTransformSymTensor2(geometricInterpPointMetrics,fibreInterpPoint, &
-          & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)        
+          & materialsInterpPoint%values(3:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)        
         
         !Calculate jacobianGaussWeight.      
 !!TODO: Think about symmetric problems.
@@ -2974,7 +2991,7 @@ CONTAINS
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi
                         DO xiIdx=1,numberOfXi
-                          sum=sum+conductivity(rowXiIdx,xiIdx)*rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum=sum+conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
@@ -2984,7 +3001,7 @@ CONTAINS
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi
                         DO xiIdx=1,numberOfXi
-                          sum=sum+conductivity(rowXiIdx,xiIdx)*rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum=sum+conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx

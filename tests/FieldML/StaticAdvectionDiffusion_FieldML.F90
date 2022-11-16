@@ -73,23 +73,23 @@ PROGRAM StaticAdvectionDiffusionExample
   REAL(CMISSRP), PARAMETER :: LENGTH=3.0_CMISSRP 
   REAL(CMISSRP), POINTER :: GEOMETRIC_PARAMETERS(:)
   
-  INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=1
-  INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=2
-  INTEGER(CMISSIntg), PARAMETER :: BasisUserNumber=3
-  INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=4
-  INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=5
-  INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=6
-  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=7
-  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=8
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=9
-  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumber=10
-  INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumber=11
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumber=12
-  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=13
-  INTEGER(CMISSIntg), PARAMETER :: ControlLoopNode=0
-  INTEGER(CMISSIntg), PARAMETER :: IndependentFieldUserNumber=14
-  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumber=15
-  INTEGER(CMISSIntg), PARAMETER :: SourceFieldUserNumber=16
+  INTEGER(CMISSIntg), PARAMETER :: ContextUserNumber=1
+  INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=2
+  INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=3
+  INTEGER(CMISSIntg), PARAMETER :: BasisUserNumber=4
+  INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=5
+  INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=6
+  INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=7
+  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=8
+  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=9
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=10
+  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumber=11
+  INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumber=12
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumber=13
+  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=14
+  INTEGER(CMISSIntg), PARAMETER :: IndependentFieldUserNumber=15
+  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumber=16
+  INTEGER(CMISSIntg), PARAMETER :: SourceFieldUserNumber=17
 
   INTEGER(CMISSIntg), PARAMETER :: MeshComponentNumber=1
 
@@ -162,13 +162,14 @@ PROGRAM StaticAdvectionDiffusionExample
 #endif
 
   !Intialise OpenCMISS
+  CALL cmfe_Initialise(Err)  
+  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
+  !Create a context
   CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,Err)  
+  CALL cmfe_Context_Create(1_CMISSIntg,context,Err)  
   CALL cmfe_Region_Initialise(worldRegion,err)
   CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
-
-  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
-
+ 
   !Get the computation nodes information
   CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
   CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
@@ -379,7 +380,7 @@ PROGRAM StaticAdvectionDiffusionExample
   CALL cmfe_Problem_ControlLoopCreateStart(Problem,Err)
   !CALL cmfe_ControlLoop_Initialise(ControlLoop,Err)
   !Get the control loop
-  !CALL cmfe_Problem_ControlLoopGet(Problem,ControlLoopNode,ControlLoop,Err)
+  !CALL cmfe_Problem_ControlLoopGet(Problem,CMFE_CONTROL_LOOP_NODE,ControlLoop,Err)
   !Set the times
   !CALL cmfe_ControlLoop_TimesSet(ControlLoop,0.0_CMISSRP,1.0_CMISSRP,0.1_CMISSRP,Err)
   !Finish creating the problem control loop
@@ -467,7 +468,10 @@ PROGRAM StaticAdvectionDiffusionExample
 
   ENDIF
 
-  CALL cmfe_Finalise(context,Err)
+  !Destroy the context
+  CALL cmfe_Context_Destroy(context,Err)
+  !Finalise OpenCMISS
+  CALL cmfe_Finalise(Err)
   WRITE(*,'(A)') "Program successfully completed."
   
   STOP

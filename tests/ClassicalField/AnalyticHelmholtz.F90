@@ -102,9 +102,11 @@ PROGRAM ANALYTICHELMHOLTZEXAMPLE
   IF(.NOT.QUICKWIN_STATUS) QUICKWIN_STATUS=SETWINDOWCONFIG(QUICKWIN_WINDOW_CONFIG)
 #endif
   
-  !Intialise cmiss
+  !Intialise OpenCMISS
+  CALL cmfe_Initialise(Err)
+  !Create a context
   CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,Err)
+  CALL cmfe_Context_Create(1_CMISSIntg,context,Err)
   
   CALL cmfe_Region_Initialise(worldRegion,err)
   CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
@@ -113,7 +115,10 @@ PROGRAM ANALYTICHELMHOLTZEXAMPLE
   CALL ANALYTICHELMHOLTZ_TESTCASE_BICUBIC_HERMITE_CONVERGENCE(2,10,2)
   CALL ANALYTICHELMHOLTZ_TESTCASE_BILINEAR_LAGRANGE_EXPORT(2,6,0)
 
-  CALL cmfe_Finalise(context,Err)
+  !Destroy the context
+  CALL cmfe_Context_Destroy(context,Err)
+  !Finalise OpenCMISS
+  CALL cmfe_Finalise(Err)
 
   WRITE(*,'(A)') "Program successfully completed."
   

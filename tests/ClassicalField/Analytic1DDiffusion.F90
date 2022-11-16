@@ -70,20 +70,21 @@ PROGRAM Analytic1DDiffusionExample
   REAL(CMISSRP), PARAMETER :: C=0.0_CMISSRP
   REAL(CMISSRP), PARAMETER :: K=1.0_CMISSRP
   
-  INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=1
-  INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=2
-  INTEGER(CMISSIntg), PARAMETER :: BasisUserNumber=3
-  INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=4
-  INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=5
-  INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=6
-  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=7
-  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=8
-  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumber=9
-  INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumber=10
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumber=11
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=12
-  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=13
-  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumber=14
+  INTEGER(CMISSIntg), PARAMETER :: ContextUserNumber=1
+  INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=2
+  INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=3
+  INTEGER(CMISSIntg), PARAMETER :: BasisUserNumber=4
+  INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=5
+  INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=6
+  INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=7
+  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=8
+  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=9
+  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumber=10
+  INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumber=11
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumber=12
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=13
+  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=14
+  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumber=15
   !Program types
   
   !Program variables
@@ -134,16 +135,16 @@ PROGRAM Analytic1DDiffusionExample
 #endif
 
   !Intialise OpenCMISS
+  CALL cmfe_Initialise(Err)
+  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,err)
+  CALL cmfe_OutputSetOn("Diffusion1DAnalytic",err)
+  !Create a context
   CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,Err)
+  CALL cmfe_Context_Create(ContextUserNumber,context,Err)
 
   CALL cmfe_Region_Initialise(worldRegion,err)
   CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
-  
-  CALL cmfe_errorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,err)
-
-  CALL cmfe_OutputSetOn("Diffusion1DAnalytic",err)
-  
+    
   !Get the computation nodes information
   CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
   CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
@@ -340,8 +341,10 @@ PROGRAM Analytic1DDiffusionExample
   CALL cmfe_Fields_ElementsExport(Fields,"Diffusion1DAnalytic","FORTRAN",err)
   CALL cmfe_Fields_Finalise(Fields,err)
 
+  !Destroy the context
+  CALL cmfe_Context_Destroy(context,err)
   !Finalise and quit
-  CALL cmfe_Finalise(context,err)
+  CALL cmfe_Finalise(err)
   WRITE(*,'(A)') "Program successfully completed."
 
   STOP

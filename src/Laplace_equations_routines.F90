@@ -91,6 +91,8 @@ MODULE LaplaceEquationsRoutines
 
   !Interfaces
 
+  PUBLIC Laplace_AnalyticFunctionsEvaluate
+
   PUBLIC Laplace_BoundaryConditionsAnalyticCalculate
 
   PUBLIC Laplace_EquationsSetSetup
@@ -111,283 +113,227 @@ CONTAINS
   !
   !================================================================================================================================
   !
-
-
-  !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
-  SUBROUTINE Laplace_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
+  
+  !>Evaluate the analytic solutions for a Laplace equation
+  SUBROUTINE Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,time,componentNumber,analyticParameters, &
+    & analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to evaluate
+    INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
+    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
+    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to evaluate
+    REAL(DP), POINTER, INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
+    REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analytic function value.
+    REAL(DP), INTENT(OUT) :: gradientAnalyticValue(:) !<On return, the gradient of the analytic function value.
+    REAL(DP), INTENT(OUT) :: hessianAnalyticValue(:,:) !<On return, the Hessian of the analytic function value.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: equationsSubType,esSpecification(3)
+    REAL(DP) :: lambda1,lambda2,sigma11,sigma12,sigma21,sigma22,sigman,sigmat,theta
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Laplace_AnalyticFunctionsEvaluate",err,error,*999)
+
+    IF(componentNumber/=1) THEN
+      localError="The specified component number of "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " is invalid. The component number should be 1 for a Laplace equation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    analyticValue=0.0_DP
+    gradientAnalyticValue=0.0_DP
+    hessianAnalyticValue=0.0_DP
+    
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+     
+    equationsSubType=esSpecification(3)
+    SELECT CASE(equationsSubType)
+    CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE)     
+      SELECT CASE(analyticFunctionType)
+      CASE(EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_1)
+        !u=x^2+2.x.y-y^2
+        analyticValue=x(1)*x(1)-2.0_DP*x(1)*x(2)-x(2)*x(2)
+        gradientAnalyticValue(1)=2.0_DP*x(1)+2.0_DP*x(2)
+        gradientAnalyticValue(2)=2.0_DP*x(1)-2.0_DP*x(2)
+        hessianAnalyticValue(1,1)=2.0_DP
+        hessianAnalyticValue(1,2)=2.0_DP
+        hessianAnalyticValue(2,1)=2.0_DP
+        hessianAnalyticValue(2,2)=-2.0_DP
+      CASE(EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_2)
+        !u=cos(x).cosh(y)
+        analyticValue=COS(x(1))*COSH(x(2))
+        gradientAnalyticValue(1)=-SIN(x(1))*COSH(x(2))
+        gradientAnalyticValue(2)=COS(x(1))*SINH(x(2))
+        hessianAnalyticValue(1,1)=-COS(x(1))*COSH(x(2))
+        hessianAnalyticValue(1,2)=-SIN(x(1))*SINH(x(2))
+        hessianAnalyticValue(2,1)=-SIN(x(1))*SINH(x(2))
+        hessianAnalyticValue(2,2)=COS(x(1))*COSH(x(2))
+      CASE(EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_1)
+        !u=x^2+y^2-2.z^2
+        analyticValue=x(1)*x(1)+x(2)*x(2)-2.0_DP*x(3)*x(3)
+        gradientAnalyticValue(1)=2.0_DP*x(1)
+        gradientAnalyticValue(2)=2.0_DP*x(2)
+        gradientAnalyticValue(3)=-4.0_DP*x(3)
+        hessianAnalyticValue(1,1)=2.0_DP
+        hessianAnalyticValue(1,2)=0.0_DP
+        hessianAnalyticValue(1,3)=0.0_DP
+        hessianAnalyticValue(2,1)=0.0_DP
+        hessianAnalyticValue(2,2)=2.0_DP
+        hessianAnalyticValue(2,3)=0.0_DP
+        hessianAnalyticValue(3,1)=0.0_DP
+        hessianAnalyticValue(3,2)=0.0_DP
+        hessianAnalyticValue(3,3)=-4.0_DP
+      CASE(EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_2)
+        !u=cos(x).cosh(y).z
+        analyticValue=COS(x(1))*COSH(x(2))*x(3)
+        gradientAnalyticValue(1)=-SIN(x(1))*COSH(x(2))*x(3)
+        gradientAnalyticValue(2)=COS(x(1))*SINH(x(2))*x(3)
+        gradientAnalyticValue(3)=COS(x(1))*COSH(x(2))
+        hessianAnalyticValue(1,1)=-COS(x(1))*COSH(x(2))*x(3)
+        hessianAnalyticValue(1,2)=-SIN(x(1))*SINH(x(2))*x(3)
+        hessianAnalyticValue(1,3)=-SIN(x(1))*COSH(x(2))
+        hessianAnalyticValue(2,1)=-SIN(x(1))*SINH(x(2))*x(3)
+        hessianAnalyticValue(2,2)=COS(x(1))*COSH(x(2))*x(3)
+        hessianAnalyticValue(2,3)=COS(x(1))*SINH(x(2))
+        hessianAnalyticValue(3,1)=-SIN(x(1))*COSH(x(2))
+        hessianAnalyticValue(3,2)=COS(x(1))*SINH(x(2))
+        hessianAnalyticValue(3,3)=0.0_DP
+      CASE DEFAULT
+        localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE)
+      SELECT CASE(analyticFunctionType)
+      CASE(EQUATIONS_SET_GENERALISED_LAPLACE_EQUATION_TWO_DIM_1)
+        !u=2.e^x.e^{-\lambda_{1}.y}cos(\lambda_{2}y)
+        sigmat=analyticParameters(1)
+        sigman=analyticParameters(2)
+        theta=analyticParameters(3)
+        sigma11=sigmat*COS(theta)*COS(theta)+sigman*SIN(theta)*SIN(theta)
+        sigma12=(sigmat-sigman)*SIN(theta)*COS(theta)
+        sigma21=(sigmat-sigman)*SIN(theta)*COS(theta)
+        sigma22=sigmat*SIN(theta)*SIN(theta)+sigman*COS(theta)*COS(theta)
+        lambda1=sigma12/sigma22
+        lambda2=SQRT(sigma11*sigma22-sigma12*sigma21)/sigma22
+        analyticValue=2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*COS(lambda2*x(2))
+        gradientAnalyticValue(1)=2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*COS(lambda2*x(2))
+        gradientAnalyticValue(2)=-2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*(lambda1*COS(lambda2*x(2))+lambda2*SIN(lambda2*x(2)))
+        !!TODO: Check Hessian as H(1,1)+H(2,2) doesn't seem to give 0?
+        hessianAnalyticValue(1,1)=2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*COS(lambda2*x(2))
+        hessianAnalyticValue(1,2)=-2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*(lambda1*COS(lambda2*x(2))+lambda2*SIN(lambda2*x(2)))
+        hessianAnalyticValue(2,1)=-2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*(lambda1*COS(lambda2*x(2))+lambda2*SIN(lambda2*x(2)))
+        hessianAnalyticValue(2,2)= &
+          &  2.0_DP*lambda1*EXP(x(1))*EXP(-lambda1*x(2))*(lambda1*COS(lambda2*x(2))+lambda2*SIN(lambda2*x(2))) &
+          & -2.0_DP*lambda2*EXP(x(1))*EXP(-lambda1*x(2))*(lambda2*COS(lambda2*x(2))-lambda1*SIN(lambda2*x(2)))
+      CASE DEFAULT
+        localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
+      CALL FlagError("No analytic function types are implemented for a moving mesh Laplace equation.",err,error,*999)
+    CASE DEFAULT
+      localError="The equations set subtype of "//TRIM(NumberToVString(equationsSubType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT           
+     
+    EXITS("Laplace_AnalyticFunctionsEvaluate")
+    RETURN
+999 ERRORSEXITS("Laplace_AnalyticFunctionsEvaluate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Laplace_AnalyticFunctionsEvaluate
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates the analytic solution and sets the boundary conditions for a Laplace analytic problem.
+  SUBROUTINE Laplace_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,boundaryOnly,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to calculate the analytic for
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer for the boundary conditions to calculate
+    LOGICAL, INTENT(IN) :: boundaryOnly !<Only calculate if DOFs are on the boundary
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentInterpolationType,componentIdx,derivativeIdx,dimensionIdx, &
-      & globalDerivativeIndex,localDOF,nodeIdx,numberOfComponents,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives, &
-      & numberOfVariables,variableIdx,variableType
-    REAL(DP) :: value,x(3)
-    REAL(DP), POINTER :: geometricParameters(:)
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,dimensionIdx,esSpecification(3),nodeIdx,numberOfComponents, &
+      & numberOfDimensions,numberOfNodes,numberOfVariables,variableIdx,variableType
+    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3),position(3),tangents(3,3),time
+    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:)
     LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FieldType), POINTER :: dependentField,geometricField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable
+    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
+    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable
     TYPE(VARYING_STRING) :: localError    
-    
+   
     ENTERS("Laplace_BoundaryConditionsAnalyticCalculate",err,error,*999)
 
-    NULLIFY(geometricParameters)
-
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
-    
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
     CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
+    
     NULLIFY(geometricField)
     CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
     NULLIFY(geometricVariable)
     CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
     CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+    NULLIFY(geometricParameters)
     CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
     NULLIFY(dependentField)
-    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)    
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
-    DO variableIdx=1,numberOfVariables
+    NULLIFY(analyticField)
+    CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
+    NULLIFY(analyticVariable)
+    NULLIFY(analyticParameters)
+    IF(ASSOCIATED(analyticField)) THEN
+      CALL Field_VariableGet(analyticField,FIELD_U_VARIABLE_TYPE,analyticVariable,err,error,*999)
+      CALL FieldVariable_ParameterSetDataGet(analyticVariable,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
+    ENDIF
+    DO variableIdx=1,numberOfVariables !U and deludeln
       NULLIFY(dependentVariable)
       CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
       CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
-      DO componentIdx=1,numberOfComponents
-        CALL FieldVariable_ComponentInterpolationGet(dependentVariable,componentIdx,componentInterpolationType,err,error,*999)
-        IF(componentInterpolationType/=FIELD_NODE_BASED_INTERPOLATION) &
-          & CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
+      DO componentIdx=1,numberOfComponents !u
+        CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
+          & err,error,*999)
         NULLIFY(domain)
         CALL FieldVariable_ComponentDomainGet(dependentVariable,componentIdx,domain,err,error,*999)
         NULLIFY(domainTopology)
-        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)         
+        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
         NULLIFY(domainNodes)
         CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
         CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         !Loop over the local nodes excluding the ghosts.
         DO nodeIdx=1,numberOfNodes
-!!TODO \todo We should interpolate the geometric field here and the node position.
-          DO dimensionIdx=1,numberOfDimensions
-            !Default to version 1 of each node derivative
-            CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOF,err,error,*999)
-            x(dimensionIdx)=geometricParameters(localDOF)
-          ENDDO !dimensionIdx
-          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-          !Loop over the derivatives
-          DO derivativeIdx=1,numberOfNodeDerivatives
-            CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-            SELECT CASE(analyticFunctionType)
-            CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1)
-              !u=x^2+2.x.y-y^2
-              SELECT CASE(variableType)
-              CASE(FIELD_U_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  value=x(1)*x(1)-2.0_DP*x(1)*x(2)-x(2)*x(2)
-                CASE(GLOBAL_DERIV_S1)
-                  value=2.0_DP*x(1)+2.0_DP*x(2)
-                CASE(GLOBAL_DERIV_S2)
-                  value=2.0_DP*x(1)-2.0_DP*x(2)
-                CASE(GLOBAL_DERIV_S1_S2)
-                  value=2.0_DP
-                CASE DEFAULT
-                  localError="The global derivative index of "// &
-                    & TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  value=0.0_DP !!TODO
-                CASE(GLOBAL_DERIV_S1)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S2)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S1_S2)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The global derivative index of "// &
-                    & TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE DEFAULT
-                localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2)
-              !u=cos(x).cosh(y)
-              SELECT CASE(variableType)
-              CASE(FIELD_U_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  value=COS(x(1))*COSH(x(2))
-                CASE(GLOBAL_DERIV_S1)
-                  value=-SIN(x(1))*COSH(x(2))
-                CASE(GLOBAL_DERIV_S2)
-                  value=COS(x(1))*SINH(x(2))
-                CASE(GLOBAL_DERIV_S1_S2)
-                  value=-SIN(x(1))*SINH(x(2))
-                CASE DEFAULT
-                  localError="The global derivative index of "// &
-                    & TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  value=0.0_DP !!TODO
-                CASE(GLOBAL_DERIV_S1)
-                  !CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S2)
-                  !CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S1_S2)
-                  !CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The global derivative index of "// &
-                    & TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE DEFAULT
-                localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1)
-              !u=x^2+y^2-2.z^2
-              SELECT CASE(variableType)
-              CASE(FIELD_U_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  value=x(1)*x(1)+x(2)*x(2)-2.0_DP*x(3)*x(3)
-                CASE(GLOBAL_DERIV_S1)
-                  value=2.0_DP*x(1)
-                CASE(GLOBAL_DERIV_S2)
-                  value=2.0_DP*x(2)
-                CASE(GLOBAL_DERIV_S1_S2)
-                  value=0.0_DP
-                CASE(GLOBAL_DERIV_S3)
-                  value=-4.0_DP*x(3)
-                CASE(GLOBAL_DERIV_S1_S3)
-                  value=0.0_DP
-                CASE(GLOBAL_DERIV_S2_S3)
-                  value=0.0_DP
-                CASE(GLOBAL_DERIV_S1_S2_S3)
-                  value=0.0_DP
-                CASE DEFAULT
-                  localError="The global derivative index of "// &
-                    & TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  value=0.0_DP !!TODO
-                CASE(GLOBAL_DERIV_S1)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S2)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S1_S2)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S3)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S1_S3)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S2_S3)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S1_S2_S3)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The global derivative index of "// &
-                    & TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE DEFAULT
-                localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2)
-              !u=cos(x).cosh(y).z
-              SELECT CASE(variableType)
-              CASE(FIELD_U_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  value=COS(x(1))*COSH(x(2))*x(3)
-                CASE(GLOBAL_DERIV_S1)
-                  value=-SIN(x(1))*COSH(x(2))*x(3)
-                CASE(GLOBAL_DERIV_S2)
-                  value=COS(x(1))*SINH(x(2))*x(3)
-                CASE(GLOBAL_DERIV_S1_S2)
-                  value=-SIN(x(1))*SINH(x(2))*x(3)
-                CASE(GLOBAL_DERIV_S3)
-                  value=COS(x(1))*COSH(x(2))
-                CASE(GLOBAL_DERIV_S1_S3)
-                  value=-SIN(x(1))*COSH(x(2))
-                CASE(GLOBAL_DERIV_S2_S3)
-                  value=COS(x(1))*SINH(x(2))
-                CASE(GLOBAL_DERIV_S1_S2_S3)
-                  value=-SIN(x(1))*SINH(x(2))
-                CASE DEFAULT
-                  localError="The global derivative index of "// &
-                    & TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  value=0.0_DP !!TODO
-                CASE(GLOBAL_DERIV_S1)
-                  !CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S2)
-                  !CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S1_S2)
-                  !CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S3)
-                  !CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S1_S3)
-                  !CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S2_S3)
-                  !CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S1_S2_S3)
-                  !CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The global derivative index of "// &
-                    & TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE DEFAULT
-                localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            CASE DEFAULT
-              localError="The analytic function type of "// &
-                & TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
-                & " is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-            CALL FieldVariable_ParameterSetUpdateLocalNode(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE, &
-              & 1,derivativeIdx,nodeIdx,componentIdx,VALUE,err,error,*999)
-            IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
-              CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-              IF(boundaryNode) THEN
-                !If we are a boundary node then set the analytic value on the boundary
-                CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOF,BOUNDARY_CONDITION_FIXED, &
-                  & VALUE,err,error,*999)
-              ENDIF
-            ENDIF
-          ENDDO !derivativeIdx
+          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+          IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
+            CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
+              & position,normal,tangents,err,error,*999)
+            CALL Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
+              & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*999)
+            CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
+              & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+              & .FALSE.,0.0_DP,.FALSE.,0.0_DP,err,error,*999)
+          ENDIF !boundary only test
         ENDDO !nodeIdx
       ENDDO !componentIdx
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
       CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+
     ENDDO !variableIdx
+
     CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
-    
+   
     EXITS("Laplace_BoundaryConditionsAnalyticCalculate")
     RETURN
 999 ERRORSEXITS("Laplace_BoundaryConditionsAnalyticCalculate",err,error)
@@ -698,7 +644,7 @@ CONTAINS
                     DO rowXiIdx=1,numberOfDependentXi
                       DO columnXiIdx=1,numberOfDependentXi
                         DO xiIdx=1,numberOfGeometricXi
-                          sum=sum+conductivity(rowXiIdx,xiIdx)*rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum=sum+conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
@@ -790,9 +736,11 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables %
     INTEGER(INTG) :: componentIdx,componentNumber,esSpecification(3),geometricMeshComponent,geometricScalingType, &
-      & numberOfDependentComponents,numberOfDimensions,numberOfIndependentComponents,numberOfMaterialsComponents,solutionMethod
+      & numberOfAnalyticComponents,numberOfDependentComponents,numberOfDimensions,numberOfIndependentComponents, &
+      & numberOfMaterialsComponents,solutionMethod
+    REAL(DP) :: fibreAngle,sigma11,sigma12,sigma22
     TYPE(DecompositionType), POINTER :: geometricDecomposition
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
+    TYPE(FieldType), POINTER :: analyticField,dependentField,fibreField,geometricField,materialsField
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -824,9 +772,9 @@ CONTAINS
     
     SELECT CASE(equationsSetSetup%setupType)
     CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
-      !
-      ! Initial setup
-      !
+      !-----------------------------------------------------------------
+      ! I n i t i a l   s e t u p
+      !-----------------------------------------------------------------
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL Laplace_EquationsSetSolutionMethodSet(equationsSet,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
@@ -853,14 +801,15 @@ CONTAINS
       END SELECT
       
     CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
-      !
-      ! Geometric setup
+      !-----------------------------------------------------------------
+      ! G e o m e t r i c   f i e l d
+      !-----------------------------------------------------------------
       !
       ! Do nothing
     CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
-      !
-      ! Dependent setup
-      !
+      !-----------------------------------------------------------------
+      ! D e p e n d e n t   f i e l d
+      !-----------------------------------------------------------------
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
@@ -1003,9 +952,9 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_SET_SETUP_INDEPENDENT_TYPE)
-      !
-      ! Independent setup
-      !
+      !-----------------------------------------------------------------
+      ! I n d e p e n d e n t   f i e l d 
+      !-----------------------------------------------------------------
       NULLIFY(equationsIndependent)
       IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
         CALL EquationsSet_IndependentGet(equationsSet,equationsIndependent,err,error,*999)
@@ -1084,9 +1033,9 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT      
     CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
-      !
-      ! Materials setup
-      !
+      !-----------------------------------------------------------------
+      ! M a t e r i a l s   f i e l d 
+      !-----------------------------------------------------------------
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
@@ -1134,10 +1083,10 @@ CONTAINS
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               DO componentIdx=1,numberOfMaterialsComponents                
                 IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
-                  CALL Field_ComponentInterpolationSetAndLock(equationsMaterials%materialsField, &
+                  CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField, &
                     & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 ELSE IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
-                  CALL Field_ComponentInterpolationSetAndLock(equationsMaterials%materialsField, &
+                  CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField, &
                     & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                 ENDIF
               ENDDO !componentIdx
@@ -1190,7 +1139,7 @@ CONTAINS
         IF(ASSOCIATED(equationsMaterials)) THEN
           IF(equationsMaterials%materialsFieldAutoCreated) THEN
             CALL Field_CreateFinish(equationsMaterials%materialsField,err,error,*999)
-            DO componentIdx=1,numberOfMaterialsComponents
+            DO componentIdx=1,numberOfDimensions
               IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
                 !Default conductivity values to 1.0 on the diagonal, 0.0 elsewhere
                 componentNumber=TENSOR_TO_VOIGT(componentIdx,componentIdx,numberOfDimensions)
@@ -1212,9 +1161,9 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
-      !
-      ! Source setup
-      !
+      !-----------------------------------------------------------------
+      ! S o u r c e   f i e l d 
+      !-----------------------------------------------------------------
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         !Do nothing
@@ -1227,81 +1176,242 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
-      !
-      ! Analytic setup
-      !
+      !-----------------------------------------------------------------
+      ! A n a l y t i c   f i e l d
+      !-----------------------------------------------------------------
+      NULLIFY(equationsAnalytic)
+      CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+      !Set number of analytic field components
+      numberOfAnalyticComponents=0
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
         NULLIFY(dependentField)
         CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-        NULLIFY(geometricField)
-        CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-        CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-        SELECT CASE(equationsSetSetup%analyticFunctionType)
-        CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1)
-          !Check that we are in 2D
-          IF(numberOfDimensions/=2) THEN
-            localError="The number of geometric dimensions of "// &
-              & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
-              & " is invalid. The analytic function type of "// &
+        SELECT CASE(esSpecification(3))
+        CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE)
+          SELECT CASE(equationsSetSetup%analyticFunctionType)
+          CASE(EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_1)
+            !Check that we are in 2D
+            IF(numberOfDimensions/=2) THEN
+              localError="The number of geometric dimensions of "// &
+                & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+                & " is invalid. The analytic function type of "// &
+                & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
+                & " requires that there be 2 geometric dimensions."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            !Create analytic field if required
+            !Set analtyic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_1
+          CASE(EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_2)
+            !Check that we are in 2D
+            IF(numberOfDimensions/=2) THEN
+              localError="The number of geometric dimensions of "// &
+                & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+                & " is invalid. The analytic function type of "// &
+                & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
+                & " requires that there be 2 geometric dimensions."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            !Create analytic field if required
+            !Set analytic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_2
+          CASE(EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_1)
+            !Check that we are in 3D
+            IF(numberOfDimensions/=3) THEN
+              localError="The number of geometric dimensions of "// &
+                & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+                & " is invalid. The analytic function type of "// &
+                & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
+                & " requires that there be 3 geometric dimensions."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            !Create analytic field if required
+            !Set analytic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_1
+          CASE(EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_2)
+            !Check that we are in 3D
+            IF(numberOfDimensions/=3) THEN
+              localError="The number of geometric dimensions of "// &
+                & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+                & " is invalid. The analytic function type of "// &
+                & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
+                & " requires that there be 3 geometric dimensions."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            !Create analytic field if required
+            !Set analytic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_2
+          CASE DEFAULT
+            localError="The specified analytic function type of "// &
               & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
-              & " requires that there be 2 geometric dimensions."
+              & " is invalid for a standard Laplace equation."
             CALL FlagError(localError,err,error,*999)
-          ENDIF
-          !Create analytic field if required
-          !Set analtyic function type
-          equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1
-        CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2)
-          !Check that we are in 2D
-          IF(numberOfDimensions/=2) THEN
-            localError="The number of geometric dimensions of "// &
-              & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
-              & " is invalid. The analytic function type of "// &
+          END SELECT
+        CASE(EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE)
+          SELECT CASE(equationsSetSetup%analyticFunctionType)
+          CASE(EQUATIONS_SET_GENERALISED_LAPLACE_EQUATION_TWO_DIM_1)
+            !Check that we are in 2D
+            IF(numberOfDimensions/=2) THEN
+              localError="The number of geometric dimensions of "// &
+                & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+                & " is invalid. The analytic function type of "// &
+                & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
+                & " requires that there be 2 geometric dimensions."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            !Check the materials values are constant
+            NULLIFY(materialsField)
+            CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+            CALL Field_ComponentInterpolationCheck(materialsField,FIELD_U_VARIABLE_TYPE,1,FIELD_CONSTANT_INTERPOLATION, &
+              & err,error,*999)
+            CALL Field_ComponentInterpolationCheck(materialsField,FIELD_U_VARIABLE_TYPE,2,FIELD_CONSTANT_INTERPOLATION, &
+              & err,error,*999)
+            CALL Field_ComponentInterpolationCheck(materialsField,FIELD_U_VARIABLE_TYPE,3,FIELD_CONSTANT_INTERPOLATION, &
+              & err,error,*999)
+            !Check that the sigma_12 parameter is 0.0.
+            CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,3,sigma12,err,error,*999)
+            IF(ABS(sigma12)>ZERO_TOLERANCE) CALL FlagError("The sigma_12 material component must be 0.0.",err,error,*999)
+            !Check the fibre field (if it exists) is constant
+            NULLIFY(fibreField)
+            CALL EquationsSet_FibreFieldExists(equationsSet,fibreField,err,error,*999)
+            IF(ASSOCIATED(fibreField)) THEN
+              CALL Field_ComponentInterpolationCheck(fibreField,FIELD_U_VARIABLE_TYPE,1,FIELD_CONSTANT_INTERPOLATION, &
+                & err,error,*999)
+            ENDIF
+            !Set number of analytic field components
+            numberOfAnalyticComponents=3
+            !Set analtyic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_GENERALISED_LAPLACE_EQUATION_TWO_DIM_1
+          CASE DEFAULT
+            localError="The specified analytic function type of "// &
               & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
-              & " requires that there be 2 geometric dimensions."
+              & " is invalid for a moving mesh Laplace equation."
             CALL FlagError(localError,err,error,*999)
-          ENDIF
-          !Create analytic field if required
-          !Set analytic function type
-          equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2
-        CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1)
-          !Check that we are in 3D
-          IF(numberOfDimensions/=3) THEN
-            localError="The number of geometric dimensions of "// &
-              & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
-              & " is invalid. The analytic function type of "// &
-              & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
-              & " requires that there be 3 geometric dimensions."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-          !Create analytic field if required
-          !Set analytic function type
-          equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1
-        CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2)
-          !Check that we are in 3D
-          IF(numberOfDimensions/=3) THEN
-            localError="The number of geometric dimensions of "// &
-              & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
-              & " is invalid. The analytic function type of "// &
-              & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
-              & " requires that there be 3 geometric dimensions."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-          !Create analytic field if required
-          !Set analytic function type
-          equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2
-        CASE DEFAULT
+          END SELECT
+        CASE(EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
           localError="The specified analytic function type of "// &
             & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
-            & " is invalid for a standard Laplace equation."
+            & " is invalid for a moving mesh Laplace equation."
+          CALL FlagError(localError,err,error,*999)
+        CASE DEFAULT
+          localError="The third equations set specification of "// &
+            & TRIM(NumberToVstring(esSpecification(3),"*",err,error))// &
+            & " is not valid for a Laplace type of a classical field equations set."
           CALL FlagError(localError,err,error,*999)
         END SELECT
+        !Create analytic field if required
+        IF(numberOfAnalyticComponents>=1) THEN
+          IF(equationsAnalytic%analyticFieldAutoCreated) THEN
+            !Create the auto created source field
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsAnalytic%analyticField,err,error,*999)
+            CALL Field_LabelSet(equationsAnalytic%analyticField,"Analytic Field",err,error,*999)
+            CALL Field_TypeSetAndLock(equationsAnalytic%analyticField,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeSetAndLock(equationsAnalytic%analyticField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
+            CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+            CALL Field_DecompositionSetAndLock(equationsAnalytic%analyticField,geometricDecomposition,err,error,*999)
+            CALL Field_GeometricFieldSetAndLock(equationsAnalytic%analyticField,geometricField,err,error,*999)
+            CALL Field_NumberOfVariablesSetAndLock(equationsAnalytic%analyticField,1,err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE,err,error,*999)
+            CALL Field_VariableLabelSet(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE,"Analytic",err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+              & err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            !Set the number of analytic components
+            CALL Field_NumberOfComponentsSetAndLock(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+              & numberOfAnalyticComponents,err,error,*999)
+            !Default the analytic components to the 1st geometric interpolation setup with constant interpolation
+            CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
+            DO componentIdx=1,numberOfAnalyticComponents
+              CALL Field_ComponentMeshComponentSet(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE,componentIdx, &
+                & geometricMeshComponent,err,error,*999)
+              CALL Field_ComponentInterpolationSet(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE,componentIdx, &
+                & FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+            ENDDO !componentIdx
+            !Default the field scaling to that of the geometric field
+            CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+            CALL Field_ScalingTypeSet(equationsAnalytic%analyticField,geometricScalingType,err,error,*999)
+          ELSE
+            !Check the user specified field
+            CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,1,err,error,*999)
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            IF(numberOfAnalyticComponents==1) THEN
+              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
+            ELSE
+              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            ENDIF
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfAnalyticComponents, &
+              & err,error,*999)
+          ENDIF
+        ENDIF
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-        NULLIFY(equationsAnalytic)
-        CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
-        IF(equationsSet%analytic%analyticFieldAutoCreated) &
-          & CALL Field_CreateFinish(equationsAnalytic%analyticField,err,error,*999)
+        NULLIFY(analyticField)
+        CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
+        IF(ASSOCIATED(analyticField)) THEN
+          IF(equationsAnalytic%analyticFieldAutoCreated) THEN
+            !Finish creating the analytic field
+            CALL Field_CreateFinish(equationsAnalytic%analyticField,err,error,*999)
+            !Set the default values for the analytic field
+            SELECT CASE(esSpecification(3))
+            CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE)
+              !Nothing to set
+            CASE(EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE)
+              IF(numberOfDimensions==2) THEN
+                SELECT CASE(equationsAnalytic%analyticFunctionType)
+                CASE(EQUATIONS_SET_GENERALISED_LAPLACE_EQUATION_TWO_DIM_1)
+                  !Set number of analytic field components
+                  numberOfAnalyticComponents=3
+                  !Default the conductivity values to the same as the materials field
+                  NULLIFY(materialsField)
+                  CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+                  !Set sigma_t
+                  CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,sigma11, &
+                    & err,error,*999)
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,1,sigma11,err,error,*999)
+                  !Set sigma_n
+                  CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,2,sigma22, &
+                    & err,error,*999)
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,2,sigma22,err,error,*999)
+                  !Default the fibre angle to the same as the fibre field
+                  NULLIFY(fibreField)
+                  fibreAngle=0.0_DP
+                  CALL EquationsSet_FibreFieldExists(equationsSet,fibreField,err,error,*999)
+                  IF(ASSOCIATED(fibreField)) THEN
+                    CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,fibreAngle, &
+                      & err,error,*999)
+                  ENDIF
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,3,fibreAngle,err,error,*999)
+                CASE DEFAULT
+                  localError="The analytic function type of "// &
+                    & TRIM(NumberToVString(equationsAnalytic%analyticFunctionType,"*",err,error))// &
+                    & " is invalid for a two-dimensional generalised Laplace equation."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              ELSE
+                localError="The number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+                  & " is invalid for a generalised Laplace equation."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+            CASE(EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
+              !Nothing to set
+            CASE DEFAULT
+              localError="The third equations set specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)            
+            END SELECT
+          ENDIF
+        ENDIF
       CASE DEFAULT
         localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
           & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
@@ -1309,9 +1419,9 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
-      !
-      ! Equations setup
-      !
+      !-----------------------------------------------------------------
+      ! E q u a t i o n s 
+      !-----------------------------------------------------------------
       CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
       IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE.OR. &
         & esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) &

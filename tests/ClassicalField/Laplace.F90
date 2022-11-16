@@ -72,18 +72,19 @@ PROGRAM LaplaceExample
   REAL(CMISSRP), PARAMETER :: WIDTH=1.0_CMISSRP
   REAL(CMISSRP), PARAMETER :: LENGTH=1.0_CMISSRP
 
-  INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=1
-  INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=2
-  INTEGER(CMISSIntg), PARAMETER :: BasisUserNumber=3
-  INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=4
-  INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=5
-  INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=6
-  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=7
-  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=8
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=9
-  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumber=10
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumber=11
-  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=12
+  INTEGER(CMISSIntg), PARAMETER :: ContextUserNumber=1
+  INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=2
+  INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=3
+  INTEGER(CMISSIntg), PARAMETER :: BasisUserNumber=4
+  INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=5
+  INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=6
+  INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=7
+  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=8
+  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=9
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=10
+  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumber=11
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumber=12
+  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=13
  
   !Program types
   
@@ -175,23 +176,21 @@ PROGRAM LaplaceExample
   ENDIF
   
   !Intialise OpenCMISS
+  CALL cmfe_Initialise(Err)
+  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
+  CALL cmfe_DiagnosticsSetOn(CMFE_IN_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",["DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE"],Err)
+  WRITE(Filename,'(A,"_",I0,"x",I0,"x",I0,"_",I0)') "Laplace",NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS, &
+    & NUMBER_GLOBAL_Z_ELEMENTS,INTERPOLATION_TYPE  
+  CALL cmfe_OutputSetOn(Filename,Err)
+  !Create a context
   CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,Err)
+  CALL cmfe_Context_Create(ContextUserNumber,context,Err)
   
   CALL cmfe_Region_Initialise(worldRegion,err)
   CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
   
-  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
-
   CALL cmfe_Context_RandomSeedsSet(context,9999,Err)
   
-  CALL cmfe_DiagnosticsSetOn(CMFE_IN_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",["DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE"],Err)
-
-  WRITE(Filename,'(A,"_",I0,"x",I0,"x",I0,"_",I0)') "Laplace",NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS, &
-    & NUMBER_GLOBAL_Z_ELEMENTS,INTERPOLATION_TYPE
-  
-  CALL cmfe_OutputSetOn(Filename,Err)
-
   !Get the computation nodes information
   CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
   CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
@@ -434,8 +433,10 @@ PROGRAM LaplaceExample
   CALL cmfe_Fields_ElementsExport(Fields,"Laplace","FORTRAN",Err)
   CALL cmfe_Fields_Finalise(Fields,Err)
   
-  !Finialise CMISS
-  CALL cmfe_Finalise(context,Err)
+  !Destroy the context
+  CALL cmfe_Context_Destroy(context,Err)
+  !Finialise OpenCMISS
+  CALL cmfe_Finalise(Err)
 
   WRITE(*,'(A)') "Program successfully completed."
   

@@ -2071,11 +2071,12 @@ CONTAINS
       NULLIFY(dependentQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
       NULLIFY(vDependentVariable)
+      NULLIFY(vDependentInterpParameters)
+      NULLIFY(VDependentInterpPoint)
       IF(equationsSetSubtype==EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFF_SUBTYPE) THEN
         CALL Field_VariableGet(dependentField,FIELD_V_VARIABLE_TYPE,vDependentVariable,err,error,*999)
         CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
           & vDependentInterpParameters,err,error,*999)
-        NULLIFY(uDependentInterpPoint)
         CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE,vDependentInterpPoint, &
           & err,error,*999)
         CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,vDependentInterpParameters,err,error,*999)
@@ -2084,13 +2085,17 @@ CONTAINS
       NULLIFY(materialsField)
       CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
       NULLIFY(uMaterialsVariable)
-      NULLIFY(vMaterialsVariable)
       CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,uMaterialsVariable,err,error,*999)
+      NULLIFY(uMaterialsInterpParameters)
       CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
         & uMaterialsInterpParameters,err,error,*999)
+      NULLIFY(uMaterialsInterpPoint)
       CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,uMaterialsInterpPoint, &
         & err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,uMaterialsInterpParameters,err,error,*999)
+      NULLIFY(vMaterialsVariable)
+      NULLIFY(vMaterialsInterpParameters)
+      NULLIFY(vMaterialsInterpPoint)
       IF(equationsSetSubtype==EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE) THEN
         CALL Field_VariableGet(materialsField,FIELD_V_VARIABLE_TYPE,vMaterialsVariable,err,error,*999)
         CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
@@ -2118,10 +2123,8 @@ CONTAINS
       IF(ASSOCIATED(sourceVariable)) THEN
         CALL EquationsSet_SourceFieldGet(equationsSet,sourceField,err,error,*999)
         CALL FieldVariable_VariableTypeGet(sourceVariable,sourceVariableType,err,error,*999)
-        NULLIFY(sourceInterpParameters)
         CALL EquationsInterpolation_SourceParametersGet(equationsInterpolation,sourceVariableType,sourceInterpParameters, &
           & err,error,*999)
-        NULLIFY(sourceInterpPoint)
         CALL EquationsInterpolation_SourcePointGet(equationsInterpolation,sourceVariableType,sourceInterpPoint, &
           & err,error,*999)
         CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,sourceInterpParameters,err,error,*999)
@@ -2266,7 +2269,7 @@ CONTAINS
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi
                         DO xiIdx=1,numberOfXi
-                          sum=sum+conductivity(rowXiIdx,xiIdx)*rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum=sum+conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
@@ -2683,11 +2686,11 @@ CONTAINS
       CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
       NULLIFY(solver)
       CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
-      !Create the solver equations
-      NULLIFY(solverEquations)
-      CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
       SELECT CASE(problemSetup%actionType)
       CASE(PROBLEM_SETUP_START_ACTION)
+        !Create the solver equations
+        NULLIFY(solverEquations)
+        CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
         CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
         IF(problemSubtype==PROBLEM_GENERALISED_STATIC_ADVEC_DIFF_SUBTYPE.OR. &
           & problemSubtype==PROBLEM_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE) THEN
@@ -2697,6 +2700,8 @@ CONTAINS
         ENDIF
         CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
       CASE(PROBLEM_SETUP_FINISH_ACTION)
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         !Finish the solver equations creation
         CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
       CASE DEFAULT

@@ -174,6 +174,8 @@ MODULE BoundaryConditionsRoutines
 
   PUBLIC BoundaryConditions_RowVariableGet
 
+  PUBLIC BoundaryConditions_SetAnalyticBoundaryNode
+
   PUBLIC BoundaryConditions_SetConstant
 
   PUBLIC BoundaryConditions_SetLocalDOF
@@ -181,6 +183,8 @@ MODULE BoundaryConditionsRoutines
   PUBLIC BoundaryConditions_SetElement
 
   PUBLIC BoundaryConditions_SetNode
+
+  PUBLIC BoundaryConditions_UpdateAnalyticNode
 
   PUBLIC BoundaryConditions_VariableExists
 
@@ -818,7 +822,7 @@ MODULE BoundaryConditionsRoutines
         CALL BoundaryConditionsVariable_FieldVariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
         NULLIFY(domainMapping)
         CALL FieldVariable_DomainMappingGet(fieldVariable,domainMapping,err,error,*999)
-        CALL DomainMapping_NumberOfLocalGet(domainMapping,sendCount,err,error,*999)
+        CALL DomainMapping_NumberOfGlobalGet(domainMapping,sendCount,err,error,*999)
         NULLIFY(field)
         CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
         IF(numberOfGroupComputationNodes>1) THEN
@@ -2323,6 +2327,215 @@ MODULE BoundaryConditionsRoutines
   !================================================================================================================================
   !
 
+  !>Sets the analytic value as a boundary condition on the specified node.
+  SUBROUTINE BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentNumber, &
+    & domainNodes,localNodenumber,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+    & setVelocity,analyticVelocity,setAcceleration,analyticAcceleration,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to set the boundary condition for
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions for the problem.
+    TYPE(FieldVariableType), POINTER :: dependentVariable !<The dependent field variable to set the boundary condition on.    
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number to set the boundary condition at
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes for the local node to set the boundary condition for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to set the boundary condition for
+    LOGICAL, INTENT(IN) :: boundaryNode !<The boundary node flag for the node
+    REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(componentIdx,tangentIdx). The tangent vectors for the node.
+    REAL(DP), INTENT(IN) :: normal(:) !<normal(componentIdx). The normal vector at the node.
+    REAL(DP), INTENT(IN) :: analyticValue !<The value of the analytic value at the node
+    REAL(DP), INTENT(IN) :: gradientAnalyticValue(:) !<gradientAnalyticValue(componentIdx). The gradient of the analytic value at the node.
+    REAL(DP), INTENT(IN) :: hessianAnalyticValue(:,:) !<hessianAnalyticValue(componentIdx1,componentIdx2). The Hessian of the analyticc value at the node.
+    LOGICAL, INTENT(IN) :: setVelocity !<Is .TRUE. if velocity values are to be set, .FALSE. if not.
+    REAL(DP), INTENT(IN) :: analyticVelocity !<The analytic velocity to set
+    LOGICAL, INTENT(IN) :: setAcceleration !<Is .TRUE. if acceleration values are to be set, .FALSE. if not.
+    REAL(DP), INTENT(IN) :: analyticAcceleration !<The analytic acceleration to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: componentIdx1,componentIdx2,derivativeGlobalIndex,derivativeIdx,localDOFIdx,numberOfNodeDerivatives, &
+      & variableType
+    REAL(DP) :: dofValue
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("BoundaryConditions_SetAnalyticBoundaryNode",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    CALL FieldVariable_AssertComponentNumberOK(dependentVariable,componentNumber,err,error,*999)
+    CALL DomainNodes_LocalNumberCheck(domainNodes,localNodeNumber,err,error,*999)
+#endif    
+    CALL FieldVariable_VariableTypeGet(dependentVariable,variableType,err,error,*999)
+
+    CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,localNodeNumber,numberOfNodeDerivatives,err,error,*999)
+    !Loop over the derivatives
+    DO derivativeIdx=1,numberOfNodeDerivatives
+      CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,localNodeNumber,derivativeGlobalIndex,err,error,*999)
+      !Default to version 1 of each node derivative
+      CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,localNodeNumber,componentNumber,localDOFIdx, &
+        & err,error,*999)
+      dofValue=0.0_DP
+      SELECT CASE(variableType)
+      CASE(FIELD_U_VARIABLE_TYPE) 
+        SELECT CASE(derivativeGlobalIndex)
+        CASE(NO_GLOBAL_DERIV)
+          dofValue=analyticValue
+        CASE(GLOBAL_DERIV_S1)
+          !Compute grad(u).s1
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,1)
+          ENDDO !componentIdx1
+        CASE(GLOBAL_DERIV_S2)
+          !Compute grad(u).s2
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,2)
+          ENDDO !componentIdx1
+        CASE(GLOBAL_DERIV_S3)
+          !Compute grad(u).s3
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,3)
+          ENDDO !componentIdx1
+        CASE(GLOBAL_DERIV_S1_S2)
+          !Compute grad s1^t.H(u).s2
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,2)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S1_S3)
+          !Compute grad s1^t.H(u).s3
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,3)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S2_S3)
+          !Compute grad s2^t.H(u).s3
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,2)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,3)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S1_S2_S3)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE DEFAULT
+          localError="The global derivative index of "//TRIM(NumberToVString(derivativeGlobalIndex,"*",err,error))// &
+            & " for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+            & TRIM(NumberToVString(localNodeNumber,"*",err,error))//" of component number "// &
+            & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+            & TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(FIELD_DELUDELN_VARIABLE_TYPE)
+        SELECT CASE(derivativeGlobalIndex)
+        CASE(NO_GLOBAL_DERIV)
+          !Compute grad(u).n
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+gradientAnalyticValue(componentIdx1)*normal(componentIdx1)
+          ENDDO !componentIdx1
+          dofValue=analyticValue
+        CASE(GLOBAL_DERIV_S1)
+          !Compute grad s1^t.H(u).n
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S2)
+          !Compute grad s2^t.H(u).n
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,2)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S3)
+          !Compute grad s3^t.H(u).n
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,3)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S1_S2)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE(GLOBAL_DERIV_S1_S3)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE(GLOBAL_DERIV_S2_S3)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE(GLOBAL_DERIV_S1_S2_S3)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE DEFAULT
+          localError="The global derivative index of "//TRIM(NumberToVString(derivativeGlobalIndex,"*",err,error))// &
+            & " for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+            & TRIM(NumberToVString(localNodeNumber,"*",err,error))//" of component number "// &
+            & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+            & TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        !Do nothing or error???
+      END SELECT
+      IF(boundaryNode) THEN
+        SELECT CASE(variableType)
+        CASE(FIELD_U_VARIABLE_TYPE) !Dirichlet
+          CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
+            & dofValue,err,error,*999)
+          IF(setVelocity) THEN
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
+              & analyticVelocity,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
+              & analyticVelocity,err,error,*999)
+            IF(setAcceleration) THEN
+              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE, &
+                & localDOFIdx,analyticAcceleration,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
+                & localDOFIdx,analyticAcceleration,err,error,*999)
+            ENDIF
+          ENDIF
+        CASE(FIELD_DELUDELN_VARIABLE_TYPE) !Neummann
+          CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
+            & dofValue,err,error,*999)
+        CASE DEFAULT
+          !Do nothing
+        END SELECT
+      ELSE
+        CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
+          & dofValue,err,error,*999)
+        IF(setVelocity) THEN
+          CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
+            & analyticVelocity,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
+            & analyticVelocity,err,error,*999)
+          IF(setAcceleration) THEN
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE, &
+              & localDOFIdx,analyticAcceleration,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
+              & localDOFIdx,analyticAcceleration,err,error,*999)
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDDO !derivativeIdx
+    
+    EXITS("BoundaryConditions_SetAnalyticBoundaryNode")
+    RETURN
+999 ERRORSEXITS("BoundaryConditions_SetAnalyticBoundaryNode",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditions_SetAnalyticBoundaryNode
+
+  !
+  !================================================================================================================================
+  !
+
   !>Sets a boundary condition on the specified constant. \see OpenCMISS::Iron::cmfe_BoundaryConditions_SetConstant
   SUBROUTINE BoundaryConditions_SetConstantField(boundaryConditions,field,variableType,componentNumber,condition,bcValue, &
     & err,error,*)
@@ -2682,6 +2895,199 @@ MODULE BoundaryConditionsRoutines
     RETURN 1
     
   END SUBROUTINE BoundaryConditions_SetNodeVariable
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Updates the analytic value as a boundary condition on the specified node.
+  SUBROUTINE BoundaryConditions_UpdateAnalyticNode(boundaryConditions,numberOfDimensions,dependentVariable, &
+    & componentNumber,domainNodes,localNodenumber,tangents,normal,analyticValue,gradientAnalyticValue, &
+    & hessianAnalyticValue,setVelocity,analyticVelocity,setAcceleration,analyticAcceleration,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to update the boundary condition for
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions for the problem.
+    TYPE(FieldVariableType), POINTER :: dependentVariable !<The dependent field variable to update the boundary condition on.    
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number to update the boundary condition at
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes for the local node to update the boundary condition for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to update the boundary condition for
+    REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(componentIdx,tangentIdx). The tangent vectors for the node.
+    REAL(DP), INTENT(IN) :: normal(:) !<normal(componentIdx). The normal vector at the node.
+    REAL(DP), INTENT(IN) :: analyticValue !<The value of the analytic value at the node
+    REAL(DP), INTENT(IN) :: gradientAnalyticValue(:) !<gradientAnalyticValue(componentIdx). The gradient of the analytic value at the node.
+    REAL(DP), INTENT(IN) :: hessianAnalyticValue(:,:) !<hessianAnalyticValue(componentIdx1,componentIdx2). The Hessian of the analyticc value at the node.
+    LOGICAL, INTENT(IN) :: setVelocity !<Is .TRUE. if velocity values are to be set, .FALSE. if not.
+    REAL(DP), INTENT(IN) :: analyticVelocity !<The analytic velocity to set
+    LOGICAL, INTENT(IN) :: setAcceleration !<Is .TRUE. if acceleration values are to be set, .FALSE. if not.
+    REAL(DP), INTENT(IN) :: analyticAcceleration !<The analytic acceleration to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: componentIdx1,componentIdx2,conditionType,derivativeGlobalIndex,derivativeIdx,localDOFIdx, &
+      & numberOfNodeDerivatives,variableType
+    REAL(DP) :: dofValue
+    TYPE(VARYING_STRING) :: localError
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
+
+    ENTERS("BoundaryConditions_UpdateAnalyticNode",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL FieldVariable_AssertComponentNumberOK(dependentVariable,componentNumber,err,error,*999)
+    CALL DomainNodes_LocalNumberCheck(domainNodes,localNodeNumber,err,error,*999)
+#endif    
+    NULLIFY(boundaryConditionsVariable)
+    CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
+    CALL FieldVariable_VariableTypeGet(dependentVariable,variableType,err,error,*999)
+ 
+    CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,localNodeNumber,numberOfNodeDerivatives,err,error,*999)
+    !Loop over the derivatives
+    DO derivativeIdx=1,numberOfNodeDerivatives
+      CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,localNodeNumber,derivativeGlobalIndex,err,error,*999)
+      !Default to version 1 of each node derivative
+      CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,localNodeNumber,componentNumber,localDOFIdx, &
+        & err,error,*999)
+      dofValue=0.0_DP
+      SELECT CASE(variableType)
+      CASE(FIELD_U_VARIABLE_TYPE) 
+        SELECT CASE(derivativeGlobalIndex)
+        CASE(NO_GLOBAL_DERIV)
+          dofValue=analyticValue
+        CASE(GLOBAL_DERIV_S1)
+          !Compute grad(u).s1
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,1)
+          ENDDO !componentIdx1
+        CASE(GLOBAL_DERIV_S2)
+          !Compute grad(u).s2
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,2)
+          ENDDO !componentIdx1
+        CASE(GLOBAL_DERIV_S3)
+          !Compute grad(u).s3
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,3)
+          ENDDO !componentIdx1
+        CASE(GLOBAL_DERIV_S1_S2)
+          !Compute grad s1^t.H(u).s2
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,2)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S1_S3)
+          !Compute grad s1^t.H(u).s3
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,3)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S2_S3)
+          !Compute grad s2^t.H(u).s3
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,2)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,3)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S1_S2_S3)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE DEFAULT
+          localError="The global derivative index of "//TRIM(NumberToVString(derivativeGlobalIndex,"*",err,error))// &
+            & " for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+            & TRIM(NumberToVString(localNodeNumber,"*",err,error))//" of component number "// &
+            & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+            & TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(FIELD_DELUDELN_VARIABLE_TYPE)
+        SELECT CASE(derivativeGlobalIndex)
+        CASE(NO_GLOBAL_DERIV)
+          !Compute grad(u).n
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+gradientAnalyticValue(componentIdx1)*normal(componentIdx1)
+          ENDDO !componentIdx1
+          dofValue=analyticValue
+        CASE(GLOBAL_DERIV_S1)
+            !Compute grad s1^t.H(u).n
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S2)
+          !Compute grad s2^t.H(u).n
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,2)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S3)
+          !Compute grad s3^t.H(u).n
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                  & tangents(componentIdx1,3)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S1_S2)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE(GLOBAL_DERIV_S1_S3)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE(GLOBAL_DERIV_S2_S3)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE(GLOBAL_DERIV_S1_S2_S3)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE DEFAULT
+          localError="The global derivative index of "//TRIM(NumberToVString(derivativeGlobalIndex,"*",err,error))// &
+            & " for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+            & TRIM(NumberToVString(localNodeNumber,"*",err,error))//" of component number "// &
+            & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+            & TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        !Do nothing or error???
+      END SELECT
+      CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx,dofValue, &
+        & err,error,*999)
+      IF(setVelocity) THEN
+        CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
+          & analyticVelocity,err,error,*999)
+        IF(setAcceleration) THEN
+          CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
+            & localDOFIdx,analyticAcceleration,err,error,*999)
+        ENDIF
+      ENDIF
+      CALL BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,localDOFIdx,conditionType,err,error,*999)
+      IF(conditionType==BOUNDARY_CONDITION_FIXED) THEN
+        CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,localDOFIdx,dofValue,err,error,*999)
+        IF(setVelocity) THEN
+          CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
+            & analyticVelocity,err,error,*999)
+          IF(setAcceleration) THEN
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE, &
+              & localDOFIdx,analyticAcceleration,err,error,*999)
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDDO !derivativeIdx
+    
+    EXITS("BoundaryConditions_UpdateAnalyticNode")
+    RETURN
+999 ERRORSEXITS("BoundaryConditions_UpdateAnalyticNode",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditions_UpdateAnalyticNode
 
   !
   !================================================================================================================================
@@ -4187,7 +4593,7 @@ MODULE BoundaryConditionsRoutines
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainFacesType), POINTER :: domainFaces
     TYPE(DomainLinesType), POINTER :: domainLines
-    TYPE(DomainMappingType), POINTER :: rhsDomainMapping
+    TYPE(DomainMappingType), POINTER :: rhsDomainMapping,rowsMapping
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FieldType), POINTER :: geometricField,rhsField
@@ -4207,6 +4613,10 @@ MODULE BoundaryConditionsRoutines
     IF(ASSOCIATED(neumannConditions)) THEN
       NULLIFY(rhsVariable)
       CALL BoundaryConditionsVariable_FieldVariableGet(rhsBoundaryConditions,rhsVariable,err,error,*999)
+!!TODO: We need to access the LHS mapping for the equations set. Just use variable for now. 
+      !For rows we can re-use the RHS variable row mapping
+      NULLIFY(rowsMapping)
+      CALL FieldVariable_DomainMappingGet(rhsVariable,rowsMapping,err,error,*999)
       NULLIFY(rhsField)
       CALL FieldVariable_FieldGet(rhsVariable,rhsField,err,error,*999)
       CALL Field_ScalingTypeGet(rhsField,rhsScalingType,err,error,*999)
@@ -4343,44 +4753,50 @@ MODULE BoundaryConditionsRoutines
                       & err,error,*999)
                     CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
                       & componentNumber,localDOF,err,error,*999)
-                    CALL Basis_ElementParameterGet(basis,derivIdx,nodeIdx,rowElementParameterIdx,err,error,*999)
-                    CALL Basis_ElementParameterGet(basis,neumannLocalDerivNumber,neumannLocalNodeNumber, &
-                      & columnElementParameterIdx,err,error,*999)
-
-                    integratedValue=0.0_DP
                     
-                    ! Loop over line gauss points, adding gauss weighted terms to the integral
-                    DO gaussIdx=1,numberOfGauss
-                      CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx,interpolatedPoint, &
-                        & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                      CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_LINE_TYPE,interpolatedPointMetrics, &
-                        & err,error,*999)
-
-                      CALL BasisQuadratureScheme_GaussWeightGet(quadratureScheme,gaussIdx,gaussWeight,err,error,*999)
-                      CALL FieldInterpolatedPointMetrics_JacobianGet(interpolatedPointMetrics,jacobian,err,error,*999)
-
-                      !Get basis function values at guass points
-                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-                        & gaussIdx,rowPhi,err,error,*999)
-                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
-                        & gaussIdx,columnPhi,err,error,*999)
+                    CALL DomainMapping_LocalToGlobalGet(rowsMapping,localDOF,globalDOF,err,error,*999)
+                    IF(rhsBoundaryConditions%conditionTypes(globalDof)==BOUNDARY_CONDITION_NEUMANN_POINT.OR. &
+                      & rhsBoundaryConditions%conditionTypes(globalDof)==BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) THEN
                       
-                      !Add gauss point value to total line integral
-                      integratedValue=integratedValue+rowPhi*columnPhi*gaussWeight*jacobian
+                      CALL Basis_ElementParameterGet(basis,derivIdx,nodeIdx,rowElementParameterIdx,err,error,*999)
+                      CALL Basis_ElementParameterGet(basis,neumannLocalDerivNumber,neumannLocalNodeNumber, &
+                        & columnElementParameterIdx,err,error,*999)
                       
-                    ENDDO !gaussIdx
-
-                    !Multiply by scale factors for dependent variable
-                    IF(rhsScalingType/=FIELD_NO_SCALING) THEN
-                      integratedValue=integratedValue* &
-                        & scalingParameters%scaleFactors(rowElementParameterIdx,componentNumber)* &
-                        & scalingParameters%scaleFactors(columnElementParameterIdx,componentNumber)
+                      integratedValue=0.0_DP
+                      
+                      ! Loop over line gauss points, adding gauss weighted terms to the integral
+                      DO gaussIdx=1,numberOfGauss
+                        CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx,interpolatedPoint, &
+                          & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+                        CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_LINE_TYPE,interpolatedPointMetrics, &
+                          & err,error,*999)
+                        
+                        CALL BasisQuadratureScheme_GaussWeightGet(quadratureScheme,gaussIdx,gaussWeight,err,error,*999)
+                        CALL FieldInterpolatedPointMetrics_JacobianGet(interpolatedPointMetrics,jacobian,err,error,*999)
+                        
+                        !Get basis function values at guass points
+                        CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
+                          & gaussIdx,rowPhi,err,error,*999)
+                        CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
+                          & gaussIdx,columnPhi,err,error,*999)
+                        
+                        !Add gauss point value to total line integral
+                        integratedValue=integratedValue+rowPhi*columnPhi*gaussWeight*jacobian
+                        
+                      ENDDO !gaussIdx
+                      
+                      !Multiply by scale factors for dependent variable
+                      IF(rhsScalingType/=FIELD_NO_SCALING) THEN
+                        integratedValue=integratedValue* &
+                          & scalingParameters%scaleFactors(rowElementParameterIdx,componentNumber)* &
+                          & scalingParameters%scaleFactors(columnElementParameterIdx,componentNumber)
+                      ENDIF
+                      
+                      !Add integral term to N matrix
+                      CALL DistributedMatrix_ValuesAdd(neumannConditions%integrationMatrix,localDOF,neumannDOFIdx, &
+                        & integratedValue,err,error,*999)
+                      
                     ENDIF
-
-                    !Add integral term to N matrix
-                    CALL DistributedMatrix_ValuesAdd(neumannConditions%integrationMatrix,localDOF,neumannDOFIdx, &
-                      & integratedValue,err,error,*999)
-                    
                   ENDDO !derivIdx
                 ENDDO !nodeIdx
               ENDDO linesLoop
@@ -4412,7 +4828,7 @@ MODULE BoundaryConditionsRoutines
                     CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
                       & componentNumber,localDOF,err,error,*999)
                     CALL DomainMapping_LocalToGlobalGet(rhsDomainMapping,localDOF,globalDOF,err,error,*999)
-                   IF(globalDOF==neumannGlobalDOF) THEN
+                    IF(globalDOF==neumannGlobalDOF) THEN
                       neumannLocalNodeNumber=nodeIdx
                       neumannLocalDerivNumber=derivIdx
                     ELSE IF(rhsBoundaryConditions%conditionTypes(globalDOF)==BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY) THEN
@@ -4442,43 +4858,49 @@ MODULE BoundaryConditionsRoutines
                       & err,error,*999)
                     CALL FieldVariable_LocalNodeDOFGet(rhsVariable,versionNumber,derivativeNumber,nodeNumber, &
                       & componentNumber,localDOF,err,error,*999)
- 
-                    CALL Basis_ElementParameterGet(basis,derivIdx,nodeIdx,rowElementParameterIdx,err,error,*999)
-                    CALL Basis_ElementParameterGet(basis,neumannLocalDerivNumber,neumannLocalNodeNumber, &
-                      & columnElementParameterIdx,err,error,*999)
- 
-                    integratedValue=0.0_DP
-                    ! Loop over line gauss points, adding gauss weighted terms to the integral
-                    DO gaussIdx=1,numberOfGauss
-                      CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx,interpolatedPoint, &
-                        & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                      CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_AREA_TYPE,interpolatedPointMetrics, &
-                        & err,error,*999)
-
-                      CALL BasisQuadratureScheme_GaussWeightGet(quadratureScheme,gaussIdx,gaussWeight,err,error,*999)
-                      CALL FieldInterpolatedPointMetrics_JacobianGet(interpolatedPointMetrics,jacobian,err,error,*999)
-
-                      !Get basis function values at guass points
-                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-                        & gaussIdx,rowPhi,err,error,*999)
-                      CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
-                        & gaussIdx,columnPhi,err,error,*999)
- 
-                      !Add gauss point value to total line integral
-                      integratedValue=integratedValue+rowPhi*columnPhi*gaussWeight*jacobian
+                    
+                    CALL DomainMapping_LocalToGlobalGet(rowsMapping,localDOF,globalDOF,err,error,*999)
+                    IF(rhsBoundaryConditions%conditionTypes(globalDof)==BOUNDARY_CONDITION_NEUMANN_POINT.OR. &
+                      & rhsBoundaryConditions%conditionTypes(globalDof)==BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) THEN
                       
-                    ENDDO !gaussIdx
+                      CALL Basis_ElementParameterGet(basis,derivIdx,nodeIdx,rowElementParameterIdx,err,error,*999)
+                      CALL Basis_ElementParameterGet(basis,neumannLocalDerivNumber,neumannLocalNodeNumber, &
+                        & columnElementParameterIdx,err,error,*999)
+                      
+                      integratedValue=0.0_DP
+                      ! Loop over line gauss points, adding gauss weighted terms to the integral
+                      DO gaussIdx=1,numberOfGauss
+                        CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx,interpolatedPoint, &
+                          & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+                        CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_AREA_TYPE,interpolatedPointMetrics, &
+                          & err,error,*999)
+                        
+                        CALL BasisQuadratureScheme_GaussWeightGet(quadratureScheme,gaussIdx,gaussWeight,err,error,*999)
+                        CALL FieldInterpolatedPointMetrics_JacobianGet(interpolatedPointMetrics,jacobian,err,error,*999)
+                        
+                        !Get basis function values at guass points
+                        CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
+                          & gaussIdx,rowPhi,err,error,*999)
+                        CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
+                          & gaussIdx,columnPhi,err,error,*999)
+                        
+                        !Add gauss point value to total line integral
+                        integratedValue=integratedValue+rowPhi*columnPhi*gaussWeight*jacobian
+                        
+                      ENDDO !gaussIdx
+                      
+                      ! Multiply by scale factors
+                      IF(rhsScalingType/=FIELD_NO_SCALING) THEN
+                        integratedValue=integratedValue* &
+                          & scalingParameters%scaleFactors(rowElementParameterIdx,componentNumber)* &
+                          & scalingParameters%scaleFactors(columnElementParameterIdx,componentNumber)
+                      ENDIF
+                      
+                      ! Add integral term to N matrix
+                      CALL DistributedMatrix_ValuesAdd(neumannConditions%integrationMatrix,localDOF,neumannDOFIdx, &
+                        & integratedValue,err,error,*999)
 
-                    ! Multiply by scale factors
-                    IF(rhsScalingType/=FIELD_NO_SCALING) THEN
-                      integratedValue=integratedValue* &
-                        & scalingParameters%scaleFactors(rowElementParameterIdx,componentNumber)* &
-                        & scalingParameters%scaleFactors(columnElementParameterIdx,componentNumber)
                     ENDIF
-
-                    ! Add integral term to N matrix
-                    CALL DistributedMatrix_ValuesAdd(neumannConditions%integrationMatrix,localDOF,neumannDOFIdx, &
-                      & integratedValue,err,error,*999)
                   ENDDO !derivIdx
                 ENDDO !nodeIdx
               ENDDO facesLoop
@@ -4656,7 +5078,7 @@ MODULE BoundaryConditionsRoutines
           localDofNumbers(domainNumber)=localDofNumbers(domainNumber)+1
           pointDofMapping%globalToLocalMap(neumannIdx)%localNumber(domainIdx)=localDofNumbers(domainNumber)
           IF(diagnostics2) THEN
-            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Global rhs var DOF = ",globalDOF,err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Global RHS variable DoF = ",globalDOF,err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Domain number = ",domainNumber,err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Local type = ",localType,err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Local number = ",localDofNumbers(domainNumber),err,error,*999)

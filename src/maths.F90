@@ -75,6 +75,12 @@ MODULE Maths
     MODULE PROCEDURE CrossProductDP
   END INTERFACE CrossProduct
 
+  !>Returns hyperbolic cosecant of an argument
+  INTERFACE Csch
+    MODULE PROCEDURE CschSP
+    MODULE PROCEDURE CschDP
+  END INTERFACE Csch
+
   !>Calculates the the vector cross product of a x b in c and the n derivatives, dc, of the vector cross product given the derivatives da and db of a and b
   INTERFACE dCrossProduct
     MODULE PROCEDURE dCrossProductIntg
@@ -303,6 +309,12 @@ MODULE Maths
     MODULE PROCEDURE NormaliseCrossProductDP
   END INTERFACE NormaliseCrossProduct
 
+  !>Returns hyperbolic secant of an argument
+  INTERFACE Sech
+    MODULE PROCEDURE SechSP
+    MODULE PROCEDURE SechDP
+  END INTERFACE Sech
+
   !>Solves a small linear system Ax=b.
   INTERFACE SolveEigenproblem
     MODULE PROCEDURE SolveEigenproblemSP
@@ -351,6 +363,8 @@ MODULE Maths
   PUBLIC Coth
 
   PUBLIC CrossProduct
+
+  PUBLIC Csch
   
   PUBLIC dCrossProduct
 
@@ -412,6 +426,8 @@ MODULE Maths
 
   PUBLIC NormaliseCrossProduct
 
+  PUBLIC Sech
+
   PUBLIC SolveEigenproblem
 
   PUBLIC SolveSmallLinearSystem
@@ -440,7 +456,7 @@ CONTAINS
     !Function variable
     REAL(SP) :: CothSP
     
-    CothSP=(EXP(a)+EXP(-1.0_SP*a))/(EXP(a)-EXP(-1.0_SP*a))
+    CothSP=COSH(a)/SINH(a)
 
     RETURN
     
@@ -458,7 +474,7 @@ CONTAINS
     !Function variable
     REAL(DP) :: CothDP
 
-    CothDP=(EXP(a)+EXP(-1.0_DP*a))/(EXP(a)-EXP(-1.0_DP*a))
+    CothDP=COSH(a)/SINH(a)
 
     RETURN
     
@@ -578,6 +594,42 @@ CONTAINS
     
   END SUBROUTINE CrossProductDP
   
+  !
+  !================================================================================================================================
+  !
+  
+  !>Calculates single precision hyperbolic cosecant function
+  PURE FUNCTION CschSP(a)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: a !<argument to perform csch() on
+    !Function variable
+    REAL(SP) :: CschSP
+    
+    CschSP=1.0/SINH(a)
+
+    RETURN
+    
+  END FUNCTION CschSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates double precision hyperbolic cosecant function
+  PURE FUNCTION CschDP(a)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: a !<argument to perform csch() on
+    !Function variable
+    REAL(DP) :: CschDP
+
+    CschDP=1.0_DP/SINH(a)
+
+    RETURN
+    
+  END FUNCTION CschDP
+
   !
   !================================================================================================================================
   !
@@ -4225,6 +4277,42 @@ CONTAINS
     
   END SUBROUTINE NormaliseCrossProductDP
   
+  !
+  !================================================================================================================================
+  !
+  
+  !>Calculates single precision hyperbolic secant function
+  PURE FUNCTION SechSP(a)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: a !<argument to perform sech() on
+    !Function variable
+    REAL(SP) :: SechSP
+    
+    SechSP=1.0/COSH(a)
+
+    RETURN
+    
+  END FUNCTION SechSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates double precision hyperbolic secant function
+  PURE FUNCTION SechDP(a)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: a !<argument to perform sech() on
+    !Function variable
+    REAL(DP) :: SechDP
+
+    SechDP=1.0_DP/COSH(a)
+
+    RETURN
+    
+  END FUNCTION SechDP
+
   !
   !================================================================================================================================
   !

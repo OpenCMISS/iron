@@ -86,61 +86,66 @@ CONTAINS
   !
 
   !>Create a context
-  SUBROUTINE Context_Create(contexts,context,err,error,*)
+  SUBROUTINE Context_Create(contextUserNumber,context,err,error,*)
 
     !Argument Variables
-    TYPE(ContextsType), TARGET :: contexts !<the contexts to create the context for
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number for the context to create.
     TYPE(ContextType), POINTER :: context !<On return, a pointer to the created context. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: contextIdx,dummyErr,i,randomSeedsSize,time(8)
+    INTEGER(INTG) :: dummyErr,i,randomSeedsSize,time(8)
     TYPE(ContextType), POINTER :: newContext
-    TYPE(ContextPtrType), ALLOCATABLE :: newContexts(:)
-    TYPE(VARYING_STRING) :: dummyError
+    TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("Context_Create",err,error,*998)
 
     IF(ASSOCIATED(context)) CALL FlagError("Context is already associated.",err,error,*998)
-
+    
+    !Check the user number has not already been used.
     NULLIFY(newContext)
-    CALL Context_Initialise(newContext,err,error,*999)
+    CALL Context_UserNumberFind(contexts,contextUserNumber,newContext,err,error,*998)
+    IF(ASSOCIATED(newContext)) THEN
+      localError="A context with a user number of "//TRIM(NumberToVString(contextUserNumber,"*",err,error))// &
+        & " has already been created."
+      CALL FlagError(localError,err,error,*998)
+    ENDIF
+    !Check if we have enough contexts
+    IF(contexts%numberOfContexts==MAXIMUM_NUMBER_OF_CONTEXTS) THEN
+      localError="The maximum number of contexts of "//TRIM(NumberToVString(MAXIMUM_NUMBER_OF_CONTEXTS,"*",err,error))// &
+        & " has been reached. Please increase MAXIMUM_NUMBER_OF_CONTEXTS."
+      CALL FlagError(localError,err,error,*998)
+    ENDIF
+    !Create the new context
+    NULLIFY(contexts%contexts(contexts%numberOfContexts+1)%ptr)
+    CALL Context_Initialise(contexts%contexts(contexts%numberOfContexts+1)%ptr,err,error,*999)
+    contexts%contexts(contexts%numberOfContexts+1)%ptr%userNumber=contextUserNumber    
     !Setup the random seeds based on the time
     CALL RANDOM_SEED(SIZE=randomSeedsSize)
-    ALLOCATE(newContext%cmissRandomSeeds(randomSeedsSize),STAT=err)
+    ALLOCATE(contexts%contexts(contexts%numberOfContexts+1)%ptr%cmissRandomSeeds(randomSeedsSize),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate random seeds.",err,error,*999)
-    newContext%cmissRandomSeeds(1:randomSeedsSize)=[(i,i=1,randomSeedsSize)]
+    contexts%contexts(contexts%numberOfContexts+1)%ptr%cmissRandomSeeds(1:randomSeedsSize)=[(i,i=1,randomSeedsSize)]
     CALL DATE_AND_TIME(VALUES=time)
-    newContext%cmissRandomSeeds(1)=3600000*time(5)+60000*time(6)+1000*time(7)+time(8)
-    CALL RANDOM_SEED(PUT=newContext%cmissRandomSeeds)
+    contexts%contexts(contexts%numberOfContexts+1)%ptr%cmissRandomSeeds(1)=3600000*time(5)+60000*time(6)+1000*time(7)+time(8)
+    CALL RANDOM_SEED(PUT=contexts%contexts(contexts%numberOfContexts+1)%ptr%cmissRandomSeeds)
     !Intialise the computation
-    CALL Computation_Initialise(newContext,err,error,*999)
+    CALL Computation_Initialise(contexts%contexts(contexts%numberOfContexts+1)%ptr,err,error,*999)
     !Intialise the basis functions
-    CALL BasisFunctions_Initialise(newContext,err,error,*999)
+    CALL BasisFunctions_Initialise(contexts%contexts(contexts%numberOfContexts+1)%ptr,err,error,*999)
     !Initialise the coordinate systems
-    CALL CoordinateSystems_Initialise(newContext,err,error,*999)
+    CALL CoordinateSystems_Initialise(contexts%contexts(contexts%numberOfContexts+1)%ptr,err,error,*999)
     !Initialise the regions 
-    CALL Regions_Initialise(newContext,err,error,*999)
+    CALL Regions_Initialise(contexts%contexts(contexts%numberOfContexts+1)%ptr,err,error,*999)
     !Initialise the problems
-    CALL Problems_Initialise(newContext,err,error,*999)
-    !Add the new context to the list of contexts    
-    contexts%lastContextUserNumber=contexts%lastContextUserNumber+1
-    newContext%userNumber=contexts%lastContextUserNumber    
-    newContext%contexts=>contexts    
-    ALLOCATE(newContexts(contexts%numberOfContexts+1),STAT=err)
-    DO contextIdx=1,contexts%numberOfContexts
-      newContexts(contextIdx)%ptr=>contexts%contexts(contextIdx)%ptr
-    ENDDO !contextIdx
-    newContexts(contexts%numberOfContexts+1)%ptr=>newContext
-    CALL MOVE_ALLOC(newContexts,contexts%contexts)
+    CALL Problems_Initialise(contexts%contexts(contexts%numberOfContexts+1)%ptr,err,error,*999)
+    !Increment the number of contexts    
     contexts%numberOfContexts=contexts%numberOfContexts+1
-    context=>newContext
-    
+    context=>contexts%contexts(contexts%numberOfContexts)%ptr
+        
     EXITS("Context_Create")
     RETURN
-999 CALL Context_Finalise(newContext,dummyErr,dummyError,*998)
-998 IF(ALLOCATED(newContexts)) DEALLOCATE(newContexts)
-    ERRORSEXITS("Context_Create",err,error)    
+999 CALL Context_Finalise(contexts%contexts(contexts%numberOfContexts+1)%ptr,dummyErr,dummyError,*998)
+998 ERRORSEXITS("Context_Create",err,error)    
     RETURN 1
     
   END SUBROUTINE Context_Create
@@ -158,16 +163,12 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: contextIdx,position
-    TYPE(ContextPtrType), ALLOCATABLE :: newContexts(:)
-    TYPE(ContextsType), POINTER :: contexts
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Context_Destroy",err,error,*999)
 
     IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
     
-    NULLIFY(contexts)
-    CALL Context_ContextsGet(context,contexts,err,error,*999)
     position=0
     DO contextIdx=1,contexts%numberOfContexts
       IF(context%userNumber==contexts%contexts(contextIdx)%ptr%userNumber) THEN
@@ -181,23 +182,19 @@ CONTAINS
         & " could not be found in the list of contexts."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    ALLOCATE(newContexts(contexts%numberOfContexts-1),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate new contexts.",err,error,*999)
-    DO contextIdx=1,contexts%numberOfContexts
-      IF(contextIdx<position) THEN
-        newContexts(contextIdx)%ptr=>contexts%contexts(contextIdx)%ptr
-      ELSE IF(contextIdx>position) THEN
-        newContexts(contextIdx-1)%ptr=>contexts%contexts(contextIdx)%ptr
-      ENDIF
+    !Destroy the context
+    CALL Context_Finalise(contexts%contexts(position)%ptr,err,error,*999)
+    !Shift all other contexts down the list
+    DO contextIdx=position+1,contexts%numberOfContexts
+      contexts%contexts(contextIdx-1)%ptr=>contexts%contexts(contextIdx)%ptr
     ENDDO !contextIdx
-    CALL MOVE_ALLOC(newContexts,contexts%contexts)
+    !Decrement the number of contexts
+    NULLIFY(contexts%contexts(contexts%numberOfContexts)%ptr)
     contexts%numberOfContexts=contexts%numberOfContexts-1
-    CALL Context_Finalise(context,err,error,*999)
     
     EXITS("Context_Destroy")
     RETURN
-999 IF(ALLOCATED(newContexts)) DEALLOCATE(newContexts)
-    ERRORSEXITS("Context_Destroy",err,error)    
+999 ERRORSEXITS("Context_Destroy",err,error)    
     RETURN 1
     
   END SUBROUTINE Context_Destroy
@@ -313,16 +310,20 @@ CONTAINS
   !
 
   !>Finalise the contexts
-  SUBROUTINE Contexts_Finalise(contexts,err,error,*)
+  SUBROUTINE Contexts_Finalise(err,error,*)
 
     !Argument Variables
-    TYPE(ContextsType) :: contexts !<The contexts to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: contextIdx
 
     ENTERS("Contexts_Finalise",err,error,*999)
 
+    DO contextIdx=1,SIZE(contexts%contexts)
+      CALL Context_Finalise(contexts%contexts(contextIdx)%ptr,err,error,*998)
+998   CONTINUE
+    ENDDO !contextIdx
     contexts%numberOfContexts=0
     
     EXITS("Contexts_Finalise")
@@ -337,18 +338,20 @@ CONTAINS
   !
 
   !>Initialise the contexts
-  SUBROUTINE Contexts_Initialise(contexts,err,error,*)
+  SUBROUTINE Contexts_Initialise(err,error,*)
 
     !Argument Variables
-    TYPE(ContextsType) :: contexts !<The contexts to initialise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: contextIdx
 
     ENTERS("Contexts_Initialise",err,error,*999)
 
     contexts%numberOfContexts=0
-    contexts%lastContextUserNumber=0
+    DO contextIdx=1,SIZE(contexts%contexts)
+      NULLIFY(contexts%contexts(contextIdx)%ptr)
+    ENDDO !contextIdx
     
     EXITS("Contexts_Initialise")
     RETURN

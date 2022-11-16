@@ -27,8 +27,13 @@ http://www.opencmiss.org
 #ErrorHandlingModeSet(ErrorHandlingModes.RETURN_ERROR_CODE)
 #"""
 
-INITIALISE = """Context = Context()
-Initialise(Context)
+#INITIALISE = """Context = Context()
+#Initialise(Context)
+## Output errors
+#ErrorHandlingModeSet(ErrorHandlingModes.OUTPUT_ERROR)
+#"""
+
+INITIALISE = """Initialise()
 # Output errors
 ErrorHandlingModeSet(ErrorHandlingModes.OUTPUT_ERROR)
 """

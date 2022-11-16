@@ -85,18 +85,19 @@ PROGRAM DarcyAnalyticExample
 
   !Test program parameters
 
-  INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=1
-  INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=2
-  INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=3
-  INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=4
-  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=5
-  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=6
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=7
-  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumberDarcy=8
-  INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumberDarcy=9
-  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumberDarcy=10
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumberDarcy=11
-  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=12
+  INTEGER(CMISSIntg), PARAMETER :: ContextUserNumber=1
+  INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=2
+  INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=3
+  INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=4
+  INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=5
+  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=6
+  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=7
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=8
+  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumberDarcy=9
+  INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumberDarcy=10
+  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumberDarcy=11
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumberDarcy=12
+  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=13
 
   INTEGER(CMISSIntg), PARAMETER :: DomainUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: SolverDarcyUserNumber=1
@@ -249,13 +250,13 @@ PROGRAM DarcyAnalyticExample
   !PROBLEM CONTROL PANEL
 
   !INITIALISE OPENCMISS
-
+  CALL cmfe_Initialise(Err)  
+  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
+ 
   CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,Err)  
+  CALL cmfe_Context_Create(ContextUserNumber,context,Err)  
   CALL cmfe_Region_Initialise(worldRegion,err)
   CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
-
-  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
 
   !Get the computation nodes information
   CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
@@ -812,8 +813,10 @@ PROGRAM DarcyAnalyticExample
     WRITE(*,'(A)') "Field exported!"
   ENDIF
 
-  !Finialise CMISS
-  CALL cmfe_Finalise(context,Err)
+  !Destroy the context
+  CALL cmfe_Context_Destroy(context,Err)
+  !Finialise OpenCMISS
+  CALL cmfe_Finalise(Err)
 
   WRITE(*,'(A)') "Program successfully completed."
 

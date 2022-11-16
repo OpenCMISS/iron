@@ -59,11 +59,12 @@ PROGRAM IRON_TEST_FIELDML_IO
 
   CALL INITIALISE_TESTS()
 
-  ! Initialise OpenCMISS-Iron
-
-  CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,Err)  
+  ! Initialise OpenCMISS
+  CALL cmfe_Initialise(Err)  
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR, err)
+  ! Create a context
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Context_Create(1_CMISSIntg,context,Err)  
 
   ! Get computation nodes information
   CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
@@ -77,7 +78,10 @@ PROGRAM IRON_TEST_FIELDML_IO
   CALL TestFieldMLIOCube(context)
   CALL TestFieldMLArguments(context)
 
-  CALL cmfe_Finalise(context,err)
+  !Destroy the context
+  CALL cmfe_Context_Destroy(context,err)
+  !Finalise OpenCMISS
+  CALL cmfe_Finalise(err)
 
   CALL FINALISE_TESTS(err)
 

@@ -79,6 +79,7 @@ PROGRAM SimpleShearExample
   LOGICAL, PARAMETER :: UsePressureBasis=.FALSE.
   INTEGER(CMISSIntg), PARAMETER :: NumberOfGaussXi=3
 
+  INTEGER(CMISSIntg), PARAMETER :: ContextUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: BasisUserNumber=1
@@ -153,18 +154,17 @@ PROGRAM SimpleShearExample
   IF(.NOT.QUICKWIN_STATUS) QUICKWIN_STATUS=SETWINDOWCONFIG(QUICKWIN_WINDOW_CONFIG)
 #endif
 
-  !Intialise cmiss
-  CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,Err)  
-  CALL cmfe_Region_Initialise(worldRegion,err)
-  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
-
+  !Intialise OpenCMISS
+  CALL cmfe_Initialise(Err)  
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
-
   !Set all diganostic levels on for testing
   !CALL cmfe_DiagnosticsSetOn(CMFE_FROM_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",["PROBLEM_RESIDUAL_EVALUATE"],Err)
-
   CALL cmfe_OutputSetOn("SimpleShear",Err)
+  !Create a context
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Context_Create(ContextUserNumber,context,Err)  
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
   
   !Get the number of computation nodes and this computation node number
   CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
@@ -468,7 +468,8 @@ PROGRAM SimpleShearExample
   CALL cmfe_Fields_ElementsExport(Fields,"SimpleShear","FORTRAN",Err)
   CALL cmfe_Fields_Finalise(Fields,Err)
 
-  CALL cmfe_Finalise(context,Err)
+  CALL cmfe_Context_Destroy(context,Err)
+  CALL cmfe_Finalise(Err)
 
   WRITE(*,'(A)') "Program successfully completed."
 

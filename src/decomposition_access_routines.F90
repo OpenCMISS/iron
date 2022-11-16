@@ -306,6 +306,8 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DomainElements_ElementVersionGet
 
+  PUBLIC DomainElements_LocalNumberCheck
+
   PUBLIC DomainElements_MaxElementParametersGet
 
   PUBLIC DomainElements_NumberOfElementsGet
@@ -410,7 +412,11 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DomainNodes_DerivativeVersionNumberGet
 
+  PUBLIC DomainNodes_LocalNumberCheck
+
   PUBLIC DomainNodes_LocalNumberGet
+
+  PUBLIC DomainNodes_MaximumNumberOfDerivativesGet
 
   PUBLIC DomainNodes_NodeBoundaryNodeGet
 
@@ -4964,6 +4970,41 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks a local element number is valid for domain elements.
+  SUBROUTINE DomainElements_LocalNumberCheck(domainElements,localElementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to check the local element number for
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !The local number in the domain elements to check.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DomainElements_LocalNumberCheck",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(domainElements)) CALL FlagError("Domain elements is not associated.",err,error,*999)
+#endif    
+
+    IF(localElementNumber<1.OR.localElementNumber>domainElements%totalNumberOfElements) THEN
+      localError="The specified local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " is invalid. The local element number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainElements%totalNumberOfElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("DomainElements_LocalNumberCheck")
+    RETURN
+999 ERRORSEXITS("DomainElements_LocalNumberCheck",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainElements_LocalNumberCheck
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the maximum number of element parameter for element in a domain. 
   SUBROUTINE DomainElements_MaxElementParametersGet(domainElements,maxElementParameters,err,error,*)
 
@@ -7281,6 +7322,41 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks a local node number is valid for domain nodes.
+  SUBROUTINE DomainNodes_LocalNumberCheck(domainNodes,localNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to check the local node number for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !The local number in the domain nodes to check.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DomainNodes_LocalNumberCheck",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain nodes is not associated.",err,error,*999)
+#endif    
+
+    IF(localNodeNumber<1.OR.localNodeNumber>domainNodes%totalNumberOfNodes) THEN
+      localError="The specified local node number of "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " is invalid. The local node number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNodes%totalNumberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("DomainNodes_LocalNumberCheck")
+    RETURN
+999 ERRORSEXITS("DomainNodes_LocalNumberCheck",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_LocalNumberCheck
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets a local node number that corresponds to a user node number from a domain. An error will be raised if the user node number does not exist.
   SUBROUTINE DomainNodes_LocalNumberGet(domainNodes,userNodeNumber,localNodeNumber,ghostNode,err,error,*)
 
@@ -7340,6 +7416,35 @@ CONTAINS
 
   END SUBROUTINE DomainNodes_LocalNumberGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the maximum number of derivatives for nodes in domain nodes. 
+  SUBROUTINE DomainNodes_MaximumNumberOfDerivativesGet(domainNodes,maximumNumberOfDerivatives,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the maximum number of derivatives for
+    INTEGER(INTG), INTENT(OUT) :: maximumNumberOfDerivatives !<On exit, the maximum number of derivatives for the nodes in the domain nodes.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainNodes_MaximumNumberOfDerivativesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain nodes is not associated.",err,error,*999)
+#endif
+
+    maximumNumberOfDerivatives=domainNodes%maximumNumberOfDerivatives
+
+    EXITS("DomainNodes_MaximumNumberOfDerivativesGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_MaximumNumberOfDerivativesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainNodes_MaximumNumberOfDerivativesGet
+  
   !
   !================================================================================================================================
   !

@@ -73,24 +73,25 @@ PROGRAM CellMLIntegrationFortranExample
   REAL(CMISSRP), PARAMETER :: WIDTH=1.0_CMISSRP
   REAL(CMISSRP), PARAMETER :: LENGTH=1.0_CMISSRP
 
-  INTEGER(CMISSIntg), PARAMETER :: coordinateSystemUserNumber=1
-  INTEGER(CMISSIntg), PARAMETER :: regionUserNumber=2
-  INTEGER(CMISSIntg), PARAMETER :: basisUserNumber=3
-  INTEGER(CMISSIntg), PARAMETER :: generatedMeshUserNumber=4
-  INTEGER(CMISSIntg), PARAMETER :: meshUserNumber=5
-  INTEGER(CMISSIntg), PARAMETER :: decompositionUserNumber=6
-  INTEGER(CMISSIntg), PARAMETER :: decomposerUserNumber=7
-  INTEGER(CMISSIntg), PARAMETER :: geometricFieldUserNumber=8
-  INTEGER(CMISSIntg), PARAMETER :: equationsSetFieldUserNumber=9
-  INTEGER(CMISSIntg), PARAMETER :: dependentFieldUserNumber=10
-  INTEGER(CMISSIntg), PARAMETER :: materialsFieldUserNumber=11
-  INTEGER(CMISSIntg), PARAMETER :: cellMLUserNumber=12
-  INTEGER(CMISSIntg), PARAMETER :: cellMLModelsFieldUserNumber=13
-  INTEGER(CMISSIntg), PARAMETER :: cellMLStateFieldUserNumber=14
-  INTEGER(CMISSIntg), PARAMETER :: cellMLIntermediateFieldUserNumber=15
-  INTEGER(CMISSIntg), PARAMETER :: cellMLParametersFieldUserNumber=16
-  INTEGER(CMISSIntg), PARAMETER :: equationsSetUserNumber=17
-  INTEGER(CMISSIntg), PARAMETER :: problemUserNumber=18
+  INTEGER(CMISSIntg), PARAMETER :: contextUserNumber=1
+  INTEGER(CMISSIntg), PARAMETER :: coordinateSystemUserNumber=2
+  INTEGER(CMISSIntg), PARAMETER :: regionUserNumber=3
+  INTEGER(CMISSIntg), PARAMETER :: basisUserNumber=4
+  INTEGER(CMISSIntg), PARAMETER :: generatedMeshUserNumber=5
+  INTEGER(CMISSIntg), PARAMETER :: meshUserNumber=6
+  INTEGER(CMISSIntg), PARAMETER :: decompositionUserNumber=7
+  INTEGER(CMISSIntg), PARAMETER :: decomposerUserNumber=8
+  INTEGER(CMISSIntg), PARAMETER :: geometricFieldUserNumber=9
+  INTEGER(CMISSIntg), PARAMETER :: equationsSetFieldUserNumber=10
+  INTEGER(CMISSIntg), PARAMETER :: dependentFieldUserNumber=11
+  INTEGER(CMISSIntg), PARAMETER :: materialsFieldUserNumber=12
+  INTEGER(CMISSIntg), PARAMETER :: cellMLUserNumber=13
+  INTEGER(CMISSIntg), PARAMETER :: cellMLModelsFieldUserNumber=14
+  INTEGER(CMISSIntg), PARAMETER :: cellMLStateFieldUserNumber=15
+  INTEGER(CMISSIntg), PARAMETER :: cellMLIntermediateFieldUserNumber=16
+  INTEGER(CMISSIntg), PARAMETER :: cellMLParametersFieldUserNumber=17
+  INTEGER(CMISSIntg), PARAMETER :: equationsSetUserNumber=18
+  INTEGER(CMISSIntg), PARAMETER :: problemUserNumber=19
 
   !Program types
   
@@ -188,13 +189,14 @@ PROGRAM CellMLIntegrationFortranExample
 !  ENDIF
 
   !Intialise OpenCMISS
-  CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,err)  
-  CALL cmfe_Region_Initialise(worldRegion,err)
-  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
-
+  CALL cmfe_Initialise(err)
   !Trap errors
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,err)
+  !Create a context
+  CALL cmfe_Context_Initialise(context,err)  
+  CALL cmfe_Context_Create(contextUserNumber,context,err)  
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
   
   !Get the computation nodes information
   CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
@@ -545,8 +547,10 @@ PROGRAM CellMLIntegrationFortranExample
     CALL cmfe_Fields_Finalise(Fields,err)
   ENDIF
 
-  !Finialise CMISS
-  CALL cmfe_Finalise(context,err)
+  !Destroy the context
+  CALL cmfe_Context_Destroy(context,err)
+  !Finialise OpenCMISS
+  CALL cmfe_Finalise(err)
 
   WRITE(*,'(A)') "Program successfully completed."
   

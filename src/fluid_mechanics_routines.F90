@@ -85,8 +85,6 @@ MODULE FluidMechanicsRoutines
 
   !Interfaces
 
-  PUBLIC FluidMechanics_AnalyticFunctionsEvaluate
-
   PUBLIC FluidMechanics_BoundaryConditionsAnalyticCalculate
 
   PUBLIC FluidMechanics_PreLoop,FluidMechanics_PostLoop
@@ -114,72 +112,6 @@ MODULE FluidMechanicsRoutines
 CONTAINS
 
   !
-  !================================================================================================================================
-  !
-
-  !>Evaluate the analytic solution for a fluid mechanics equations set.
-  SUBROUTINE FluidMechanics_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents, &
-    & normal,time,variableType,globalDerivative,componentNumber,analyticParameters,materialsParameters,value,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the analytic for
-    INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: position(:) !<position(dimentionIdx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(dimentionIdx,xiIdx). The geometric tangents at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: normal(:) !<normal(dimensionIdx). The normal vector at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to evaluate at
-    INTEGER(INTG), INTENT(IN) :: globalDerivative !<The global derivative direction to evaluate at
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<The dependent field component number to evaluate
-    REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
-    REAL(DP), INTENT(IN) :: materialsParameters(:) !<A pointer to any materials field parameters
-    REAL(DP), INTENT(OUT) :: value !<On return, the analtyic function value.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("FluidMechanics_AnalyticFunctionsEvaluate",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(equationsSet%specification)) &
-      & CALL FlagError("Equations set specification has not been allocated.",err,error,*999)
-    IF(SIZE(equationsSet%specification,1)<2) &
-      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics equations set.", &
-      & err,error,*999)
-    
-    SELECT CASE(equationsSet%specification(2))
-    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-      CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position, &
-        & tangents,normal,time,variableType,globalDerivative,componentNumber,analyticParameters, &
-        & materialsParameters,value,err,error,*999)
-    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE DEFAULT
-      localError="The second equations set specification of "// &
-        & TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
-        & " is not valid for a fluid mechanics equations set."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
-        
-    EXITS("FluidMechanics_AnalyticFunctionsEvaluate")
-    RETURN
-999 ERRORSEXITS("FluidMechanics_AnalyticFunctionsEvaluate",err,error)
-    RETURN 1
-    
-  END SUBROUTINE FluidMechanics_AnalyticFunctionsEvaluate
-
-   !
   !================================================================================================================================
   !
 
@@ -630,7 +562,7 @@ CONTAINS
       
     SELECT CASE(equationsSet%specification(2))
     CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-      CALL Burgers_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+      CALL Burgers_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,.TRUE.,err,error,*999)
     CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
       CALL Stokes_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
     CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)

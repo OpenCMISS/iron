@@ -505,7 +505,7 @@ CONTAINS
                     DO rowXiIdx=1,numberOfDependentXi
                       DO columnXiIdx=1,numberOfDependentXi
                         DO xiIdx=1,numberOfGeometricXi
-                          sum=sum+conductivityTensor(rowXiIdx,xiIdx)*rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum=sum+conductivityTensor(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx

@@ -70,6 +70,7 @@ MODULE BurgersEquationsRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
+  USE Maths
   USE MatrixVector
   USE ProblemAccessRoutines
   USE RegionAccessRoutines
@@ -123,27 +124,26 @@ CONTAINS
   !
   
   !>Evaluate the analytic solutions for a Burgers equation
-  SUBROUTINE Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time,variableType, &
-    & globalDerivative,componentNumber,analyticParameters,materialsParameters,dependentValue,err,error,*)
+  SUBROUTINE Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,time,componentNumber,analyticParameters, &
+    & analyticValue,gradientAnalyticValue,hessianAnalyticValue,velocityAnalyticValue,accelerationAnalyticValue,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to evaluate
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
     REAL(DP), INTENT(IN) :: x(:) !<x(dimention_idx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(dimention_idx,xi_idx). The geometric tangents at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: normal(:) !<normal(dimension_idx). The normal vector at the point to evaluate at.
     REAL(DP), INTENT(IN) :: time !<The time to evaluate at
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to evaluate at
-    INTEGER(INTG), INTENT(IN) :: globalDerivative !<The global derivative direction to evaluate at
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The dependent field component number to evaluate
     REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
-    REAL(DP), INTENT(IN) :: materialsParameters(:) !<A pointer to any materials field parameters
-    REAL(DP), INTENT(OUT) :: dependentValue !<On return, the analytic function value.
+    REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analytic function value.
+    REAL(DP), INTENT(OUT) :: gradientAnalyticValue(:) !<On return, the gradient of the analytic function value.
+    REAL(DP), INTENT(OUT) :: hessianAnalyticValue(:,:) !<On return, the Hessian of the analytic function value.
+    REAL(DP), INTENT(OUT) :: velocityAnalyticValue !<On return, the analytic velocity value.
+    REAL(DP), INTENT(OUT) :: accelerationAnalyticValue !<On return, the analytic acceleration value.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: equationsSubtype,esSpecification(3)
-    REAL(DP) :: aParam,bParam,cParam,dParam,eParam,x0Param
+    REAL(DP) :: a,b,c,d,e,nu,uL,uR,x0
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Burgers_AnalyticFunctionsEvaluate",err,error,*999)
@@ -153,110 +153,49 @@ CONTAINS
     equationsSubtype=esSpecification(3)
     SELECT CASE(equationsSubtype)
     CASE(EQUATIONS_SET_BURGERS_SUBTYPE)
+      !For del u /del t  + u.del u/del x = nu.(del^2 u/del x^2)
       SELECT CASE(analyticFunctionType)
       CASE(EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1)
-        !For del[u]/del[t] + u.(del[u]/del[x]) = nu.(del^2[u]/del[x]^2)
-        !u(x,t)=1-tanh(x-x0-t)/(2.nu))   with BCs,
-        !u(0,t) = 2, u_{n} = 2.u_{n-1} - u_{n-2}
-        !see http://www.cfd-online.com/Wiki/Burgers_equation
-        !OpenCMISS has del[u]/del[t] + K.(del^2[u]/del[x]^2) + u.(del[u]/del[x]) = 0,
-        !u(x,t)= 1 - tanh(x-x0 - t)/(2.K)
-        bParam=materialsParameters(1)  !nu
-        x0Param=analyticParameters(1)  !x0
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivative)
-          CASE(NO_GLOBAL_DERIV)
-            dependentValue=1.0_DP - TANH((x(1)-x0Param-time)/(2.0_DP*bParam))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivative,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivative)
-          CASE(NO_GLOBAL_DERIV)
-            dependentValue=0.0_DP
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivative,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+        !u(x,t)=(uL+uR)/2-(uL-uR)/2.tanh(([x-x0]-ct).(uL-uR)/4nu) where u(-\infty,t)=uL, u(+\infty,t)=uR, c=(uL+uR)/2
+        uL=analyticParameters(1) !uL
+        uR=analyticParameters(2) !uR
+        x0=analyticParameters(3) !x0
+        nu=analyticParameters(4) !nu
+        c=(uL+uR)/2.0_DP
+        d=(uL-uR)/2.0_DP
+        e=(((x(1)-x0)-c*time)*d)/(2.0_DP*nu)
+        analyticValue=c-d*TANH(e)
+        gradientAnalyticValue(1)=-d*d/(2.0_DP*nu)*SECH(e)*SECH(e)
+        hessianAnalyticValue(1,1)=d*d*d/(2.0_DP*nu*nu)*SECH(e)*SECH(e)*TANH(e)
+        velocityAnalyticValue=c*d*d/(2.0_DP*nu)*SECH(e)*SECH(e)
+        accelerationAnalyticValue=c*c*d*d*d/(2.0_DP*nu*nu)*SECH(e)*SECH(e)*TANH(e)
       CASE DEFAULT
         localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
-          & " is invalid for a Burgers equation."
+          & " is invalid for a standard Burgers equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE)
       !a.del u/del t + b.del^2 u/del x^2 + c.u.del u/del x = 0
-      aParam=materialsParameters(1)
-      bParam=materialsParameters(2)
-      cParam=materialsParameters(3)
+      a=analyticParameters(1)
+      b=analyticParameters(2)
+      c=analyticParameters(3)
+      d=analyticParameters(4)
+      e=analyticParameters(5)
       SELECT CASE(analyticFunctionType)
       CASE(EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1)
         !Analytic solution is u(x,t)=(d+a.x)/(e+c.t)
-        dParam = analyticParameters(1)
-        eParam = analyticParameters(2)
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivative)
-          CASE(NO_GLOBAL_DERIV)
-            dependentValue=(dParam+aParam*x(1))/(eParam+cParam*time)
-          CASE(GLOBAL_DERIV_S1)
-            dependentValue=dParam/(eParam+cParam*time)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivative,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivative)
-          CASE(NO_GLOBAL_DERIV)
-            dependentValue=0.0_DP
-          CASE(GLOBAL_DERIV_S1)
-            dependentValue=0.0_DP
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivative,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+        analyticValue=(d+a*x(1))/(e+c*time)
+        gradientAnalyticValue(1)=a/(e+c*time)
+        hessianAnalyticValue(1,1)=0.0_DP
+        velocityAnalyticValue=-c*(d+a*x(1))/((e+c*time)*(e+c*time))
+        accelerationAnalyticValue=2.0_DP*c*c*(d+a*x(1))/((e+c*time)*(e+c*time)*(e+c*time))
       CASE(EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_2)
         !Analytic_solution=a.d+2.b/c(x-c.d.t+e)
-        dParam = analyticParameters(1)
-        eParam = analyticParameters(2)
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivative)
-          CASE(NO_GLOBAL_DERIV)
-            dependentValue=aParam*dParam+2.0_DP*bParam/(cParam*(x(1)-cParam*dParam*time+eParam))
-          CASE(GLOBAL_DERIV_S1)
-            dependentValue=-2.0_DP*bParam/(cParam*(x(1)-cParam*dParam*time+eParam)**2)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivative,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivative)
-          CASE(NO_GLOBAL_DERIV)
-            dependentValue=0.0_DP
-          CASE(GLOBAL_DERIV_S1)
-            dependentValue=0.0_DP
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivative,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+        analyticValue=a*d+2.0_DP*b/(c*(x(1)-c*d*time+e))
+        gradientAnalyticValue(1)=-2.0_DP*b/(c*(x(1)-c*d*time+e)**2)
+        hessianAnalyticValue(1,1)=4.0_DP*b/(c*(x(1)-c*d*time+e)**3)
+        velocityAnalyticValue=2.0_DP*b*d/((x(1)-c*d*time+e)**2)
+        accelerationAnalyticValue=4.0_DP*b*c*d*d/((x(1)-c*d*time+e)**3)
       CASE DEFAULT
         localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
           & " is invalid for a generalised Burgers equation."
@@ -283,65 +222,71 @@ CONTAINS
   !
 
   !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
-  SUBROUTINE Burgers_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
+  SUBROUTINE Burgers_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,boundaryOnly,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to calculate the analytic for
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer for the boundary conditions to calculate
+    LOGICAL, INTENT(IN) :: boundaryOnly !<Only calculate if DOFs are on the boundary   
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,derivativeIdx,dimensionIdx,localDOFIdx,nodeIdx,numberOfComponents,numberOfDimensions, &
-      & numberOfNodeDerivatives,numberOfNodes,numberOfVariables,numberOfVersions,variableIdx,variableType,versionIdx
-    REAL(DP) :: dependentValue,X(3),initialValue
-    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
-    LOGICAL :: boundaryNode
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,derivativeIdx,dimensionIdx,esSpecification(3),localDOFIdx,nodeIdx, &
+      & numberOfComponents,numberOfDimensions,numberOfNodeDerivatives,numberOfNodes,numberOfVariables,numberOfVersions, &
+      & variableIdx,variableType,versionIdx
+    REAL(DP) :: analyticAccelerationValue,analyticValue,analyticVelocityValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3), &
+      & normal(3),position(3),tangents(3,3),time
+    REAL(DP), POINTER :: analyticParameters(:)
+    LOGICAL :: boundaryNode,setAcceleration,setVelocity
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField
-    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable,materialsVariable
-    INTEGER(INTG) :: globalDerivativeIndex,analyticFunctionType
-    !THESE ARE TEMPORARY VARIABLES - they need to be replace by constant field values and the current simulation time
-    REAL(DP) :: time,normal(3),tangents(3,3)
-    !CURRENT_TIME = 1.2_DP
+    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
+    TYPE(FieldParameterSetType), POINTER :: accelerationParameterSet,analyticAccelerationParameterSet, &
+      & analyticVelocityParameterSet,velocityParameterSet
+    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable
 
     ENTERS("Burgers_BoundaryConditionsAnalyticCalculate",err,error,*999)
 
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
-    
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
     CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
+   
     NULLIFY(geometricField)
     CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-    NULLIFY(dependentField)
-    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-    NULLIFY(materialsField)
-    CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
-    NULLIFY(analyticField)
-    CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
     NULLIFY(geometricVariable)
     CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
     CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
-    NULLIFY(geometricParameters)
-    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+    NULLIFY(analyticField)
+    CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
     NULLIFY(analyticVariable)
-    NULLIFY(analyticParameters)
     IF(ASSOCIATED(analyticField)) THEN
       CALL Field_VariableGet(analyticField,FIELD_U_VARIABLE_TYPE,analyticVariable,err,error,*999)
       CALL FieldVariable_ParameterSetDataGet(analyticVariable,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
     ENDIF
-    NULLIFY(materialsVariable)
-    NULLIFY(materialsParameters)
-    IF(ASSOCIATED(materialsField)) THEN
-      CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
-      CALL FieldVariable_ParameterSetDataGet(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
-    ENDIF
-    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
-    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
     DO variableIdx=1,numberOfVariables
       NULLIFY(dependentVariable)
       CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
       CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      NULLIFY(velocityParameterSet)
+      NULLIFY(accelerationParameterSet)
+      NULLIFY(analyticVelocityParameterSet)
+      NULLIFY(analyticAccelerationParameterSet)
+      CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE, &
+        & velocityParameterSet,err,error,*999)
+      CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE, &
+        & accelerationParameterSet,err,error,*999)
+      CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE, &
+        & analyticVelocityParameterSet,err,error,*999)
+      CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
+        & analyticAccelerationParameterSet,err,error,*999)
+      setVelocity=(ASSOCIATED(velocityParameterSet).AND.ASSOCIATED(analyticVelocityParameterSet))
+      setAcceleration=(ASSOCIATED(accelerationParameterSet).AND.ASSOCIATED(analyticAccelerationParameterSet))
       CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
       DO componentIdx=1,numberOfComponents
         CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
@@ -355,42 +300,40 @@ CONTAINS
         !Loop over the local nodes excluding the ghosts.
         CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         DO nodeIdx=1,numberOfNodes
-         CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-          !Loop over the derivatives
-          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-          DO derivativeIdx=1,numberOfNodeDerivatives
-            CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-            CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,0.0_DP,variableType, &
-              & globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,initialValue,err,error,*999)
-            CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time,variableType, &
-              & globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,dependentValue,err,error,*999)
-            CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
-            DO versionIdx=1,numberOfVersions
-              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,versionIdx,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
-                & err,error,*999)
-              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
-                & dependentValue,err,error,*999)
-              IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
-                IF(boundaryNode) THEN
-                  !If we are a boundary node then set the analytic value on the boundary
-                  CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
-                    & dependentValue,err,error,*999)
-                ELSE
-                  !Set the initial condition.
-                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,localDOFIdx, &
-                    & initialValue,err,error,*999)
-                ENDIF
-              ENDIF
-            ENDDO !versionIdx
-          ENDDO !derivativeIdx
+          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+          IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
+            CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
+              & position,normal,tangents,err,error,*999)
+            CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
+              & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,analyticVelocityValue, &
+              & analyticAccelerationValue,err,error,*999)
+            CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
+              & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+              & setVelocity,analyticVelocityValue,setAcceleration,analyticAccelerationValue,err,error,*999)
+          ENDIF !boundary only test
         ENDDO !nodeIdx
       ENDDO !componentIdx
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+      IF(setVelocity) THEN
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+        IF(setAcceleration) THEN
+          CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+        ENDIF
+      ENDIF
+      IF(setVelocity) THEN
+        IF(setAcceleration) THEN
+          CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+        ENDIF
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+      ENDIF
       CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
       CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
     ENDDO !variableIdx
-    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
 
     EXITS("Burgers_BoundaryConditionsAnalyticCalculate")
     RETURN
@@ -520,6 +463,7 @@ CONTAINS
     INTEGER(INTG) :: analyticFunctionType,componentIdx,esSpecification(3),geometricMeshComponent,geometricScalingType, &
       & lumpingType,numberOfAnalyticComponents,numberOfDependentComponents,numberOfDimensions,numberOfMaterialsComponents, &
       & solutionMethod,sparsityType
+    REAL(DP) :: aParam,bParam,cParam,nuParam
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -527,7 +471,7 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
+    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField
     TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
 
@@ -841,13 +785,13 @@ CONTAINS
       !-----------------------------------------------------------------
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
       NULLIFY(equationsAnalytic)
       CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
         CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
-        CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
         SELECT CASE(esSpecification(3))
         CASE(EQUATIONS_SET_BURGERS_SUBTYPE)
           SELECT CASE(equationsSetSetup%analyticFunctionType)
@@ -865,7 +809,7 @@ CONTAINS
               & FIELD_CONSTANT_INTERPOLATION,err,error,*999)
             !Set analytic function type
             equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1
-            numberOfAnalyticComponents=1
+            numberOfAnalyticComponents=4
           CASE DEFAULT
             localError="The specified analytic function type of "// &
               & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))//" is invalid for a Burgers equation."
@@ -892,7 +836,7 @@ CONTAINS
               & 3,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
             !Set analytic function type
             equationsSet%analytic%analyticFunctionType=equationsSetSetup%analyticFunctionType
-            numberOfAnalyticComponents=2
+            numberOfAnalyticComponents=5
           CASE DEFAULT
             localError="The specified analytic function type of "// &
               & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
@@ -966,15 +910,72 @@ CONTAINS
             !Set the default values for the analytic field
             SELECT CASE(esSpecification(3))
             CASE(EQUATIONS_SET_BURGERS_SUBTYPE)
-              !Default the analytic parameter value to 0.0
-              CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,1,0.0_DP,err,error,*999)
+              IF(numberOfDimensions==1) THEN
+                SELECT CASE(equationsAnalytic%analyticFunctionType)
+                CASE(EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1)
+                  !Default the u_L analytic parameter value to 2.0
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,1,2.0_DP,err,error,*999)
+                  !Default the u_R analytic parameter value to 0.0
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,2,0.0_DP,err,error,*999)
+                  !Default the x_0 analytic parameter value to 0.0
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,3,0.0_DP,err,error,*999)
+                  !Set nu to be the same as the materials field
+                  NULLIFY(materialsField)
+                  CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+                  CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,nuParam, &
+                    & err,error,*999)
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,4,-1.0_DP*nuParam,err,error,*999)                      
+                CASE DEFAULT
+                  localError="The analytic function type of "// &
+                    & TRIM(NumberToVString(equationsAnalytic%analyticFunctionType,"*",err,error))// &
+                    & " is invalid for an one-dimensional standard Burgers equation."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              ELSE
+                localError="The number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+                  & " is invalid for a standard Burgers equation."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
             CASE(EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE)
-              !Default the analytic parameter values to 1.0
-              CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,1,1.0_DP,err,error,*999)
-              CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,2,1.0_DP,err,error,*999)
+              IF(numberOfDimensions==1) THEN
+                SELECT CASE(equationsAnalytic%analyticFunctionType)
+                CASE(EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1, &
+                  & EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_2)
+                  !Set a, b and c to be the same as the materials field
+                  NULLIFY(materialsField)
+                  CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+                  CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,aParam, &
+                    & err,error,*999)
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,1,aParam,err,error,*999)                      
+                  CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,2,bParam, &
+                    & err,error,*999)
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,2,bParam,err,error,*999)                      
+                  CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,3,cParam, &
+                    & err,error,*999)
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,3,cParam,err,error,*999)                      
+                  !Default the D & E analytic parameter values to 1.0
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,4,1.0_DP,err,error,*999)
+                  CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,5,1.0_DP,err,error,*999)
+                CASE DEFAULT
+                  localError="The specified analytic function type of "// &
+                    & TRIM(NumberToVString(equationsAnalytic%analyticFunctionType,"*",err,error))// &
+                    & " is invalid for a generalised Burgers equation."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              ELSE
+                localError="The number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+                  & " is invalid for a generalised Burgers equation."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
             CASE(EQUATIONS_SET_STATIC_BURGERS_SUBTYPE)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE)
@@ -1260,7 +1261,7 @@ CONTAINS
       !Do nothing ???
     CASE(PROBLEM_DYNAMIC_BURGERS_SUBTYPE)
       CALL Solver_DynamicSolverInitialisedGet(solver,solverInitialised,err,error,*999)
-      IF(solverInitialised) CALL Burgers_PreSolveUpdateAnalyticValues(solver,err,error,*999)
+      IF(solverInitialised) CALL Burgers_PreSolveUpdateAnalyticValues(solver,.FALSE.,err,error,*999)
     CASE DEFAULT
       localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
         & " is not valid for a Burgers equation type of a fluid mechanics problem class."
@@ -1280,18 +1281,21 @@ CONTAINS
   !
   
   !>Updates the boundary conditions and source term to the required analytic values
-  SUBROUTINE Burgers_PreSolveUpdateAnalyticValues(solver,err,error,*)
+  SUBROUTINE Burgers_PreSolveUpdateAnalyticValues(solver,boundaryOnly,err,error,*)
 
     !Argument variables
     TYPE(SolverType), POINTER :: solver !<A pointer to the solver
+    LOGICAL, INTENT(IN) :: boundaryOnly !<Only calculate if DOFs are on the boundary   
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,boundaryConditionCheckVariable,componentIdx,derivativeIdx,dimensionIdx, &
       & equationsSetIdx,globalDerivativeIndex,localDOFIdx,nodeIdx,numberOfComponents,numberOfDimensions,numberOfEquationsSets, &
       & numberOfNodes,numberOfNodeDerivatives,numberOfVariables,pSpecification(3),variableIdx,variableType
-    REAL(DP) :: currentTime,dependentValue,normal(3),tangents(3,3),timeIncrement,x(3)
-    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
+    REAL(DP) :: analyticAccelerationValue,analyticValue,analyticVelocityValue,currentTime,gradientAnalyticValue(3), &
+      & hessianAnalyticValue(3,3),normal(3),position(3),tangents(3,3),timeIncrement
+    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:)
+    LOGICAL :: boundaryNode,setAcceleration,setVelocity
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop
@@ -1301,8 +1305,10 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField
-    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable,materialsVariable
+    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
+    TYPE(FieldParameterSetType), POINTER :: accelerationParameterSet,analyticAccelerationParameterSet, &
+      & analyticVelocityParameterSet,velocityParameterSet
+    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations 
     TYPE(SolverMappingType), POINTER :: solverMapping
@@ -1340,8 +1346,6 @@ CONTAINS
           NULLIFY(geometricVariable)
           CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
           CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
-          NULLIFY(geometricParameters)
-          CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
           NULLIFY(dependentField)
           CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
           NULLIFY(analyticField)
@@ -1352,18 +1356,24 @@ CONTAINS
             CALL Field_VariableGet(analyticField,FIELD_U_VARIABLE_TYPE,analyticVariable,err,error,*999)
             CALL FieldVariable_ParameterSetDataGet(analyticVariable,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
           ENDIF
-          NULLIFY(materialsField)
-          CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
-          NULLIFY(materialsVariable)
-          NULLIFY(materialsParameters)
-          IF(ASSOCIATED(materialsField)) THEN
-            CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
-            CALL FieldVariable_ParameterSetDataGet(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
-          ENDIF
           CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
           DO variableIdx=1,numberOfVariables
             NULLIFY(dependentVariable)
             CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
+            NULLIFY(velocityParameterSet)
+            NULLIFY(accelerationParameterSet)
+            NULLIFY(analyticVelocityParameterSet)
+            NULLIFY(analyticAccelerationParameterSet)
+            CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE, &
+              & velocityParameterSet,err,error,*999)
+            CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE, &
+              & accelerationParameterSet,err,error,*999)
+            CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE, &
+              & analyticVelocityParameterSet,err,error,*999)
+            CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
+              & analyticAccelerationParameterSet,err,error,*999)
+            setVelocity=(ASSOCIATED(velocityParameterSet).AND.ASSOCIATED(analyticVelocityParameterSet))
+            setAcceleration=(ASSOCIATED(accelerationParameterSet).AND.ASSOCIATED(analyticAccelerationParameterSet))
             CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
             DO componentIdx=1,numberOfComponents
               CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
@@ -1377,41 +1387,42 @@ CONTAINS
               !Loop over the local nodes excluding the ghosts.
               CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
               DO nodeIdx=1,numberOfNodes
-!!TODO \todo We should interpolate the geometric field here and the node position.
-                DO dimensionIdx=1,numberOfDimensions
-                  !Default to version 1 of each node derivative
-                  CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
-                  x(dimensionIdx)=geometricParameters(localDOFIdx)
-                ENDDO !dimensionIdx
-                !Loop over the derivatives
-                CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-                DO derivativeIdx=1,numberOfNodeDerivatives
-                  CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-                  CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,currentTime, &
-                    & variableType,globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,dependentValue, &
-                    & err,error,*999)
-                  !Default to version 1 of each node derivative
-                  CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
-                    & err,error,*999)
-                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
-                    & dependentValue,err,error,*999)
-                  NULLIFY(boundaryConditionsVariable)
-                  CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
-                    & err,error,*999)
-                  boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOFIdx)
-                  IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED) THEN
-                    CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,localDOFIdx, &
-                      & dependentValue,err,error,*999)
-                  ENDIF
-                ENDDO !derivativeIdx
+                CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+                IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
+                  CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
+                    & position,normal,tangents,err,error,*999)
+                  CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,currentTime,componentIdx, &
+                    & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,analyticVelocityValue, &
+                    & analyticAccelerationValue,err,error,*999)
+                  CALL BoundaryConditions_UpdateAnalyticNode(boundaryConditions,numberOfDimensions,dependentVariable, &
+                    & componentIdx,domainNodes,nodeIdx,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+                    & setVelocity,analyticVelocityValue,setAcceleration,analyticAccelerationValue,err,error,*999)
+                ENDIF !boundary only test
               ENDDO !nodeIdx
             ENDDO !componentIdx
             CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
             CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+            IF(setVelocity) THEN
+              CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+              IF(setAcceleration) THEN
+                CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
+                  & err,error,*999)
+                CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+              ENDIF
+            ENDIF
+            IF(setVelocity) THEN
+              IF(setAcceleration) THEN
+                CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
+                  & err,error,*999)
+                CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+              ENDIF
+              CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+            ENDIF
             CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-            CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)            
+            CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
           ENDDO !variableIdx
-          CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
         ENDIF
       ENDDO !equationsSetIdx
     CASE DEFAULT
@@ -1427,7 +1438,6 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE Burgers_PreSolveUpdateAnalyticValues
-
 
   !
   !================================================================================================================================

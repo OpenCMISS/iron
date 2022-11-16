@@ -359,16 +359,6 @@ MODULE OpenCMISS_Iron
 
  TYPE(VARYING_STRING) :: error
 
- INTERFACE cmfe_Initialise
-   MODULE PROCEDURE cmfe_InitialiseNumber
-   MODULE PROCEDURE cmfe_InitialiseObj
- END INTERFACE cmfe_Initialise
-
- INTERFACE cmfe_Finalise
-   MODULE PROCEDURE cmfe_FinaliseNumber
-   MODULE PROCEDURE cmfe_FinaliseObj
- END INTERFACE cmfe_Finalise
- 
  INTERFACE cmfe_Fields_Create
    MODULE PROCEDURE cmfe_Fields_CreateInterface
    MODULE PROCEDURE cmfe_Fields_CreateRegion
@@ -458,6 +448,19 @@ MODULE OpenCMISS_Iron
 
  !Module parameters
 
+ !> \addtogroup OpenCMISS_AnalyticAnalysisConstants OpenCMISS::Iron::AnalyticAnalysis::Constants
+ !> \brief Analytic analysis constants.
+ !>@{
+ !> \addtogroup OpenCMISS_AnalyticErrorTypes OpenCMISS::Iron::AnalyticAnalysis::ErrorTypes
+ !> \brief Analytic analysis error type parameters.
+ !> \see OpenCMISS::Iron::AnalyticAnalysis,OpenCMISS
+ !>@{ 
+ INTEGER(INTG), PARAMETER :: CMFE_ANALYTIC_ABSOLUTE_ERROR_TYPE = ANALYTIC_ABSOLUTE_ERROR_TYPE !<Analytic analysis absolute error type \see OpenCMISS_AnalyticErrorTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_ANALYTIC_PERCENTAGE_ERROR_TYPE = ANALYTIC_PERCENTAGE_ERROR_TYPE !<Analytic analysis percentage error type \see OpenCMISS_AnalyticErrorTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_ANALYTIC_RELATIVE_ERROR_TYPE = ANALYTIC_RELATIVE_ERROR_TYPE !<Analytic analysis relative error type \see OpenCMISS_AnalyticErrorTypes,OpenCMISS
+ !>@}
+ !>@}
+ 
  !Module types
 
  !Module variables
@@ -526,8 +529,10 @@ MODULE OpenCMISS_Iron
 
  !>Get the RMS error of nodes.
  INTERFACE cmfe_AnalyticAnalysis_RMSErrorGetNode
-   MODULE PROCEDURE cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber
-   MODULE PROCEDURE cmfe_AnalyticAnalysis_RMSErrorGetNodeObj
+   MODULE PROCEDURE cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber0
+   MODULE PROCEDURE cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber1
+   MODULE PROCEDURE cmfe_AnalyticAnalysis_RMSErrorGetNodeObj0
+   MODULE PROCEDURE cmfe_AnalyticAnalysis_RMSErrorGetNodeObj1
  END INTERFACE cmfe_AnalyticAnalysis_RMSErrorGetNode
 
  !>Get the RMS error of elements.
@@ -578,6 +583,8 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_AnalyticAnalysis_IntegralNIDErrorGetObj
  END INTERFACE cmfe_AnalyticAnalysis_IntegralNIDErrorGet
 
+ PUBLIC CMFE_ANALYTIC_ABSOLUTE_ERROR_TYPE,CMFE_ANALYTIC_PERCENTAGE_ERROR_TYPE,CMFE_ANALYTIC_RELATIVE_ERROR_TYPE
+ 
  PUBLIC cmfe_AnalyticAnalysis_Output
 
  PUBLIC cmfe_AnalyticAnalysis_AbsoluteErrorGetNode,cmfe_AnalyticAnalysis_PercentageErrorGetNode, &
@@ -1403,6 +1410,18 @@ MODULE OpenCMISS_Iron
 
  !Interfaces
 
+ !>Create a context
+ INTERFACE cmfe_Context_Create
+   MODULE PROCEDURE cmfe_Context_CreateNumber
+   MODULE PROCEDURE cmfe_Context_CreateObj
+ END INTERFACE cmfe_Context_Create
+
+ !>Destroy a context
+ INTERFACE cmfe_Context_Destroy
+   MODULE PROCEDURE cmfe_Context_DestroyNumber
+   MODULE PROCEDURE cmfe_Context_DestroyObj
+ END INTERFACE cmfe_Context_Destroy
+
  !>Gets the computation environment for an OpenCMISS context.
  INTERFACE cmfe_Context_ComputationEnvironmentGet
    MODULE PROCEDURE cmfe_Context_ComputationEnvironmentGetNumber
@@ -1436,6 +1455,8 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Context_WorldRegionGetNumber
    MODULE PROCEDURE cmfe_Context_WorldRegionGetObj
  END INTERFACE cmfe_Context_WorldRegionGet
+
+ PUBLIC cmfe_Context_Create,cmfe_Context_Destroy
  
  PUBLIC cmfe_Context_ComputationEnvironmentGet
 
@@ -3241,10 +3262,16 @@ MODULE OpenCMISS_Iron
   !> \brief The analytic function types for a Laplace equation
   !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1 = EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1 !<u=x**2+2*x*y-y**2 \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2 = EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2 !<u=cos(x)cosh(y) \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1 = EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1 !<u=x**2-2*y**2+z**2 \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2 = EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2 !<u=cos(x)*cosh(y)*z \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_1 = &
+    & EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_1 !<u=x**2+2*x*y-y**2 \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_2 = &
+    & EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_2 !<u=cos(x)cosh(y) \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_1 = &
+    & EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_1 !<u=x**2-2*y**2+z**2 \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_2 = &
+    & EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_2 !<u=cos(x)*cosh(y)*z \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_LAPLACE_EQUATION_TWO_DIM_1 = &
+    & EQUATIONS_SET_GENERALISED_LAPLACE_EQUATION_TWO_DIM_1 !<u=2.e^x.e^{-\lambda_{1}.y}cos(\lambda_{2}y) \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
   !>@}
   !> \addtogroup OpenCMISS_EquationsSetHelmholtzAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Helmholtz
   !> \brief The analytic function types for a Helmholtz equation
@@ -3267,6 +3294,7 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_1 = EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_1 !<u=ln(6/(x+y+z+1^2)) \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_2 = EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_3 = EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_POISSON_EQUATION_TWO_DIM_1 = EQUATIONS_SET_QUADRATIC_POISSON_EQUATION_TWO_DIM_1 !<u=??? \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_POISSON_EQUATION_TWO_DIM_1 = EQUATIONS_SET_EXPONENTIAL_POISSON_EQUATION_TWO_DIM_1 !<\see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
@@ -3573,8 +3601,9 @@ MODULE OpenCMISS_Iron
  
   PUBLIC CMFE_EQUATIONS_SET_NO_OUTPUT,CMFE_EQUATIONS_SET_PROGRESS_OUTPUT
 
-  PUBLIC CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2, &
-    & CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2
+  PUBLIC CMFE_EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_2, &
+    & CMFE_EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_THREE_DIM_2
+  PUBLIC CMFE_EQUATIONS_SET_GENERALISED_LAPLACE_EQUATION_TWO_DIM_1
 
   PUBLIC CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1
 
@@ -3600,6 +3629,7 @@ MODULE OpenCMISS_Iron
   PUBLIC CMFE_EQUATIONS_SET_CONSTANT_POISSON_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_CONSTANT_POISSON_EQUATION_TWO_DIM_2
   PUBLIC CMFE_EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_2, &
     & CMFE_EQUATIONS_SET_CONSTANT_POISSON_EQUATION_THREE_DIM_3
+  PUBLIC CMFE_EQUATIONS_SET_QUADRATIC_POISSON_EQUATION_TWO_DIM_1
   PUBLIC CMFE_EQUATIONS_SET_EXPONENTIAL_POISSON_EQUATION_TWO_DIM_1
   PUBLIC CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1,CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2
 
@@ -4098,10 +4128,12 @@ MODULE OpenCMISS_Iron
  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INITIAL_VELOCITY_SET_TYPE = FIELD_INITIAL_VELOCITY_SET_TYPE !<The parameter set corresponding to the initial velocity values for dynamic problems. This is also the previous velocity values \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_VELOCITY_SET_TYPE = FIELD_PREVIOUS_VELOCITY_SET_TYPE !<The parameter set corresponding to the previous velocity values (at time T). This is also the initial velocity values for dynamic problems. \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE = FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE !<The parameter set corresponding to the mean predicited velocity values (at time T+DT) \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE = FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE !<The parameter set corresponding to the analytic field velocity values \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_FIELD_ACCELERATION_VALUES_SET_TYPE = FIELD_ACCELERATION_VALUES_SET_TYPE !<The parameter set corresponding to the acceleration values (at time T+DT) \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INITIAL_ACCELERATION_SET_TYPE = FIELD_INITIAL_ACCELERATION_SET_TYPE !<The parameter set corresponding to the initial acceleration values for dynamic problems. This is also the previous accelearation values \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_ACCELERATION_SET_TYPE = FIELD_PREVIOUS_ACCELERATION_SET_TYPE !<The parameter set corresponding to the previous acceleration values (at time T).This is also the initial acceleration values for dynamic problems. \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE = FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE !<The parameter set corresponding to the mean predicited acceleration values (at time T+DT) \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE = FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE !<The parameter set corresponding to the analytic field velocity values \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PRESSURE_VALUES_SET_TYPE = FIELD_PRESSURE_VALUES_SET_TYPE !<The parameter set corresponding to the surface pressure values. \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_PRESSURE_SET_TYPE = FIELD_PREVIOUS_PRESSURE_SET_TYPE !<The parameter set corresponding to the previous surface pressure values (at time T). \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE = FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE !<The parameter set corresponding to the impermeable flag values. \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
@@ -4323,6 +4355,18 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Field_NumberOfComponentsSetNumber
    MODULE PROCEDURE cmfe_Field_NumberOfComponentsSetObj
  END INTERFACE cmfe_Field_NumberOfComponentsSet
+
+ !>Returns the number of field DOFs for a field variable.
+ INTERFACE cmfe_Field_NumberOfDOFsGet
+   MODULE PROCEDURE cmfe_Field_NumberOfDOFsGetNumber
+   MODULE PROCEDURE cmfe_Field_NumberOfDOFsGetObj
+ END INTERFACE cmfe_Field_NumberOfDOFsGet
+
+ !>Returns the number of global field DOFs for a field variable.
+ INTERFACE cmfe_Field_NumberOfGlobalDOFsGet
+   MODULE PROCEDURE cmfe_Field_NumberOfGlobalDOFsGetNumber
+   MODULE PROCEDURE cmfe_Field_NumberOfGlobalDOFsGetObj
+ END INTERFACE cmfe_Field_NumberOfGlobalDOFsGet
 
  !>Returns the number of field variables for a field.
  INTERFACE cmfe_Field_NumberOfVariablesGet
@@ -4624,6 +4668,12 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Field_ScalingTypeSetObj
  END INTERFACE cmfe_Field_ScalingTypeSet
 
+ !>Returns the total number of field DOFs for a field variable.
+ INTERFACE cmfe_Field_TotalNumberOfDOFsGet
+   MODULE PROCEDURE cmfe_Field_TotalNumberOfDOFsGetNumber
+   MODULE PROCEDURE cmfe_Field_TotalNumberOfDOFsGetObj
+ END INTERFACE cmfe_Field_TotalNumberOfDOFsGet
+
  !>Returns the type for a field.
  INTERFACE cmfe_Field_TypeGet
    MODULE PROCEDURE cmfe_Field_TypeGetNumber
@@ -4709,8 +4759,8 @@ MODULE OpenCMISS_Iron
  PUBLIC CMFE_FIELD_SEPARATED_COMPONENT_DOF_ORDER,CMFE_FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER
 
  PUBLIC CMFE_FIELD_VALUES_SET_TYPE,CMFE_FIELD_INITIAL_VALUES_SET_TYPE,CMFE_FIELD_INCREMENTAL_VALUES_SET_TYPE, &
-   & CMFE_FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
-   & CMFE_FIELD_ANALYTIC_VALUES_SET_TYPE, &
+   & CMFE_FIELD_BOUNDARY_CONDITIONS_SET_TYPE, CMFE_FIELD_ANALYTIC_VALUES_SET_TYPE, &
+   & CMFE_FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,CMFE_FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
    & CMFE_FIELD_PREVIOUS_VALUES_SET_TYPE,CMFE_FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,CMFE_FIELD_VELOCITY_VALUES_SET_TYPE, &
    & CMFE_FIELD_INITIAL_VELOCITY_SET_TYPE,CMFE_FIELD_PREVIOUS_VELOCITY_SET_TYPE,CMFE_FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE, &
    & CMFE_FIELD_ACCELERATION_VALUES_SET_TYPE,CMFE_FIELD_INITIAL_ACCELERATION_SET_TYPE, &
@@ -4757,6 +4807,10 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_Field_NumberOfComponentsGet,cmfe_Field_NumberOfComponentsSet
 
+ PUBLIC cmfe_Field_NumberOfDOFsGet
+
+ PUBLIC cmfe_Field_NumberOfGlobalDOFsGet
+
  PUBLIC cmfe_Field_NumberOfVariablesGet,cmfe_Field_NumberOfVariablesSet
 
  PUBLIC cmfe_Field_ParameterSetAddConstant,cmfe_Field_ParameterSetAddElement,cmfe_Field_ParameterSetAddGaussPoint, &
@@ -4793,6 +4847,8 @@ MODULE OpenCMISS_Iron
  PUBLIC cmfe_Field_ParametersToFieldParametersComponentCopy
 
  PUBLIC cmfe_Field_ScalingTypeGet,cmfe_Field_ScalingTypeSet
+
+ PUBLIC cmfe_Field_TotalNumberOfDOFsGet
 
  PUBLIC cmfe_Field_TypeGet,cmfe_Field_TypeSet
 
@@ -8230,142 +8286,41 @@ CONTAINS
  !================================================================================================================================
  !
 
- !>Finalises an OpenCMISS context specified by user number.
- SUBROUTINE cmfe_FinaliseNumber(contextUserNumber,err)
-   !DLLEXPORT(cmfe_FinaliseNumber)
+ !>Finalises OpenCMISS.
+ SUBROUTINE cmfe_Finalise(err)
+   !DLLEXPORT(cmfe_Finalise)
 
    !Argument variables
-   INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context to finalise.
    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
    !Local variables
-   TYPE(ContextType), POINTER :: context
 
-   NULLIFY(context)
-   CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
-   CALL cmfe_Finalise_(context,err,error,*999)
+   CALL cmfe_Finalise_(err,error,*999)
 
    RETURN
 999 CALL cmfe_HandleError(err,error)
    RETURN
 
- END SUBROUTINE cmfe_FinaliseNumber
+ END SUBROUTINE cmfe_Finalise
 
  !
  !================================================================================================================================
  !
 
- !>Finalises an OpenCMISS context specified by an object.
- SUBROUTINE cmfe_FinaliseObj(context,err)
-   !DLLEXPORT(cmfe_FinaliseObj)
-
-   !Argument variables
-   TYPE(cmfe_ContextType), INTENT(INOUT) :: context !<The context o finalise
-   INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-   !Local variables
-
-   CALL cmfe_Finalise_(context%context,err,error,*999)
-
-   RETURN
-999 CALL cmfe_HandleError(err,error)
-   RETURN
-
- END SUBROUTINE cmfe_FinaliseObj
-
- !
- !================================================================================================================================
- !
-
- !>Initialises OpenCMISS context returning a user number new context.
- SUBROUTINE cmfe_InitialiseNumber(newContextUserNumber,err)
-   !DLLEXPORT(cmfe_InitialiseNumber)
+ !>Initialises OpenCMISS.
+ SUBROUTINE cmfe_Initialise(err)
+   !DLLEXPORT(cmfe_Initialise)
 
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: newContextUserNumber !<On return, the context user number.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(ContextType), POINTER :: newContext
 
-    NULLIFY(newContext)
-    CALL cmfe_Initialise_(newContext,err,error,*999)
-    CALL Context_UserNumberGet(newContext,newContextUserNumber,err,error,*999)
+    CALL cmfe_Initialise_(err,error,*999)
  
     RETURN
 999 CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_InitialiseNumber
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Initialises OpenCMISS returning a pointer to the new context.
-  SUBROUTINE cmfe_InitialiseObj(newContext,err)
-    !DLLEXPORT(cmfe_InitialiseObj)
-
-    !Argument variables
-    TYPE(cmfe_ContextType), INTENT(INOUT) :: newContext !<On return, the new context. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    CALL cmfe_Initialise_(newContext%context,err,error,*999)
-
-    RETURN
-999 CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_InitialiseObj
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finalises a cmfe_ContextType object.
-  SUBROUTINE cmfe_Context_Finalise(cmfe_Context,err)
-    !DLLEXPORT(cmfe_Context_Finalise)
-
-    !Argument variables
-    TYPE(cmfe_ContextType), INTENT(OUT) :: cmfe_Context !<The cmfe_ContextType object to finalise.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_Context_Finalise",err,error,*999)
-
-    IF(ASSOCIATED(cmfe_Context%context))  &
-      & CALL Context_Destroy(cmfe_Context%context,err,error,*999)
-
-    EXITS("cmfe_Context_Finalise")
-    RETURN
-999 ERRORSEXITS("cmfe_Context_Finalise",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Context_Finalise
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Initialises a cmfe_ContextType object.
-  SUBROUTINE cmfe_Context_Initialise(cmfe_Context,err)
-    !DLLEXPORT(cmfe_Context_Initialise)
-
-    !Argument variables
-    TYPE(cmfe_ContextType), INTENT(OUT) :: cmfe_Context !<The cmfe_ContextType object to initialise.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_Context_Initialise",err,error,*999)
-
-    NULLIFY(cmfe_Context%context)
-
-    EXITS("cmfe_Context_Initialise")
-    RETURN
-999 ERRORSEXITS("cmfe_Context_Initialise",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Context_Initialise
+  END SUBROUTINE cmfe_Initialise
 
   !
   !================================================================================================================================
@@ -8717,6 +8672,57 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_ComputationEnvironment_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a cmfe_ContextType object.
+  SUBROUTINE cmfe_Context_Finalise(cmfe_Context,err)
+    !DLLEXPORT(cmfe_Context_Finalise)
+
+    !Argument variables
+    TYPE(cmfe_ContextType), INTENT(OUT) :: cmfe_Context !<The cmfe_ContextType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Context_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(cmfe_Context%context))  &
+      & CALL Context_Destroy(cmfe_Context%context,err,error,*999)
+
+    EXITS("cmfe_Context_Finalise")
+    RETURN
+999 ERRORSEXITS("cmfe_Context_Finalise",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Context_Finalise
+  
+  !  
+  !================================================================================================================================
+  !
+
+  !>Initialises a cmfe_ContextType object.
+  SUBROUTINE cmfe_Context_Initialise(cmfe_Context,err)
+    !DLLEXPORT(cmfe_ControlLoop_Initialise)
+
+    !Argument variables
+    TYPE(cmfe_ContextType), INTENT(OUT) :: cmfe_Context !<The cmfe_ContextType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Context_Initialise",err,error,*999)
+
+    NULLIFY(cmfe_Context%context)
+
+    EXITS("cmfe_Context_Initialise")
+    RETURN
+999 ERRORSEXITS("cmfe_Context_Initialise",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Context_Initialise
 
   !
   !================================================================================================================================
@@ -10286,7 +10292,7 @@ CONTAINS
 
   !>Get absolute error value for the node in a field specified by a user number compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_AbsoluteErrorGetNodeNumber(contextUserNumber,regionUserNumber,fieldUserNumber,variableType, &
-    & versionNumber,derivativeNumber, nodeNumber,componentNumber,value,err)
+    & versionNumber,derivativeNumber,nodeNumber,componentNumber,value,err)
     !DLLEXPORT(cmfe_AnalyticAnalysis_AbsoluteErrorGetNodeNumber)
 
     !Argument variables
@@ -10977,29 +10983,30 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get rms error value for nodes in a field compared to the analytic value.
-  SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber(contextUserNumber,regionUserNumber,fieldUserNumber,variableType, &
+  !>Get RMS error value for nodes in a field compared to the analytic value.
+  SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber0(contextUserNumber,regionUserNumber,fieldUserNumber,variableType, &
     & componentNumber,errorType,localValue,localGhostValue,globalValue,err)
-    !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    INTEGER(INTG), INTENT(IN) :: errorType !<error type
-    REAL(DP), INTENT(OUT) :: localValue(8) !<On return, the local error
-    REAL(DP), INTENT(OUT) :: localGhostValue(8) !<On return, the local ghost error
-    REAL(DP), INTENT(OUT) :: globalValue(8) !<On return, the global error
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    INTEGER(INTG), INTENT(IN) :: errorType !<The analytic analysis error type to return \see OpenCMISS_AnalyticErrorTypes
+    REAL(DP), INTENT(OUT) :: localValue !<On return, the local error
+    REAL(DP), INTENT(OUT) :: localGhostValue !<On return, the local ghost error
+    REAL(DP), INTENT(OUT) :: globalValue !<On return, the global error
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
+    REAL(DP) ::  localValues(1),localGhostValues(1),globalValues(1)
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
-    ENTERS("cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber",err,error,*999)
+    ENTERS("cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber0",err,error,*999)
 
     NULLIFY(context)
     NULLIFY(regions)
@@ -11009,55 +11016,142 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL AnalyticAnalysis_RMSErrorGetNode(field,variableType,componentNumber,errorType,localValue,localGhostValue, &
-      & globalValue,err,error,*999)
+    CALL AnalyticAnalysis_RMSErrorGetNode(field,variableType,componentNumber,errorType,localValues,localGhostValues, &
+      & globalValues,err,error,*999)
+    localValue=localValues(1)
+    localGhostValue=localGhostValues(1)
+    globalValue=globalValues(1)
 
-    EXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber")
+    EXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber0")
     RETURN
-999 ERRORSEXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber",err,error)
+999 ERRORSEXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber0",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber
+  END SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber0
 
   !
   !================================================================================================================================
   !
 
-  !>Get rms error value for nodes in a field identified by an object compared to the analytic value.
-  SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeObj(field,variableType,componentNumber,errorType,localValue,localGhostValue, &
+  !>Get RMS error value for nodes in a field compared to the analytic value.
+  SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber1(contextUserNumber,regionUserNumber,fieldUserNumber,variableType, &
+    & componentNumber,errorType,localValues,localGhostValues,globalValues,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to calculate the analytic error analysis for.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    INTEGER(INTG), INTENT(IN) :: errorType !<The analytic analysis error type to return \see OpenCMISS_AnalyticErrorTypes
+    REAL(DP), INTENT(OUT) :: localValues(:) !<localValues(derivativeIdx). On return, the local error for the derivativeIdx'th derivative. The array size must be greater than the maximum number of derivatives for the nodes.
+    REAL(DP), INTENT(OUT) :: localGhostValues(:) !<localGhostValues(derivativeIdx). On return, the local ghost error for the derivativeIdx'th derivative. The array size must be greater than the maximum number of derivatives for the nodes.
+    REAL(DP), INTENT(OUT) :: globalValues(:) !<globalValues(derivativeIdx). On return, the global error for the derivativeIdx'th derivative. The array size must be greater than the maximum number of derivatives for the nodes.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(FieldType), POINTER :: field
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber1",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(field)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
+    CALL AnalyticAnalysis_RMSErrorGetNode(field,variableType,componentNumber,errorType,localValues,localGhostValues, &
+      & globalValues,err,error,*999)
+
+    EXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber1")
+    RETURN
+999 ERRORSEXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get RMS error value for nodes in a field identified by an object compared to the analytic value.
+  SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeObj0(field,variableType,componentNumber,errorType,localValue,localGhostValue, &
     & globalValue,err)
-    !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetNodeObj)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetNodeObj0)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    INTEGER(INTG), INTENT(IN) :: errorType !<error type
-    REAL(DP), INTENT(OUT) :: localValue(8) !<On return, the local error
-    REAL(DP), INTENT(OUT) :: localGhostValue(8) !<On return, the local ghost error
-    REAL(DP), INTENT(OUT) :: globalValue(8) !<On return, the global error
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    INTEGER(INTG), INTENT(IN) :: errorType !<The analytic analysis error type to return \see OpenCMISS_AnalyticErrorTypes
+    REAL(DP), INTENT(OUT) :: localValue !<On return, the local error
+    REAL(DP), INTENT(OUT) :: localGhostValue !<On return, the local ghost error
+    REAL(DP), INTENT(OUT) :: globalValue !<On return, the global error
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
+    REAL(DP) :: localValues(1),localGhostValues(1),globalValues(1)
 
-    ENTERS("cmfe_AnalyticAnalysis_RMSErrorGetNodeObj",err,error,*999)
+    ENTERS("cmfe_AnalyticAnalysis_RMSErrorGetNodeObj0",err,error,*999)
 
-    CALL AnalyticAnalysis_RMSErrorGetNode(field%field,variableType,componentNumber,errorType,localValue,localGhostValue, &
-      & globalValue,err,error,*999)
+    CALL AnalyticAnalysis_RMSErrorGetNode(field%field,variableType,componentNumber,errorType,localValues,localGhostValues, &
+      & globalValues,err,error,*999)
+    localValue=localValues(1)
+    localGhostValue=localGhostValues(1)
+    globalValue=globalValues(1)
 
-    EXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeObj")
+    EXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeObj0")
     RETURN
-999 ERRORSEXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeObj",err,error)
+999 ERRORSEXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeObj0",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeObj
+  END SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeObj0
 
   !
   !================================================================================================================================
   !
 
-  !>Get rms error value for elements in a field compared to the analytic value.
+  !>Get RMS error value for nodes in a field identified by an object compared to the analytic value.
+  SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeObj1(field,variableType,componentNumber,errorType,localValues,localGhostValues, &
+    & globalValues,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetNodeObj1)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    INTEGER(INTG), INTENT(IN) :: errorType !<The analytic analysis error type to return \see OpenCMISS_AnalyticErrorTypes
+    REAL(DP), INTENT(OUT) :: localValues(:) !<localValues(derivativeIdx). On return, the local error for the derivativeIdx'th derivative. The array size must be greater than the maximum number of derivatives for the nodes.
+    REAL(DP), INTENT(OUT) :: localGhostValues(:) !<On return, the local ghost error for the derivativeIdx'th derivative. The array size must be greater than the maximum number of derivatives for the nodes.
+    REAL(DP), INTENT(OUT) :: globalValues(:) !<On return, the global error for the derivativeIdx'th derivative. The array size must be greater than the maximum number of derivatives for the nodes.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_AnalyticAnalysis_RMSErrorGetNodeObj1",err,error,*999)
+
+    CALL AnalyticAnalysis_RMSErrorGetNode(field%field,variableType,componentNumber,errorType,localValues,localGhostValues, &
+      & globalValues,err,error,*999)
+
+    EXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeObj1")
+    RETURN
+999 ERRORSEXITS("cmfe_AnalyticAnalysis_RMSErrorGetNodeObj1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeObj1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get RMS error value for elements in a field identified by user numbers compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetElementNumber(contextUserNumber,regionUserNumber,fieldUserNumber,variableType, &
     & componentNumber,errorType,localValue,localGhostValue,globalValue,err)
     !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetElementNumber)
@@ -11066,9 +11160,9 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    INTEGER(INTG), INTENT(IN) :: errorType !<error type
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    INTEGER(INTG), INTENT(IN) :: errorType !<The analytic analysis error type to return \see OpenCMISS_AnalyticErrorTypes
     REAL(DP), INTENT(OUT) :: localValue !<On return, the local error
     REAL(DP), INTENT(OUT) :: localGhostValue !<On return, the local ghost error
     REAL(DP), INTENT(OUT) :: globalValue !<On return, the global error
@@ -11105,16 +11199,16 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get relative error value for the constant in a field identified by an object compared to the analytic value.
+  !>Get RMS error value for elements in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetElementObj(field,variableType,componentNumber,errorType,localValue,localGhostValue, &
     & globalValue,err)
     !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetElementObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    INTEGER(INTG), INTENT(IN) :: errorType !<error type
+     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    INTEGER(INTG), INTENT(IN) :: errorType !<The analytic analysis error type to return \see OpenCMISS_AnalyticErrorTypes
     REAL(DP), INTENT(OUT) :: localValue !<On return, the local error
     REAL(DP), INTENT(OUT) :: localGhostValue !<On return, the local ghost error
     REAL(DP), INTENT(OUT) :: globalValue !<On return, the global error
@@ -11147,10 +11241,10 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -11191,10 +11285,10 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -11225,10 +11319,10 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -11269,10 +11363,10 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -11303,10 +11397,10 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -11347,10 +11441,10 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -11381,10 +11475,10 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -11425,10 +11519,10 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -11459,10 +11553,10 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -11503,10 +11597,10 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -11537,10 +11631,10 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -11582,9 +11676,9 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -11615,10 +11709,10 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -11658,10 +11752,10 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
-    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
-    REAL(DP), INTENT(OUT) :: integralValue(2) !<On return, the integral value
-    REAL(DP), INTENT(OUT) :: ghostIntegralValue(2) !<On return, ghost integral value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to calculate the analytic analytic error analysis for \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field to calculate the analytic error analysis for.
+    REAL(DP), INTENT(OUT) :: integralValue(:) !<On return, the integral value
+    REAL(DP), INTENT(OUT) :: ghostIntegralValue(:) !<On return, ghost integral value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -17730,6 +17824,112 @@ CONTAINS
 !!==================================================================================================================================
 
 
+  !>Creates a new context object specified by user numbr
+  SUBROUTINE cmfe_Context_CreateNumber(newContextUserNumber,err)
+    !DLLEXPORT(cmfe_Context_CreateNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: newContextUserNumber !<The context user number to create.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: newContext
+
+    ENTERS("cmfe_Context_CreateNumber",err,error,*999)
+
+    NULLIFY(newContext)
+    CALL Context_Create(newContextUserNumber,newContext,err,error,*999)
+
+    EXITS("cmfe_Context_CreateNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Context_CreateNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Context_CreateNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Creates a new context object.
+  SUBROUTINE cmfe_Context_CreateObj(newContextUserNumber,newContext,err)
+    !DLLEXPORT(cmfe_Context_CreateObj)
+ 
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: newContextUserNumber !<The context user number to create.
+    TYPE(cmfe_ContextType), INTENT(INOUT) :: newContext !<The context object to create.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Context_CreateObj",err,error,*999)
+
+    CALL Context_Create(newContextUserNumber,newContext%context,err,error,*999)
+
+    EXITS("cmfe_Context_CreateObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Context_CreateObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Context_CreateObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Destroys a context specified by user number
+  SUBROUTINE cmfe_Context_DestroyNumber(contextUserNumber,err)
+    !DLLEXPORT(cmfe_Context_DestroyNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context to destroy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    
+    ENTERS("cmfe_Context_DestroyNumber",err,error,*999)
+
+    NULLIFY(context)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_Destroy(context,err,error,*999)
+
+    EXITS("cmfe_Context_DestroyNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Context_DestroyNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Context_DestroyNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Destroys a context specfied by a pointer to an object
+  SUBROUTINE cmfe_Context_DestroyObj(context,err)
+    !DLLEXPORT(cmfe_Context_DestroyObj)
+
+    !Argument variables
+    TYPE(cmfe_ContextType), INTENT(INOUT) :: context !<The context object to destroy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Context_DestroyObj",err,error,*999)
+
+    IF(ASSOCIATED(context%context)) CALL Context_Destroy(context%context,err,error,*999)
+
+    EXITS("cmfe_Context_DestroyObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Context_DestroyObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Context_DestroyObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the computation environment for an OpenCMISS context given by user number.
   SUBROUTINE cmfe_Context_ComputationEnvironmentGetNumber(contextUserNumber,computationEnvironment,err)
     !DLLEXPORT(cmfe_Context_ComputationEnvironmentGetNumber)
@@ -18680,7 +18880,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoopRoot !<The root control loop.
     INTEGER(INTG), INTENT(INOUT) :: controlLoopIdentifiers(:) !<The control loop identifiers.
-    TYPE(cmfe_ControlLoopType), INTENT(OUT) :: controlLoop !<On return, the specified control loop.
+    TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<On return, the specified control loop.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -37353,6 +37553,144 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the number of DOFs for a field variable for a field identified by a user number.
+  SUBROUTINE cmfe_Field_NumberOfDOFsGetNumber(contextUserNumber,regionUserNumber,fieldUserNumber,variableType, &
+    & numberOfDOFs,err)
+    !DLLEXPORT(cmfe_Field_NumberOfDOFsGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the number of DOFs for.
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the number of DOFs for.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to get the number of DOFs for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: numberOfDOFs !<On return, the number of DOFs in the field variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(FieldType), POINTER :: field
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Field_NumberOfDOFsGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(field)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
+    CALL Field_NumberOfDOFsGet(field,variableType,numberOfDOFs,err,error,*999)
+
+    EXITS("cmfe_Field_NumberOfDOFsGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_NumberOfDOFsGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_NumberOfDOFsGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of DOFs for a field variable for a field identified by an object.
+  SUBROUTINE cmfe_Field_NumberOfDOFsGetObj(field,variableType,numberOfDOFs,err)
+    !DLLEXPORT(cmfe_Field_NumberOfDOFsGetObj)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the number of DOFs for.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to get the number of DOFs for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: numberOfDOFs !<On return, the number of DOFs in the field variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Field_NumberOfDOFsGetObj",err,error,*999)
+
+    CALL Field_NumberOfDOFsGet(field%field,variableType,numberOfDOFs,err,error,*999)
+
+    EXITS("cmfe_Field_NumberOfDOFsGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_NumberOfDOFsGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_NumberOfDOFsGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of global DOFs for a field variable for a field identified by a user number.
+  SUBROUTINE cmfe_Field_NumberOfGlobalDOFsGetNumber(contextUserNumber,regionUserNumber,fieldUserNumber,variableType, &
+    & numberOfGlobalDOFs,err)
+    !DLLEXPORT(cmfe_Field_NumberOfGlobalDOFsGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the number of global DOFs for.
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the number of global DOFs for.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to get the number of global DOFs for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: numberOfGlobalDOFs !<On return, the number of global DOFs in the field variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(FieldType), POINTER :: field
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Field_NumberOfGlobalDOFsGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(field)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
+    CALL Field_NumberOfGlobalDOFsGet(field,variableType,numberOfGLobalDOFs,err,error,*999)
+
+    EXITS("cmfe_Field_NumberOfGlobalDOFsGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_NumberOfGLobalDOFsGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_NumberOfGlobalDOFsGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of global DOFs for a field variable for a field identified by an object.
+  SUBROUTINE cmfe_Field_NumberOfGlobalDOFsGetObj(field,variableType,numberOfGlobalDOFs,err)
+    !DLLEXPORT(cmfe_Field_NumberOfGlobalDOFsGetObj)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the number of global DOFs for.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to get the number of global DOFs for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: numberOfGlobalDOFs !<On return, the number of global DOFs in the field variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Field_NumberOfGlobalDOFsGetObj",err,error,*999)
+
+    CALL Field_NumberOfGlobalDOFsGet(field%field,variableType,numberOfGlobalDOFs,err,error,*999)
+
+    EXITS("cmfe_Field_NumberOfDOFsGlobalGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_NumberOfGlobalDOFsGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_NumberOfGlobalDOFsGetObj
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the number of variables for a field identified by a user number.
   SUBROUTINE cmfe_Field_NumberOfVariablesGetNumber(contextUserNumber,regionUserNumber,fieldUserNumber,numberOfVariables,err)
     !DLLEXPORT(cmfe_Field_NumberOfVariablesGetNumber)
@@ -43439,6 +43777,75 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ScalingTypeSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the total number of DOFs for a field variable for a field identified by a user number.
+  SUBROUTINE cmfe_Field_TotalNumberOfDOFsGetNumber(contextUserNumber,regionUserNumber,fieldUserNumber,variableType, &
+    & totalNumberOfDOFs,err)
+    !DLLEXPORT(cmfe_Field_TotalNumberOfDOFsGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the total number of DOFs for.
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the total number of DOFs for.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to get the total number of DOFs for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfDOFs !<On return, the total number of DOFs in the field variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(FieldType), POINTER :: field
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Field_TotalNumberOfDOFsGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(field)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
+    CALL Field_TotalNumberOfDOFsGet(field,variableType,totalNumberOfDOFs,err,error,*999)
+
+    EXITS("cmfe_Field_TotalNumberOfDOFsGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_TotalNumberOfDOFsGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_TotalNumberOfDOFsGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the total number of DOFs for a field variable for a field identified by an object.
+  SUBROUTINE cmfe_Field_TotalNumberOfDOFsGetObj(field,variableType,totalNumberOfDOFs,err)
+    !DLLEXPORT(cmfe_Field_TotalNumberOfDOFsGetObj)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the total number of DOFs for.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to get the total number of DOFs for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfDOFs !<On return, the total number of DOFs in the field variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Field_TotalNumberOfDOFsGetObj",err,error,*999)
+
+    CALL Field_TotalNumberOfDOFsGet(field%field,variableType,totalNumberOfDOFs,err,error,*999)
+
+    EXITS("cmfe_Field_TotalNumberOfDOFsGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_TotalNumberOfDOFsGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_TotalNumberOfDOFsGetObj
 
   !
   !================================================================================================================================

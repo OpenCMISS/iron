@@ -4033,7 +4033,7 @@ CONTAINS
     CASE(2)
       materialTensor(1,1)=symmetricMaterialTensor(TENSOR_TO_VOIGT2(1,1))
       materialTensor(1,2)=symmetricMaterialTensor(TENSOR_TO_VOIGT2(1,2))
-      materialTensor(2,1)=symmetricMaterialTensor(TENSOR_TO_VOIGT2(2,2))
+      materialTensor(2,1)=symmetricMaterialTensor(TENSOR_TO_VOIGT2(2,1))
       materialTensor(2,2)=symmetricMaterialTensor(TENSOR_TO_VOIGT2(2,2))
     CASE(3)
       materialTensor(1,1)=symmetricMaterialTensor(TENSOR_TO_VOIGT3(1,1))

@@ -1817,7 +1817,7 @@ MODULE SolverMappingRoutines
       !Allocate memory for this solver matrix
       !Allocate solver columns to equations sets maps
       ALLOCATE(solverMapping%solverMatricesToEquationsMaps(solverMatrixIdx)%ptr% &
-        & solverDOFToVariableDOFsMaps(totalNumberOfLocalSolverDOFs),STAT=err)
+        & solverDOFToVariableDOFsMaps(numberOfLocalSolverDOFs),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate solver dof to variable maps.",err,error,*999)
       !Set the number of columns
       solverMapping%solverMatricesToEquationsMaps(solverMatrixIdx)%ptr%numberOfColumns=numberOfGlobalSolverDOFs
