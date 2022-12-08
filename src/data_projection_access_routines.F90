@@ -62,10 +62,11 @@ MODULE DataProjectionAccessRoutines
   !> \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
   !>@{ 
   INTEGER(INTG), PARAMETER :: DATA_PROJECTION_CANCELLED=0 !<Data projection has been cancelled. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_CONVERGED=1 !<Data projection exited due to it being converged \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_BOUNDS=2 !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_MAX_ITERATION=3 !<Data projection exited due to it attaining maximum number of iteration specified by user. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_NO_ELEMENT=4 !<Data projection exited due to no local element found, this happens when none of the candidate elements are within this computational node, and before MPI communication with other nodes. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_USER_SPECIFIED=1 !<Data projection was specified by the user. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_CONVERGED=2 !<Data projection exited due to it being converged \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_BOUNDS=3 !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_MAX_ITERATION=4 !<Data projection exited due to it attaining maximum number of iteration specified by user. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_NO_ELEMENT=5 !<Data projection exited due to no local element found, this happens when none of the candidate elements are within this computational node, and before MPI communication with other nodes. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
   !>@}
 
   !Module types
@@ -74,8 +75,8 @@ MODULE DataProjectionAccessRoutines
 
   !Interfaces
 
-  PUBLIC DATA_PROJECTION_CANCELLED,DATA_PROJECTION_EXIT_TAG_CONVERGED,DATA_PROJECTION_EXIT_TAG_BOUNDS, &
-    & DATA_PROJECTION_EXIT_TAG_MAX_ITERATION,DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
+  PUBLIC DATA_PROJECTION_CANCELLED,DATA_PROJECTION_USER_SPECIFIED,DATA_PROJECTION_EXIT_TAG_CONVERGED, &
+    & DATA_PROJECTION_EXIT_TAG_BOUNDS,DATA_PROJECTION_EXIT_TAG_MAX_ITERATION,DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
 
   PUBLIC DataProjection_DataPointsGet
 
