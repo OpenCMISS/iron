@@ -30,10 +30,11 @@ def _logical_type():
 
 C_DEFINES = ('\n/*\n * Defines\n */\n\n'
         'const int CMFE_NO_ERROR = 0;\n'
-        'const int CMFE_POINTER_IS_NULL = -1;\n'
-        'const int CMFE_POINTER_NOT_NULL = -2;\n'
-        'const int CMFE_COULD_NOT_ALLOCATE_POINTER = -3;\n'
-        'const int CMFE_ERROR_CONVERTING_POINTER = -4;\n\n'
+        'const int CMFE_FORCE_ERROR = -1;\n'
+        'const int CMFE_POINTER_IS_NULL = -2;\n'
+        'const int CMFE_POINTER_NOT_NULL = -3;\n'
+        'const int CMFE_COULD_NOT_ALLOCATE_POINTER = -4;\n'
+        'const int CMFE_ERROR_CONVERTING_POINTER = -5;\n\n'
         'typedef %s cmfe_Bool;\n'
         'const cmfe_Bool cmfe_True = 1;\n'
         'const cmfe_Bool cmfe_False = 0;\n\n'
@@ -53,7 +54,23 @@ def write_c_header(library, output):
         'generate_bindings script\n */\n\n'
         '#ifndef OPENCMISS_H\n'
         '#define OPENCMISS_H\n\n'
-        '#include "iron_c_export.h"')
+        '#define OPENCMISS_CHECK_ERROR(E,S) \\\n'
+        '  if(E != CMFE_NO_ERROR) { \\\n'
+        '    if(E == CMFE_ERROR_CONVERTING_POINTER) { \\\n'
+        '      fprintf(stderr,"Error: %s: Error converting pointer.\\n",(S)); \\\n'
+        '    } \\\n'
+        '    else if(E == CMFE_POINTER_IS_NULL) { \\\n'
+        '      fprintf(stderr,"Error: %s: Pointer is null.\\n",(S)); \\\n'
+        '    } \\\n'
+        '    else if(E == CMFE_POINTER_NOT_NULL) { \\\n'
+        '      fprintf(stderr,"Error: %s: Pointer is not null.\\n",(S)); \\\n'
+        '    } \\\n'
+        '    else if(E == CMFE_COULD_NOT_ALLOCATE_POINTER) { \\\n'
+        '      fprintf(stderr,"Error: %s: Could not allocate pointer.\\n",(S)); \\\n'
+        '    } \\\n'
+        '    exit(E); \\\n'
+        '  }\n\n'
+        '#include "iron_c_export.h"\n\n')
 
     output.write(C_DEFINES)
 
@@ -93,10 +110,11 @@ def write_c_f90(library, output):
         '  INTEGER(C_INT), PARAMETER :: cmfe_True = 1\n'
         '  INTEGER(C_INT), PARAMETER :: cmfe_False = 0\n'
         '  INTEGER(C_INT), PARAMETER :: CMFE_NO_ERROR = 0\n'
-        '  INTEGER(C_INT), PARAMETER :: CMFE_POINTER_IS_NULL = -1\n'
-        '  INTEGER(C_INT), PARAMETER :: CMFE_POINTER_NOT_NULL = -2\n'
-        '  INTEGER(C_INT), PARAMETER :: CMFE_COULD_NOT_ALLOCATE_POINTER = -3\n'
-        '  INTEGER(C_INT), PARAMETER :: CMFE_ERROR_CONVERTING_POINTER = -4\n\n')
+        '  INTEGER(C_INT), PARAMETER :: CMFE_FORCE_ERROR = -1\n'
+        '  INTEGER(C_INT), PARAMETER :: CMFE_POINTER_IS_NULL = -2\n'
+        '  INTEGER(C_INT), PARAMETER :: CMFE_POINTER_NOT_NULL = -3\n'
+        '  INTEGER(C_INT), PARAMETER :: CMFE_COULD_NOT_ALLOCATE_POINTER = -4\n'
+        '  INTEGER(C_INT), PARAMETER :: CMFE_ERROR_CONVERTING_POINTER = -5\n\n')
 
     output.write('\n'.join(('  PUBLIC %s' % subroutine_c_names(subroutine)[1]
             for subroutine in library.public_subroutines)))

@@ -47,58 +47,45 @@
 
 #define STRING_SIZE 20
 
-#define REGION_USER_NUMBER 1
-
-#define CHECK_ERROR(S) \
-  if(Err != CMFE_NO_ERROR) { \
-    if(Err == CMFE_ERROR_CONVERTING_POINTER) { \
-      fprintf(stderr,"Error: %s: Error converting pointer.\n",(S)); \
-    } \
-    else if(Err == CMFE_POINTER_IS_NULL) { \
-      fprintf(stderr,"Error: %s: Pointer is null.\n",(S)); \
-    } \
-    else if(Err == CMFE_POINTER_NOT_NULL) { \
-      fprintf(stderr,"Error: %s: Pointer is not null.\n",(S)); \
-    } \
-    else if(Err == CMFE_COULD_NOT_ALLOCATE_POINTER) { \
-      fprintf(stderr,"Error: %s: Could not allocate pointer.\n",(S)); \
-    } \
-    exit(Err); \
-  }
+#define CONTEXT_USER_NUMBER 1
+#define REGION_USER_NUMBER 2
 
 int main() 
 {
-  /* int ContextUserNumber;
-     int WorldRegionUserNumber; */
-  cmfe_ContextType Context=(cmfe_ContextType)NULL;
-  cmfe_RegionType WorldRegion=(cmfe_RegionType)NULL,Region=(cmfe_RegionType)NULL;
-  char Label[STRING_SIZE];
-  int Err;
 
-  Err = cmfe_Context_Initialise(&Context);
-  CHECK_ERROR("Initialising context");
-  if(cmfe_Initialise(Context) == CMFE_NO_ERROR)
-    {
+  cmfe_ContextType context=(cmfe_ContextType)NULL;
+  cmfe_RegionType region=(cmfe_RegionType)NULL,worldRegion=(cmfe_RegionType)NULL;
+  char label[STRING_SIZE];
+  int err;
 
-      Err = cmfe_Region_Initialise(&WorldRegion);
-      CHECK_ERROR("Initialising world region");
-      Err = cmfe_Context_WorldRegionGet(Context,WorldRegion);
-      CHECK_ERROR("Get world region");
-      Err = cmfe_Region_LabelGet(WorldRegion,STRING_SIZE,Label);
-      printf("The world region label is '%s'.\n",Label);
+  err = cmfe_Initialise();
+  OPENCMISS_CHECK_ERROR(err,"Initialising OpenCMISS");
+  err = cmfe_Context_Initialise(&context);
+  OPENCMISS_CHECK_ERROR(err,"Initialising context");
+  err = cmfe_Context_Create(CONTEXT_USER_NUMBER,context);
+  OPENCMISS_CHECK_ERROR(err,"Creating context");
+  err = cmfe_Region_Initialise(&worldRegion);
+  OPENCMISS_CHECK_ERROR(err,"Initialising world region");
+  err = cmfe_Context_WorldRegionGet(context,worldRegion);
+  OPENCMISS_CHECK_ERROR(err,"Get world region");
+  
+  err = cmfe_Region_LabelGet(worldRegion,STRING_SIZE,label);
+  printf("The world region label is '%s'.\n",label);
+  
+  err = cmfe_Region_Initialise(&region);
+  err = cmfe_Region_CreateStart(REGION_USER_NUMBER,worldRegion,region);
+  err = cmfe_Region_LabelSet(region,8,"Testing");
+  err = cmfe_Region_CreateFinish(region);
+  
+  err = cmfe_Region_LabelGet(region,STRING_SIZE,label);	       
+  printf("The region label is '%s'.\n",label);
+  
+  /* Destroy the region */
+  err = cmfe_Region_Finalise(&region);
+  /* Destroy the context */
+  err = cmfe_Context_Destroy(context);
+  /* Finalise OpenCMISS */
+  err = cmfe_Finalise();
 
-      Err = cmfe_Region_Initialise(&Region);
-      Err = cmfe_Region_CreateStart(REGION_USER_NUMBER,WorldRegion,Region);
-      Err = cmfe_Region_LabelSet(Region,8,"Testing");
-      Err = cmfe_Region_CreateFinish(Region);
-
-      Err = cmfe_Region_LabelGet(Region,STRING_SIZE,Label);	       
-      printf("The region label is '%s'.\n",Label);
-
-      Err = cmfe_Region_Finalise(&Region);
-
-      Err = cmfe_Finalise(Context);
-    }
-
-  return Err;
+  return err;
 }
