@@ -21613,12 +21613,12 @@ CONTAINS
   !
 
   !>Starts the creation of a coordinate system identified by a user number.
-  SUBROUTINE cmfe_CoordinateSystem_CreateStartNumber(contextUserNumber,coordinateSystemUserNumber,err)
+  SUBROUTINE cmfe_CoordinateSystem_CreateStartNumber(coordinateSystemUserNumber,contextUserNumber,err)
     !DLLEXPORT(cmfe_CoordinateSystem_CreateStartNumber)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the coordinate system.
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to start creating.
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the coordinate system.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context

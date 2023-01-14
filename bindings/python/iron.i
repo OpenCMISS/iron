@@ -81,9 +81,11 @@
 /* String input */
 %typemap(in,numinputs=1) (const int Size, const char *DummyInputString) {
   PyObject *temp_obj;
+  char *temp_str;
   if (PyString_Check($input)) {
     $1 = PyString_Size($input)+1;
-    $2 = PyString_AsString($input);
+    temp_str = PyString_AsString($input);
+    $2 = strdup(temp_str);
   } else if (PyUnicode_Check($input)) {
 %#if PY_VERSION_HEX < 0x03030000
     $1 = PyUnicode_GetSize($input)+1;
@@ -92,7 +94,8 @@
 %#endif
     temp_obj = PyUnicode_AsUTF8String($input);
     if (temp_obj != NULL) {
-      $2 = PyString_AsString(temp_obj);
+      temp_str = PyString_AsString(temp_obj);
+      $2 = strdup(temp_str);
       Py_XDECREF(temp_obj);
     } else {
       PyErr_SetString(PyExc_ValueError,"Expected a UTF8 compatible string");
@@ -210,21 +213,25 @@
   len = PyObject_Length($input);
   for (i =0; i < len; i++) {
     o = PySequence_GetItem($input,i);
-    if (PyString_Check(o)) {
-        l = PyString_Size(o)+1;
-    }
-    else if (PyUnicode_Check(o)) {
-%#if PY_VERSION_HEX < 0x03030000
-        l = PyUnicode_GetSize(o)+1;
-%#else
+%#if PY_VERSION_HEX >= 0x03030000
+    if (PyUnicode_Check(o)) {
         l = PyUnicode_GetLength(o)+1;
-%#endif
-    }
-    else {
+    } else {
       Py_XDECREF(o);
       PyErr_SetString(PyExc_ValueError,"Expected a sequence of strings");
       return NULL;
     } 
+%#else    
+    if (PyString_Check(o)) {
+        l = PyString_Size(o)+1;
+    } else if (PyUnicode_Check(o)) {
+        l = PyUnicode_GetSize(o)+1;
+    } else {
+      Py_XDECREF(o);
+      PyErr_SetString(PyExc_ValueError,"Expected a sequence of strings");
+      return NULL;
+    } 
+%#endif
     if (l > max_strlen) {
       max_strlen = l;
     }
@@ -239,37 +246,48 @@
     for (i=0; i < len; i++) {
       o = PySequence_GetItem($input,i);
 
-      if (PyString_Check(o)) 
-      {
-          l = PyString_Size(o)+1;
-          str = PyString_AsString(o);
-      } 
-      else if (PyUnicode_Check(o)) 
-      {
-%#if PY_VERSION_HEX < 0x03030000
-         l = PyUnicode_GetSize(o)+1;
-%#else
-         l = PyUnicode_GetLength(o)+1;
-%#endif
-         temp_obj = PyUnicode_AsUTF8String(o);
-         if (temp_obj) {
-             str = PyString_AsString(temp_obj);
-         } 
-         else 
-         {
-             PyErr_SetString(PyExc_ValueError,"Expected a UTF8 compatible string");
-             Py_XDECREF(o);
-             return NULL;
+%#if PY_VERSION_HEX >= 0x03030000
+      if (PyUnicode_Check(o)) {
+        l = PyUnicode_GetLength(o)+1;
+        temp_obj = PyUnicode_AsUTF8String(o);
+        if (temp_obj) {
+          str = PyString_AsString(temp_obj);
+          strncpy($3+i*max_strlen, str,l);
+	  Py_XDECREF(temp_obj);
+        } else {
+          PyErr_SetString(PyExc_ValueError,"Expected a UTF8 compatible string");
+          Py_XDECREF(o);
+          return NULL;
         }
-    }
-    else 
-    {
-         PyErr_SetString(PyExc_ValueError,"Expected a string");
-         Py_XDECREF(o);
-         return NULL;
-    }  
+      } else {
+        PyErr_SetString(PyExc_ValueError,"Expected a string");
+        Py_XDECREF(o);
+        return NULL;
+      }  
+%#else    
+      if (PyString_Check(o)) {
+        l = PyString_Size(o)+1;
+        str = PyString_AsString(o);
+        strncpy($3+i*max_strlen, str,l);
+      } else if (PyUnicode_Check(o)) {
+        l = PyUnicode_GetSize(o)+1;
+        temp_obj = PyUnicode_AsUTF8String(o);
+        if (temp_obj) {
+          str = PyString_AsString(temp_obj);
+          strncpy($3+i*max_strlen, str,l);
+	  Py_XDECREF(temp_obj);
+        } else {
+          PyErr_SetString(PyExc_ValueError,"Expected a UTF8 compatible string");
+          Py_XDECREF(o);
+          return NULL;
+        }
+      } else {
+        PyErr_SetString(PyExc_ValueError,"Expected a string");
+        Py_XDECREF(o);
+        return NULL;
+      }  
+%#endif      
 
-      strncpy($3+i*max_strlen, str,l);
       Py_DECREF(o);
     }
   }

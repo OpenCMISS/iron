@@ -24,7 +24,7 @@
 !> of Oxford are Copyright (C) 2007 by the University of Auckland and
 !> the University of Oxford. All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -39,14 +39,6 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \example Bioelectrics/Monodomain/src/MonodomainExample.F90
-!! Example program to solve a Monodomain equation using OpenCMISS calls.
-!! \par Latest Builds:
-!! \li <a href='http://autotest.bioeng.auckland.ac.nz/opencmiss-build/logs_x86_64-linux/Bioelectrics/Monodomain/build-intel'>Linux Intel Build</a>
-!! \li <a href='http://autotest.bioeng.auckland.ac.nz/opencmiss-build/logs_x86_64-linux/Bioelectrics/Monodomain/build-gnu'>Linux GNU Build</a>
-!!
-!<
-
 !> Main program
 PROGRAM MonodomainExample
 
@@ -54,10 +46,6 @@ PROGRAM MonodomainExample
   USE OpenCMISS_Iron
 #ifndef NOMPIMOD
   USE MPI
-#endif
-
-#ifdef WIN32
-  USE IFQWIN
 #endif
 
   IMPLICIT NONE

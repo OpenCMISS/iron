@@ -1724,8 +1724,8 @@ CONTAINS
                 lhsSum=lhsSum+sourceAlpha*SourceValue              
               ENDDO !sourceIdx
             ENDIF
-            !Set the RHS value
-            CALL FieldVariable_ParameterSetUpdateLocalDOF(rhsVariable,FIELD_VALUES_SET_TYPE,rhsVariableDOF,lhsSum,err,error,*999)
+            !Set the RHS value. Note OpenCMISS defines the equation as ... + RHS = 0 and so the LHS + RHS = 0 therefore RHS = -LHS
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(rhsVariable,FIELD_VALUES_SET_TYPE,rhsVariableDOF,-lhsSum,err,error,*999)
           CASE(BOUNDARY_CONDITION_NEUMANN_ROW)
             !OK, do nothing
           CASE(BOUNDARY_CONDITION_ROBIN_ROW)

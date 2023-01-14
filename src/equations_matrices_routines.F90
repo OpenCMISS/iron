@@ -4542,6 +4542,7 @@ MODULE EquationsMatricesRoutines
     NULLIFY(vectorEquations%vectorMatrices%dynamicMatrices)
     NULLIFY(vectorEquations%vectorMatrices%linearMatrices)
     NULLIFY(vectorEquations%vectorMatrices%nonlinearMatrices)
+    NULLIFY(vectorEquations%vectorMatrices%optimisationMatrices)
     NULLIFY(vectorEquations%vectorMatrices%rhsVector)
     NULLIFY(vectorEquations%vectorMatrices%sourceVectors)            
     CALL EquationsMatricesVector_DynamicInitialise(vectorEquations%vectorMatrices,err,error,*999)            
