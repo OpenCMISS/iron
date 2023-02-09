@@ -53,6 +53,7 @@ MODULE LaplaceEquationsRoutines
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE CoordinateSystemRoutines
+  USE CoordinateSystemAccessRoutines
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DomainMappings
@@ -220,14 +221,14 @@ CONTAINS
         lambda2=SQRT(sigma11*sigma22-sigma12*sigma21)/sigma22
         analyticValue=2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*COS(lambda2*x(2))
         gradientAnalyticValue(1)=2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*COS(lambda2*x(2))
-        gradientAnalyticValue(2)=-2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*(lambda1*COS(lambda2*x(2))+lambda2*SIN(lambda2*x(2)))
+        gradientAnalyticValue(2)=-2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*(lambda2*SIN(lambda2*x(2))+lambda1*COS(lambda2*x(2)))
         !!TODO: Check Hessian as H(1,1)+H(2,2) doesn't seem to give 0?
         hessianAnalyticValue(1,1)=2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*COS(lambda2*x(2))
-        hessianAnalyticValue(1,2)=-2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*(lambda1*COS(lambda2*x(2))+lambda2*SIN(lambda2*x(2)))
-        hessianAnalyticValue(2,1)=-2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*(lambda1*COS(lambda2*x(2))+lambda2*SIN(lambda2*x(2)))
+        hessianAnalyticValue(1,2)=-2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*(lambda2*SIN(lambda2*x(2))+lambda1*COS(lambda2*x(2)))
+        hessianAnalyticValue(2,1)=-2.0_DP*EXP(x(1))*EXP(-lambda1*x(2))*(lambda2*SIN(lambda2*x(2))+lambda1*COS(lambda2*x(2)))
         hessianAnalyticValue(2,2)= &
-          &  2.0_DP*lambda1*EXP(x(1))*EXP(-lambda1*x(2))*(lambda1*COS(lambda2*x(2))+lambda2*SIN(lambda2*x(2))) &
-          & -2.0_DP*lambda2*EXP(x(1))*EXP(-lambda1*x(2))*(lambda2*COS(lambda2*x(2))-lambda1*SIN(lambda2*x(2)))
+          & -2.0_DP*lambda2*EXP(x(1))*EXP(-lambda1*x(2))*(lambda2*COS(lambda2*x(2))-lambda1*SIN(lambda2*x(2))) &
+          & +2.0_DP*lambda1*EXP(x(1))*EXP(-lambda1*x(2))*(lambda2*SIN(lambda2*x(2))+lambda1*COS(lambda2*x(2)))
       CASE DEFAULT
         localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
@@ -595,7 +596,8 @@ CONTAINS
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
             & err,error,*999)
 
-          CALL CoordinateSystem_MaterialTransformSymTensor2(geometricInterpPointMetrics,fibreInterpPoint, &
+          CALL CoordinateSystem_MaterialTransformVoigtTensor2([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
+            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
             & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)        
         ENDIF
         IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
@@ -1387,7 +1389,7 @@ CONTAINS
                   fibreAngle=0.0_DP
                   CALL EquationsSet_FibreFieldExists(equationsSet,fibreField,err,error,*999)
                   IF(ASSOCIATED(fibreField)) THEN
-                    CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,fibreAngle, &
+                    CALL Field_ParameterSetGetConstant(fibreField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,fibreAngle, &
                       & err,error,*999)
                   ENDIF
                   CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &

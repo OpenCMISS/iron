@@ -53,6 +53,7 @@ MODULE HelmholtzEquationsRoutines
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE CoordinateSystemRoutines
+  USE CoordinateSystemAccessRoutines
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DomainMappings
@@ -435,7 +436,8 @@ CONTAINS
         IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE) THEN
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
             & err,error,*999)
-          CALL CoordinateSystem_MaterialTransformSymTensor2(geometricInterpPointMetrics,fibreInterpPoint, &
+          CALL CoordinateSystem_MaterialTransformVoigtTensor2([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
+            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
             & materialsInterpPoint%values(2:1+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivityTensor, &
             & err,error,*999)
         ENDIF

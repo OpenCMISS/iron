@@ -140,7 +140,7 @@ MODULE EquationsSetRoutines
 
   PUBLIC EquationsSet_DerivedDestroy
   
-  PUBLIC EquationSet_IndependentCreateStart,EquationsSet_IndependentCreateFinish
+  PUBLIC EquationsSet_IndependentCreateStart,EquationsSet_IndependentCreateFinish
 
   PUBLIC EquationsSet_IndependentDestroy
   
@@ -2768,7 +2768,7 @@ CONTAINS
   !
 
   !>Start the creation of independent variables for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_IndependentCreateStart
-  SUBROUTINE EquationSet_IndependentCreateStart(equationsSet,independentFieldUserNumber,independentField,err,error,*)
+  SUBROUTINE EquationsSet_IndependentCreateStart(equationsSet,independentFieldUserNumber,independentField,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to start the creation of the materials field for
@@ -2784,7 +2784,7 @@ CONTAINS
     TYPE(RegionType), POINTER :: region,independentFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
 
-    ENTERS("EquationSet_IndependentCreateStart",err,error,*998)
+    ENTERS("EquationsSet_IndependentCreateStart",err,error,*998)
 
     CALL EquationsSet_AssertIndependentNotCreated(equationsSet,err,error,*998)
     CALL EquationsSet_FieldRegionSetupCheck(equationsSet,"independent",independentFieldUserNumber,independentField,err,error,*998)
@@ -2809,13 +2809,13 @@ CONTAINS
       equationsSet%independent%independentField=>independentField
     ENDIF
        
-    EXITS("EquationSet_IndependentCreateStart")
+    EXITS("EquationsSet_IndependentCreateStart")
     RETURN
 999 CALL EquationsSet_IndependentFinalise(equationsSet%independent,dummyErr,dummyError,*998)
-998 ERRORSEXITS("EquationSet_IndependentCreateStart",err,error)
+998 ERRORSEXITS("EquationsSet_IndependentCreateStart",err,error)
     RETURN 1
     
-  END SUBROUTINE EquationSet_IndependentCreateStart
+  END SUBROUTINE EquationsSet_IndependentCreateStart
 
   !
   !================================================================================================================================

@@ -33012,7 +33012,7 @@ CONTAINS
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     !Find the field so that non-auto created fields can be used by number
     CALL Field_UserNumberFind(independentFieldUserNumber,region,independentField,err,error,*999)
-    CALL EquationSet_IndependentCreateStart(equationsSet,independentFieldUserNumber,independentField,err,error,*999)
+    CALL EquationsSet_IndependentCreateStart(equationsSet,independentFieldUserNumber,independentField,err,error,*999)
 
     EXITS("cmfe_EquationsSet_IndependentCreateStartNumber")
     RETURN
@@ -33040,7 +33040,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_IndependentCreateStartObj",err,error,*999)
 
-    CALL EquationSet_IndependentCreateStart(equationsSet%equationsSet,independentFieldUserNumber,independentField%field, &
+    CALL EquationsSet_IndependentCreateStart(equationsSet%equationsSet,independentFieldUserNumber,independentField%field, &
       & err,error,*999)
 
     EXITS("cmfe_EquationsSet_IndependentCreateStartObj")

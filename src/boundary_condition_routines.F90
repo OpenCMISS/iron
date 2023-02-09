@@ -2489,6 +2489,8 @@ MODULE BoundaryConditionsRoutines
         CASE(FIELD_U_VARIABLE_TYPE) !Dirichlet
           CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
             & dofValue,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
+            & dofValue,err,error,*999)
           IF(setVelocity) THEN
             CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
               & analyticVelocity,err,error,*999)
