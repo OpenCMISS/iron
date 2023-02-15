@@ -116,6 +116,16 @@ MODULE CoordinateSystemRoutines
     MODULE PROCEDURE CoordinateSystem_DerivativeConvertToRCSP
   END INTERFACE CoordinateSystem_DerivativeConvertToRC
 
+  !>Transform a tensor in material coordinates to a tensor in geometric coordinates using the appropriate tensor transform. 
+  INTERFACE CoordinateSystem_MaterialTransformTensor
+    MODULE PROCEDURE CoordinateSystem_MaterialTransformVector0
+    MODULE PROCEDURE CoordinateSystem_MaterialTransformVector1
+    MODULE PROCEDURE CoordinateSystem_MaterialTransformTensor2
+    MODULE PROCEDURE CoordinateSystem_MaterialTransformTensor4
+    MODULE PROCEDURE CoordinateSystem_MaterialTransformVoigtTensor2
+    MODULE PROCEDURE CoordinateSystem_MaterialTransformVoigtTensor4
+  END INTERFACE CoordinateSystem_MaterialTransformTensor
+
   PUBLIC CoordinateSystem_ConvertFromRC
   
   PUBLIC CoordinateSystem_ConvertToRC
@@ -140,9 +150,11 @@ MODULE CoordinateSystemRoutines
 
   PUBLIC CoordinateSystem_MaterialSystemCalculate
 
+  PUBLIC CoordinateSystem_MaterialSystemCalculateOld
+
   PUBLIC CoordinateSystem_MaterialTransformSymTensor2
 
-  PUBLIC CoordinateSystem_MaterialTransformVoigtTensor2
+  PUBLIC CoordinateSystem_MaterialTransformTensor
 
   PUBLIC CoordinateSystem_MetricsCalculate
   
@@ -3623,8 +3635,173 @@ CONTAINS
   !================================================================================================================================
   !
  
+  !>Calculates the transformation (and the inverse transformation) from the material coordinate system, nu, to the local coordinate
+  !>system, xi.
+  SUBROUTINE CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudXi,dXidNu,err,error,*)
+  
+    !Argument variables
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolation point metrics at the point to calculate the material coordinate system from.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolation point at the point to calculate the material coordinate system from
+    REAL(DP), INTENT(OUT) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). On return, the transformation from the local coordinate system, xi, to the material coordinate system nu.
+    REAL(DP), INTENT(OUT) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). On return, the transformation from the material system, nu, to the local coordinate system, xi.
+    INTEGER(INTG), INTENT(OUT) :: err   !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) ::  error   !<The error string
+    !Local variables
+    INTEGER(INTG) :: numberOfXiDimensions,numberOfNuDimensions
+    REAL(DP) :: angles(3),c(3),s(3)
+    TYPE(VARYING_STRING) :: localError 
+     
+    ENTERS("CoordinateSystem_MaterialSystemCalculate",err,error,*999)
+    
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
+      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
+    IF(geometricInterpPointMetrics%numberOfXDimensions/=geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="A different number of nu and xi dimensions is not implemented. The number of nu dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))// &
+        & " and the number of xi dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dNudXi,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the first index of the specified dNudXi matrix of "// &
+        & TRIM(NumberToVString(SIZE(dNudXi,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dNudXi,2)<geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="The size of the second index of the specified dNudXi matrix of "// &
+        & TRIM(NumberToVString(SIZE(dNudXi,2),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dXidNu,1)<geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="The size of the first index of the specified dXidNu matrix of "// &
+        & TRIM(NumberToVString(SIZE(dXidNu,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dXidNu,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the second index of the specified dXidNu matrix of "// &
+        & TRIM(NumberToVString(SIZE(dXidNu,2),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    numberOfNuDimensions=geometricInterpPointMetrics%numberOfXDimensions
+    numberOfXiDimensions=geometricInterpPointMetrics%numberOfXiDimensions
+    SELECT CASE(numberOfNuDimensions)
+    CASE(1)
+      !In 1D the material coordinates are aligned with the xi coordinates regardless
+      dNudXi(1,1)=1.0_DP
+      !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
+      dXidNu(1,1)=1.0_DP
+    CASE(2)
+      IF(ASSOCIATED(fibreInterpPoint)) THEN
+        !With fibres
+        !Get the fibre angle
+        angles(1)=fibreInterpPoint%values(1,NO_PART_DERIV)
+        !Calculate dNudXi as the rotation matrix
+        dNudXi(1,1)=COS(angles(1))
+        dNudXi(1,2)=SIN(angles(1))
+        dNudXi(2,1)=-1.0_DP*SIN(angles(1))
+        dNudXi(2,2)=COS(angles(1))
+      ELSE
+        !Without fibres, the material coordinates are aligned with the xi coordinates
+        dNudXi(1,1)=1.0_DP
+        dNudXi(1,2)=0.0_DP
+        dNudXi(2,1)=0.0_DP
+        dNudXi(2,2)=1.0_DP
+      ENDIF
+      !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
+      dXidNu(1,1)=dNudXi(1,1)
+      dXidNu(1,2)=dNudXi(2,1)
+      dXidNu(2,1)=dNudXi(1,2)
+      dXidNu(2,2)=dNudXi(2,2)
+    CASE(3)
+      IF(ASSOCIATED(fibreInterpPoint)) THEN
+        !With fibres
+        !Get the fibre/roll, sheet/pitch and imbrication/yaw angles
+        angles(1:3)=fibreInterpPoint%values(1:3,NO_PART_DERIV)
+        !Calculate dNudXi as the 3D rotation matrix
+        c(1)=COS(angles(1))
+        c(2)=COS(angles(2))
+        c(3)=COS(angles(3))
+        s(1)=SIN(angles(1))
+        s(2)=SIN(angles(2))
+        s(3)=SIN(angles(3))
+        !Use yaw, pitch, roll convection i.e., extrinsic rotations about X-Y-Z
+        dNudXi(1,1)=c(2)*c(3)
+        dNudXi(1,2)=-1.0_DP*c(2)*s(3)
+        dNudXi(1,3)=s(2)
+        dNudXi(2,1)=c(1)*s(3)+c(3)*s(1)*s(2)
+        dNudXi(2,2)=c(1)*c(3)-s(1)*s(2)*s(3)
+        dNudXi(2,3)=-1.0_DP*c(2)*s(1)
+        dNudXi(3,1)=s(1)*s(3)-c(1)*c(3)*s(2)
+        dNudXi(3,2)=c(3)*s(1)+c(1)*s(2)*s(3)
+        dNudXi(3,3)=c(1)*c(2)                
+      ELSE
+        !Without fibres, the material coordinates are aligned with the xi coordinates
+        dNudXi(1,1)=1.0_DP
+        dNudXi(1,2)=0.0_DP
+        dNudXi(1,3)=0.0_DP
+        dNudXi(2,1)=0.0_DP
+        dNudXi(2,2)=1.0_DP
+        dNudXi(2,3)=0.0_DP
+        dNudXi(3,1)=0.0_DP
+        dNudXi(3,2)=0.0_DP
+        dNudXi(3,3)=1.0_DP
+      ENDIF
+      !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
+      dXidNu(1,1)=dNudXi(1,1)
+      dXidNu(1,2)=dNudXi(2,1)
+      dXidNu(1,3)=dNudXi(3,1)
+      dXidNu(2,1)=dNudXi(1,2)
+      dXidNu(2,2)=dNudXi(2,2)
+      dXidNu(2,3)=dNudXi(3,2)
+      dXidNu(3,1)=dNudXi(1,3)
+      dXidNu(3,2)=dNudXi(2,3)
+      dXidNu(3,3)=dNudXi(3,3)
+    CASE DEFAULT
+      localError="The number of dimensions in the geometric interpolated point of "// &
+        & TRIM(NumberToVString(numberOfNuDimensions,"*",err,error))// &
+        & " is invalid. The number of dimensions must be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+       
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Calculated material coordinate system:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Nu dimensions = ",numberOfNuDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt Xi:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNuDimensions,1,1,numberOfXiDimensions, &
+        & numberOfXiDimensions,numberOfXiDimensions,dNudXi,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    dNudXi','(",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Xi wrt Nu:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfNuDimensions, &
+        & numberOfNuDimensions,numberOfNuDimensions,dXidNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    dXidNu','(",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+    ENDIF
+   
+    EXITS("CoordinateSystem_MaterialSystemCalculate")
+    RETURN
+999 ERRORSEXITS("CoordinateSystem_MaterialSystemCalculate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_MaterialSystemCalculate
+  
+  !
+  !================================================================================================================================
+  !
+ 
   !>Calculates the tensor to get from material coordinate system, nu, to local coordinate system, xi.
-  SUBROUTINE CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu,dNudXi,dXidNu, &
+  SUBROUTINE CoordinateSystem_MaterialSystemCalculateOld(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu,dNudXi,dXidNu, &
     & err,error,*)
   
     !Argument variables
@@ -3641,7 +3818,7 @@ CONTAINS
     REAL(DP) :: dNudXiTemp(3,3),Jnuxi,JNuX
     TYPE(VARYING_STRING) :: localError 
      
-    ENTERS("CoordinateSystem_MaterialSystemCalculate",err,error,*999)
+    ENTERS("CoordinateSystem_MaterialSystemCalculateOld",err,error,*999)
     
     IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
       & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
@@ -3690,7 +3867,7 @@ CONTAINS
       CALL Invert(dNudXi(1:numberOfXDimensions,1:numberOfXiDimensions),dXidNu(1:numberOfXiDimensions,1:numberOfXDimensions), &
         & JNuXi,err,error,*999)
     ELSE
-      CALL FlagError("Not implemented",err,error,*999)
+      CALL FlagError("Not implemented.",err,error,*999)
     ENDIF
 
     IF(diagnostics1) THEN
@@ -3720,12 +3897,12 @@ CONTAINS
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dNu_dXi, JNuXi = ",JNuXi,err,error,*999)
     ENDIF
    
-    EXITS("CoordinateSystem_MaterialSystemCalculate")
+    EXITS("CoordinateSystem_MaterialSystemCalculateOld")
     RETURN
-999 ERRORSEXITS("CoordinateSystem_MaterialSystemCalculate",err,error)
+999 ERRORSEXITS("CoordinateSystem_MaterialSystemCalculateOld",err,error)
     RETURN 1
     
-  END SUBROUTINE CoordinateSystem_MaterialSystemCalculate
+  END SUBROUTINE CoordinateSystem_MaterialSystemCalculateOld
   
   !
   !================================================================================================================================
@@ -3974,34 +4151,34 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Transforms a second order Voigt tensor in materials coordinates (e.g., conductivity tensor) to a tensor in xi coordinates using the appropriate transformation formula for the tensor type
-  SUBROUTINE CoordinateSystem_MaterialTransformVoigtTensor2(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
-    & voigtMaterialTensor,transformedTensor,err,error,*)
+  !>Transforms a second order tensor from the materials coordinates (e.g., conductivity tensor) to a tensor in geometric coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialTransformTensor2(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
+    & materialTensor,transformedTensor,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order Voigt tensor to transform
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order tensor to transform \see CoordinateRoutines_TensorIndexTypes
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
-    REAL(DP), INTENT(IN) :: voigtMaterialTensor(:) !<voigtMaterialTensor(voigtIdx). The original symmetric material second order tensor values (in Voigt form) to transform.
-    REAL(DP), INTENT(OUT) :: transformedTensor(:,:) !<transformedTensor(xiCoordinateIdx,xiCoordinateIdx). On exit, the second order tensor transformed from material coordinates.
+    REAL(DP), INTENT(IN) :: materialTensor(:,:) !<materialTensor(nuCoordinateIdx,nuCoordinateIdx). The original material second order tensor values to transform.
+    REAL(DP), INTENT(OUT) :: transformedTensor(:,:) !<transformedTensor(xCoordinateIdx,xCoordinateIdx). On exit, the second order tensor transformed from material coordinates to geometric coordinates.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: aIdx,bIdx,iIdx,jIdx,numberOfDimensions,numberOfXi
-    REAL(DP) :: dNudX(3,3),dNudXi(3,3),dXdNu(3,3),dXidNu(3,3),materialTensor(3,3),sum
+    INTEGER(INTG) :: numberOfDimensions,numberOfXi
+    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),tempTensor(3,3),tempTensor2(3,3)
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("CoordinateSystem_MaterialTransformVoigtTensor2",err,error,*999)
+    ENTERS("CoordinateSystem_MaterialTransformTensor2",err,error,*999)
 
 #ifdef WITH_PRECHECKS
     IF(SIZE(tensorIndexTypes,1)<2) THEN
       localError="The size of the specified tensor index types array is "// &
-        & NumberToVString(SIZE(tensorIndexTypes,1),"*",err,error)//" and needs to be at least two for a second order Voigt tensor."
+        & NumberToVString(SIZE(tensorIndexTypes,1),"*",err,error)//" and needs to be at least two for a second order tensor."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
-      & CALL FlagError("Geometry interpolated point metrics is not associated.",err,error,*999)
+      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
     IF(geometricInterpPointMetrics%numberOfXDimensions/=geometricInterpPointMetrics%numberOfXiDimensions) THEN
       localError="A different number of x and xi dimensions is not implemented. The number of x dimensions is "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))// &
@@ -4009,23 +4186,28 @@ CONTAINS
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(voigtMaterialTensor,1)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
-      localError="The size of the specified symmetric tensor of "// &
-        & TRIM(NumberToVString(SIZE(voigtMaterialTensor,1),"*",err,error))// &
-        & " is too small. The size should be >= "// &
-        & TRIM(NumberToVString(NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions),"*",err,error))//"."
+    IF(SIZE(materialTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The first dimension of the specified material tensor of "// &
+        & TRIM(NumberToVString(SIZE(materialTensor,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(transformedTensor,1)<geometricInterpPointMetrics%numberOfXiDimensions) THEN
+    IF(SIZE(materialTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The second dimension of the specified material tensor of "// &
+        & TRIM(NumberToVString(SIZE(materialTensor,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
       localError="The first dimension of the specified transformed tensor of "// &
         & TRIM(NumberToVString(SIZE(transformedTensor,1),"*",err,error))//" is too small. The size should be >= "// &
-        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(transformedTensor,2)<geometricInterpPointMetrics%numberOfXiDimensions) THEN
+    IF(SIZE(transformedTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
       localError="The second dimension of the specified transformed tensor of "// &
         & TRIM(NumberToVString(SIZE(transformedTensor,2),"*",err,error))//" is too small. The size should be >= "// &
-        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
@@ -4033,8 +4215,410 @@ CONTAINS
     numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
     numberOfXi=geometricInterpPointMetrics%numberOfXiDimensions
     
+    !Calculate material coordinates
+    CALL CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
+      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions),err,error,*999)
+
+    !Transform the tensor from material coordinates according to the appropriate tensor transformation rule
+    SELECT CASE(tensorIndexTypes(1))
+    CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+      SELECT CASE(tensorIndexTypes(2))
+      CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+        !(Contravariant,Contravariant) tensor i.e.,
+        !B^{ij}=\delby{\xi^{i}}{\xi^{r}}\delby{\xi^{j}}{\xi^{s}}\delby{\xi^{r}}{\nu^{a}}\delby{\xi^{s}}{\nu^{b}}.A^{ab}
+        CALL MatrixProductTranspose(materialTensor(1:numberOfDimensions,1:numberOfDimensions), &        
+          & dXidNu(1:numberOfXi,1:numberOfDimensions),tempTensor(1:numberOfDimensions,1:numberOfXi),err,error,*999)
+        CALL MatrixProduct(dXidNu(1:numberOfXi,1:numberOfDimensions),tempTensor(1:numberOfDimensions,1:numberOfXi), &
+          & tempTensor2(1:numberOfXi,1:numberOfXi),err,error,*999)
+        CALL MatrixProductTranspose(tempTensor2(1:numberOfXi,1:numberOfXi), &
+          & geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi),tempTensor(1:numberOfXi,1:numberOfDimensions), &
+          & err,error,*999)
+        CALL MatrixProduct(geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi), &
+          & tempTensor(1:numberOfDimensions,1:numberOfXi),transformedTensor(1:numberOfDimensions,1:numberOfDimensions), &
+          & err,error,*999)
+      CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+        !(Contravariant,Covariant) tensor i.e.,
+        !B^{i.}_{.j}=\delby{x^{i}}{\xi^{r}}\delby{\xi^{s}}{x^{j}}\delby{\xi^{r}}{\nu^{a}}\delby{\nu^{b}}{\xi^{s}}.A^{a.}_{.b}
+        CALL MatrixProduct(materialTensor(1:numberOfDimensions,1:numberOfDimensions), &
+          & dNudXi(1:numberOfDimensions,1:numberOfXi),tempTensor(1:numberOfDimensions,1:numberOfXi),err,error,*999)
+        CALL MatrixProduct(dXidNu(1:numberOfXi,1:numberOfDimensions),tempTensor(1:numberOfDimensions,1:numberOfXi), &
+          & tempTensor2(1:numberOfXi,1:numberOfXi),err,error,*999)
+        CALL MatrixProduct(tempTensor2(1:numberOfXi,1:numberOfXi), &
+          & geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions),tempTensor(1:numberOfXi,1:numberOfDimensions), &
+          & err,error,*999)
+        CALL MatrixProduct(geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi), &
+          & tempTensor(1:numberOfXi,1:numberOfDimensions),transformedTensor(1:numberOfDimensions,1:numberOfDimensions), &
+          & err,error,*999)
+      CASE DEFAULT
+        localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+      SELECT CASE(tensorIndexTypes(2))
+      CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+        !(Covariant,Contravariant) tensor i.e.,
+        !B^{.j}_{i.}=\delby{\xi^{r}}{x^{i}}\delby{x^{j}}{\xi^{s}}\delby{\nu^{a}}{\xi^{r}}\delby{\xi^{s}}{\nu^{b}}.A^{a.}_{.b}
+        CALL MatrixProduct(materialTensor(1:numberOfDimensions,1:numberOfDimensions), &
+          & dNudXi(1:numberOfDimensions,1:numberOfXi),tempTensor(1:numberOfDimensions,1:numberOfXi),err,error,*999)
+        CALL MatrixTransposeProduct(dNudXi(1:numberOfDimensions,1:numberOfXi), &
+          & materialTensor(1:numberOfDimensions,1:numberOfDimensions),tempTensor2(1:numberOfDimensions,1:numberOfXi), &
+          & err,error,*999)
+        CALL MatrixProductTranspose(tempTensor2(1:numberOfDimensions,1:numberOfXi), &
+          & geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi),tempTensor(1:numberOfXi,1:numberOfDimensions), &
+          & err,error,*999)
+        CALL MatrixTransposeProduct(geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions), &
+          & tempTensor(1:numberOfXi,1:numberOfDimensions),transformedTensor(1:numberOfDimensions,1:numberOfDimensions), &
+          & err,error,*999)
+      CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+        !(Covariant,Covariant) tensor i.e., 
+        !B^{.j}_{i.}=\delby{\xi^{r}}{x^{i}}\delby{\xi^{s}}{x^{j}}\delby{\nu^{a}}{\xi^{r}}\delby{\nu^{b}}{\xi^{s}}.A_{ab}
+        CALL MatrixProduct(materialTensor(1:numberOfDimensions,1:numberOfDimensions), &
+          & dNudXi(1:numberOfDimensions,1:numberOfXi),tempTensor(1:numberOfDimensions,1:numberOfXi),err,error,*999)
+        CALL MatrixTransposeProduct(dNudXi(1:numberOfDimensions,1:numberOfXi), &
+          & tempTensor(1:numberOfDimensions,1:numberOfXi),tempTensor2(1:numberOfXi,1:numberOfXi),err,error,*999)
+        CALL MatrixProduct(tempTensor2(1:numberOfXi,1:numberOfXi), &
+          & geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions), &
+          & tempTensor(1:numberOfXi,1:numberOfDimensions),err,error,*999)
+        CALL MatrixTransposeProduct(geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions), &
+          & tempTensor(1:numberOfDimensions,1:numberOfXi),transformedTensor(1:numberOfDimensions,1:numberOfDimensions), &
+          & err,error,*999)
+      CASE DEFAULT
+        localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material tensor transformation:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X  = ",numberOfDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi = ",numberOfXi,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,tensorIndexTypes, &
+        & '("  Tensor index types :",2(X,I1))','(22X,2(X,I1))',err,error,*999)      
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material tensor:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions, &
+        & numberOfDimensions,materialTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    MT','(",I1,",:)',' :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed tensor:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions, &
+        & numberOfDimensions,transformedTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    TT','(",I1,",:)','   :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
+    ENDIF
+        
+    EXITS("CoordinateSystem_MaterialTransformTensor2")
+    RETURN
+999 ERRORS("CoordinateSystem_MaterialTransformTensor2",err,error)
+    EXITS("CoordinateSystem_MaterialTransformTensor2")
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_MaterialTransformTensor2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a fourth order tensor from the materials coordinates (e.g., elasticity tensor) to a tensor in geometric coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialTransformTensor4(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
+    & materialTensor,transformedTensor,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the fourth order tensor to transform \see CoordinateRoutines_TensorIndexTypes
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    
+    REAL(DP), INTENT(IN) :: materialTensor(:,:,:,:) !<materialTensor(nuCoordinateIdx,nuCoordinateIdx,nuCoordinateIdx,nuCoordinateIdx). The original material fourth order tensor values to transform.
+    REAL(DP), INTENT(OUT) :: transformedTensor(:,:,:,:) !<transformedTensor(xCoordinateIdx,xCoordinateIdx,xCoordinateIdx,xCoordinateIdx). On exit, the fourth order tensor transformed from material coordinates to geometric coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: numberOfDimensions,numberOfXi
+    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),tempTensor(3,3,3,3),tempTensor2(3,3,3,3)
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("CoordinateSystem_MaterialTransformTensor4",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(SIZE(tensorIndexTypes,1)<4) THEN
+      localError="The size of the specified tensor index types array is "// &
+        & NumberToVString(SIZE(tensorIndexTypes,1),"*",err,error)//" and needs to be at least four for a fourth order tensor."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
+      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
+    IF(geometricInterpPointMetrics%numberOfXDimensions/=geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="A different number of x and xi dimensions is not implemented. The number of x dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))// &
+        & " and the number of xi dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(materialTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The first dimension of the specified material tensor of "// &
+        & TRIM(NumberToVString(SIZE(materialTensor,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(materialTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The second dimension of the specified material tensor of "// &
+        & TRIM(NumberToVString(SIZE(materialTensor,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(materialTensor,3)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The third dimension of the specified material tensor of "// &
+        & TRIM(NumberToVString(SIZE(materialTensor,3),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(materialTensor,4)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The fourth dimension of the specified material tensor of "// &
+        & TRIM(NumberToVString(SIZE(materialTensor,4),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The first dimension of the specified transformed tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedTensor,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The second dimension of the specified transformed tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedTensor,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedTensor,3)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The third dimension of the specified transformed tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedTensor,3),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedTensor,4)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The fourth dimension of the specified transformed tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedTensor,4),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
+    numberOfXi=geometricInterpPointMetrics%numberOfXiDimensions
+    
+    !Calculate material coordinates
+    CALL CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
+      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions),err,error,*999)
+    
+    transformedTensor=0.0_DP
+    
+    !Transform the tensor from material coordinates according to the appropriate tensor transformation rule
+    SELECT CASE(tensorIndexTypes(1))
+    CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+      SELECT CASE(tensorIndexTypes(2))
+      CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+        SELECT CASE(tensorIndexTypes(3))
+        CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+            !(Contravariant,Contravariant,Contravariant,Contravariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+            !(Contravariant,Contravariant,Contravariant,Covariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+            !(Contravariant,Contravariant,Covariant,Contravariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+            !(Contravariant,Contravariant,Covariant,Covariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The third tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(3),"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+        SELECT CASE(tensorIndexTypes(3))
+        CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+            !(Contravariant,Covariant,Contravariant,Contravariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+            !(Contravariant,Covariant,Contravariant,Covariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+            !(Contravariant,Covariant,Covariant,Contravariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+            !(Contravariant,Covariant,Covariant,Covariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The third tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(3),"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+      SELECT CASE(tensorIndexTypes(2))
+      CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+        SELECT CASE(tensorIndexTypes(3))
+        CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+            !(Contravariant,Covariant,Contravariant,Contravariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+            !(Contravariant,Covariant,Contravariant,Covariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+            !(Contravariant,Covariant,Covariant,Contravariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+            !(Contravariant,Covariant,Covariant,Covariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The third tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(3),"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+        SELECT CASE(tensorIndexTypes(3))
+        CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+            !(Contravariant,Covariant,Contravariant,Contravariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+            !(Contravariant,Covariant,Contravariant,Covariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+            !(Covariant,Covariant,Covariant,Contravariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+            !(Covariant,Covariant,Covariant,Covariant) tensor i.e.,
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The third tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(3),"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material tensor transformation:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X  = ",numberOfDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi = ",numberOfXi,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,4,4,4,tensorIndexTypes, &
+        & '("  Tensor index types :",4(X,I1))','(22X,4(X,I1))',err,error,*999)      
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material tensor:",err,error,*999)
+      !CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions, &
+      !  & numberOfDimensions,materialTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+      !  & '("    MT','(",I1,",:)',' :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed tensor:",err,error,*999)
+      !CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions, &
+      !  & numberOfDimensions,transformedTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+      !  & '("    TT','(",I1,",:)','   :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
+    ENDIF
+        
+    EXITS("CoordinateSystem_MaterialTransformTensor4")
+    RETURN
+999 ERRORS("CoordinateSystem_MaterialTransformTensor4",err,error)
+    EXITS("CoordinateSystem_MaterialTransformTensor4")
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_MaterialTransformTensor4
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a second order Voigt tensor in materials coordinates (e.g., conductivity tensor) to a tensor in geometric coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialTransformVoigtTensor2(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
+    & voigtMaterialTensor,transformedTensor,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order Voigt tensor to transform \see CoordinateRoutines_TensorIndexTypes
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    
+    REAL(DP), INTENT(IN) :: voigtMaterialTensor(:) !<voigtMaterialTensor(voigtIdx). The original symmetric material second order tensor values (in Voigt form) to transform.
+    REAL(DP), INTENT(OUT) :: transformedTensor(:,:) !<transformedTensor(xCoordinateIdx,xCoordinateIdx). On exit, the second order tensor transformed from material coordinates to geometric coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: numberOfDimensions
+    REAL(DP) :: materialTensor(3,3)
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("CoordinateSystem_MaterialTransformVoigtTensor2",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
+      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
+    IF(SIZE(voigtMaterialTensor,1)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
+      localError="The size of the specified symmetric tensor of "// &
+        & TRIM(NumberToVString(SIZE(voigtMaterialTensor,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
+    
+!!TODO: Need routines for tensor to Voigt etc. and vice versa. Also, adjust for Voigt scale factors with tensor type. What does a mixed Voigt tensor look like????
+    
     !Calculate the untransformed tensor in material coordinates
-    materialTensor(1:numberOfDimensions,1:numberOfDimensions)=0.0_DP
     SELECT CASE(numberOfDimensions)
     CASE(1)
       materialTensor(1,1)=voigtMaterialTensor(TENSOR_TO_VOIGT1(1,1))
@@ -4058,104 +4642,9 @@ CONTAINS
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    
-    !Calculate material coordinates
-    dNudX(1:numberOfDimensions,1:numberOfDimensions)=0.0_DP
-    dXdNu(1:numberOfDimensions,1:numberOfDimensions)=0.0_DP
-    dNudXi(1:numberOfDimensions,1:numberOfXi)=0.0_DP
-    dXidNu(1:numberOfXi,1:numberOfDimensions)=0.0_DP
-    CALL CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
-      & dNudX(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
-      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
-      & err,error,*999)
 
-    !Transform the tensor from material coordinates according to the appropriate tensor transformation rule
-    SELECT CASE(tensorIndexTypes(1))
-    CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
-      SELECT CASE(tensorIndexTypes(2))
-      CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
-        !(Contravariant,Contravariant) tensor i.e., T^{ij}=\delby{\xi^{i}}{\nu^{a}}\delby{\xi^{j}}{\nu^{b}}.M^{ab}
-        DO iIdx=1,numberOfDimensions
-          DO jIdx=1,numberOfDimensions
-            sum=0.0_DP
-            DO aIdx=1,numberOfXi
-              DO bIdx=1,numberOfXi
-                sum=sum+dXidNu(iIdx,aIdx)*dXidNu(jIdx,bIdx)*materialTensor(aIdx,bIdx)
-              ENDDO !bIdx
-            ENDDO !aIdx
-            transformedTensor(iIdx,jIdx)=sum
-          ENDDO !jIdx
-        ENDDO !iIdx
-      CASE(COORDINATE_COVARIANT_INDEX_TYPE)
-        !(Contravariant,Covariant) tensor i.e., T^{i.}_{.j}=\delby{\xi^{i}}{\nu^{a}}\delby{\nu^{b}}{\xi^{j}}.M^{a.}_{.b}
-        DO iIdx=1,numberOfDimensions
-          DO jIdx=1,numberOfDimensions
-            sum=0.0_DP
-            DO aIdx=1,numberOfXi
-              DO bIdx=1,numberOfXi
-                sum=sum+dXidNu(iIdx,aIdx)*dNudXi(bIdx,jIdx)*materialTensor(aIdx,bIdx)
-              ENDDO !bIdx
-            ENDDO !aIdx
-            transformedTensor(iIdx,jIdx)=sum
-          ENDDO !jIdx
-        ENDDO !iIdx
-      CASE DEFAULT
-        localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    CASE(COORDINATE_COVARIANT_INDEX_TYPE)
-      SELECT CASE(tensorIndexTypes(2))
-      CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
-        !(Covariant,Contravariant) tensor i.e., T^{.j}_{i.}=\delby{\nu^{a}}{\xi^{i}}\delby{\xi^{j}}{\nu^{b}}.M^{.b}_{a.}
-        DO iIdx=1,numberOfDimensions
-          DO jIdx=1,numberOfDimensions
-            sum=0.0_DP
-            DO aIdx=1,numberOfXi
-              DO bIdx=1,numberOfXi
-                sum=sum+dNudXi(aIdx,iIdx)*dXidNu(jIdx,bIdx)*materialTensor(aIdx,bIdx)
-              ENDDO !bIdx
-            ENDDO !aIdx
-            transformedTensor(iIdx,jIdx)=sum
-          ENDDO !jIdx
-        ENDDO !iIdx
-      CASE(COORDINATE_COVARIANT_INDEX_TYPE)
-        !(Covariant,Covariant) tensor i.e., T_{ij}=\delby{\nu^{a}}{\xi^{i}}\delby{\nu^{b}}{\xi^{j}}.M_{ab}
-        DO iIdx=1,numberOfDimensions
-          DO jIdx=1,numberOfDimensions
-            sum=0.0_DP
-            DO aIdx=1,numberOfXi
-              DO bIdx=1,numberOfXi
-                sum=sum+dNudXi(aIdx,iIdx)*dNudXi(bIdx,jIdx)*materialTensor(aIdx,bIdx)
-              ENDDO !bIdx
-            ENDDO !aIdx
-            transformedTensor(iIdx,jIdx)=sum
-          ENDDO !jIdx
-        ENDDO !iIdx
-      CASE DEFAULT
-        localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    CASE DEFAULT
-      localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))//" is invalid."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
-    
-    IF(diagnostics1) THEN
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Symmetric material tensor transformation:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X  = ",numberOfDimensions,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi = ",numberOfXi,err,error,*999)
-      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,tensorIndexTypes, &
-        & '("  Tensor index types :",2(X,I1))','(22X,2(X,I1))',err,error,*999)      
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material tensor:",err,error,*999)
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions, &
-        & numberOfDimensions,materialTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("    MT','(",I1,",:)',' :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed tensor:",err,error,*999)
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXi,1,1,numberOfXi,numberOfXi, &
-        & numberOfXi,transformedTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("    TT','(",I1,",:)','   :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
-    ENDIF
+    CALL CoordinateSystem_MaterialTransformTensor2(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
+      & materialTensor,transformedTensor,err,error,*999)
         
     EXITS("CoordinateSystem_MaterialTransformVoigtTensor2")
     RETURN
@@ -4164,6 +4653,77 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE CoordinateSystem_MaterialTransformVoigtTensor2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a fourth order Voigt tensor in materials coordinates (e.g., elasticity tensor) to a tensor in geometric coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialTransformVoigtTensor4(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
+    & voigtMaterialTensor,transformedTensor,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order Voigt tensor to transform \see CoordinateRoutines_TensorIndexTypes
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    
+    REAL(DP), INTENT(IN) :: voigtMaterialTensor(:,:) !<voigtMaterialTensor(voigtIdx,voigtIdx). The original symmetric material fourth order tensor values (in Voigt form) to transform.
+    REAL(DP), INTENT(OUT) :: transformedTensor(:,:,:,:) !<transformedTensor(xCoordinateIdx,xCoordinateIdx,xCoordinateIdx,xCoordinateIdx). On exit, the fourth order tensor transformed from material coordinates to geometric coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: numberOfDimensions
+    REAL(DP) :: materialTensor(3,3,3,3)
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("CoordinateSystem_MaterialTransformVoigtTensor4",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
+      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
+    IF(SIZE(voigtMaterialTensor,1)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
+      localError="The size of the first index of the specified Voigt material tensor of "// &
+        & TRIM(NumberToVString(SIZE(voigtMaterialTensor,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(voigtMaterialTensor,2)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
+      localError="The size of the second index of the specified Voigt material tensor of "// &
+        & TRIM(NumberToVString(SIZE(voigtMaterialTensor,2),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
+
+!!TODO: Need routines for tensor to Voigt etc. and vice versa. Also, adjust for Voigt scale factors with tensor type.    
+    !Calculate the untransformed tensor in material coordinates
+    SELECT CASE(numberOfDimensions)
+    CASE(1)
+      materialTensor(1,1,1,1)=voigtMaterialTensor(TENSOR_TO_VOIGT1(1,1),TENSOR_TO_VOIGT1(1,1))
+    CASE(2)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(3)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    CALL CoordinateSystem_MaterialTransformTensor4(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
+      & materialTensor,transformedTensor,err,error,*999)
+        
+    EXITS("CoordinateSystem_MaterialTransformVoigtTensor4")
+    RETURN
+999 ERRORS("CoordinateSystem_MaterialTransformVoigtTensor4",err,error)
+    EXITS("CoordinateSystem_MaterialTransformVoigtTensor4")
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_MaterialTransformVoigtTensor4
 
   !
   !================================================================================================================================
@@ -4253,7 +4813,7 @@ CONTAINS
     dXdNu(1:numberOfDimensions,1:numberOfDimensions)=0.0_RP
     dNudXi(1:numberOfDimensions,1:numberOfXi)=0.0_RP
     dXidNu(1:numberOfXi,1:numberOfDimensions)=0.0_RP
-    CALL CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
+    CALL CoordinateSystem_MaterialSystemCalculateOld(geometricInterpPointMetrics,fibreInterpPoint, &
       & dNudX(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
       & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
       & err,error,*999)
@@ -4288,6 +4848,143 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE CoordinateSystem_MaterialTransformSymTensor2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a vector in materials coordinates to a tensor in x coordinates using the appropriate transformation formula for the vector type
+  SUBROUTINE CoordinateSystem_MaterialTransformVector0(vectorIndexType,geometricInterpPointMetrics,fibreInterpPoint, &
+    & materialVector,transformedVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: vectorIndexType !<The type (e.g., covariant or contravariant) of the vector index to transform \see CoordinateRoutines_TensorIndexTypes
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed vector.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    
+    REAL(DP), INTENT(IN) :: materialVector(:) !<materialVector(materialIdx). The original material vector values to transform.
+    REAL(DP), INTENT(OUT) :: transformedVector(:) !<transformedVector(coordinateIdx). On exit, the vector transformed from material coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CoordinateSystem_MaterialTransformVector0",err,error,*999)
+    
+    CALL CoordinateSystem_MaterialTransformVector1([vectorIndexType],geometricInterpPointMetrics,fibreInterpPoint, &
+      & materialVector,transformedVector,err,error,*999)
+        
+    EXITS("CoordinateSystem_MaterialTransformVector0")
+    RETURN
+999 ERRORS("CoordinateSystem_MaterialTransformVector0",err,error)
+    EXITS("CoordinateSystem_MaterialTransformVector0")
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_MaterialTransformVector0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a vector in materials coordinates to a tensor in x coordinates using the appropriate transformation formula for the vector type
+  SUBROUTINE CoordinateSystem_MaterialTransformVector1(vectorIndexType,geometricInterpPointMetrics,fibreInterpPoint, &
+    & materialVector,transformedVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: vectorIndexType(1) !<The type (e.g., covariant or contravariant) of the vector index to transform \see CoordinateRoutines_TensorIndexTypes
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed vector.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    
+    REAL(DP), INTENT(IN) :: materialVector(:) !<materialVector(materialIdx). The original material vector values to transform.
+    REAL(DP), INTENT(OUT) :: transformedVector(:) !<transformedVector(coordinateIdx). On exit, the vector transformed from material coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: numberOfDimensions,numberOfXi
+    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),tempVector(3)
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("CoordinateSystem_MaterialTransformVector1",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
+      & CALL FlagError("Geometry interpolated point metrics is not associated.",err,error,*999)
+    IF(geometricInterpPointMetrics%numberOfXDimensions/=geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="A different number of x and xi dimensions is not implemented. The number of x dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))// &
+        & " and the number of xi dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(materialVector,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the specified material vector of "// &
+        & TRIM(NumberToVString(SIZE(materialVector,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedVector,1)<geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="The size of the specified transformed vector of "// &
+        & TRIM(NumberToVString(SIZE(transformedVector,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(materialVector,1)/=SIZE(transformedVector,1)) THEN
+      localError="The size of the material vector of "// &
+        & TRIM(NumberToVString(SIZE(materialVector,1),"*",err,error))//" does not match the size of the transformed vector of "// &
+        & TRIM(NumberToVString(SIZE(transformedVector,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
+    numberOfXi=geometricInterpPointMetrics%numberOfXiDimensions
+    
+    !Calculate material coordinates
+    CALL CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
+      & dNudXi(1:numberOfDimensions,1:numberOfDimensions),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & err,error,*999)
+
+    !Transform the tensor from material coordinates according to the appropriate tensor transformation rule
+    SELECT CASE(vectorIndexType(1))
+    CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+      !Contravariant vector i.e., b^{i}=\delby{\xi^{i}}{\xi^{r}}\delby{\xi^{r}}{\nu^{a}}.a^{a}
+      CALL MatrixVectorProduct(dXidNu(1:numberOfXi,1:numberOfDimensions),materialVector(1:numberOfDimensions), &
+        & tempVector(1:numberOfXi),err,error,*999)
+      CALL MatrixVectorProduct(geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi),tempVector(1:numberOfXi), &
+        & transformedVector(1:numberOfDimensions),err,error,*999)
+    CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+      !Convariant vector i.e., b_{i}=\delby{\xi^{r}}{\xi^{i}}\delby{\nu^{a}}{\xi^{r}}.a_{a}
+      CALL MatrixTransposeVectorProduct(dNudXi(1:numberOfDimensions,1:numberOfXi),materialVector(1:numberOfDimensions), &
+        & tempVector(1:numberOfXi),err,error,*999)
+      CALL MatrixVectorProduct(geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi),tempVector(1:numberOfXi), &
+        & transformedVector(1:numberOfDimensions),err,error,*999)
+    CASE DEFAULT
+      localError="The vector index type of "//TRIM(NumberToVString(vectorIndexType(1),"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+     
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material vector transformation:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X  = ",numberOfDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi = ",numberOfXi,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Vector index type = ",vectorIndexType(1),err,error,*999)      
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material Vector:",err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,numberOfDimensions, &
+        & numberOfDimensions,materialVector,'("    mv :",3(X,E13.6))','(8X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed vector:",err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,numberOfDimensions, &
+        & numberOfDimensions,transformedVector,'("    tv :",3(X,E13.6))','(8X,3(X,E13.6))',err,error,*999)
+    ENDIF
+        
+    EXITS("CoordinateSystem_MaterialTransformVector1")
+    RETURN
+999 ERRORS("CoordinateSystem_MaterialTransformVector1",err,error)
+    EXITS("CoordinateSystem_MaterialTransformVector1")
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_MaterialTransformVector1
 
   !
   !================================================================================================================================

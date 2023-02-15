@@ -341,7 +341,7 @@ CONTAINS
         
         !Get the permeability tensor and density
 !!TODO: CHECK TENSOR TYPE OF PERMEABILITY TENSOR
-        CALL CoordinateSystem_MaterialTransformVoigtTensor2([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
+        CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
           & COORDINATE_CONTRAVARIANT_INDEX_TYPE],solidDependentInterpPointMetrics,fibreInterpPoint, &
           & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),sigma,err,error,*999)        
         density=materialsInterpPoint%values(NUMBER_OF_VOIGT(numberOfDimensions)+1,NO_PART_DERIV)

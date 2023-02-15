@@ -641,7 +641,7 @@ CONTAINS
     numberOfXiDimensions=geometricInterpPointMetrics%numberOfXiDimensions
     numberOfZDimensions=dependentInterpPointMetrics%numberOfXDimensions
 
-    CALL CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu, &
+    CALL CoordinateSystem_MaterialSystemCalculateOld(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu, &
       & dNudXi(1:numberOfXDimensions,1:numberOfXiDimensions),dXidNu(1:numberOfXiDimensions,1:numberOfXDimensions), &
       & err,error,*999)
     !F = dZ/dNu = dZ/dXi * dXi/dNu  (deformation gradient tensor, F)
@@ -1101,7 +1101,7 @@ CONTAINS
         & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
         !Form of constitutive model is:
-        ! WBar=c1*(I1Bar-3)+c2*(I2Bar-3) where I1Bar and I2Bar are the first and second invariants of CBar
+        ! WBar=c1*(I1Bar-2)+c2*(I2Bar-2) where I1Bar and I2Bar are the first and second invariants of CBar
 
         I1Bar=CBar(1,1)+CBar(2,2)
         tempTerm1=-2.0_DP*materialParameters(2)
@@ -9316,7 +9316,7 @@ CONTAINS
     numberOfXiDimensions=geometricInterpPointMetrics%numberOfXiDimensions
     numberOfZDimensions=dependentInterpPointMetrics%numberOfXDimensions
 
-    CALL CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu, &
+    CALL CoordinateSystem_MaterialSystemCalculateOld(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu, &
       & dNudXi(1:numberOfXDimensions,1:numberOfXiDimensions),dXidNu(1:numberOfXiDimensions,1:numberOfXDimensions), &
       & err,error,*999)
     !dZ/dNu = dZ/dXi * dXi/dNu  (deformation gradient tensor, F)
