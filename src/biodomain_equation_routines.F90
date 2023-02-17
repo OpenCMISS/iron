@@ -2993,15 +2993,15 @@ CONTAINS
             CALL FlagError(localError,err,error,*999)
           ENDIF
           !Calculate (intracellular) conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,uFibreInterpPoint, &
+          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+            & geometricInterpPointMetrics,uFibreInterpPoint, &
             & materialsInterpPoint%values(3:3+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),intraConductivity, &
             & err,error,*999)
           intraConductivity(1:numberOfXi,1:numberOfXi)=intraConductivity(1:numberOfXi,1:numberOfXi)/(am*cm)
           IF(extracellular) THEN
             !Calculate extracellular conductivity tensor
-            CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,vFibreInterpPoint, &
+            CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+              & geometricInterpPointMetrics,vFibreInterpPoint, &
               & materialsInterpPoint%values(3+NUMBER_OF_VOIGT(numberOfDimensions):2+2*NUMBER_OF_VOIGT(numberOfDimensions), &
               & NO_PART_DERIV),extraConductivity,err,error,*999)
           ENDIF

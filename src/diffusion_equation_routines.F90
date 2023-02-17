@@ -2610,13 +2610,13 @@ CONTAINS
           & EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE)
           bParam=uMaterialsInterpPoint%values(2,NO_PART_DERIV)
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
+          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+            & geometricInterpPointMetrics,fibreInterpPoint, &
             & uMaterialsInterpPoint%values(3:3+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
         CASE DEFAULT
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
+          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+            & geometricInterpPointMetrics,fibreInterpPoint, &
             & uMaterialsInterpPoint%values(2:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)  
         END SELECT
 
@@ -3482,8 +3482,8 @@ CONTAINS
         bParam=materialsInterpPoint%values(2,NO_PART_DERIV)
         cParam=materialsInterpPoint%values(3,NO_PART_DERIV)
         
-        CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-          & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
+        CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          & geometricInterpPointMetrics,fibreInterpPoint, &
           & materialsInterpPoint%values(4:4+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
         
         !Calculate jacobianGaussWeight.

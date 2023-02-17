@@ -93,13 +93,6 @@ MODULE CoordinateSystemAccessRoutines
   INTEGER(INTG), PARAMETER :: COORDINATE_JACOBIAN_AREA_TYPE=2 !<Area type Jacobian \see CoordinateRoutines_JacobianTypes,CoordinateRoutines
   INTEGER(INTG), PARAMETER :: COORDINATE_JACOBIAN_VOLUME_TYPE=3 !<Volume type Jacobian \see CoordinateRoutines_JacobianTypes,CoordinateRoutines
   !>@}
-  !> \addtogroup CoordinateRoutines_TensorIndexTypes OpenCMISS::Iron::CoordinateSystem::Constants::TensorIndexTypes
-  !> \see CoordinateRoutines
-  !> \brief The type (covariant or contravariant) of the tensor index.
-  !>@{
-  INTEGER(INTG), PARAMETER :: COORDINATE_CONTRAVARIANT_INDEX_TYPE=1 !<Contravariant tensor indes \see CoordinateRoutines_TensorIndexTypes,CoordinateRoutines
-  INTEGER(INTG), PARAMETER :: COORDINATE_COVARIANT_INDEX_TYPE=2 !<Line type Jacobian \see CoordinateRoutines_TensorIndexTypes,CoordinateRoutines
-  !>@}
   !>@}
   
   !Module types
@@ -123,8 +116,6 @@ MODULE CoordinateSystemAccessRoutines
   
   PUBLIC COORDINATE_JACOBIAN_NO_TYPE,COORDINATE_JACOBIAN_LINE_TYPE,COORDINATE_JACOBIAN_AREA_TYPE,COORDINATE_JACOBIAN_VOLUME_TYPE
 
-  PUBLIC COORDINATE_CONTRAVARIANT_INDEX_TYPE,COORDINATE_COVARIANT_INDEX_TYPE
-  
   PUBLIC COORDINATE_SYSTEM_TYPE_STRING
   
   PUBLIC CoordinateSystem_AssertIsFinished,CoordinateSystem_AssertNotFinished
@@ -133,7 +124,7 @@ MODULE CoordinateSystemAccessRoutines
   
   PUBLIC CoordinateSystem_DimensionGet
 
- PUBLIC CoordinateSystem_FocusGet
+  PUBLIC CoordinateSystem_FocusGet
 
   PUBLIC CoordinateSystem_Get
 

@@ -2016,12 +2016,12 @@ CONTAINS
             & err,error,*999)  
           IF(esSpecification(3)==EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE) THEN
             aParam=materialsInterpPoint%values(1,NO_PART_DERIV)
-            CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
+            CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+              & geometricInterpPointMetrics,fibreInterpPoint, &
               & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
           ELSE
-            CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
+            CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+              & geometricInterpPointMetrics,fibreInterpPoint, &
               & materialsInterpPoint%values(2:1+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
           ENDIF
         CASE(EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE,EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE, &
@@ -2067,11 +2067,11 @@ CONTAINS
           IF(ASSOCIATED(fibreField)) &
             & CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
             & err,error,*999)
-          CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
+          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+            & geometricInterpPointMetrics,fibreInterpPoint, &
             & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),intraConductivity,err,error,*999)
-          CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
+          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+            & geometricInterpPointMetrics,fibreInterpPoint, &
             & materialsInterpPoint%values(NUMBER_OF_VOIGT(numberOfDimensions)+1: &
             & 2*NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),extraConductivity,err,error,*999)
           conductivity(1:numberOfXi,1:numberOfXi)=intraConductivity(1:numberOfXi,1:numberOfXi)+ &
@@ -2956,8 +2956,8 @@ CONTAINS
         aParam=materialsInterpPoint%values(1,NO_PART_DERIV)
         bParam=materialsInterpPoint%values(2,NO_PART_DERIV)
         
-        CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-          & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
+        CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          & geometricInterpPointMetrics,fibreInterpPoint, &
           & materialsInterpPoint%values(3:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)        
         
         !Calculate jacobianGaussWeight.      

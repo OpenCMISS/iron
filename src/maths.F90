@@ -348,12 +348,30 @@ MODULE Maths
     MODULE PROCEDURE TransposeMatrixDP
   END INTERFACE MatrixTranspose
 
+  !>Converts a tensor to a Voigt representation
+  INTERFACE TensorToVoigt
+    MODULE PROCEDURE TensorToVoigt2SP
+    MODULE PROCEDURE TensorToVoigt2DP
+    MODULE PROCEDURE TensorToVoigt4SP
+    MODULE PROCEDURE TensorToVoigt4DP
+  END INTERFACE TensorToVoigt
+
   !>Calculates and returns the unimodular form of a matrix/tensor
   INTERFACE Unimodular
     MODULE PROCEDURE UnimodularMatrixSP
     MODULE PROCEDURE UnimodularMatrixDP
   END INTERFACE Unimodular
   
+  !>Converts a Voigt representation to a tensor
+  INTERFACE VoigtToTensor
+    MODULE PROCEDURE VoigtToTensor2SP0
+    MODULE PROCEDURE VoigtToTensor2SP1
+    MODULE PROCEDURE VoigtToTensor2DP0
+    MODULE PROCEDURE VoigtToTensor2DP1
+    MODULE PROCEDURE VoigtToTensor4SP
+    MODULE PROCEDURE VoigtToTensor4DP
+  END INTERFACE VoigtToTensor
+
   !>Zeros a matrix
   INTERFACE ZeroMatrix
     MODULE PROCEDURE ZeroMatrixSP
@@ -436,9 +454,13 @@ MODULE Maths
 
   PUBLIC TensorProduct
 
+  PUBLIC TensorToVoigt
+
   PUBLIC Trace
 
   PUBLIC Unimodular
+
+  PUBLIC VoigtToTensor
 
   PUBLIC ZeroMatrix
   
@@ -4751,6 +4773,854 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Converts a single precision second order tensor into a Voigt matrix form of the tensor. 
+  SUBROUTINE TensorToVoigt2SP(n,tensorIndexTypes,A,AV,err,error,*)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The index type of the rankIdx'th rank of the second order tensor \see Constants_TensorIndexTypes
+    REAL(SP), INTENT(IN) :: A(:,:) !<A(iIdx,jIdx). The second order tensor to convert to Voigt form.
+    
+    REAL(SP), INTENT(OUT) :: AV(:) !<AV(voigtIdx). On exit, the Voigt form of the second order tensor.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("TensorToVoigt2SP",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(n<1.OR.n>3) THEN
+      localError="The specified number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number of dimensions should be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(tensorIndexTypes,1)<2) THEN
+      localError="The size of the tensor index types array of "// &
+        & TRIM(NumberToVString(SIZE(tensorIndexTypes,1),"*",err,error))// &
+        & " is too small. The size should be >= 2 for a second order tensor."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,1)<n) THEN
+      localError="The size of the first index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,1),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,2)<n) THEN
+      localError="The size of the second index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,2),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,1)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,1),"*",err,error))// &
+        & " is too small for a second order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the Voigt array should be >= "//TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    SELECT CASE(n)
+    CASE(1)
+      AV(1)=A(VOIGT_TO_TENSOR1(1,1),VOIGT_TO_TENSOR1(2,1))
+    CASE(2)
+      AV(1)=A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,1))
+      AV(2)=A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,2))
+      SELECT CASE(tensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (contravariant,contravariant)
+          AV(3)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (contravariant,covariant). Don't apply any correction factors to mixed second order tensors.
+          AV(3)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (covariant,contravariant). Don't apply any correction factors to mixed second order tensors.
+          AV(3)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (covariant,covariant)
+          AV(3)=2.0_SP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(3)
+      AV(1)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,1))
+      AV(2)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,2))
+      AV(3)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,3))
+      SELECT CASE(tensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (contravariant,contravariant)
+          AV(4)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (contravariant,covariant). Don't apply any correction factors to mixed second order tensors.
+          AV(4)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (covariant,contravariant). Don't apply any correction factors to mixed second order tensors.
+          AV(4)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (covariant,covariant)
+          AV(4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT    
+
+    EXITS("TensorToVoigt2SP")
+    RETURN
+999 ERRORSEXITS("TensorToVoigt2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TensorToVoigt2SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a double precision second order tensor into a Voigt matrix form of the tensor. 
+  SUBROUTINE TensorToVoigt2DP(n,tensorIndexTypes,A,AV,err,error,*)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The index type of the rankIdx'th rank of the second order tensor \see Constants_TensorIndexTypes
+    REAL(DP), INTENT(IN) :: A(:,:) !<A(iIdx,jIdx). The second order tensor to convert to Voigt form.
+    
+    REAL(DP), INTENT(OUT) :: AV(:) !<AV(voigtIdx). On exit, the Voigt form of the second order tensor.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("TensorToVoigt2DP",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(n<1.OR.n>3) THEN
+      localError="The specified number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number of dimensions should be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(tensorIndexTypes,1)<2) THEN
+      localError="The size of the tensor index types array of "// &
+        & TRIM(NumberToVString(SIZE(tensorIndexTypes,1),"*",err,error))// &
+        & " is too small. The size should be >= 2 for a second order tensor."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,1)<n) THEN
+      localError="The size of the first index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,1),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,2)<n) THEN
+      localError="The size of the second index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,2),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,1)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,1),"*",err,error))// &
+        & " is too small for a second order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the Voigt array should be >= "//TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    SELECT CASE(n)
+    CASE(1)
+      AV(1)=A(VOIGT_TO_TENSOR1(1,1),VOIGT_TO_TENSOR1(2,1))
+    CASE(2)
+      AV(1)=A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,1))
+      AV(2)=A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,2))
+      SELECT CASE(tensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (contravariant,contravariant)
+          AV(3)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (contravariant,covariant). Don't apply any correction factors to mixed second order tensors.
+          AV(3)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (covariant,contravariant). Don't apply any correction factors to mixed second order tensors.
+          AV(3)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (covariant,covariant)
+          AV(3)=2.0_DP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(3)
+      AV(1)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,1))
+      AV(2)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,2))
+      AV(3)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,3))
+      SELECT CASE(tensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (contravariant,contravariant)
+          AV(4)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (contravariant,covariant). Don't apply any correction factors to mixed second order tensors.
+          AV(4)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (covariant,contravariant). Don't apply any correction factors to mixed second order tensors.
+          AV(4)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (covariant,covariant)
+          AV(4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT    
+
+    EXITS("TensorToVoigt2DP")
+    RETURN
+999 ERRORSEXITS("TensorToVoigt2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TensorToVoigt2DP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a single precision fourth order tensor into a Voigt matrix form of the tensor. 
+  SUBROUTINE TensorToVoigt4SP(n,tensorIndexTypes,A,AV,err,error,*)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The index type of the rankIdx'th rank of the fourth order tensor \see Constants_TensorIndexTypes
+    REAL(SP), INTENT(IN) :: A(:,:,:,:) !<A(iIdx,jIdx,kIdx,lIdx). The fourth order tensor to convert to Voigt form.
+    
+    REAL(SP), INTENT(OUT) :: AV(:,:) !<AV(voigtIdx,voigtIdx). On exit, the Voigt form of the fourth order tensor.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("TensorToVoigt4SP",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(n<1.OR.n>3) THEN
+      localError="The specified number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number of dimensions should be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(tensorIndexTypes,1)<4) THEN
+      localError="The size of the tensor index types array of "// &
+        & TRIM(NumberToVString(SIZE(tensorIndexTypes,1),"*",err,error))// &
+        & " is too small. The size should be >= 4 for a fourth order tensor."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,1)<n) THEN
+      localError="The size of the first index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,1),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,2)<n) THEN
+      localError="The size of the second index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,2),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,3)<n) THEN
+      localError="The size of the third index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,3),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,4)<n) THEN
+      localError="The size of the fourth index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,4),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,1)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the first index of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,1),"*",err,error))// &
+        & " is too small for a fourth order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the Voigt array should be >= "//TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,2)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the second index of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,2),"*",err,error))// &
+        & " is too small for a fourth order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the Voigt array should be >= "//TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    SELECT CASE(n)
+    CASE(1)
+      AV(1,1)=A(VOIGT_TO_TENSOR1(1,1),VOIGT_TO_TENSOR1(1,1),VOIGT_TO_TENSOR1(2,1),VOIGT_TO_TENSOR1(2,1))
+    CASE(2)
+      AV(1,1)=A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+      AV(2,1)=A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+      AV(1,2)=A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+      AV(2,2)=A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+      SELECT CASE(tensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (contravariant,contravariant)
+          AV(3,1)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+          AV(3,2)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+          AV(1,3)=A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(2,3)=A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(3,3)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (contravariant,covariant).
+          AV(3,1)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+          AV(3,2)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+          AV(1,3)=2.0_SP*A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(2,3)=2.0_SP*A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(3,3)=2.0_SP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (covariant,contravariant). Don't apply any correction factors to mixed second order tensors.
+          AV(3,1)=2.0_SP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+          AV(3,2)=2.0_SP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+          AV(1,3)=A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(2,3)=A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(3,3)=2.0_SP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (covariant,covariant)
+          AV(3,1)=2.0_SP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+          AV(3,2)=2.0_SP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+          AV(1,3)=2.0_SP*A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(2,3)=2.0_SP*A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(3,3)=4.0_SP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(3)
+      AV(1,1)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+      AV(2,1)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+      AV(3,1)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+      AV(1,2)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+      AV(2,2)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+      AV(3,2)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+      AV(1,3)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+      AV(2,3)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+      AV(3,3)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+      SELECT CASE(tensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (contravariant,contravariant)
+          AV(4,1)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(5,1)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(6,1)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(4,2)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(5,2)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(6,2)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(4,3)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(5,3)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(6,3)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(1,4)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(2,4)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(3,4)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(4,4)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5,4)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(6,4)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(1,5)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(2,5)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(3,5)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(4,5)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(5,5)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6,5)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(1,6)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(2,6)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(3,6)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(4,6)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(5,6)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(6,6)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (contravariant,covariant). Don't apply any correction factors to mixed second order tensors.
+          AV(4,1)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(5,1)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(6,1)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(4,2)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(5,2)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(6,2)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(4,3)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(5,3)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(6,3)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(1,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(2,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(3,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(4,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(6,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(1,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(2,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(3,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(4,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(5,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(1,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(2,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(3,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(4,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(5,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(6,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (covariant,contravariant). Don't apply any correction factors to mixed second order tensors.
+          AV(4,1)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(5,1)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(6,1)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(4,2)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(5,2)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(6,2)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(4,3)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(5,3)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(6,3)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(1,4)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(2,4)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(3,4)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(4,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(6,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(1,5)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(2,5)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(3,5)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(4,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(5,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(1,6)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(2,6)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(3,6)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(4,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(5,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(6,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (covariant,covariant)
+          AV(4,1)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(5,1)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(6,1)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(4,2)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(5,2)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(6,2)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(4,3)=2.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(5,3)=2.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(6,3)=2.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(1,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(2,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(3,4)=2.0_SP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(4,4)=4.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5,4)=4.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(6,4)=4.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(1,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(2,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(3,5)=2.0_SP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(4,5)=4.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(5,5)=4.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6,5)=4.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(1,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(2,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(3,6)=2.0_SP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(4,6)=4.0_SP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(5,6)=4.0_SP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(6,6)=4.0_SP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT    
+
+    EXITS("TensorToVoigt4SP")
+    RETURN
+999 ERRORSEXITS("TensorToVoigt4SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TensorToVoigt4SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a double precision fourth order tensor into a Voigt matrix form of the tensor. 
+  SUBROUTINE TensorToVoigt4DP(n,tensorIndexTypes,A,AV,err,error,*)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The index type of the rankIdx'th rank of the fourth order tensor \see Constants_TensorIndexTypes
+    REAL(DP), INTENT(IN) :: A(:,:,:,:) !<A(iIdx,jIdx,kIdx,lIdx). The fourth order tensor to convert to Voigt form.
+    
+    REAL(DP), INTENT(OUT) :: AV(:,:) !<AV(voigtIdx,voigtIdx). On exit, the Voigt form of the fourth order tensor.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("TensorToVoigt4DP",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(n<1.OR.n>3) THEN
+      localError="The specified number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number of dimensions should be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(tensorIndexTypes,1)<4) THEN
+      localError="The size of the tensor index types array of "// &
+        & TRIM(NumberToVString(SIZE(tensorIndexTypes,1),"*",err,error))// &
+        & " is too small. The size should be >= 4 for a fourth order tensor."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,1)<n) THEN
+      localError="The size of the first index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,1),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,2)<n) THEN
+      localError="The size of the second index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,2),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,3)<n) THEN
+      localError="The size of the third index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,3),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,4)<n) THEN
+      localError="The size of the fourth index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,4),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,1)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the first index of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,1),"*",err,error))// &
+        & " is too small for a fourth order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the Voigt array should be >= "//TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,2)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the second index of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,2),"*",err,error))// &
+        & " is too small for a fourth order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the Voigt array should be >= "//TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    SELECT CASE(n)
+    CASE(1)
+      AV(1,1)=A(VOIGT_TO_TENSOR1(1,1),VOIGT_TO_TENSOR1(1,1),VOIGT_TO_TENSOR1(2,1),VOIGT_TO_TENSOR1(2,1))
+    CASE(2)
+      AV(1,1)=A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+      AV(2,1)=A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+      AV(1,2)=A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+      AV(2,2)=A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+      SELECT CASE(tensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (contravariant,contravariant)
+          AV(3,1)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+          AV(3,2)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+          AV(1,3)=A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(2,3)=A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(3,3)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (contravariant,covariant).
+          AV(3,1)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+          AV(3,2)=A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+          AV(1,3)=2.0_DP*A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(2,3)=2.0_DP*A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(3,3)=2.0_DP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (covariant,contravariant). Don't apply any correction factors to mixed second order tensors.
+          AV(3,1)=2.0_DP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+          AV(3,2)=2.0_DP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+          AV(1,3)=A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(2,3)=A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(3,3)=2.0_DP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (covariant,covariant)
+          AV(3,1)=2.0_DP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,1),VOIGT_TO_TENSOR2(2,1))
+          AV(3,2)=2.0_DP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,2),VOIGT_TO_TENSOR2(2,2))
+          AV(1,3)=2.0_DP*A(VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(1,1),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(2,3)=2.0_DP*A(VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(1,2),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+          AV(3,3)=4.0_DP*A(VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(1,3),VOIGT_TO_TENSOR2(2,3),VOIGT_TO_TENSOR2(2,3))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(3)
+      AV(1,1)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+      AV(2,1)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+      AV(3,1)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+      AV(1,2)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+      AV(2,2)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+      AV(3,2)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+      AV(1,3)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+      AV(2,3)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+      AV(3,3)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+      SELECT CASE(tensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (contravariant,contravariant)
+          AV(4,1)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(5,1)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(6,1)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(4,2)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(5,2)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(6,2)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(4,3)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(5,3)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(6,3)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(1,4)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(2,4)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(3,4)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(4,4)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5,4)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(6,4)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(1,5)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(2,5)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(3,5)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(4,5)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(5,5)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6,5)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(1,6)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(2,6)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(3,6)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(4,6)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(5,6)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(6,6)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (contravariant,covariant). Don't apply any correction factors to mixed second order tensors.
+          AV(4,1)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(5,1)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(6,1)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(4,2)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(5,2)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(6,2)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(4,3)=A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(5,3)=A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(6,3)=A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(1,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(2,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(3,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(4,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(6,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(1,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(2,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(3,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(4,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(5,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(1,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(2,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(3,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(4,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(5,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(6,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Tensor is (covariant,contravariant). Don't apply any correction factors to mixed second order tensors.
+          AV(4,1)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(5,1)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(6,1)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(4,2)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(5,2)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(6,2)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(4,3)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(5,3)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(6,3)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(1,4)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(2,4)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(3,4)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(4,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(6,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(1,5)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(2,5)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(3,5)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(4,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(5,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(1,6)=A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(2,6)=A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(3,6)=A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(4,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(5,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(6,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Tensor is (covariant,covariant)
+          AV(4,1)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(5,1)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(6,1)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,1),VOIGT_TO_TENSOR3(2,1))
+          AV(4,2)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(5,2)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(6,2)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,2),VOIGT_TO_TENSOR3(2,2))
+          AV(4,3)=2.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(5,3)=2.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(6,3)=2.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,3),VOIGT_TO_TENSOR3(2,3))
+          AV(1,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(2,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(3,4)=2.0_DP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(4,4)=4.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(5,4)=4.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(6,4)=4.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,4),VOIGT_TO_TENSOR3(2,4))
+          AV(1,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(2,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(3,5)=2.0_DP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(4,5)=4.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(5,5)=4.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(6,5)=4.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,5),VOIGT_TO_TENSOR3(2,5))
+          AV(1,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(1,1),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(2,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(1,2),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(3,6)=2.0_DP*A(VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(1,3),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(4,6)=4.0_DP*A(VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(1,4),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(5,6)=4.0_DP*A(VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(1,5),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+          AV(6,6)=4.0_DP*A(VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(1,6),VOIGT_TO_TENSOR3(2,6),VOIGT_TO_TENSOR3(2,6))
+        CASE DEFAULT
+          localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT    
+
+    EXITS("TensorToVoigt4DP")
+    RETURN
+999 ERRORSEXITS("TensorToVoigt4DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TensorToVoigt4DP
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the trace of an integer matrix A.
   SUBROUTINE TraceIntg(A,traceA,err,error,*)
   
@@ -5094,6 +5964,1246 @@ CONTAINS
     
   END SUBROUTINE UnimodularMatrixDP
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a Voigt representation of a single precision second order tensor into a matrix form of the tensor. \todo Think about Voigt scale factors.
+  SUBROUTINE VoigtToTensor2SP0(n,voigtTensorIndexType,AV,A,err,error,*)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: voigtTensorIndexType !<The index type of the Voigt second order tensor \see Constants_TensorIndexTypes
+    REAL(SP), INTENT(IN) :: AV(:) !<AV(voigtIdx). The second order tensor in Voigt form to convert
+    REAL(SP), INTENT(OUT) :: A(:,:) !<A(iIdx,jIdx). On exit, the second order tensor converted from Voigt form.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("VoigtToTensor2SP0",err,error,*999)
+
+    CALL VoigtToTensor2SP1(n,[voigtTensorIndexType],AV,A,err,error,*999)
+
+    EXITS("VoigtToTensor2SP0")
+    RETURN
+999 ERRORSEXITS("VoigtToTensor2SP0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE VoigtToTensor2SP0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a Voigt representation of a single precision second order tensor into a matrix form of the tensor.
+  SUBROUTINE VoigtToTensor2SP1(n,voigtTensorIndexTypes,AV,A,err,error,*)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: voigtTensorIndexTypes(:) !<The index type of the Voigt second order tensor \see Constants_TensorIndexTypes
+    REAL(SP), INTENT(IN) :: AV(:) !<AV(voigtIdx). The second order tensor in Voigt form to convert
+    REAL(SP), INTENT(OUT) :: A(:,:) !<A(iIdx,jIdx). On exit, the second order tensor converted from Voigt form.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("VoigtToTensor2SP1",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(n<1.OR.n>3) THEN
+      localError="The specified number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number of dimensions should be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(voigtTensorIndexTypes,1)<1) THEN
+      localError="The size of the Voigt tensor index types array of "// &
+        & TRIM(NumberToVString(SIZE(voigtTensorIndexTypes,1),"*",err,error))// &
+        & " is too small. The size should be >= 1 for a second order Voigt array."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,1)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,1),"*",err,error))// &
+        & " is too small for a second order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the Voigt array should be >= "//TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,1)<n) THEN
+      localError="The size of the first index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,1),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,2)<n) THEN
+      localError="The size of the second index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,2),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    SELECT CASE(n)
+    CASE(1)
+      A(1,1)=AV(TENSOR_TO_VOIGT1(1,1))
+    CASE(2)
+      A(1,1)=AV(TENSOR_TO_VOIGT2(1,1))
+      A(2,2)=AV(TENSOR_TO_VOIGT2(2,2))
+      SELECT CASE(voigtTensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        A(2,1)=AV(TENSOR_TO_VOIGT2(2,1))
+        A(1,2)=AV(TENSOR_TO_VOIGT2(1,2))
+      CASE(TENSOR_COVARIANT_INDEX)
+        A(2,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,1))
+        A(1,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,2))
+      CASE DEFAULT
+        localError="The Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(3)
+      A(1,1)=AV(TENSOR_TO_VOIGT3(1,1))
+      A(2,2)=AV(TENSOR_TO_VOIGT3(2,2))
+      A(3,3)=AV(TENSOR_TO_VOIGT3(3,3))
+      SELECT CASE(voigtTensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        A(2,1)=AV(TENSOR_TO_VOIGT3(2,1))
+        A(3,1)=AV(TENSOR_TO_VOIGT3(3,1))
+        A(1,2)=AV(TENSOR_TO_VOIGT3(1,2))
+        A(3,2)=AV(TENSOR_TO_VOIGT3(3,2))
+        A(1,3)=AV(TENSOR_TO_VOIGT3(1,3))
+        A(2,3)=AV(TENSOR_TO_VOIGT3(2,3))
+      CASE(TENSOR_COVARIANT_INDEX)
+        A(2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1))
+        A(3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1))
+        A(1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2))
+        A(3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2))
+        A(1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3))
+        A(2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3))
+      CASE DEFAULT
+        localError="The Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT    
+
+    EXITS("VoigtToTensor2SP1")
+    RETURN
+999 ERRORSEXITS("VoigtToTensor2SP1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE VoigtToTensor2SP1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a Voigt representation of a double precision second order tensor into a matrix form of the tensor. \todo Think about Voigt scale factors.
+  SUBROUTINE VoigtToTensor2DP0(n,voigtTensorIndexType,AV,A,err,error,*)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: voigtTensorIndexType !<The index type of the Voigt second order tensor \see Constants_TensorIndexTypes
+    REAL(DP), INTENT(IN) :: AV(:) !<AV(voigtIdx). The second order tensor in Voigt form to convert
+    REAL(DP), INTENT(OUT) :: A(:,:) !<A(iIdx,jIdx). On exit, the second order tensor converted from Voigt form.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("VoigtToTensor2DP0",err,error,*999)
+
+    CALL VoigtToTensor2DP1(n,[voigtTensorIndexType],AV,A,err,error,*999)
+
+    EXITS("VoigtToTensor2DP0")
+    RETURN
+999 ERRORSEXITS("VoigtToTensor2DP0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE VoigtToTensor2DP0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a Voigt representation of a double precision second order tensor into a matrix form of the tensor.
+  SUBROUTINE VoigtToTensor2DP1(n,voigtTensorIndexTypes,AV,A,err,error,*)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: voigtTensorIndexTypes(:) !<The index type of the Voigt second order tensor \see Constants_TensorIndexTypes
+    REAL(DP), INTENT(IN) :: AV(:) !<AV(voigtIdx). The second order tensor in Voigt form to convert
+    REAL(DP), INTENT(OUT) :: A(:,:) !<A(iIdx,jIdx). On exit, the second order tensor converted from Voigt form.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("VoigtToTensor2DP1",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(n<1.OR.n>3) THEN
+      localError="The specified number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number of dimensions should be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(voigtTensorIndexTypes,1)<1) THEN
+      localError="The size of the Voigt tensor index types array of "// &
+        & TRIM(NumberToVString(SIZE(voigtTensorIndexTypes,1),"*",err,error))// &
+        & " is too small. The size should be >= 1 for a second order Voigt array."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,1)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,1),"*",err,error))// &
+        & " is too small for a second order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the Voigt array should be >= "//TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,1)<n) THEN
+      localError="The size of the first index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,1),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,2)<n) THEN
+      localError="The size of the second index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,2),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    SELECT CASE(n)
+    CASE(1)
+      A(1,1)=AV(TENSOR_TO_VOIGT1(1,1))
+    CASE(2)
+      A(1,1)=AV(TENSOR_TO_VOIGT2(1,1))
+      A(2,2)=AV(TENSOR_TO_VOIGT2(2,2))
+      SELECT CASE(voigtTensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        A(2,1)=AV(TENSOR_TO_VOIGT2(2,1))
+        A(1,2)=AV(TENSOR_TO_VOIGT2(1,2))
+      CASE(TENSOR_COVARIANT_INDEX)
+        A(2,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,1))
+        A(1,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,2))
+      CASE DEFAULT
+        localError="The Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(3)
+      A(1,1)=AV(TENSOR_TO_VOIGT3(1,1))
+      A(2,2)=AV(TENSOR_TO_VOIGT3(2,2))
+      A(3,3)=AV(TENSOR_TO_VOIGT3(3,3))
+      SELECT CASE(voigtTensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        A(2,1)=AV(TENSOR_TO_VOIGT3(2,1))
+        A(3,1)=AV(TENSOR_TO_VOIGT3(3,1))
+        A(1,2)=AV(TENSOR_TO_VOIGT3(1,2))
+        A(3,2)=AV(TENSOR_TO_VOIGT3(3,2))
+        A(1,3)=AV(TENSOR_TO_VOIGT3(1,3))
+        A(2,3)=AV(TENSOR_TO_VOIGT3(2,3))
+      CASE(TENSOR_COVARIANT_INDEX)
+        A(2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1))
+        A(3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1))
+        A(1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2))
+        A(3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2))
+        A(1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3))
+        A(2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3))
+      CASE DEFAULT
+        localError="The Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT    
+
+    EXITS("VoigtToTensor2DP1")
+    RETURN
+999 ERRORSEXITS("VoigtToTensor2DP1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE VoigtToTensor2DP1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a Voigt representation of a single precision fourth order tensor into a matrix form of the tensor.
+  SUBROUTINE VoigtToTensor4SP(n,voigtTensorIndexTypes,AV,A,err,error,*)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: voigtTensorIndexTypes(:) !<The index types of the Voigt fourth order tensor \see Constants_TensorIndexTypes
+    REAL(SP), INTENT(IN) :: AV(:,:) !<AV(voigtIdx,voigtIdx). The fourth order tensor in Voigt form to convert
+    REAL(SP), INTENT(OUT) :: A(:,:,:,:) !<A(iIdx,jIdx,kIdx,lIdx). On exit, the fourth order tensor converted from Voigt form.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("VoigtToTensor4SP",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(n<1.OR.n>3) THEN
+      localError="The specified number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number of dimensions should be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(voigtTensorIndexTypes,1)<2) THEN
+      localError="The size of the Voigt tensor index types array of "// &
+        & TRIM(NumberToVString(SIZE(voigtTensorIndexTypes,1),"*",err,error))// &
+        & " is too small. The size should be >= 2 for a fourth order Voigt array."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,1)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the first index of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,1),"*",err,error))// &
+        & " is too small for a fourth order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the first index of the Voigt array should be >= "// &
+        & TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,2)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the second index of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,2),"*",err,error))// &
+        & " is too small for a fourth order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the second index of the Voigt array should be >= "// &
+        & TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,1)<n) THEN
+      localError="The size of the first index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,1),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,2)<n) THEN
+      localError="The size of the second index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,2),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,3)<n) THEN
+      localError="The size of the third index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,3),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,4)<n) THEN
+      localError="The size of the fourth index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,4),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    SELECT CASE(n)
+    CASE(1)
+      A(1,1,1,1)=AV(TENSOR_TO_VOIGT1(1,1),TENSOR_TO_VOIGT1(1,1))
+    CASE(2)
+      A(1,1,1,1)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))
+      A(2,2,1,1)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))
+      A(1,1,2,2)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))
+      A(2,2,2,2)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))     
+      SELECT CASE(voigtTensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(voigtTensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Voigt array is (contravariant,contravariant)
+          A(2,1,1,1)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,1))
+          A(1,2,1,1)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))
+          A(1,1,2,1)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,1))
+          A(2,1,2,1)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,1))
+          A(1,2,2,1)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,1))
+          A(2,2,2,1)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,1))
+          A(1,1,1,2)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,1,2)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,2))
+          A(1,2,1,2)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,2,1,2)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,2,2)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,2))
+          A(1,2,2,2)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))          
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Voigt array is (contravariant,covariant)
+          A(2,1,1,1)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,1))
+          A(1,2,1,1)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))
+          A(1,1,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,1))
+          A(2,1,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,1))
+          A(1,2,2,1)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,1))
+          A(2,2,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,1))
+          A(1,1,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,1,2)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,2))
+          A(1,2,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,2,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,2,2)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,2))
+          A(1,2,2,2)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))          
+        CASE DEFAULT
+          localError="The second Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(voigtTensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Voigt array is (covariant,contravariant)
+          A(2,1,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,1))
+          A(1,2,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))
+          A(1,1,2,1)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,1))
+          A(2,1,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,1))
+          A(1,2,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,1))
+          A(2,2,2,1)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,1))
+          A(1,1,1,2)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,2))
+          A(1,2,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,2,1,2)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,2))
+          A(1,2,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))          
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Voigt array is (covariant,covariant)
+          A(2,1,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,1))
+          A(1,2,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))
+          A(1,1,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,1))
+          A(2,1,2,1)=0.25_SP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,1))
+          A(1,2,2,1)=0.25_SP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,1))
+          A(2,2,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,1))
+          A(1,1,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,1,2)=0.25_SP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,2))
+          A(1,2,1,2)=0.25_SP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,2,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,2))
+          A(1,2,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))          
+        CASE DEFAULT
+          localError="The second Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(3)
+      A(1,1,1,1)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))
+      A(2,2,1,1)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))
+      A(3,3,1,1)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))
+      A(1,1,2,2)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))
+      A(2,2,2,2)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))
+      A(3,3,2,2)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))
+      A(1,1,3,3)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))
+      A(2,2,3,3)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))
+      A(3,3,3,3)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+      SELECT CASE(voigtTensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(voigtTensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Voigt array is (contravariant,contravariant)
+          A(2,1,1,1)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,1))
+          A(3,1,1,1)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,1))
+          A(1,2,1,1)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))
+          A(3,2,1,1)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,1))
+          A(1,3,1,1)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))
+          A(2,3,1,1)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))
+          A(1,1,2,1)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,1))
+          A(2,1,2,1)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,1))
+          A(3,1,2,1)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,1))
+          A(1,2,2,1)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,1))
+          A(2,2,2,1)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,1))
+          A(3,2,2,1)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,1))
+          A(1,3,2,1)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,1))
+          A(2,3,2,1)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,1))
+          A(3,3,2,1)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,1))
+          A(1,1,3,1)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,1))
+          A(2,1,3,1)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,1))
+          A(3,1,3,1)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,1))
+          A(1,2,3,1)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,1))
+          A(2,2,3,1)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,1))
+          A(3,2,3,1)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,1))
+          A(1,3,3,1)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,1))
+          A(2,3,3,1)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,1))
+          A(3,3,3,1)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,1))
+          A(1,1,1,2)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,1,2)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,2))
+          A(3,1,1,2)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,2))
+          A(1,2,1,2)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))
+          A(2,2,1,2)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))
+          A(3,2,1,2)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,2))
+          A(1,3,1,2)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,3,1,2)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
+          A(3,3,1,2)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,2,2)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,2))
+          A(3,1,2,2)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,2))
+          A(1,2,2,2)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))
+          A(3,2,2,2)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,2))
+          A(1,3,2,2)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))
+          A(2,3,2,2)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))
+          A(1,1,3,2)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,2))
+          A(2,1,3,2)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,2))
+          A(3,1,3,2)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,2))
+          A(1,2,3,2)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,2))
+          A(2,2,3,2)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,2))
+          A(3,2,3,2)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,2))
+          A(1,3,3,2)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,2))
+          A(2,3,3,2)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,2))
+          A(3,3,3,2)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,2))
+          A(1,1,1,3)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))
+          A(2,1,1,3)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,3))
+          A(3,1,1,3)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,3))
+          A(1,2,1,3)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))
+          A(2,2,1,3)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))
+          A(3,2,1,3)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,3))
+          A(1,3,1,3)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
+          A(2,3,1,3)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
+          A(3,3,1,3)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))
+          A(1,1,2,3)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,2,3)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,3))
+          A(3,1,2,3)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,3))
+          A(1,2,2,3)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+          A(2,2,2,3)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))
+          A(3,2,2,3)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,3))
+          A(1,3,2,3)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,3,2,3)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
+          A(3,3,2,3)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,3,3)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,3))
+          A(3,1,3,3)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,3))
+          A(1,2,3,3)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+          A(3,2,3,3)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,3))
+          A(1,3,3,3)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+          A(2,3,3,3)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Voigt array is (contravariant,covariant)
+          A(2,1,1,1)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,1))
+          A(3,1,1,1)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,1))
+          A(1,2,1,1)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))
+          A(3,2,1,1)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,1))
+          A(1,3,1,1)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))
+          A(2,3,1,1)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))
+          A(1,1,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,1))
+          A(2,1,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,1))
+          A(3,1,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,1))
+          A(1,2,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,1))
+          A(2,2,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,1))
+          A(3,2,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,1))
+          A(1,3,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,1))
+          A(2,3,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,1))
+          A(3,3,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,1))
+          A(1,1,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,1))
+          A(2,1,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,1))
+          A(3,1,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,1))
+          A(1,2,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,1))
+          A(2,2,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,1))
+          A(3,2,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,1))
+          A(1,3,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,1))
+          A(2,3,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,1))
+          A(3,3,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,1))
+          A(1,1,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,2))
+          A(3,1,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,2))
+          A(1,2,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))
+          A(2,2,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))
+          A(3,2,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,2))
+          A(1,3,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,3,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
+          A(3,3,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,2,2)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,2))
+          A(3,1,2,2)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,2))
+          A(1,2,2,2)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))
+          A(3,2,2,2)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,2))
+          A(1,3,2,2)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))
+          A(2,3,2,2)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))
+          A(1,1,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,2))
+          A(2,1,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,2))
+          A(3,1,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,2))
+          A(1,2,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,2))
+          A(2,2,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,2))
+          A(3,2,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,2))
+          A(1,3,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,2))
+          A(2,3,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,2))
+          A(3,3,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,2))
+          A(1,1,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))
+          A(2,1,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,3))
+          A(3,1,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,3))
+          A(1,2,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))
+          A(2,2,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))
+          A(3,2,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,3))
+          A(1,3,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
+          A(2,3,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
+          A(3,3,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))
+          A(1,1,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,3))
+          A(3,1,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,3))
+          A(1,2,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+          A(2,2,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))
+          A(3,2,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,3))
+          A(1,3,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,3,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
+          A(3,3,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,3,3)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,3))
+          A(3,1,3,3)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,3))
+          A(1,2,3,3)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+          A(3,2,3,3)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,3))
+          A(1,3,3,3)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+          A(2,3,3,3)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        CASE DEFAULT
+          localError="The second Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(voigtTensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Voigt array is (covariant,contravariant)
+          A(2,1,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,1))
+          A(3,1,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,1))
+          A(1,2,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))
+          A(3,2,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,1))
+          A(1,3,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))
+          A(2,3,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))
+          A(1,1,2,1)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,1))
+          A(2,1,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,1))
+          A(3,1,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,1))
+          A(1,2,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,1))
+          A(2,2,2,1)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,1))
+          A(3,2,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,1))
+          A(1,3,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,1))
+          A(2,3,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,1))
+          A(3,3,2,1)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,1))
+          A(1,1,3,1)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,1))
+          A(2,1,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,1))
+          A(3,1,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,1))
+          A(1,2,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,1))
+          A(2,2,3,1)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,1))
+          A(3,2,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,1))
+          A(1,3,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,1))
+          A(2,3,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,1))
+          A(3,3,3,1)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,1))
+          A(1,1,1,2)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,2))
+          A(3,1,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,2))
+          A(1,2,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))
+          A(2,2,1,2)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))
+          A(3,2,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,2))
+          A(1,3,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,3,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
+          A(3,3,1,2)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,2))
+          A(3,1,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,2))
+          A(1,2,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))
+          A(3,2,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,2))
+          A(1,3,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))
+          A(2,3,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))
+          A(1,1,3,2)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,2))
+          A(2,1,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,2))
+          A(3,1,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,2))
+          A(1,2,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,2))
+          A(2,2,3,2)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,2))
+          A(3,2,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,2))
+          A(1,3,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,2))
+          A(2,3,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,2))
+          A(3,3,3,2)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,2))
+          A(1,1,1,3)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))
+          A(2,1,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,3))
+          A(3,1,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,3))
+          A(1,2,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))
+          A(2,2,1,3)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))
+          A(3,2,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,3))
+          A(1,3,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
+          A(2,3,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
+          A(3,3,1,3)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))
+          A(1,1,2,3)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,3))
+          A(3,1,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,3))
+          A(1,2,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+          A(2,2,2,3)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))
+          A(3,2,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,3))
+          A(1,3,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,3,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
+          A(3,3,2,3)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,3))
+          A(3,1,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,3))
+          A(1,2,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+          A(3,2,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,3))
+          A(1,3,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+          A(2,3,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Voigt array is (covariant,covariant)
+          A(2,1,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,1))
+          A(3,1,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,1))
+          A(1,2,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))
+          A(3,2,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,1))
+          A(1,3,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))
+          A(2,3,1,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))
+          A(1,1,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,1))
+          A(2,1,2,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,1))
+          A(3,1,2,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,1))
+          A(1,2,2,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,1))
+          A(2,2,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,1))
+          A(3,2,2,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,1))
+          A(1,3,2,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,1))
+          A(2,3,2,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,1))
+          A(3,3,2,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,1))
+          A(1,1,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,1))
+          A(2,1,3,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,1))
+          A(3,1,3,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,1))
+          A(1,2,3,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,1))
+          A(2,2,3,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,1))
+          A(3,2,3,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,1))
+          A(1,3,3,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,1))
+          A(2,3,3,1)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,1))
+          A(3,3,3,1)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,1))
+          A(1,1,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,1,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,2))
+          A(3,1,1,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,2))
+          A(1,2,1,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))
+          A(2,2,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))
+          A(3,2,1,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,2))
+          A(1,3,1,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,3,1,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
+          A(3,3,1,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,2))
+          A(3,1,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,2))
+          A(1,2,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))
+          A(3,2,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,2))
+          A(1,3,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))
+          A(2,3,2,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))
+          A(1,1,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,2))
+          A(2,1,3,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,2))
+          A(3,1,3,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,2))
+          A(1,2,3,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,2))
+          A(2,2,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,2))
+          A(3,2,3,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,2))
+          A(1,3,3,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,2))
+          A(2,3,3,2)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,2))
+          A(3,3,3,2)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,2))
+          A(1,1,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))
+          A(2,1,1,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,3))
+          A(3,1,1,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,3))
+          A(1,2,1,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))
+          A(2,2,1,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))
+          A(3,2,1,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,3))
+          A(1,3,1,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
+          A(2,3,1,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
+          A(3,3,1,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))
+          A(1,1,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,2,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,3))
+          A(3,1,2,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,3))
+          A(1,2,2,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+          A(2,2,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))
+          A(3,2,2,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,3))
+          A(1,3,2,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,3,2,3)=0.25_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
+          A(3,3,2,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,3))
+          A(3,1,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,3))
+          A(1,2,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+          A(3,2,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,3))
+          A(1,3,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+          A(2,3,3,3)=0.5_SP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        CASE DEFAULT
+          localError="The second Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT    
+
+    EXITS("VoigtToTensor4SP")
+    RETURN
+999 ERRORSEXITS("VoigtToTensor4SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE VoigtToTensor4SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a Voigt representation of a double precision fourth order tensor into a matrix form of the tensor.
+  SUBROUTINE VoigtToTensor4DP(n,voigtTensorIndexTypes,AV,A,err,error,*)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: voigtTensorIndexTypes(:) !<The index types of the Voigt fourth order tensor \see Constants_TensorIndexTypes
+    REAL(DP), INTENT(IN) :: AV(:,:) !<AV(voigtIdx,voigtIdx). The fourth order tensor in Voigt form to convert
+    REAL(DP), INTENT(OUT) :: A(:,:,:,:) !<A(iIdx,jIdx,kIdx,lIdx). On exit, the fourth order tensor converted from Voigt form.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("VoigtToTensor4DP",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(n<1.OR.n>3) THEN
+      localError="The specified number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number of dimensions should be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(voigtTensorIndexTypes,1)<2) THEN
+      localError="The size of the Voigt tensor index types array of "// &
+        & TRIM(NumberToVString(SIZE(voigtTensorIndexTypes,1),"*",err,error))// &
+        & " is too small. The size should be >= 2 for a fourth order Voigt array."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,1)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the first index of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,1),"*",err,error))// &
+        & " is too small for a fourth order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the first index of the Voigt array should be >= "// &
+        & TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(AV,2)<NUMBER_OF_VOIGT(n)) THEN
+      localError="The size of the second index of the Voigt array of "//TRIM(NumberToVString(SIZE(AV,2),"*",err,error))// &
+        & " is too small for a fourth order Voigt array with "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " dimensions. The size of the second index of the Voigt array should be >= "// &
+        & TRIM(NumberToVString(NUMBER_OF_VOIGT(n),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,1)<n) THEN
+      localError="The size of the first index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,1),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,2)<n) THEN
+      localError="The size of the second index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,2),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,3)<n) THEN
+      localError="The size of the third index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,3),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,4)<n) THEN
+      localError="The size of the fourth index of the tensor matrix of "//TRIM(NumberToVString(SIZE(A,4),"*",err,error))// &
+        & " is too small. The size should be >= than the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    SELECT CASE(n)
+    CASE(1)
+      A(1,1,1,1)=AV(TENSOR_TO_VOIGT1(1,1),TENSOR_TO_VOIGT1(1,1))
+    CASE(2)
+      A(1,1,1,1)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))
+      A(2,2,1,1)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))
+      A(1,1,2,2)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))
+      A(2,2,2,2)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))     
+      SELECT CASE(voigtTensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(voigtTensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Voigt array is (contravariant,contravariant)
+          A(2,1,1,1)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,1))
+          A(1,2,1,1)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))
+          A(1,1,2,1)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,1))
+          A(2,1,2,1)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,1))
+          A(1,2,2,1)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,1))
+          A(2,2,2,1)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,1))
+          A(1,1,1,2)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,1,2)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,2))
+          A(1,2,1,2)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,2,1,2)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,2,2)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,2))
+          A(1,2,2,2)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))          
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Voigt array is (contravariant,covariant)
+          A(2,1,1,1)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,1))
+          A(1,2,1,1)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))
+          A(1,1,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,1))
+          A(2,1,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,1))
+          A(1,2,2,1)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,1))
+          A(2,2,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,1))
+          A(1,1,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,1,2)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,2))
+          A(1,2,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,2,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,2,2)=AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,2))
+          A(1,2,2,2)=AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))          
+        CASE DEFAULT
+          localError="The second Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(voigtTensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Voigt array is (covariant,contravariant)
+          A(2,1,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,1))
+          A(1,2,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))
+          A(1,1,2,1)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,1))
+          A(2,1,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,1))
+          A(1,2,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,1))
+          A(2,2,2,1)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,1))
+          A(1,1,1,2)=AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,2))
+          A(1,2,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,2,1,2)=AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,2))
+          A(1,2,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))          
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Voigt array is (covariant,covariant)
+          A(2,1,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,1))
+          A(1,2,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))
+          A(1,1,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,1))
+          A(2,1,2,1)=0.25_DP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,1))
+          A(1,2,2,1)=0.25_DP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,1))
+          A(2,2,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,1))
+          A(1,1,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,1,2)=0.25_DP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(1,2))
+          A(1,2,1,2)=0.25_DP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,2,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+          A(2,1,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(2,1),TENSOR_TO_VOIGT2(2,2))
+          A(1,2,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))          
+        CASE DEFAULT
+          localError="The second Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(3)
+      A(1,1,1,1)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))
+      A(2,2,1,1)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))
+      A(3,3,1,1)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))
+      A(1,1,2,2)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))
+      A(2,2,2,2)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))
+      A(3,3,2,2)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))
+      A(1,1,3,3)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))
+      A(2,2,3,3)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))
+      A(3,3,3,3)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+      SELECT CASE(voigtTensorIndexTypes(1))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(voigtTensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Voigt array is (contravariant,contravariant)
+          A(2,1,1,1)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,1))
+          A(3,1,1,1)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,1))
+          A(1,2,1,1)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))
+          A(3,2,1,1)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,1))
+          A(1,3,1,1)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))
+          A(2,3,1,1)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))
+          A(1,1,2,1)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,1))
+          A(2,1,2,1)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,1))
+          A(3,1,2,1)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,1))
+          A(1,2,2,1)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,1))
+          A(2,2,2,1)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,1))
+          A(3,2,2,1)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,1))
+          A(1,3,2,1)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,1))
+          A(2,3,2,1)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,1))
+          A(3,3,2,1)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,1))
+          A(1,1,3,1)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,1))
+          A(2,1,3,1)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,1))
+          A(3,1,3,1)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,1))
+          A(1,2,3,1)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,1))
+          A(2,2,3,1)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,1))
+          A(3,2,3,1)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,1))
+          A(1,3,3,1)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,1))
+          A(2,3,3,1)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,1))
+          A(3,3,3,1)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,1))
+          A(1,1,1,2)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,1,2)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,2))
+          A(3,1,1,2)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,2))
+          A(1,2,1,2)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))
+          A(2,2,1,2)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))
+          A(3,2,1,2)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,2))
+          A(1,3,1,2)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,3,1,2)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
+          A(3,3,1,2)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,2,2)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,2))
+          A(3,1,2,2)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,2))
+          A(1,2,2,2)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))
+          A(3,2,2,2)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,2))
+          A(1,3,2,2)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))
+          A(2,3,2,2)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))
+          A(1,1,3,2)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,2))
+          A(2,1,3,2)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,2))
+          A(3,1,3,2)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,2))
+          A(1,2,3,2)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,2))
+          A(2,2,3,2)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,2))
+          A(3,2,3,2)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,2))
+          A(1,3,3,2)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,2))
+          A(2,3,3,2)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,2))
+          A(3,3,3,2)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,2))
+          A(1,1,1,3)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))
+          A(2,1,1,3)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,3))
+          A(3,1,1,3)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,3))
+          A(1,2,1,3)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))
+          A(2,2,1,3)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))
+          A(3,2,1,3)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,3))
+          A(1,3,1,3)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
+          A(2,3,1,3)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
+          A(3,3,1,3)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))
+          A(1,1,2,3)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,2,3)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,3))
+          A(3,1,2,3)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,3))
+          A(1,2,2,3)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+          A(2,2,2,3)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))
+          A(3,2,2,3)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,3))
+          A(1,3,2,3)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,3,2,3)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
+          A(3,3,2,3)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,3,3)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,3))
+          A(3,1,3,3)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,3))
+          A(1,2,3,3)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+          A(3,2,3,3)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,3))
+          A(1,3,3,3)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+          A(2,3,3,3)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Voigt array is (contravariant,covariant)
+          A(2,1,1,1)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,1))
+          A(3,1,1,1)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,1))
+          A(1,2,1,1)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))
+          A(3,2,1,1)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,1))
+          A(1,3,1,1)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))
+          A(2,3,1,1)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))
+          A(1,1,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,1))
+          A(2,1,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,1))
+          A(3,1,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,1))
+          A(1,2,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,1))
+          A(2,2,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,1))
+          A(3,2,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,1))
+          A(1,3,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,1))
+          A(2,3,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,1))
+          A(3,3,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,1))
+          A(1,1,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,1))
+          A(2,1,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,1))
+          A(3,1,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,1))
+          A(1,2,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,1))
+          A(2,2,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,1))
+          A(3,2,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,1))
+          A(1,3,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,1))
+          A(2,3,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,1))
+          A(3,3,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,1))
+          A(1,1,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,2))
+          A(3,1,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,2))
+          A(1,2,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))
+          A(2,2,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))
+          A(3,2,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,2))
+          A(1,3,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,3,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
+          A(3,3,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,2,2)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,2))
+          A(3,1,2,2)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,2))
+          A(1,2,2,2)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))
+          A(3,2,2,2)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,2))
+          A(1,3,2,2)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))
+          A(2,3,2,2)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))
+          A(1,1,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,2))
+          A(2,1,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,2))
+          A(3,1,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,2))
+          A(1,2,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,2))
+          A(2,2,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,2))
+          A(3,2,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,2))
+          A(1,3,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,2))
+          A(2,3,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,2))
+          A(3,3,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,2))
+          A(1,1,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))
+          A(2,1,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,3))
+          A(3,1,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,3))
+          A(1,2,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))
+          A(2,2,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))
+          A(3,2,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,3))
+          A(1,3,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
+          A(2,3,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
+          A(3,3,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))
+          A(1,1,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,3))
+          A(3,1,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,3))
+          A(1,2,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+          A(2,2,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))
+          A(3,2,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,3))
+          A(1,3,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,3,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
+          A(3,3,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,3,3)=AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,3))
+          A(3,1,3,3)=AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,3))
+          A(1,2,3,3)=AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+          A(3,2,3,3)=AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,3))
+          A(1,3,3,3)=AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+          A(2,3,3,3)=AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        CASE DEFAULT
+          localError="The second Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(voigtTensorIndexTypes(2))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          !Voigt array is (covariant,contravariant)
+          A(2,1,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,1))
+          A(3,1,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,1))
+          A(1,2,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))
+          A(3,2,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,1))
+          A(1,3,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))
+          A(2,3,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))
+          A(1,1,2,1)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,1))
+          A(2,1,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,1))
+          A(3,1,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,1))
+          A(1,2,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,1))
+          A(2,2,2,1)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,1))
+          A(3,2,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,1))
+          A(1,3,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,1))
+          A(2,3,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,1))
+          A(3,3,2,1)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,1))
+          A(1,1,3,1)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,1))
+          A(2,1,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,1))
+          A(3,1,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,1))
+          A(1,2,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,1))
+          A(2,2,3,1)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,1))
+          A(3,2,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,1))
+          A(1,3,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,1))
+          A(2,3,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,1))
+          A(3,3,3,1)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,1))
+          A(1,1,1,2)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,2))
+          A(3,1,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,2))
+          A(1,2,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))
+          A(2,2,1,2)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))
+          A(3,2,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,2))
+          A(1,3,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,3,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
+          A(3,3,1,2)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,2))
+          A(3,1,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,2))
+          A(1,2,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))
+          A(3,2,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,2))
+          A(1,3,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))
+          A(2,3,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))
+          A(1,1,3,2)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,2))
+          A(2,1,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,2))
+          A(3,1,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,2))
+          A(1,2,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,2))
+          A(2,2,3,2)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,2))
+          A(3,2,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,2))
+          A(1,3,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,2))
+          A(2,3,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,2))
+          A(3,3,3,2)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,2))
+          A(1,1,1,3)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))
+          A(2,1,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,3))
+          A(3,1,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,3))
+          A(1,2,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))
+          A(2,2,1,3)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))
+          A(3,2,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,3))
+          A(1,3,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
+          A(2,3,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
+          A(3,3,1,3)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))
+          A(1,1,2,3)=AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,3))
+          A(3,1,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,3))
+          A(1,2,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+          A(2,2,2,3)=AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))
+          A(3,2,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,3))
+          A(1,3,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,3,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
+          A(3,3,2,3)=AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,3))
+          A(3,1,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,3))
+          A(1,2,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+          A(3,2,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,3))
+          A(1,3,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+          A(2,3,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        CASE(TENSOR_COVARIANT_INDEX)
+          !Voigt array is (covariant,covariant)
+          A(2,1,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,1))
+          A(3,1,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,1))
+          A(1,2,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))
+          A(3,2,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,1))
+          A(1,3,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))
+          A(2,3,1,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))
+          A(1,1,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,1))
+          A(2,1,2,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,1))
+          A(3,1,2,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,1))
+          A(1,2,2,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,1))
+          A(2,2,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,1))
+          A(3,2,2,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,1))
+          A(1,3,2,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,1))
+          A(2,3,2,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,1))
+          A(3,3,2,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,1))
+          A(1,1,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,1))
+          A(2,1,3,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,1))
+          A(3,1,3,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,1))
+          A(1,2,3,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,1))
+          A(2,2,3,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,1))
+          A(3,2,3,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,1))
+          A(1,3,3,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,1))
+          A(2,3,3,1)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,1))
+          A(3,3,3,1)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,1))
+          A(1,1,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,1,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,2))
+          A(3,1,1,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,2))
+          A(1,2,1,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))
+          A(2,2,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))
+          A(3,2,1,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,2))
+          A(1,3,1,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,3,1,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
+          A(3,3,1,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))
+          A(2,1,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,2))
+          A(3,1,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,2))
+          A(1,2,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))
+          A(3,2,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,2))
+          A(1,3,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))
+          A(2,3,2,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))
+          A(1,1,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,2))
+          A(2,1,3,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,2))
+          A(3,1,3,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,2))
+          A(1,2,3,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,2))
+          A(2,2,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,2))
+          A(3,2,3,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,2))
+          A(1,3,3,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,2))
+          A(2,3,3,2)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,2))
+          A(3,3,3,2)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,2))
+          A(1,1,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))
+          A(2,1,1,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(1,3))
+          A(3,1,1,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(1,3))
+          A(1,2,1,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))
+          A(2,2,1,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))
+          A(3,2,1,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(1,3))
+          A(1,3,1,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
+          A(2,3,1,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
+          A(3,3,1,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))
+          A(1,1,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,2,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(2,3))
+          A(3,1,2,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(2,3))
+          A(1,2,2,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+          A(2,2,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))
+          A(3,2,2,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(2,3))
+          A(1,3,2,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,3,2,3)=0.25_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
+          A(3,3,2,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))
+          A(2,1,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,1),TENSOR_TO_VOIGT3(3,3))
+          A(3,1,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,1),TENSOR_TO_VOIGT3(3,3))
+          A(1,2,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+          A(3,2,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(3,2),TENSOR_TO_VOIGT3(3,3))
+          A(1,3,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+          A(2,3,3,3)=0.5_DP*AV(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        CASE DEFAULT
+          localError="The second Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(2),"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The first Voigt tensor index type of "//TRIM(NumberToVString(voigtTensorIndexTypes(1),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT    
+
+    EXITS("VoigtToTensor4DP")
+    RETURN
+999 ERRORSEXITS("VoigtToTensor4DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE VoigtToTensor4DP
+
   !
   !================================================================================================================================
   !

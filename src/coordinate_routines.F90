@@ -4156,7 +4156,7 @@ CONTAINS
     & materialTensor,transformedTensor,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order tensor to transform \see CoordinateRoutines_TensorIndexTypes
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order tensor to transform \see Constants_TensorIndexTypes
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
@@ -4221,9 +4221,9 @@ CONTAINS
 
     !Transform the tensor from material coordinates according to the appropriate tensor transformation rule
     SELECT CASE(tensorIndexTypes(1))
-    CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+    CASE(TENSOR_CONTRAVARIANT_INDEX)
       SELECT CASE(tensorIndexTypes(2))
-      CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
         !(Contravariant,Contravariant) tensor i.e.,
         !B^{ij}=\delby{\xi^{i}}{\xi^{r}}\delby{\xi^{j}}{\xi^{s}}\delby{\xi^{r}}{\nu^{a}}\delby{\xi^{s}}{\nu^{b}}.A^{ab}
         CALL MatrixProductTranspose(materialTensor(1:numberOfDimensions,1:numberOfDimensions), &        
@@ -4236,7 +4236,7 @@ CONTAINS
         CALL MatrixProduct(geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi), &
           & tempTensor(1:numberOfDimensions,1:numberOfXi),transformedTensor(1:numberOfDimensions,1:numberOfDimensions), &
           & err,error,*999)
-      CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+      CASE(TENSOR_COVARIANT_INDEX)
         !(Contravariant,Covariant) tensor i.e.,
         !B^{i.}_{.j}=\delby{x^{i}}{\xi^{r}}\delby{\xi^{s}}{x^{j}}\delby{\xi^{r}}{\nu^{a}}\delby{\nu^{b}}{\xi^{s}}.A^{a.}_{.b}
         CALL MatrixProduct(materialTensor(1:numberOfDimensions,1:numberOfDimensions), &
@@ -4253,9 +4253,9 @@ CONTAINS
         localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+    CASE(TENSOR_COVARIANT_INDEX)
       SELECT CASE(tensorIndexTypes(2))
-      CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
         !(Covariant,Contravariant) tensor i.e.,
         !B^{.j}_{i.}=\delby{\xi^{r}}{x^{i}}\delby{x^{j}}{\xi^{s}}\delby{\nu^{a}}{\xi^{r}}\delby{\xi^{s}}{\nu^{b}}.A^{a.}_{.b}
         CALL MatrixProduct(materialTensor(1:numberOfDimensions,1:numberOfDimensions), &
@@ -4269,7 +4269,7 @@ CONTAINS
         CALL MatrixTransposeProduct(geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions), &
           & tempTensor(1:numberOfXi,1:numberOfDimensions),transformedTensor(1:numberOfDimensions,1:numberOfDimensions), &
           & err,error,*999)
-      CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+      CASE(TENSOR_COVARIANT_INDEX)
         !(Covariant,Covariant) tensor i.e., 
         !B^{.j}_{i.}=\delby{\xi^{r}}{x^{i}}\delby{\xi^{s}}{x^{j}}\delby{\nu^{a}}{\xi^{r}}\delby{\nu^{b}}{\xi^{s}}.A_{ab}
         CALL MatrixProduct(materialTensor(1:numberOfDimensions,1:numberOfDimensions), &
@@ -4325,7 +4325,7 @@ CONTAINS
     & materialTensor,transformedTensor,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the fourth order tensor to transform \see CoordinateRoutines_TensorIndexTypes
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the fourth order tensor to transform \see Constants_TensorIndexTypes
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
@@ -4334,8 +4334,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfDimensions,numberOfXi
-    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),tempTensor(3,3,3,3),tempTensor2(3,3,3,3)
+    INTEGER(INTG) :: numberOfDimensions,numberOfXi,aIdx,bIdx,cIdx,dIdx,iIdx,jIdx,kIdx,lIdx,rIdx,sIdx,tIdx,uIdx
+    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),sum,tempTensor(3,3,3,3),tempTensor2(3,3,3,3)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("CoordinateSystem_MaterialTransformTensor4",err,error,*999)
@@ -4416,30 +4416,166 @@ CONTAINS
     
     !Transform the tensor from material coordinates according to the appropriate tensor transformation rule
     SELECT CASE(tensorIndexTypes(1))
-    CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+    CASE(TENSOR_CONTRAVARIANT_INDEX)
       SELECT CASE(tensorIndexTypes(2))
-      CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
         SELECT CASE(tensorIndexTypes(3))
-        CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
           SELECT CASE(tensorIndexTypes(4))
-          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
-            !(Contravariant,Contravariant,Contravariant,Contravariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
-            !(Contravariant,Contravariant,Contravariant,Covariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Contravariant,Contravariant,Contravariant,Contravariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXdXi(iIdx,rIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(jIdx,sIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(kIdx,tIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(lIdx,uIdx)* &                                     
+                                      & dXidNu(rIdx,aIdx)* &
+                                      & dXidNu(sIdx,bIdx)* &
+                                      & dXidNu(tIdx,cIdx)* &
+                                      & dXidNu(uIdx,dIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Contravariant,Contravariant,Contravariant,Covariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXdXi(iIdx,rIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(jIdx,sIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(kIdx,tIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(uIdx,lIdx)* &                                     
+                                      & dXidNu(rIdx,aIdx)* &
+                                      & dXidNu(sIdx,bIdx)* &
+                                      & dXidNu(tIdx,cIdx)* &
+                                      & dNudXi(dIdx,uIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
           CASE DEFAULT
             localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
-        CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+        CASE(TENSOR_COVARIANT_INDEX)
           SELECT CASE(tensorIndexTypes(4))
-          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
-            !(Contravariant,Contravariant,Covariant,Contravariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
-            !(Contravariant,Contravariant,Covariant,Covariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Contravariant,Contravariant,Covariant,Contravariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXdXi(iIdx,rIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(jIdx,sIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(tIdx,kIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(lIdx,uIdx)* &                                     
+                                      & dXidNu(rIdx,aIdx)* &
+                                      & dXidNu(sIdx,bIdx)* &
+                                      & dNudXi(cIdx,tIdx)* &
+                                      & dXidNu(uIdx,dIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Contravariant,Contravariant,Covariant,Covariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXdXi(iIdx,rIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(jIdx,sIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(tIdx,kIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(uIdx,lIdx)* &                                     
+                                      & dXidNu(rIdx,aIdx)* &
+                                      & dXidNu(sIdx,bIdx)* &
+                                      & dNudXi(cIdx,tIdx)* &
+                                      & dNudXi(dIdx,uIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
           CASE DEFAULT
             localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
@@ -4448,28 +4584,164 @@ CONTAINS
           localError="The third tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(3),"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-      CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+      CASE(TENSOR_COVARIANT_INDEX)
         SELECT CASE(tensorIndexTypes(3))
-        CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
           SELECT CASE(tensorIndexTypes(4))
-          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
-            !(Contravariant,Covariant,Contravariant,Contravariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
-            !(Contravariant,Covariant,Contravariant,Covariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Contravariant,Covariant,Contravariant,Contravariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXdXi(iIdx,rIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(sIdx,jIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(kIdx,tIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(lIdx,uIdx)* &                                     
+                                      & dXidNu(rIdx,aIdx)* &
+                                      & dNudXi(bIdx,sIdx)* &
+                                      & dXidNu(tIdx,cIdx)* &
+                                      & dXidNu(uIdx,dIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Contravariant,Covariant,Contravariant,Covariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXdXi(iIdx,rIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(sIdx,jIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(kIdx,tIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(uIdx,lIdx)* &                                     
+                                      & dXidNu(rIdx,aIdx)* &
+                                      & dNudXi(bIdx,sIdx)* &
+                                      & dXidNu(tIdx,cIdx)* &
+                                      & dNudXi(dIdx,uIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
           CASE DEFAULT
             localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
-        CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+        CASE(TENSOR_COVARIANT_INDEX)
           SELECT CASE(tensorIndexTypes(4))
-          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
-            !(Contravariant,Covariant,Covariant,Contravariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
-            !(Contravariant,Covariant,Covariant,Covariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Contravariant,Covariant,Covariant,Contravariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXdXi(iIdx,rIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(sIdx,jIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(tIdx,kIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(lIdx,uIdx)* &                                     
+                                      & dXidNu(rIdx,aIdx)* &
+                                      & dNudXi(bIdx,sIdx)* &
+                                      & dNudXi(cIdx,tIdx)* &
+                                      & dXidNu(uIdx,dIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Contravariant,Covariant,Covariant,Covariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXdXi(iIdx,rIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(sIdx,jIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(tIdx,kIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(uIdx,lIdx)* &                                     
+                                      & dXidNu(rIdx,aIdx)* &
+                                      & dNudXi(bIdx,sIdx)* &
+                                      & dNudXi(cIdx,tIdx)* &
+                                      & dNudXi(dIdx,uIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
           CASE DEFAULT
             localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
@@ -4482,30 +4754,166 @@ CONTAINS
         localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+    CASE(TENSOR_COVARIANT_INDEX)
       SELECT CASE(tensorIndexTypes(2))
-      CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
         SELECT CASE(tensorIndexTypes(3))
-        CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
           SELECT CASE(tensorIndexTypes(4))
-          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
-            !(Contravariant,Covariant,Contravariant,Contravariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
-            !(Contravariant,Covariant,Contravariant,Covariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Covariant,Contravariant,Contravariant,Contravariant) tensor i.e.,
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXidX(rIdx,iIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(jIdx,sIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(kIdx,tIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(lIdx,uIdx)* &                                     
+                                      & dNudXi(aIdx,rIdx)* &
+                                      & dXidNu(sIdx,bIdx)* &
+                                      & dXidNu(tIdx,cIdx)* &
+                                      & dXidNu(uIdx,dIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Covariant,Contravariant,Contravariant,Covariant) tensor i.e.,
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXidX(rIdx,iIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(jIdx,sIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(kIdx,tIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(uIdx,lIdx)* &                                     
+                                      & dNudXi(aIdx,rIdx)* &
+                                      & dXidNu(sIdx,bIdx)* &
+                                      & dXidNu(tIdx,cIdx)* &
+                                      & dNudXi(dIdx,uIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
           CASE DEFAULT
             localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
-        CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+        CASE(TENSOR_COVARIANT_INDEX)
           SELECT CASE(tensorIndexTypes(4))
-          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
-            !(Contravariant,Covariant,Covariant,Contravariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
-            !(Contravariant,Covariant,Covariant,Covariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Covariant,Contravariant,Covariant,Contravariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXidX(rIdx,iIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(jIdx,sIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(tIdx,kIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(lIdx,uIdx)* &                                     
+                                      & dNudXi(aIdx,rIdx)* &
+                                      & dXidNu(sIdx,bIdx)* &
+                                      & dNudXi(cIdx,tIdx)* &
+                                      & dXidNu(uIdx,dIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Covariant,Contravariant,Covariant,Covariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXidX(rIdx,iIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(jIdx,sIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(tIdx,kIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(uIdx,lIdx)* &                                     
+                                      & dNudXi(aIdx,rIdx)* &
+                                      & dXidNu(sIdx,bIdx)* &
+                                      & dNudXi(cIdx,tIdx)* &
+                                      & dNudXi(dIdx,uIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
           CASE DEFAULT
             localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
@@ -4514,28 +4922,164 @@ CONTAINS
           localError="The third tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(3),"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-      CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+      CASE(TENSOR_COVARIANT_INDEX)
         SELECT CASE(tensorIndexTypes(3))
-        CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
           SELECT CASE(tensorIndexTypes(4))
-          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
-            !(Contravariant,Covariant,Contravariant,Contravariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
-            !(Contravariant,Covariant,Contravariant,Covariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Covariant,Covariant,Contravariant,Contravariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXidX(rIdx,iIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(sIdx,jIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(kIdx,tIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(lIdx,uIdx)* &                                     
+                                      & dNudXi(aIdx,rIdx)* &
+                                      & dNudXi(bIdx,sIdx)* &
+                                      & dXidNu(tIdx,cIdx)* &
+                                      & dXidNu(uIdx,dIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Covariant,Covariant,Contravariant,Covariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXidX(rIdx,iIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(sIdx,jIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(kIdx,tIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(uIdx,lIdx)* &                                     
+                                      & dNudXi(aIdx,rIdx)* &
+                                      & dNudXi(bIdx,sIdx)* &
+                                      & dXidNu(tIdx,cIdx)* &
+                                      & dNudXi(dIdx,uIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
           CASE DEFAULT
             localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
-        CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+        CASE(TENSOR_COVARIANT_INDEX)
           SELECT CASE(tensorIndexTypes(4))
-          CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
-            !(Covariant,Covariant,Covariant,Contravariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(COORDINATE_COVARIANT_INDEX_TYPE)
-            !(Covariant,Covariant,Covariant,Covariant) tensor i.e.,
-            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Covariant,Covariant,Covariant,Contravariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXidX(rIdx,iIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(sIdx,jIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(tIdx,kIdx)* &
+                                      & geometricInterpPointMetrics%dXdXi(lIdx,uIdx)* &                                     
+                                      & dNudXi(aIdx,rIdx)* &
+                                      & dNudXi(bIdx,sIdx)* &
+                                      & dNudXi(cIdx,tIdx)* &
+                                      & dXidNu(uIdx,dIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Covariant,Covariant,Covariant,Covariant) tensor
+            DO iIdx=1,numberOfDimensions
+              DO jIdx=1,numberOfDimensions
+                DO kIdx=1,numberOfDimensions
+                  DO lIdx=1,numberOfDimensions
+                    sum=0.0_DP
+                    DO rIdx=1,numberOfXi
+                      DO sIdx=1,numberOfXi
+                        DO tIdx=1,numberOfXi
+                          DO uIdx=1,numberOfXi
+                            DO aIdx=1,numberOfDimensions
+                              DO bIdx=1,numberOfDimensions
+                                DO cIdx=1,numberOfDimensions
+                                  DO dIdx=1,numberOfDimensions
+                                    sum=sum+geometricInterpPointMetrics%dXidX(rIdx,iIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(sIdx,jIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(tIdx,kIdx)* &
+                                      & geometricInterpPointMetrics%dXidX(uIdx,lIdx)* &                                     
+                                      & dNudXi(aIdx,rIdx)* &
+                                      & dNudXi(bIdx,sIdx)* &
+                                      & dNudXi(cIdx,tIdx)* &
+                                      & dNudXi(dIdx,uIdx)* &
+                                      & materialTensor(aIdx,bIdx,cIdx,dIdx)
+                                  ENDDO !dIdx
+                                ENDDO !cIdx
+                              ENDDO !bIdx
+                            ENDDO !aIdx
+                          ENDDO !uIdx
+                        ENDDO !tIdx
+                      ENDDO !sIdx
+                    ENDDO !rIdx
+                    transformedTensor(iIdx,jIdx,kIdx,lIdx)=sum
+                  ENDDO !lIdx
+                ENDDO !kIdx
+              ENDDO !jIdx
+            ENDDO !iIdx
           CASE DEFAULT
             localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
@@ -4561,14 +5105,16 @@ CONTAINS
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,4,4,4,tensorIndexTypes, &
         & '("  Tensor index types :",4(X,I1))','(22X,4(X,I1))',err,error,*999)      
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material tensor:",err,error,*999)
-      !CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions, &
-      !  & numberOfDimensions,materialTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-      !  & '("    MT','(",I1,",:)',' :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
+      CALL WriteStringMatrixFour(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions, &
+        & 1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions,numberOfDimensions,materialTensor, &
+        & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    MT','(",I1,",",I1,",",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))', &
+        & err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed tensor:",err,error,*999)
-      !CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions, &
-      !  & numberOfDimensions,transformedTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-      !  & '("    TT','(",I1,",:)','   :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
-    ENDIF
+      CALL WriteStringMatrixFour(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions, &
+        & 1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions,numberOfDimensions,transformedTensor, &
+        & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    TT','(",I1,",",I1,",",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))', &
+        & err,error,*999)
+   ENDIF
         
     EXITS("CoordinateSystem_MaterialTransformTensor4")
     RETURN
@@ -4587,7 +5133,7 @@ CONTAINS
     & voigtMaterialTensor,transformedTensor,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order Voigt tensor to transform \see CoordinateRoutines_TensorIndexTypes
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order tensor to transform \see Constants_TensorIndexTypes
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
@@ -4596,7 +5142,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfDimensions
+    INTEGER(INTG) :: numberOfDimensions,voigtTensorIndexTypes(1)
     REAL(DP) :: materialTensor(3,3)
     TYPE(VARYING_STRING) :: localError
 
@@ -4615,34 +5161,16 @@ CONTAINS
 #endif
     
     numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
-    
-!!TODO: Need routines for tensor to Voigt etc. and vice versa. Also, adjust for Voigt scale factors with tensor type. What does a mixed Voigt tensor look like????
-    
+     
     !Calculate the untransformed tensor in material coordinates
-    SELECT CASE(numberOfDimensions)
-    CASE(1)
-      materialTensor(1,1)=voigtMaterialTensor(TENSOR_TO_VOIGT1(1,1))
-    CASE(2)
-      materialTensor(1,1)=voigtMaterialTensor(TENSOR_TO_VOIGT2(1,1))
-      materialTensor(1,2)=voigtMaterialTensor(TENSOR_TO_VOIGT2(1,2))
-      materialTensor(2,1)=voigtMaterialTensor(TENSOR_TO_VOIGT2(2,1))
-      materialTensor(2,2)=voigtMaterialTensor(TENSOR_TO_VOIGT2(2,2))
-    CASE(3)
-      materialTensor(1,1)=voigtMaterialTensor(TENSOR_TO_VOIGT3(1,1))
-      materialTensor(1,2)=voigtMaterialTensor(TENSOR_TO_VOIGT3(1,2))
-      materialTensor(1,3)=voigtMaterialTensor(TENSOR_TO_VOIGT3(1,3))
-      materialTensor(2,1)=voigtMaterialTensor(TENSOR_TO_VOIGT3(2,1))
-      materialTensor(2,2)=voigtMaterialTensor(TENSOR_TO_VOIGT3(2,2))
-      materialTensor(2,3)=voigtMaterialTensor(TENSOR_TO_VOIGT3(2,3))
-      materialTensor(3,1)=voigtMaterialTensor(TENSOR_TO_VOIGT3(3,1))
-      materialTensor(3,2)=voigtMaterialTensor(TENSOR_TO_VOIGT3(3,2))
-      materialTensor(3,3)=voigtMaterialTensor(TENSOR_TO_VOIGT3(3,3))
-    CASE DEFAULT
-      localError="The number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
-        & " is invalid."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
+    IF(ALL(tensorIndexTypes==TENSOR_COVARIANT_INDEX)) THEN
+      voigtTensorIndexTypes(1)=TENSOR_COVARIANT_INDEX
+    ELSE
+      voigtTensorIndexTypes(1)=TENSOR_CONTRAVARIANT_INDEX
+    ENDIF
+    CALL VoigtToTensor(numberOfDimensions,voigtTensorIndexTypes,voigtMaterialTensor,materialTensor,err,error,*999)
 
+    !Tranform the tensor
     CALL CoordinateSystem_MaterialTransformTensor2(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
       & materialTensor,transformedTensor,err,error,*999)
         
@@ -4663,7 +5191,7 @@ CONTAINS
     & voigtMaterialTensor,transformedTensor,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order Voigt tensor to transform \see CoordinateRoutines_TensorIndexTypes
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order tensor to transform \see Constants_TensorIndexTypes
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
@@ -4672,7 +5200,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfDimensions
+    INTEGER(INTG) :: numberOfDimensions,voigtTensorIndexTypes(2)
     REAL(DP) :: materialTensor(3,3,3,3)
     TYPE(VARYING_STRING) :: localError
 
@@ -4699,21 +5227,20 @@ CONTAINS
     
     numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
 
-!!TODO: Need routines for tensor to Voigt etc. and vice versa. Also, adjust for Voigt scale factors with tensor type.    
     !Calculate the untransformed tensor in material coordinates
-    SELECT CASE(numberOfDimensions)
-    CASE(1)
-      materialTensor(1,1,1,1)=voigtMaterialTensor(TENSOR_TO_VOIGT1(1,1),TENSOR_TO_VOIGT1(1,1))
-    CASE(2)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE(3)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE DEFAULT
-      localError="The number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
-        & " is invalid."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
+    IF(ALL(tensorIndexTypes(1:2)==TENSOR_COVARIANT_INDEX)) THEN
+      voigtTensorIndexTypes(1)=TENSOR_COVARIANT_INDEX
+    ELSE
+      voigtTensorIndexTypes(1)=TENSOR_CONTRAVARIANT_INDEX
+    ENDIF
+    IF(ALL(tensorIndexTypes(3:4)==TENSOR_COVARIANT_INDEX)) THEN
+      voigtTensorIndexTypes(2)=TENSOR_COVARIANT_INDEX
+    ELSE
+      voigtTensorIndexTypes(2)=TENSOR_CONTRAVARIANT_INDEX
+    ENDIF
+    CALL VoigtToTensor(numberOfDimensions,voigtTensorIndexTypes,voigtMaterialTensor,materialTensor,err,error,*999)
 
+    !Tranform the tensor
     CALL CoordinateSystem_MaterialTransformTensor4(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
       & materialTensor,transformedTensor,err,error,*999)
         
@@ -4858,7 +5385,7 @@ CONTAINS
     & materialVector,transformedVector,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: vectorIndexType !<The type (e.g., covariant or contravariant) of the vector index to transform \see CoordinateRoutines_TensorIndexTypes
+    INTEGER(INTG), INTENT(IN) :: vectorIndexType !<The type (e.g., covariant or contravariant) of the vector index to transform \see Constants_TensorIndexTypes
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed vector.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
@@ -4890,7 +5417,7 @@ CONTAINS
     & materialVector,transformedVector,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: vectorIndexType(1) !<The type (e.g., covariant or contravariant) of the vector index to transform \see CoordinateRoutines_TensorIndexTypes
+    INTEGER(INTG), INTENT(IN) :: vectorIndexType(1) !<The type (e.g., covariant or contravariant) of the vector index to transform \see Constants_TensorIndexTypes
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed vector.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
@@ -4946,13 +5473,13 @@ CONTAINS
 
     !Transform the tensor from material coordinates according to the appropriate tensor transformation rule
     SELECT CASE(vectorIndexType(1))
-    CASE(COORDINATE_CONTRAVARIANT_INDEX_TYPE)
+    CASE(TENSOR_CONTRAVARIANT_INDEX)
       !Contravariant vector i.e., b^{i}=\delby{\xi^{i}}{\xi^{r}}\delby{\xi^{r}}{\nu^{a}}.a^{a}
       CALL MatrixVectorProduct(dXidNu(1:numberOfXi,1:numberOfDimensions),materialVector(1:numberOfDimensions), &
         & tempVector(1:numberOfXi),err,error,*999)
       CALL MatrixVectorProduct(geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi),tempVector(1:numberOfXi), &
         & transformedVector(1:numberOfDimensions),err,error,*999)
-    CASE(COORDINATE_COVARIANT_INDEX_TYPE)
+    CASE(TENSOR_COVARIANT_INDEX)
       !Convariant vector i.e., b_{i}=\delby{\xi^{r}}{\xi^{i}}\delby{\nu^{a}}{\xi^{r}}.a_{a}
       CALL MatrixTransposeVectorProduct(dNudXi(1:numberOfDimensions,1:numberOfXi),materialVector(1:numberOfDimensions), &
         & tempVector(1:numberOfXi),err,error,*999)

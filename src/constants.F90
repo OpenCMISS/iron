@@ -298,6 +298,13 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_PLUS_XI4=4 !<Positive xi 4 normal 
   !>@}
     
+  !> \addtogroup Constants_TensorIndexTypes OpenCMISS::Iron::Constants::TensorIndexTypes
+  !> \brief The index types for tensors i.e., contravariant/upper or covariant/lower.
+  !> \see Constants
+  INTEGER(INTG), PARAMETER :: TENSOR_CONTRAVARIANT_INDEX=1 !<The tensor index is a contravariant/upper index.
+  INTEGER(INTG), PARAMETER :: TENSOR_COVARIANT_INDEX=2 !<The tensor index is a covariant/lower index.
+  !>@}
+  
   !> \addtogroup Constants_VoigtTensorIndices OpenCMISS::Iron::Constants::VoigtTensorIndices
   !> \brief The indices for converting back and forth between Voigt indices and symmetric rank 2 tensor indices.
   !> \see Constants

@@ -1024,19 +1024,19 @@ CONTAINS
         SELECT CASE(esSpecification(3))
         CASE(EQUATIONS_SET_GENERALISED_NO_REAC_DIFF_SUBTYPE)
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
+          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+            & geometricInterpPointMetrics,fibreInterpPoint, &
             & materialsInterpPoint%values(2:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)  
         CASE(EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE)
           bParam=materialsInterpPoint%values(2,NO_PART_DERIV)
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
+          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+            & geometricInterpPointMetrics,fibreInterpPoint, &
             & materialsInterpPoint%values(3:3+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
         CASE DEFAULT
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([COORDINATE_CONTRAVARIANT_INDEX_TYPE, &
-            & COORDINATE_COVARIANT_INDEX_TYPE],geometricInterpPointMetrics,fibreInterpPoint, &
+          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+            & geometricInterpPointMetrics,fibreInterpPoint, &
             & materialsInterpPoint%values(2:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)  
         END SELECT
         

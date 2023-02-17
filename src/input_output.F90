@@ -340,6 +340,15 @@ MODULE InputOutput
     MODULE PROCEDURE WriteStringMatrixSP
   END INTERFACE WriteStringMatrix
 
+  !>Write a string followed by a matrix to a specified output stream
+  INTERFACE WriteStringMatrixFour
+    MODULE PROCEDURE WriteStringMatrixFourDP
+    MODULE PROCEDURE WriteStringMatrixFourIntg
+    MODULE PROCEDURE WriteStringMatrixFourLIntg
+    MODULE PROCEDURE WriteStringMatrixFourL
+    MODULE PROCEDURE WriteStringMatrixFourSP
+  END INTERFACE WriteStringMatrixFour
+
   PUBLIC WRITE_STRING_MATRIX_NAME_ONLY,WRITE_STRING_MATRIX_NAME_AND_INDICES
   
   PUBLIC WRITE_STRING,WRITE_STRING_VALUE,WRITE_STRING_TWO_VALUE,WRITE_STRING_FMT_VALUE,WRITE_STRING_FMT_TWO_VALUE, &
@@ -360,6 +369,8 @@ MODULE InputOutput
   PUBLIC WriteStringIdxVector
 
   PUBLIC WriteStringMatrix
+
+  PUBLIC WriteStringMatrixFour
 
   !Module variables
 
@@ -4154,6 +4165,411 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE WriteStringMatrixSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given double precision fourth order matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each first/second index block is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each first/second/third index block is matrixNameFormat concatenated with indicesFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the first/second/third index number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstIndex1/firstIndex2/firstIndex3/firstIndex4 and lastIndex1/lastIndex2/lastIndex3/lastIndex4 are the extents of the first/second/third/fourth indices and deltaIndex1/deltaIndex2/deltaIndex3/deltaIndex4 is the number of indices to skip for each index1/index2/index3/index4 index.
+  SUBROUTINE WriteStringMatrixFourDP(id,firstIndex1,deltaIndex1,lastIndex1,firstIndex2,deltaIndex2,lastIndex2, &
+    & firstIndex3,deltaIndex3,lastIndex3,firstIndex4,deltaIndex4,lastIndex4,numberFirst,numberRepeat,matrix, &
+    & indexFormatType,matrixNameFormat,indicesFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstIndex1 !<The first index1 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex1 !<The delta index1 increment to be used when outputing the first through to the last matrix index1
+    INTEGER(INTG), INTENT(IN) :: lastIndex1 !<The last index1 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex2 !<The first index2 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex2 !<The delta index2 increment to be used when outputing the first through to the last matrix index2
+    INTEGER(INTG), INTENT(IN) :: lastIndex2 !<The last index2 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex3 !<The first index3 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex3 !<The delta index3 increment to be used when outputing the first through to the last matrix index3
+    INTEGER(INTG), INTENT(IN) :: lastIndex3 !<The last index3 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex4 !<The first index4 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex4 !<The delta index4 increment to be used when outputing the first through to the last matrix index3
+    INTEGER(INTG), INTENT(IN) :: lastIndex4 !<The last index4 of the matrix to be output
+    
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    REAL(DP), INTENT(IN) :: matrix(:,:,:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: indicesFormat !<The format string to be used to format the indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentIndex1,currentIndex2,currentIndex3,currentIndex4,finalIndex4,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixFourDP",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//indicesFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentIndex1=firstIndex1,lastIndex1,deltaIndex1
+      DO currentIndex2=firstIndex2,lastIndex2,deltaIndex2
+        DO currentIndex3=firstIndex3,lastIndex3,deltaIndex3
+          currentIndex4=firstIndex4
+          finalIndex4=currentIndex4+(numberFirst-1)*deltaIndex4
+          IF(finalIndex4>lastIndex4) finalIndex4=lastIndex4
+          IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+            WRITE(outputString,FMT=formatStr) (matrix(currentIndex1,currentIndex2,currentIndex3,count), &
+              & count=currentIndex4,finalIndex4,deltaIndex4)
+          ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+            WRITE(outputString,FMT=formatStr) currentIndex1,currentIndex2,currentIndex4, &
+              & (matrix(currentIndex1,currentIndex2,currentIndex3,count),count=currentIndex4,finalIndex4,deltaIndex4)
+          ENDIF
+          CALL WriteStr(id,err,error,*999)
+          DO WHILE(finalIndex4<lastIndex4) !more stuff to do
+            currentIndex4=finalIndex4+deltaIndex4
+            finalIndex4=finalIndex4+numberRepeat*deltaIndex4
+            IF(finalIndex4>lastIndex4) finalIndex4=lastIndex4
+            WRITE(outputString,FMT=repeatFormat) (matrix(currentIndex1,currentIndex2,currentIndex3,count), &
+              & count=currentIndex4,finalIndex4,deltaIndex4)
+            CALL WriteStr(id,err,error,*999)
+          ENDDO !finalIndex4<lastIndex4
+        ENDDO !currentIndex3
+      ENDDO !currentIndex2
+    ENDDO !currentIndex1
+    
+!    EXITS("WriteStringMatrixFourDP")
+    RETURN
+999 ERRORS("WriteStringMatrixFourDP",err,error)
+!    EXITS("WriteStringMatrixFourDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixFourDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given integer fourth order matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each first/second index block is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each first/second/third index block is matrixNameFormat concatenated with indicesFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the first/second/third index number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstIndex1/firstIndex2/firstIndex3/firstIndex4 and lastIndex1/lastIndex2/lastIndex3/lastIndex4 are the extents of the first/second/third/fourth indices and deltaIndex1/deltaIndex2/deltaIndex3/deltaIndex4 is the number of indices to skip for each index1/index2/index3/index4 index.
+  SUBROUTINE WriteStringMatrixFourIntg(id,firstIndex1,deltaIndex1,lastIndex1,firstIndex2,deltaIndex2,lastIndex2, &
+    & firstIndex3,deltaIndex3,lastIndex3,firstIndex4,deltaIndex4,lastIndex4,numberFirst,numberRepeat,matrix, &
+    & indexFormatType,matrixNameFormat,indicesFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstIndex1 !<The first index1 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex1 !<The delta index1 increment to be used when outputing the first through to the last matrix index1
+    INTEGER(INTG), INTENT(IN) :: lastIndex1 !<The last index1 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex2 !<The first index2 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex2 !<The delta index2 increment to be used when outputing the first through to the last matrix index2
+    INTEGER(INTG), INTENT(IN) :: lastIndex2 !<The last index2 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex3 !<The first index3 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex3 !<The delta index3 increment to be used when outputing the first through to the last matrix index3
+    INTEGER(INTG), INTENT(IN) :: lastIndex3 !<The last index3 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex4 !<The first index4 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex4 !<The delta index4 increment to be used when outputing the first through to the last matrix index3
+    INTEGER(INTG), INTENT(IN) :: lastIndex4 !<The last index4 of the matrix to be output
+    
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    INTEGER(INTG), INTENT(IN) :: matrix(:,:,:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: indicesFormat !<The format string to be used to format the indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentIndex1,currentIndex2,currentIndex3,currentIndex4,finalIndex4,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixFourIntg",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//indicesFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentIndex1=firstIndex1,lastIndex1,deltaIndex1
+      DO currentIndex2=firstIndex2,lastIndex2,deltaIndex2
+        DO currentIndex3=firstIndex3,lastIndex3,deltaIndex3
+          currentIndex4=firstIndex4
+          finalIndex4=currentIndex4+(numberFirst-1)*deltaIndex4
+          IF(finalIndex4>lastIndex4) finalIndex4=lastIndex4
+          IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+            WRITE(outputString,FMT=formatStr) (matrix(currentIndex1,currentIndex2,currentIndex3,count), &
+              & count=currentIndex4,finalIndex4,deltaIndex4)
+          ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+            WRITE(outputString,FMT=formatStr) currentIndex1,currentIndex2,currentIndex4, &
+              & (matrix(currentIndex1,currentIndex2,currentIndex3,count),count=currentIndex4,finalIndex4,deltaIndex4)
+          ENDIF
+          CALL WriteStr(id,err,error,*999)
+          DO WHILE(finalIndex4<lastIndex4) !more stuff to do
+            currentIndex4=finalIndex4+deltaIndex4
+            finalIndex4=finalIndex4+numberRepeat*deltaIndex4
+            IF(finalIndex4>lastIndex4) finalIndex4=lastIndex4
+            WRITE(outputString,FMT=repeatFormat) (matrix(currentIndex1,currentIndex2,currentIndex3,count), &
+              & count=currentIndex4,finalIndex4,deltaIndex4)
+            CALL WriteStr(id,err,error,*999)
+          ENDDO !finalIndex4<lastIndex4
+        ENDDO !currentIndex3
+      ENDDO !currentIndex2
+    ENDDO !currentIndex1
+    
+!    EXITS("WriteStringMatrixFourIntg")
+    RETURN
+999 ERRORS("WriteStringMatrixFourIntg",err,error)
+!    EXITS("WriteStringMatrixFourIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixFourIntg
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given long integer fourth order matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each first/second index block is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each first/second/third index block is matrixNameFormat concatenated with indicesFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the first/second/third index number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstIndex1/firstIndex2/firstIndex3/firstIndex4 and lastIndex1/lastIndex2/lastIndex3/lastIndex4 are the extents of the first/second/third/fourth indices and deltaIndex1/deltaIndex2/deltaIndex3/deltaIndex4 is the number of indices to skip for each index1/index2/index3/index4 index.
+  SUBROUTINE WriteStringMatrixFourLIntg(id,firstIndex1,deltaIndex1,lastIndex1,firstIndex2,deltaIndex2,lastIndex2, &
+    & firstIndex3,deltaIndex3,lastIndex3,firstIndex4,deltaIndex4,lastIndex4,numberFirst,numberRepeat,matrix, &
+    & indexFormatType,matrixNameFormat,indicesFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstIndex1 !<The first index1 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex1 !<The delta index1 increment to be used when outputing the first through to the last matrix index1
+    INTEGER(INTG), INTENT(IN) :: lastIndex1 !<The last index1 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex2 !<The first index2 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex2 !<The delta index2 increment to be used when outputing the first through to the last matrix index2
+    INTEGER(INTG), INTENT(IN) :: lastIndex2 !<The last index2 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex3 !<The first index3 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex3 !<The delta index3 increment to be used when outputing the first through to the last matrix index3
+    INTEGER(INTG), INTENT(IN) :: lastIndex3 !<The last index3 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex4 !<The first index4 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex4 !<The delta index4 increment to be used when outputing the first through to the last matrix index3
+    INTEGER(INTG), INTENT(IN) :: lastIndex4 !<The last index4 of the matrix to be output
+    
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    INTEGER(LINTG), INTENT(IN) :: matrix(:,:,:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: indicesFormat !<The format string to be used to format the indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentIndex1,currentIndex2,currentIndex3,currentIndex4,finalIndex4,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixFourLIntg",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//indicesFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentIndex1=firstIndex1,lastIndex1,deltaIndex1
+      DO currentIndex2=firstIndex2,lastIndex2,deltaIndex2
+        DO currentIndex3=firstIndex3,lastIndex3,deltaIndex3
+          currentIndex4=firstIndex4
+          finalIndex4=currentIndex4+(numberFirst-1)*deltaIndex4
+          IF(finalIndex4>lastIndex4) finalIndex4=lastIndex4
+          IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+            WRITE(outputString,FMT=formatStr) (matrix(currentIndex1,currentIndex2,currentIndex3,count), &
+              & count=currentIndex4,finalIndex4,deltaIndex4)
+          ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+            WRITE(outputString,FMT=formatStr) currentIndex1,currentIndex2,currentIndex4, &
+              & (matrix(currentIndex1,currentIndex2,currentIndex3,count),count=currentIndex4,finalIndex4,deltaIndex4)
+          ENDIF
+          CALL WriteStr(id,err,error,*999)
+          DO WHILE(finalIndex4<lastIndex4) !more stuff to do
+            currentIndex4=finalIndex4+deltaIndex4
+            finalIndex4=finalIndex4+numberRepeat*deltaIndex4
+            IF(finalIndex4>lastIndex4) finalIndex4=lastIndex4
+            WRITE(outputString,FMT=repeatFormat) (matrix(currentIndex1,currentIndex2,currentIndex3,count), &
+              & count=currentIndex4,finalIndex4,deltaIndex4)
+            CALL WriteStr(id,err,error,*999)
+          ENDDO !finalIndex4<lastIndex4
+        ENDDO !currentIndex3
+      ENDDO !currentIndex2
+    ENDDO !currentIndex1
+    
+!    EXITS("WriteStringMatrixFourLIntg")
+    RETURN
+999 ERRORS("WriteStringMatrixFourLIntg",err,error)
+!    EXITS("WriteStringMatrixFourLIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixFourLIntg
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given logical fourth order matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each first/second index block is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each first/second/third index block is matrixNameFormat concatenated with indicesFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the first/second/third index number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstIndex1/firstIndex2/firstIndex3/firstIndex4 and lastIndex1/lastIndex2/lastIndex3/lastIndex4 are the extents of the first/second/third/fourth indices and deltaIndex1/deltaIndex2/deltaIndex3/deltaIndex4 is the number of indices to skip for each index1/index2/index3/index4 index.
+  SUBROUTINE WriteStringMatrixFourL(id,firstIndex1,deltaIndex1,lastIndex1,firstIndex2,deltaIndex2,lastIndex2, &
+    & firstIndex3,deltaIndex3,lastIndex3,firstIndex4,deltaIndex4,lastIndex4,numberFirst,numberRepeat,matrix, &
+    & indexFormatType,matrixNameFormat,indicesFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstIndex1 !<The first index1 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex1 !<The delta index1 increment to be used when outputing the first through to the last matrix index1
+    INTEGER(INTG), INTENT(IN) :: lastIndex1 !<The last index1 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex2 !<The first index2 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex2 !<The delta index2 increment to be used when outputing the first through to the last matrix index2
+    INTEGER(INTG), INTENT(IN) :: lastIndex2 !<The last index2 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex3 !<The first index3 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex3 !<The delta index3 increment to be used when outputing the first through to the last matrix index3
+    INTEGER(INTG), INTENT(IN) :: lastIndex3 !<The last index3 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex4 !<The first index4 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex4 !<The delta index4 increment to be used when outputing the first through to the last matrix index3
+    INTEGER(INTG), INTENT(IN) :: lastIndex4 !<The last index4 of the matrix to be output
+    
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    LOGICAL, INTENT(IN) :: matrix(:,:,:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: indicesFormat !<The format string to be used to format the indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentIndex1,currentIndex2,currentIndex3,currentIndex4,finalIndex4,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixFourL",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//indicesFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentIndex1=firstIndex1,lastIndex1,deltaIndex1
+      DO currentIndex2=firstIndex2,lastIndex2,deltaIndex2
+        DO currentIndex3=firstIndex3,lastIndex3,deltaIndex3
+          currentIndex4=firstIndex4
+          finalIndex4=currentIndex4+(numberFirst-1)*deltaIndex4
+          IF(finalIndex4>lastIndex4) finalIndex4=lastIndex4
+          IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+            WRITE(outputString,FMT=formatStr) (matrix(currentIndex1,currentIndex2,currentIndex3,count), &
+              & count=currentIndex4,finalIndex4,deltaIndex4)
+          ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+            WRITE(outputString,FMT=formatStr) currentIndex1,currentIndex2,currentIndex4, &
+              & (matrix(currentIndex1,currentIndex2,currentIndex3,count),count=currentIndex4,finalIndex4,deltaIndex4)
+          ENDIF
+          CALL WriteStr(id,err,error,*999)
+          DO WHILE(finalIndex4<lastIndex4) !more stuff to do
+            currentIndex4=finalIndex4+deltaIndex4
+            finalIndex4=finalIndex4+numberRepeat*deltaIndex4
+            IF(finalIndex4>lastIndex4) finalIndex4=lastIndex4
+            WRITE(outputString,FMT=repeatFormat) (matrix(currentIndex1,currentIndex2,currentIndex3,count), &
+              & count=currentIndex4,finalIndex4,deltaIndex4)
+            CALL WriteStr(id,err,error,*999)
+          ENDDO !finalIndex4<lastIndex4
+        ENDDO !currentIndex3
+      ENDDO !currentIndex2
+    ENDDO !currentIndex1
+    
+!    EXITS("WriteStringMatrixFourL")
+    RETURN
+999 ERRORS("WriteStringMatrixFourL",err,error)
+!    EXITS("WriteStringMatrixFourL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixFourL
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given single precision fourth order matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each first/second index block is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each first/second/third index block is matrixNameFormat concatenated with indicesFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the first/second/third index number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstIndex1/firstIndex2/firstIndex3/firstIndex4 and lastIndex1/lastIndex2/lastIndex3/lastIndex4 are the extents of the first/second/third/fourth indices and deltaIndex1/deltaIndex2/deltaIndex3/deltaIndex4 is the number of indices to skip for each index1/index2/index3/index4 index.
+  SUBROUTINE WriteStringMatrixFourSP(id,firstIndex1,deltaIndex1,lastIndex1,firstIndex2,deltaIndex2,lastIndex2, &
+    & firstIndex3,deltaIndex3,lastIndex3,firstIndex4,deltaIndex4,lastIndex4,numberFirst,numberRepeat,matrix, &
+    & indexFormatType,matrixNameFormat,indicesFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstIndex1 !<The first index1 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex1 !<The delta index1 increment to be used when outputing the first through to the last matrix index1
+    INTEGER(INTG), INTENT(IN) :: lastIndex1 !<The last index1 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex2 !<The first index2 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex2 !<The delta index2 increment to be used when outputing the first through to the last matrix index2
+    INTEGER(INTG), INTENT(IN) :: lastIndex2 !<The last index2 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex3 !<The first index3 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex3 !<The delta index3 increment to be used when outputing the first through to the last matrix index3
+    INTEGER(INTG), INTENT(IN) :: lastIndex3 !<The last index3 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstIndex4 !<The first index4 of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaIndex4 !<The delta index4 increment to be used when outputing the first through to the last matrix index3
+    INTEGER(INTG), INTENT(IN) :: lastIndex4 !<The last index4 of the matrix to be output
+    
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    REAL(SP), INTENT(IN) :: matrix(:,:,:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: indicesFormat !<The format string to be used to format the indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentIndex1,currentIndex2,currentIndex3,currentIndex4,finalIndex4,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixFourSP",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//indicesFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentIndex1=firstIndex1,lastIndex1,deltaIndex1
+      DO currentIndex2=firstIndex2,lastIndex2,deltaIndex2
+        DO currentIndex3=firstIndex3,lastIndex3,deltaIndex3
+          currentIndex4=firstIndex4
+          finalIndex4=currentIndex4+(numberFirst-1)*deltaIndex4
+          IF(finalIndex4>lastIndex4) finalIndex4=lastIndex4
+          IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+            WRITE(outputString,FMT=formatStr) (matrix(currentIndex1,currentIndex2,currentIndex3,count), &
+              & count=currentIndex4,finalIndex4,deltaIndex4)
+          ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+            WRITE(outputString,FMT=formatStr) currentIndex1,currentIndex2,currentIndex4, &
+              & (matrix(currentIndex1,currentIndex2,currentIndex3,count),count=currentIndex4,finalIndex4,deltaIndex4)
+          ENDIF
+          CALL WriteStr(id,err,error,*999)
+          DO WHILE(finalIndex4<lastIndex4) !more stuff to do
+            currentIndex4=finalIndex4+deltaIndex4
+            finalIndex4=finalIndex4+numberRepeat*deltaIndex4
+            IF(finalIndex4>lastIndex4) finalIndex4=lastIndex4
+            WRITE(outputString,FMT=repeatFormat) (matrix(currentIndex1,currentIndex2,currentIndex3,count), &
+              & count=currentIndex4,finalIndex4,deltaIndex4)
+            CALL WriteStr(id,err,error,*999)
+          ENDDO !finalIndex4<lastIndex4
+        ENDDO !currentIndex3
+      ENDDO !currentIndex2
+    ENDDO !currentIndex1
+    
+!    EXITS("WriteStringMatrixFourSP")
+    RETURN
+999 ERRORS("WriteStringMatrixFourSP",err,error)
+!    EXITS("WriteStringMatrixFourSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixFourSP
 
   !
   !================================================================================================================================
