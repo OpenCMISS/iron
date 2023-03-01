@@ -311,8 +311,8 @@ MODULE Types
     INTEGER(INTG) :: userDataPointNumber !<The user number of the data point to which the projection result corresponds to.
     INTEGER(INTG) :: globalDataPointNumber !<The global number of the data point to which the projection results cooresponds to.
     REAL(DP) :: distance !<The distances between the data point and the projection. Assigned only if dataPointsProjected is .TRUE.
-    INTEGER(INTG) :: elementNumber !<The local element number of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE.
-    INTEGER(INTG) :: globalElementNumber !<The global element number of the mesh the data point projects onto. Temp whilst we still have global data points. Assigned only if dataPointsProjected is .TRUE.
+    INTEGER(INTG) :: elementLocalNumber !<The local element number of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE.
+    INTEGER(INTG) :: elementGlobalNumber !<The global element number of the mesh the data point projects onto. Temp whilst we still have global data points. Assigned only if dataPointsProjected is .TRUE.
     INTEGER(INTG) :: elementLineFaceNumber !<The element line/face of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE. and DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE or DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE is chosen    
     INTEGER(INTG) :: exitTag !<The exit tag of the data projection. Assigned only if dataPointsProjected is .TRUE. \See DataProtectionRoutines,DataProjectionRoutines_DataProjectionTypes 
     REAL(DP), ALLOCATABLE :: xi(:) !<The xi coordinate of the projection. Assigned only if dataPointsProjected is .TRUE.
@@ -349,7 +349,7 @@ MODULE Types
     INTEGER(INTG) :: numberOfClosestElements !<The number of closest elements to perform full projection on. The algorithm first find the distance of the data point to each elements base on starting xi, full projection is only performed on the first few elements sorted by the distance
     REAL(DP) :: absoluteTolerance !<The absolute tolerance of the iteration update
     REAL(DP) :: relativeTolerance !<The relative tolerance of the iteration update
-    REAL(DP), ALLOCATABLE :: startingXi(:) !<The starting value of the element xi
+    REAL(DP), ALLOCATABLE :: startingXi(:,:) !<startingXi(xiIdx,dataPointIdx). The starting value of the element xi for the dataPointIdx'th data point.
     INTEGER(INTG) :: maxNumberOfCandidates !<The maximum number of projection candidate elements.
     TYPE(DataProjectionCandidateType), ALLOCATABLE :: dataProjectionCandidates(:) !<projectionCandidates(dataIdx). The projection candidates for the dataIdx'th data point. The 0'th index contains the default projection candidates which can then be overridden for specific data points.
     TYPE(DataProjectionResultType), ALLOCATABLE :: dataProjectionResults(:) !<dataProjectionResults(dataIdx). The data projection results for the dataIdx'th data point.
@@ -1433,7 +1433,7 @@ END TYPE GeneratedMeshEllipsoidType
     REAL(DP), ALLOCATABLE :: areas(:) !<areas(faceIdx). The area of the faceIdx'th face in the field decomposition.
     REAL(DP), ALLOCATABLE :: volumes(:) !<volumes(elementIdx). The volume of the elementIdx'th element in the field decomposition.
     INTEGER(INTG) :: numberOfFieldsUsing !<The number of fields that use these geometric parameters for their scaling. 
-    TYPE(FieldPtrType), POINTER :: fieldsUsing(:) !< fieldsUsing(fieldIdx). A pointer to the fieldIdx'th field that uses these geometric parameters for its scaling.
+    TYPE(FieldPtrType), ALLOCATABLE :: fieldsUsing(:) !< fieldsUsing(fieldIdx). A pointer to the fieldIdx'th field that uses these geometric parameters for its scaling.
   END TYPE FieldGeometricParametersType
 
   !>A type to hold the scale factors for the appropriate mesh component of a field. 
@@ -1653,7 +1653,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(RegionType), POINTER :: region !<A pointer to the region containing the fields. If the fields are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
     TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface containing the fields. If the fields are in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
     INTEGER(INTG) :: numberOfFields !<The number of fields defined on the region.
-    TYPE(FieldPtrType), POINTER :: fields(:) !<fields(fieldsIdx). The array of pointers to the fields.
+    TYPE(FieldPtrType), ALLOCATABLE :: fields(:) !<fields(fieldsIdx). The array of pointers to the fields.
   END TYPE FieldsType
 
   PUBLIC FieldPhysicalPointType,FieldPhysicalPointPtrType

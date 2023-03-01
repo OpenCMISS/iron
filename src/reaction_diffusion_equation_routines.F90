@@ -68,9 +68,11 @@ MODULE ReactionDiffusionEquationsRoutines
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
+  USE FiniteElasticityUtilityRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
+  USE Maths
   USE MatrixVector
 #ifndef NOMPIMOD
   USE MPI
@@ -137,7 +139,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,dimensionMultiplier,esSpecification(3),geometricComponentNumber,geometricMeshComponent, &
-      & geometricScalingType,lumpingType,numberOfDimensions,numberOfMaterialsComponents,solutionMethod,sparsityType
+      & geometricScalingType,independentFieldNumberOfComponents,independentFieldNumberOfVariables,lumpingType,numberOfDimensions, &
+      & numberOfMaterialsComponents,solutionMethod,sparsityType
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -356,23 +359,23 @@ CONTAINS
           !Set the number of materials components
           CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
             & numberOfMaterialsComponents,err,error,*999)
-          !Default the materials components for diffusivity param to the first component geometric interpolation
-          !with const interpolation
+          !Default the materials components for diffusivity parameters to the first component geometric interpolation
+          !with node based interpolation
           CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,err,error,*999)
           DO componentIdx=1,numberOfDimensions
             CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
               & componentIdx,geometricComponentNumber,err,error,*999)
             CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
-              & componentIdx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+              & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
           ENDDO !components_idx
-          !Default the storage co-efficient to the first geometric interpolation setup with constant interpolation
+          !Default the storage co-efficient to the first geometric interpolation setup with node based interpolation
           IF(esSpecification(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE) THEN
             componentIdx=numberOfMaterialsComponents
             CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,err,error,*999)
             CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,componentIdx, &
               & geometricComponentNumber,err,error,*999)
             CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,componentIdx, &
-              & FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+              & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
           ENDIF
           !Default the field scaling to that of the geometric field
           CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
@@ -421,6 +424,9 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
+      !-----------------------------------------------------------------
+      ! S o u r c e   f i e l d
+      !-----------------------------------------------------------------
       NULLIFY(equationsSource)
       CALL EquationsSet_SourceGet(equationsSet,equationsSource,err,error,*999)
       NULLIFY(geometricField)
@@ -436,7 +442,7 @@ CONTAINS
           !Create a general field
           CALL Field_TypeSetAndLock(equationsSource%sourceField,FIELD_GENERAL_TYPE,err,error,*999)
           !Label the field
-          CALL Field_LabelSetAndLock(equationsSource%sourceField,"Source Field",err,error,*999)
+          CALL Field_LabelSet(equationsSource%sourceField,"Source Field",err,error,*999)
           !Set the dependent type
           CALL Field_DependentTypeSetAndLock(equationsSource%sourceField,FIELD_INDEPENDENT_TYPE,err,error,*999)
           !Set the field decomposition to be that of the geometric decomposition
@@ -522,7 +528,201 @@ CONTAINS
           & " is invalid for a reaction diffusion equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
+    CASE(EQUATIONS_SET_SETUP_INDEPENDENT_TYPE)
+      !-----------------------------------------------------------------
+      ! I n d e p e n d e n t   f i e l d
+      !-----------------------------------------------------------------
+      NULLIFY(equationsIndependent)
+      CALL EquationsSet_IndependentGet(equationsSet,equationsIndependent,err,error,*999)
+!!TODO: This should check on the equation set type and only set up the independent field if it is required
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+      independentFieldNumberOfVariables=5
+      independentFieldNumberOfComponents=numberOfDimensions
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        IF(equationsSource%sourceFieldAutoCreated) THEN
+          !Create the auto created independent field
+          !Start field creation with name 'Independent Field'
+          CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsIndependent%independentField,err,error,*999)
+          !Create a general field
+          CALL Field_TypeSetAndLock(equationsIndependent%independentField,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
+          !Label the field
+          CALL Field_LabelSet(equationsIndependent%independentField,"Independent Field",err,error,*999)
+          !Set the dependent type
+          CALL Field_DependentTypeSetAndLock(equationsIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          !Set the field decomposition to be that of the geometric decomposition
+          NULLIFY(geometricDecomposition)
+          CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+          CALL Field_DecompositionSetAndLock(equationsIndependent%independentField,geometricDecomposition,err,error,*999)
+          !Set the geometric field
+          CALL Field_GeometricFieldSetAndLock(equationsIndependent%independentField,geometricField,err,error,*999)
+          !Set the field variables.
+          CALL Field_NumberOfVariablesSetAndLock(equationsIndependent%independentField,independentFieldNumberOfVariables, &
+            & err,error,*999)
+          CALL Field_VariableTypesSetAndLock(equationsIndependent%independentField,[FIELD_U_VARIABLE_TYPE, &
+            & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE],err,error,*999)
+          !Set the dimension
+          !Velocity field
+          CALL Field_DimensionSetAndLock(equationsIndependent%independentField,FIELD_U_VARIABLE_TYPE, &
+            & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          !Velocity gradient field
+          CALL Field_DimensionSetAndLock(equationsIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+!!TODO: Temperary Field to store time step. Need to delete once time step is accessed in Finite Element Calculate
+          CALL Field_DimensionSetAndLock(equationsIndependent%independentField,FIELD_V_VARIABLE_TYPE, &
+            & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+!!TODO: These should just be accessed via the previous time step parameter set of the dependent field????
+          !Stores Deformation Field of Previous Time Step, Required for Temporal Derivative of Jacobian
+          CALL Field_DimensionSetAndLock(equationsIndependent%independentField,FIELD_U1_VARIABLE_TYPE, &
+            & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          !Stores Deformation Field of Current Time Step
+          CALL Field_DimensionSetAndLock(equationsIndependent%independentField,FIELD_U2_VARIABLE_TYPE, &
+            & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          !Set the data type
+          CALL Field_DataTypeSetAndLock(equationsIndependent%independentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE, &
+            & err,error,*999)
+          CALL Field_DataTypeSetAndLock(equationsIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
+            & err,error,*999)
+          CALL Field_DataTypeSetAndLock(equationsIndependent%independentField,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE, &
+            & err,error,*999)
+          CALL Field_DataTypeSetAndLock(equationsIndependent%independentField,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE, &
+            & err,error,*999)
+          CALL Field_DataTypeSetAndLock(equationsIndependent%independentField,FIELD_U2_VARIABLE_TYPE,FIELD_DP_TYPE, &
+            & err,error,*999)
+          !Set the number of components
+          CALL Field_NumberOfComponentsSetAndLock(equationsIndependent%independentField,FIELD_U_VARIABLE_TYPE, &
+            & independentFieldNumberOfComponents,err,error,*999)
+          CALL Field_NumberOfComponentsSetAndLock(equationsIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            & independentFieldNumberOfComponents,err,error,*999)
+          CALL Field_NumberOfComponentsSetAndLock(equationsIndependent%independentField,FIELD_V_VARIABLE_TYPE, &
+            & independentFieldNumberOfComponents,err,error,*999)
+          CALL Field_NumberOfComponentsSetAndLock(equationsIndependent%independentField,FIELD_U1_VARIABLE_TYPE, &
+            & independentFieldNumberOfComponents,err,error,*999)
+          CALL Field_NumberOfComponentsSetAndLock(equationsIndependent%independentField,FIELD_U2_VARIABLE_TYPE, &
+            & independentFieldNumberOfComponents,err,error,*999)
+          !Default to the geometric interpolation setup
+          DO componentIdx=1,numberOfDimensions
+            !Get the geometric mesh component
+            CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,componentIdx,geometricMeshComponent, &
+              & err,error,*999)
+            !Set the mesh component
+            CALL Field_ComponentMeshComponentSet(equationsIndependent%independentField,FIELD_U_VARIABLE_TYPE,componentIdx, &
+              & geometricMeshComponent,err,error,*999)
+            CALL Field_ComponentMeshComponentSet(equationsIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+              & geometricMeshComponent,err,error,*999)
+            CALL Field_ComponentMeshComponentSet(equationsIndependent%independentField,FIELD_V_VARIABLE_TYPE,componentIdx, &
+              & geometricMeshComponent,err,error,*999)
+            CALL Field_ComponentMeshComponentSet(equationsIndependent%independentField,FIELD_U1_VARIABLE_TYPE,componentIdx, &
+              & geometricMeshComponent,err,error,*999)
+            CALL Field_ComponentMeshComponentSet(equationsIndependent%independentField,FIELD_U2_VARIABLE_TYPE,componentIdx, &
+              & geometricMeshComponent,err,error,*999)
+          ENDDO !componentIdx
+          !Specify the interpolation to be same as geometric interpolation
+          CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+          SELECT CASE(solutionMethod)
+          CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+            DO componentIdx=1,numberOfDimensions
+              CALL Field_ComponentInterpolationSetAndLock(equationsIndependent%independentField,FIELD_U_VARIABLE_TYPE, &
+                & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationSetAndLock(equationsIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+                & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationSetAndLock(equationsIndependent%independentField,FIELD_V_VARIABLE_TYPE, &
+                & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationSetAndLock(equationsIndependent%independentField,FIELD_U1_VARIABLE_TYPE, &
+                & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationSetAndLock(equationsIndependent%independentField,FIELD_U2_VARIABLE_TYPE, &
+                & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+            ENDDO !componentIdx
+          CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))// " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          !Set the scaling to be the same as the geometric field
+          CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+          CALL Field_ScalingTypeSet(equationsIndependent%independentField,geometricScalingType,err,error,*999)
+        ELSE
+          !Check the user specified field
+          CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
+          CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,independentFieldNumberOfVariables,err,error,*999)
+          CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+            & FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE],err,error,*999)
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,independentFieldNumberOfComponents, &
+            & err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+            & independentFieldNumberOfComponents,err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,independentFieldNumberOfComponents, &
+            & err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,independentFieldNumberOfComponents, &
+            & err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE,independentFieldNumberOfComponents, &
+            & err,error,*999)
+          CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+          SELECT CASE(solutionMethod)
+          CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+            DO componentIdx=1,independentFieldNumberOfComponents
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,componentIdx, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,componentIdx, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE,componentIdx, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+            ENDDO !componentIdx
+          CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT          
+        ENDIF
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        IF(equationsIndependent%independentFieldAutoCreated) THEN
+          CALL Field_CreateFinish(equationsIndependent%independentField,err,error,*999)
+        ENDIF
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a reaction diffusion equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
     CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
+      !-----------------------------------------------------------------
+      ! A n a l y t i c
+      !-----------------------------------------------------------------
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL FlagError("Not implemented.",err,error,*999)
@@ -535,6 +735,9 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
+      !-----------------------------------------------------------------
+      ! E q u a t i o n s
+      !-----------------------------------------------------------------
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL EquationsSet_AssertSourceIsFinished(equationsSet,err,error,*999)
@@ -761,8 +964,8 @@ CONTAINS
       & esSpecification(3),gaussPointIdx,numberOfColsComponents,numberOfColumnElementParameters(MAX_NUMBER_OF_COMPONENTS), &
       & numberOfDimensions,numberOfGauss,numberOfRowElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfRowsComponents, &
       & numberOfXi,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowXiIdx,rowsVariableType,scalingType,xiIdx
-    REAL(DP) :: aParam,bParam,columnPhi,columndPhidXi(3),conductivity(3,3),gaussWeight,jacobian,jacobianGaussWeight, &
-      & rowComponentPhi(3),rowPhi,rowdPhidXi(3),sourceParam,sum
+    REAL(DP) :: aParam,bParam,columnPhi,columndPhidXi(3),conductivity(3,3),dJdt,F(3,3),gaussWeight,jacobian,jacobianGaussWeight, &
+      & JZNu,prevF(3,3),prevJZNu,rowComponentPhi(3),rowPhi,rowdPhidXi(3),sourceParam,sum
     LOGICAL :: update,updateDamping,updateMatrices,updateRHS,updateSource,updateStiffness
     TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(BasisPtrType) :: columnBasis(MAX_NUMBER_OF_COMPONENTS),rowBasis(MAX_NUMBER_OF_COMPONENTS)
@@ -787,11 +990,16 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixType), POINTER :: dampingMatrix,stiffnessMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,materialsField,sourceField
+    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField,materialsField,sourceField
     TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,fibreInterpParameters,geometricInterpParameters, &
-      & rowsInterpParameters,sourceInterpParameters,materialsInterpParameters
-    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint,geometricInterpPoint,materialsInterpPoint,sourceInterpPoint
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
+      & rowsInterpParameters,sourceInterpParameters,materialsInterpParameters,uIndependentInterpParameters, &
+      & deludelnIndependentInterpParameters,vIndependentInterpParameters,u1IndependentInterpParameters, &
+      & u2IndependentInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint,geometricInterpPoint,materialsInterpPoint, &
+      & sourceInterpPoint,uIndependentInterpPoint,deludelnIndependentInterpPoint,vIndependentInterpPoint, &
+      & u1IndependentInterpPoint,u2IndependentInterpPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,independentInterpPointMetric, &
+      & prevIndependentInterpPointMetrics
     TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,geometricVariable,rowsVariable
     TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,geometricQuadratureScheme
     TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAX_NUMBER_OF_COMPONENTS),rowQuadratureScheme(MAX_NUMBER_OF_COMPONENTS)
@@ -946,7 +1154,60 @@ CONTAINS
           CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,sourceInterpParameters,err,error,*999)
         ENDIF
       ENDIF
-      
+
+!!TODO: Should check a specific equations set subtype for deforming mesh additions      
+      NULLIFY(independentField)
+      NULLIFY(uIndependentInterpParameters)
+      NULLIFY(deludelnIndependentInterpParameters)
+      NULLIFY(vIndependentInterpParameters)
+      NULLIFY(u1IndependentInterpParameters)
+      NULLIFY(u2IndependentInterpParameters)
+      NULLIFY(uIndependentInterpPoint)
+      NULLIFY(deludelnIndependentInterpPoint)
+      NULLIFY(vIndependentInterpPoint)
+      NULLIFY(u1IndependentInterpPoint)
+      NULLIFY(u2IndependentInterpPoint)
+      NULLIFY(prevIndependentInterpPoint)
+      NULLIFY(independentInterpPointMetrics)
+      NULLIFY(prevIndependentInterpPointMetrics)
+      CALL EquationsSet_IndependentFieldExists(equationsSet,independentField,err,error,*999)
+      IF(ASSOCIATED(independentField)) THEN
+        CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & uIndependentInterpParameters,err,error,*999)
+        CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_DELUDELN_VARIABLE_TYPE, &
+          & deludelnIndependentInterpParameters,err,error,*999)
+        CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
+          & vIndependentInterpParameters,err,error,*999)
+        CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_U1_VARIABLE_TYPE, &
+          & u1IndependentInterpParameters,err,error,*999)
+        CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_U2_VARIABLE_TYPE, &
+          & u2IndependentInterpParameters,err,error,*999)
+        CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & uIndependentInterpPoint,err,error,*999)
+        CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_DELUDELN_VARIABLE_TYPE, &
+          & deludelnIndependentInterpPoint,err,error,*999)
+        CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
+          & vIndependentInterpPoint,err,error,*999)
+        CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_U1_VARIABLE_TYPE, &
+          & u1IndependentInterpPoint,err,error,*999)
+        CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_U2_VARIABLE_TYPE, &
+          & u2IndependentInterpPoint,err,error,*999)
+        CALL EquationsInterpolation_IndependentPointMetricsGet(equationsInterpolation,FIELD_U1_VARIABLE_TYPE, &
+          & independentInterpPointMetrics,err,error,*999)
+        CALL EquationsInterpolation_IndependentPointMetricsGet(equationsInterpolation,FIELD_U2_VARIABLE_TYPE, &
+          & prevIndependentInterpPointMetrics,err,error,*999)
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,uIndependentInterpParameters, &
+          & err,error,*999)
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,deludelnIndependentInterpParameters, &
+          & err,error,*999)
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,vIndependentInterpParameters, &
+          & err,error,*999)
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,u1IndependentInterpParameters, &
+          & err,error,*999)
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,u2IndependentInterpParameters, &
+          & err,error,*999)
+      ENDIF
+            
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
       CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
@@ -1010,6 +1271,13 @@ CONTAINS
         CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint, &
           & err,error,*999)
+        
+        !Calculate jacobianGaussWeight.
+!!TODO: Think about symmetric problems. 
+        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+        jacobianGaussWeight=jacobian*gaussWeight
+        
         IF(ASSOCIATED(fibreField)) THEN
           CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
             & err,error,*999)
@@ -1018,6 +1286,38 @@ CONTAINS
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,sourceInterpPoint, &
             & err,error,*999)
           sourceParam=sourceInterpPoint%values(1,NO_PART_DERIV)
+        ENDIF
+        velocity=0.0_DP
+        gradVelocity=0.0_DP
+        IF(ASSOCIATED(independentField)) THEN
+          CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+            & uIndependentInterpPoint,err,error,*999)
+          CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+            & deludelnIndependentInterpPoint,err,error,*999)
+          CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+            & vIndependentInterpPoint,err,error,*999)
+          CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+            & u1IndependentInterpPoint,err,error,*999)
+          CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+            & u2IndependentInterpPoint,err,error,*999)
+          CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,indepdendentInterpPointMetrics,err,error,*999)
+          CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,prevIndepdendentInterpPointMetrics,err,error,*999)
+          DO componentIdx=1,numberOfDimensions
+            velocity(componentIdx)=uIndependentInterpPoint%values(componentIdx,NO_PART_DERIV)
+            gradVelocity(componentIdx)=deludelnIndependentInterpPoint%values(componentIdx,NO_PART_DERIV)            
+          ENDDO !componentIdx
+          deltaTime=vIndependentInterpPoint%values(numberOfDimensions,NO_PART_DERIV)
+          CALL FieldInterpolatedPointMetrics_JacobianGet(indepdendentInterpPointMetrics,currentJ,err,error,*999)
+          JZNuRef=currentJ/jacobian
+          CALL FieldInterpolatedPointMetrics_JacobianGet(prevIndepdendentInterpPointMetrics,prevJ,err,error,*999)
+          prevJZNuRef=prevJ/jacobian
+          !Calculate current deformation state
+          CALL FiniteElasticity_GaussDeformationGradientTensor(independentInterpPointMetrics,geometricInterpPointMetrics, &
+            & fibreInterpPointMetrics,F,JZNu,err,error,*999)
+          !Calculate previous deformation gradient tensor and its determinant
+          CALL FiniteElasticity_GaussDeformationGradientTensor(prevIndependentInterpPointMetrics,geometricInterpPointMetrics, &
+            & fibreInterpPointMetrics,prevF,prevJZNu,err,error,*999)
+          dJdt=(JZNu-prevJZNu)/deltaTime
         ENDIF
         
         aParam=materialsInterpPoint%values(1,NO_PART_DERIV)
@@ -1040,12 +1340,7 @@ CONTAINS
             & materialsInterpPoint%values(2:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)  
         END SELECT
         
-        !Calculate jacobianGaussWeight.
-!!TODO: Think about symmetric problems. 
-        CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
-        CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
-        jacobianGaussWeight=jacobian*gaussWeight
-        
+       
         !Loop over field components
         rowElementDOFIdx=0          
         DO rowComponentIdx=1,numberOfRowsComponents

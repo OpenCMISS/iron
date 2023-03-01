@@ -492,6 +492,10 @@ MODULE FieldAccessRoutines
 
   PUBLIC FieldInterpolatedPointMetrics_JacobianGet
 
+  PUBLIC FieldInterpolatedPointMetrics_NumberOfXDimensionsGet
+
+  PUBLIC FieldInterpolatedPointMetrics_NumberOfXiDimensionsGet
+
   PUBLIC FieldInterpolationParameters_FieldGet
 
   PUBLIC FieldInterpolationParameters_FieldVariableGet
@@ -2694,7 +2698,7 @@ CONTAINS
    
     !Get the field from the user number
     NULLIFY(field)
-    IF(ASSOCIATED(fields%fields)) THEN
+    IF(ALLOCATED(fields%fields)) THEN
       DO fieldIdx=1,fields%numberOfFields
 #ifdef WITH_PRECHECKS      
         IF(.NOT.ASSOCIATED(fields%fields(fieldIdx)%ptr)) THEN
@@ -3076,7 +3080,7 @@ CONTAINS
   SUBROUTINE FieldInterpolatedPointMetrics_JacobianGet(interpolatedPointMetrics,jacobian,err,error,*)
 
     !Argument variables
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: interpolatedPointMetrics !<A pointer to the interpolated point metrics to get the interpolated point for.
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: interpolatedPointMetrics !<A pointer to the interpolated point metrics to get the Jacobian for.
     REAL(DP), INTENT(OUT) :: jacobian !<On exit, the Jacobian for the interpolated point metrics.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3098,6 +3102,68 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE FieldInterpolatedPointMetrics_JacobianGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of X dimensions for a field interpolated point metrics
+  SUBROUTINE FieldInterpolatedPointMetrics_NumberOfXDimensionsGet(interpolatedPointMetrics,numberOfXDimensions,err,error,*)
+
+    !Argument variables
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: interpolatedPointMetrics !<A pointer to the interpolated point metrics to get the number of X diemnsions for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfXDimensions !<On exit, the number of X dimensions for the interpolated point metrics.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldInterpolatedPointMetrics_NumberOfXDimensionsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interpolatedPointMetrics)) &
+      & CALL FlagError("Field interpolated point metrics is not associated.",err,error,*999)
+#endif    
+
+    numberOfXDimensions=interpolatedPointMetrics%numberOfXDimensions
+
+    EXITS("FieldInterpolatedPointMetrics_NumberOfXDimensionsGet")
+    RETURN
+999 ERRORS("FieldInterpolatedPointMetrics_NumberOfXDimensionsGet",err,error)
+    EXITS("FieldInterpolatedPointMetrics_NumberOfXDimensionsGet")
+    RETURN 1
+    
+  END SUBROUTINE FieldInterpolatedPointMetrics_NumberOfXDimensionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of Xi dimensions for a field interpolated point metrics
+  SUBROUTINE FieldInterpolatedPointMetrics_NumberOfXiDimensionsGet(interpolatedPointMetrics,numberOfXiDimensions,err,error,*)
+
+    !Argument variables
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: interpolatedPointMetrics !<A pointer to the interpolated point metrics to get the number of X diemnsions for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfXiDimensions !<On exit, the number of Xi dimensions for the interpolated point metrics.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldInterpolatedPointMetrics_NumberOfXiDimensionsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interpolatedPointMetrics)) &
+      & CALL FlagError("Field interpolated point metrics is not associated.",err,error,*999)
+#endif    
+
+    numberOfXiDimensions=interpolatedPointMetrics%numberOfXiDimensions
+
+    EXITS("FieldInterpolatedPointMetrics_NumberOfXiDimensionsGet")
+    RETURN
+999 ERRORS("FieldInterpolatedPointMetrics_NumberOfXiDimensionsGet",err,error)
+    EXITS("FieldInterpolatedPointMetrics_NumberOfXiDimensionsGet")
+    RETURN 1
+    
+  END SUBROUTINE FieldInterpolatedPointMetrics_NumberOfXiDimensionsGet
 
   !
   !================================================================================================================================

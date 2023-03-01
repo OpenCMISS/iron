@@ -2377,6 +2377,8 @@ CONTAINS
             CALL FlagError("Not implemented.",err,error,*999)
           CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
             CALL MultiPhysics_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*999)
+          CASE(EQUATIONS_SET_FITTING_CLASS)
+            CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             localError="The first equations set specification of"// &
               & TRIM(NumberToVString(equationsSet%specification(1),"*", &
@@ -2517,6 +2519,11 @@ CONTAINS
     column=0  ! element jacobian matrix column number
     CALL FieldVariable_NumberOfComponentsGet(columnVariable,numberOfComponents,err,error,*999)
     DO componentIdx=1,numberOfComponents
+!!TODO: this is too specific for this general routine
+      !!Adjusts the pertubation for the hydrostatic pressure to not use the L2Norm
+      !IF(componentIdx==4) THEN
+      !  delta=(1.0_DP)*jacobianMatrix%jacobianFiniteDifferenceStepSize
+      !ENDIF
       NULLIFY(domain)
       CALL FieldVariable_ComponentDomainGet(columnVariable,componentIdx,domain,err,error,*999)
       NULLIFY(domainTopology)
@@ -2635,6 +2642,8 @@ CONTAINS
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
       CALL MultiPhysics_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_FITTING_CLASS)
+      CALL Fitting_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
     CASE DEFAULT
       localError="The first equations set specification of "// &
         & TRIM(NumberToVString(equationsSet%specification(1),"*",err,error))//" is not valid."

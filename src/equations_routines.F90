@@ -517,7 +517,8 @@ CONTAINS
         & equations%interpolation%independentInterpParameters,err,error,*999)
       CALL Field_InterpolatedPointsInitialise(equations%interpolation%independentInterpParameters,  &
         & equations%interpolation%independentInterpPoint,err,error,*999)
-      IF(equations%interpolation%independentField%type==FIELD_GEOMETRIC_TYPE.OR. &
+      IF(equations%interpolation%independentField%TYPE==FIELD_GEOMETRIC_TYPE.OR. &
+        & equations%interpolation%independentField%type==FIELD_GEOMETRIC_GENERAL_TYPE.OR. &
         & equations%interpolation%independentField%type==FIELD_FIBRE_TYPE) THEN
         CALL Field_InterpolatedPointsMetricsInitialise(equations%interpolation%independentInterpPoint,  &
           &  equations%interpolation%independentInterpPointMetrics,err,error,*999)

@@ -78,6 +78,7 @@ set(IRON_Fortran_SRC
     finite_elasticity_Darcy_routines.F90
     finite_elasticity_fluid_pressure_routines.F90
     finite_elasticity_routines.F90
+    finite_elasticity_utility_routines.F90
     fitting_routines.F90
     fluid_mechanics_IO_routines.F90
     fluid_mechanics_routines.F90

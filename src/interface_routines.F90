@@ -958,15 +958,12 @@ CONTAINS
     ENDDO !dataPointIdx
     
     !Data reprojection and update points connectivity information with the projection results
-    dependentFieldProjection=>interfaceCondition%DEPENDENT%fieldVariables(projectionBodyIdx)%ptr%FIELD
-    IF(ASSOCIATED(dependentFieldProjection)) THEN
-      !Projection the data points (with know spatial positions) on the projection dependent field 
-      CALL DataProjection_DataPointsProjectionEvaluate(dataProjection,FIELD_VALUES_SET_TYPE,err,error,*999)
-      CALL InterfacePointsConnectivity_UpdateFromProjection(InterfacePointsConnectivity,dataProjection, &
-        & projectionBodyIdx,err,error,*999) 
-    ELSE
-      CALL FlagError("Projection dependent field is not associated.",err,error,*999)
-    ENDIF
+    NULLIFY(dependentProjectionVariable)
+    CALL InterfaceDependent_DependentVariableGet(interfaceDependent,projectionBodyIdx,dependentProjectionVariable,err,error,*999)
+    !Projection the data points (with know spatial positions) on the projection dependent field 
+    CALL DataProjection_DataPointsProjectionEvaluate(dataProjection,FIELD_VALUES_SET_TYPE,err,error,*999)
+    CALL InterfacePointsConnectivity_UpdateFromProjection(InterfacePointsConnectivity,dataProjection, &
+      & projectionBodyIdx,err,error,*999) 
     
     EXITS("InterfacePointsConnectivity_DataReprojection")
     RETURN

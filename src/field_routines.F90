@@ -946,6 +946,8 @@ MODULE FieldRoutines
   PUBLIC FieldVariablesList_VariableGet
   
   PUBLIC FieldVariablesList_VariableInListCheck
+
+  PUBLIC Fields_AddField
   
   PUBLIC Fields_Finalise,Fields_Initialise
   
@@ -1620,10 +1622,9 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: fieldIdx
     TYPE(FieldType), POINTER :: newField
-    TYPE(FieldPtrType), POINTER :: newFields(:)
+    TYPE(FieldPtrType), ALLOCATABLE :: newFields(:)
 
     NULLIFY(newField)
-    NULLIFY(newFields)
 
     ENTERS("Field_CreateStartGeneric",err,error,*998)
 
@@ -1651,15 +1652,14 @@ CONTAINS
       newFields(fieldIdx)%ptr=>fields%fields(fieldIdx)%ptr
     ENDDO !fieldIdx
     newFields(fields%numberOfFields+1)%ptr=>newField
-    IF(ASSOCIATED(fields%fields)) DEALLOCATE(fields%fields)
-    fields%fields=>newFields
+    CALL MOVE_ALLOC(newFields,fields%fields)
     fields%numberOfFields=fields%numberOfFields+1
     field=>newField
 
     EXITS("Field_CreateStartGeneric")
     RETURN
 999 IF(ASSOCIATED(newField)) DEALLOCATE(newField)
-    IF(ASSOCIATED(newFields)) DEALLOCATE(newFields)
+    IF(ALLOCATED(newFields)) DEALLOCATE(newFields)
     NULLIFY(field)
 998 ERRORSEXITS("Field_CreateStartGeneric",err,error)
     RETURN 1
@@ -2408,10 +2408,7 @@ CONTAINS
     INTEGER(INTG) :: fieldIdx,fieldPosition,fieldPosition2
     TYPE(FieldType), POINTER :: field2,geometricField
     TYPE(FieldsType), POINTER :: fields
-    TYPE(FieldPtrType), POINTER :: newFields(:),newFieldsUsing(:)
-
-    NULLIFY(newFields)
-    NULLIFY(newFieldsUsing)
+    TYPE(FieldPtrType), ALLOCATABLE :: newFields(:),newFieldsUsing(:)
 
     ENTERS("Field_Destroy",err,error,*999)
 
@@ -2444,9 +2441,7 @@ CONTAINS
             ENDIF
           ENDDO !fieldIdx
           geometricField%geometricFieldParameters%numberOfFieldsUsing=geometricField%geometricFieldParameters%numberOfFieldsUsing-1
-          IF(ASSOCIATED(geometricField%geometricFieldParameters%fieldsUsing)) &
-            & DEALLOCATE(geometricField%geometricFieldParameters%fieldsUsing)
-          geometricField%geometricFieldParameters%fieldsUsing=>newFieldsUsing
+          CALL MOVE_ALLOC(newFieldsUsing,geometricField%geometricFieldParameters%fieldsUsing)
         ELSE
           !??? Error
         ENDIF
@@ -2464,8 +2459,7 @@ CONTAINS
           newFields(fieldIdx-1)%ptr=>fields%fields(fieldIdx)%ptr
         ENDIF
       ENDDO !fieldIdx
-      DEALLOCATE(fields%fields)
-      fields%fields=>newFields
+      CALL MOVE_ALLOC(newFields,fields%fields)
       fields%numberOfFields=fields%numberOfFields-1
     ELSE
       DEALLOCATE(fields%fields)
@@ -2474,8 +2468,8 @@ CONTAINS
 
     EXITS("Field_Destroy")
     RETURN
-999 IF(ASSOCIATED(newFields)) DEALLOCATE(newFields)
-    IF(ASSOCIATED(newFieldsUsing)) DEALLOCATE(newFieldsUsing)
+999 IF(ALLOCATED(newFields)) DEALLOCATE(newFields)
+    IF(ALLOCATED(newFieldsUsing)) DEALLOCATE(newFieldsUsing)
     ERRORSEXITS("Field_Destroy",err,error)
     RETURN 1
 
@@ -2913,7 +2907,7 @@ CONTAINS
         field2=>geometricParameters%fieldsUsing(fieldIdx)%ptr
         IF(ASSOCIATED(field2)) NULLIFY(field2%geometricField)
       ENDDO !fieldIdx
-      IF(ASSOCIATED(geometricParameters%fieldsUsing)) DEALLOCATE(geometricParameters%fieldsUsing)
+      IF(ALLOCATED(geometricParameters%fieldsUsing)) DEALLOCATE(geometricParameters%fieldsUsing)
       IF(ALLOCATED(geometricParameters%lengths)) DEALLOCATE(geometricParameters%lengths)
       !IF(ALLOCATED(geometricParameters%volumes)) DEALLOCATE(geometricParameters%volumes)
       DEALLOCATE(geometricParameters)
@@ -2945,12 +2939,10 @@ CONTAINS
     TYPE(DecompositionLinesType), POINTER :: decompositionLines
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(FieldType), POINTER :: fieldGeometricField
-    TYPE(FieldPtrType), POINTER :: newFieldsUsing(:)
+    TYPE(FieldPtrType), ALLOCATABLE :: newFieldsUsing(:)
     TYPE(FieldGeometricParametersType), POINTER :: geometricParameters
  
-    NULLIFY(newFieldsUsing)
-
-    ENTERS("Field_GeometricParametersInitialise",err,error,*999)
+     ENTERS("Field_GeometricParametersInitialise",err,error,*999)
 
     IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
     
@@ -3003,14 +2995,13 @@ CONTAINS
         newFieldsUsing(fieldIdx)%ptr=>geometricParameters%fieldsUsing(fieldIdx)%ptr
       ENDDO !fieldIdx
       newFieldsUsing(geometricParameters%numberOfFieldsUsing+1)%ptr=>field
+      CALL MOVE_ALLOC(newFieldsUsing,geometricParameters%fieldsUsing)
       geometricParameters%numberOfFieldsUsing=geometricParameters%numberOfFieldsUsing+1
-      IF(ASSOCIATED(geometricParameters%fieldsUsing)) DEALLOCATE(geometricParameters%fieldsUsing)
-      geometricParameters%fieldsUsing=>newFieldsUsing
     ENDIF
 
     EXITS("Field_GeometricParametersInitialise")
     RETURN
-999 IF(ASSOCIATED(newFieldsUsing)) DEALLOCATE(newFieldsUsing)
+999 IF(ALLOCATED(newFieldsUsing)) DEALLOCATE(newFieldsUsing)
     ERRORSEXITS("Field_GeometricParametersInitialise",err,error)
     RETURN 1
     
@@ -22096,6 +22087,77 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Adds a field to a fields list
+  SUBROUTINE Fields_AddField(fields,field,err,error,*)
+
+    !Argument variables
+    TYPE(FieldsType), POINTER :: fields !<A pointer to the fields to add a field to
+    TYPE(FieldType), POINTER :: field !<The field to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: fieldIdx
+    TYPE(FieldPtrType), ALLOCATABLE :: newFields(:)
+
+    ENTERS("Fields_AddField",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fields)) THEN
+      ALLOCATE(fields,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate fields.",err,error,*999)
+      CALL Fields_InitialiseGeneric(fields,err,error,*999)      
+    ENDIF
+    ALLOCATE(newFields(fields%numberOfFields+1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate new fields.",err,error,*999)
+    IF(fields%numberOfFields>0) THEN
+      IF(ASSOCIATED(fields%region)) THEN
+        IF(ASSOCIATED(field%region)) THEN
+          IF(.NOT.ASSOCIATED(fields%region,field%region)) &
+            & CALL FlagError("The specified field does not have the same region as the specified fields.",err,error,*999)
+        ELSE IF(ASSOCIATED(field%interface)) THEN
+          CALL FlagError("Can not add a field from an interface to fields that are from a region.",err,error,*999)
+        ELSE
+          CALL FlagError("Field does not have an associated region or interface.",err,error,*999)
+        ENDIF
+      ELSE IF(ASSOCIATED(fields%interface)) THEN
+        IF(ASSOCIATED(field%interface)) THEN
+          IF(.NOT.ASSOCIATED(fields%interface,field%interface)) &
+            & CALL FlagError("The specified field does not have the same interface as the specified fields.",err,error,*999)
+        ELSE IF(ASSOCIATED(field%region)) THEN
+          CALL FlagError("Can not add a field from a region to fields that are from an interface.",err,error,*999)
+        ELSE
+          CALL FlagError("Field does not have an associated region or interface.",err,error,*999)
+        ENDIF                    
+      ELSE
+        CALL FlagError("Fields does not have a region or interface.",err,error,*999)
+      ENDIF
+    ELSE
+      IF(ASSOCIATED(field%region)) THEN
+        fields%region=>field%region
+      ELSE IF(ASSOCIATED(field%INTERFACE)) THEN
+        fields%interface=>field%interface
+      ELSE 
+        CALL FlagError("Field does not have an associated region or interface.",err,error,*999)
+      ENDIF
+    ENDIF
+    DO fieldIdx=1,fields%numberOfFields
+      newFields(fieldIdx)%ptr=>fields%fields(fieldIdx)%ptr
+    ENDDO !fieldIdx
+    newFields(fields%numberOfFields+1)%ptr=>field
+    CALL MOVE_ALLOC(newFields,fields%fields)
+    fields%numberOfFields=fields%numberOfFields+1
+    
+    EXITS("Fields_AddField")
+    RETURN
+999 ERRORSEXITS("Fields_AddField",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Fields_AddField
+
+  !
+  !================================================================================================================================
+  !
+
   !>Finalises the fields and deallocates all memory.
   SUBROUTINE Fields_Finalise(fields,err,error,*)
 
@@ -22143,7 +22205,6 @@ CONTAINS
     NULLIFY(fields%region)
     NULLIFY(fields%interface)
     fields%numberOfFields=0
-    NULLIFY(fields%fields)
 
     EXITS("Fields_InitialiseGeneric")
     RETURN

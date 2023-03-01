@@ -72,6 +72,7 @@ MODULE FiniteElasticityRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE FIELD_IO_ROUTINES
+  USE FiniteElasticityUtilityRoutines
   USE FLUID_MECHANICS_IO_ROUTINES
   USE GeneratedMeshRoutines
   USE InputOutput
@@ -170,8 +171,6 @@ MODULE FiniteElasticityRoutines
   PUBLIC FiniteElasticity_EvaluateChapelleFunction
 
   PUBLIC FiniteElasticity_GetDarcyParameters
-
-  PUBLIC FiniteElasticity_GaussDeformationGradientTensor
 
   PUBLIC FiniteElasticity_LoadIncrementApply
 
@@ -607,78 +606,6 @@ CONTAINS
     RETURN
     
   END FUNCTION FiniteElasticity_CylinderAnalyticFuncEvaluate
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Calculates the deformation gradient tensor at a given interpolated point
-  SUBROUTINE FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics,&
-    & fibreInterpPoint,F,J,err,error,*)
-
-    !Argument variables
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: dependentInterpPointMetrics !<The interpolated point metrics of the deformed/spatial geometry
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The interpolated point metrics of the undeformed/reference geometry
-    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<A pointer to the fibre field interpolated at the point. If there is no fibre field defined this will be NULL.
-    REAL(DP), INTENT(OUT) :: F(3,3) !<F(coordinateIdx,coordinateIdx). On return, the deformation gradient tensor F
-    REAL(DP), INTENT(OUT) :: J !<On return, the Jacobian of the deformation i.e., determinant F
-    INTEGER(INTG), INTENT(OUT) :: err   !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfZDimensions
-    REAL(DP) :: dNudX(3,3),dXdNu(3,3),dNudXi(3,3),dXidNu(3,3)
-
-    ENTERS("FiniteElasticity_DeformationGradientTensorCalculate",err,error,*999)
-
-#ifdef WITH_PRECHECKS    
-    IF(.NOT.ASSOCIATED(dependentInterpPointMetrics)) &
-      & CALL FlagError("Dependent interpolated point metrics is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
-      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
-#endif    
-    
-    numberOfXDimensions=geometricInterpPointMetrics%numberOfXDimensions
-    numberOfXiDimensions=geometricInterpPointMetrics%numberOfXiDimensions
-    numberOfZDimensions=dependentInterpPointMetrics%numberOfXDimensions
-
-    CALL CoordinateSystem_MaterialSystemCalculateOld(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu, &
-      & dNudXi(1:numberOfXDimensions,1:numberOfXiDimensions),dXidNu(1:numberOfXiDimensions,1:numberOfXDimensions), &
-      & err,error,*999)
-    !F = dZ/dNu = dZ/dXi * dXi/dNu  (deformation gradient tensor, F)
-    CALL MatrixProduct(dependentInterpPointMetrics%dXdXi(1:numberOfZDimensions,1:numberOfXiDimensions), &
-      & dXiDNu(1:numberOfXiDimensions,1:numberOfXDimensions),F(1:numberOfZDimensions,1:numberOfXDimensions), &
-      & err,error,*999)
-    
-    IF(numberOfZDimensions == 2) THEN
-      F(:,3) = [0.0_DP,0.0_DP,1.0_DP]
-      F(3,1:2) = 0.0_DP
-    ENDIF
-    
-    CALL Determinant(F,J,err,error,*999)
-
-    IF(diagnostics1) THEN
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Calculated deformation gradient tensor:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Z dimensions  = ",numberOfZDimensions,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of X wrt to Nu coordinates:",err,error,*999)
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfXDimensions, &
-        & numberOfXDimensions,numberOfXDimensions,dXidNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("    dX_dNu','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deformation gradient tensor wrt Nu coordinates:",err,error,*999)
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfZDimensions,1,1,numberOfXDimensions, &
-        & numberOfXDimensions,numberOfXDimensions,F,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("         F','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant F  = ",J,err,error,*999)
-    ENDIF
-
-    EXITS("FiniteElasticity_DeformationGradientTensorCalculate")
-    RETURN
-999 ERRORS("FiniteElasticity_GaussDeformationGradientTensorCalculate",err,error)
-    EXITS("FiniteElasticity_GaussDeformationGradientTensorCalculate")
-    RETURN 1
-
-  END SUBROUTINE FiniteElasticity_DeformationGradientTensorCalculate
 
   !
   !================================================================================================================================
@@ -2299,7 +2226,7 @@ CONTAINS
 
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
-      & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
+      & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE, &
       & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
       pressureComponent=numberOfDimensions+1
       P=dependentInterpPoint%values(pressureComponent,NO_PART_DERIV)
@@ -2367,6 +2294,7 @@ CONTAINS
       !stressTensor(1:3)=stressTensor(1:3)+P
 
     CASE(EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
+      & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_NOLENDEP_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_2NDPIOLA_SUBTYPE, &
       & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE)
       pressureComponent=numberOfDimensions+1
       P=dependentInterpPoint%values(pressureComponent,NO_PART_DERIV)
@@ -2644,7 +2572,8 @@ CONTAINS
       CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
       NULLIFY(geometricField)
       NULLIFY(dependentField)
-      IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
+      IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE .OR. &
+        & equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE) THEN
         CALL EquationsSet_GeometricFieldGet(equationsSet,dependentField,err,error,*999)
         CALL EquationsSet_DependentFieldGet(equationsSet,geometricField,err,error,*999)
       ELSE
@@ -2707,7 +2636,8 @@ CONTAINS
       NULLIFY(dependentInterpParameters)
       NULLIFY(dependentInterpPoint)
       NULLIFY(dependentInterpPointMetrics)
-      IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
+      IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE .OR. &
+        & equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE) THEN
         CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
           & dependentInterpParameters,err,error,*999)
         CALL EquationsInterpolation_GeometricPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -3874,9 +3804,9 @@ CONTAINS
       & numberOfMaterialsComponents,numberOfRowsComponents,numberOfRowElementParameters,numberOfXi,pressureComponent, &
       & pressureInterpolationType,rhsVariableType,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowInterpolationType, &
       & rowsVariableType,scalingType,timeDependence,totalNumberOfSurfacePressureConditions,xiIdx
-    REAL(DP) :: bfact,cauchyTensor(3,3),columndPhidXi,columnPhi,darcyMassIncrease,darcyRho0F,darcyVolIncrease,density, &
-      & dFdZ(3,64,3),dPhidZ(3,64,3),F(3,3),Fe(3,3),Fg(3,3),gaussWeight,growthValues(3),J,Je,Jg,JacobianGaussWeight,Jxxi,Jzxi, &
-      & Mfact,p,p0fact,rowPhi,sigmaV(6),spatialDensity,sum1,tempTerm1,thickness
+    REAL(DP) :: bfact,cauchyTensor(3,3),cauchyTensorFibre(3,3),columndPhidXi,columnPhi,darcyMassIncrease,darcyRho0F, &
+      & darcyVolIncrease,density,dFdZ(3,64,3),dPhidZ(3,64,3),F(3,3),Fe(3,3),Fg(3,3),gaussWeight,growthValues(3),J,Je,Jg, &
+      & JacobianGaussWeight,Jxxi,Jzxi,Mfact,p,p0fact,rowPhi,sigmaV(6),spatialDensity,sum1,tempTerm1,thickness
     LOGICAL :: boundaryElement,darcyDependent,darcyDensity,haveDensity,haveHydrostaticPressure,haveSurfacePressure,incompressible, &
       & updateResidual,updateMass,updateRHS
     TYPE(BasisType), POINTER :: columnComponentBasis,dependentBasis,rowComponentBasis
@@ -3994,7 +3924,8 @@ CONTAINS
       CALL FieldVariable_VariableTypeGet(rhsVariable,rhsVariableType,err,error,*999)
       NULLIFY(geometricField)
       NULLIFY(dependentField)
-      IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
+      IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE .OR. &
+        & equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE) THEN
         CALL EquationsSet_GeometricFieldGet(equationsSet,dependentField,err,error,*999)
         CALL EquationsSet_DependentFieldGet(equationsSet,geometricField,err,error,*999)
       ELSE
@@ -4006,7 +3937,14 @@ CONTAINS
       NULLIFY(materialsField)
       CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
       NULLIFY(independentField)
-      CALL EquationsSet_IndependentFieldExists(equationsSet,independentField,err,error,*999)
+      IF(equationsSetSubtype==EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE .OR. &
+        & equationsSetSubtype==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE .OR. &
+        & equationsSetSubtype==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_NOLENDEP_SUBTYPE .OR. &
+        & equationsSetSubtype==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_2NDPIOLA_SUBTYPE) THEN
+        CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+      ELSE
+        CALL EquationsSet_IndependentFieldExists(equationsSet,independentField,err,error,*999)
+      ENDIF
       NULLIFY(sourceField)
       CALL EquationsSet_SourceFieldExists(equationsSet,sourceField,err,error,*999)
       NULLIFY(decomposition)
@@ -4084,7 +4022,8 @@ CONTAINS
       NULLIFY(dependentInterpParameters)
       NULLIFY(dependentInterpPoint)
       NULLIFY(dependentInterpPointMetrics)
-      IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
+      IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE .OR. &
+        & equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE) THEN
         CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
           & dependentInterpParameters,err,error,*999)
         CALL EquationsInterpolation_GeometricPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -4810,7 +4749,8 @@ CONTAINS
         NULLIFY(geometricField)
         NULLIFY(geometricVariable)
         NULLIFY(dependentField)
-        IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
+        IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE .OR. &
+          & equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE) THEN
           CALL EquationsSet_GeometricFieldGet(equationsSet,dependentField,err,error,*999)
           geometricVariable=>dependentVariable
           CALL EquationsSet_DependentFieldGet(equationsSet,geometricField,err,error,*999)
@@ -4827,7 +4767,14 @@ CONTAINS
         NULLIFY(materialsField)
         CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
         NULLIFY(independentField)
-        CALL EquationsSet_IndependentFieldExists(equationsSet,independentField,err,error,*999)
+        IF(equationsSetSubtype==EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE .OR. &
+          & equationsSetSubtype==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE .OR. &
+          & equationsSetSubtype==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_NOLENDEP_SUBTYPE .OR. &
+          & equationsSetSubtype==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_2NDPIOLA_SUBTYPE) THEN
+          CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+        ELSE
+          CALL EquationsSet_IndependentFieldExists(equationsSet,independentField,err,error,*999)
+        ENDIF
         NULLIFY(sourceField)
         CALL EquationsSet_SourceFieldExists(equationsSet,sourceField,err,error,*999)
 
@@ -4927,7 +4874,8 @@ CONTAINS
         NULLIFY(dependentInterpParameters)
         NULLIFY(dependentInterpPoint)
         NULLIFY(dependentInterpPointMetrics)
-        IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
+        IF(equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE .OR. &
+          & equationsSetSubtype == EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE) THEN
           CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
             & dependentInterpParameters,err,error,*999)
           CALL EquationsInterpolation_GeometricPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -5426,6 +5374,8 @@ CONTAINS
           & EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
           & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
           & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
+          & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_NOLENDEP_SUBTYPE, &
+          & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_2NDPIOLA_SUBTYPE, &
           & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE, &
           & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE, &
           & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE, &
@@ -5463,7 +5413,9 @@ CONTAINS
               CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,darcyDependentInterpParameters, &
                 & err,error,*999)
             ELSE IF(equationsSetSubtype==EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE .OR. &
-              & equationsSetSubtype==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE) THEN
+              & equationsSetSubtype==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE.OR. &
+              & equationsSetSubtype==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_NOLENDEP_SUBTYPE .OR. &
+              & equationsSetSubtype==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_2NDPIOLA_SUBTYPE) THEN
               CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,independentInterpParameters, &
                 & err,error,*999)
             ENDIF
@@ -5496,7 +5448,7 @@ CONTAINS
             !Calculate Sigma=1/Jznu.FTF', the Cauchy stress tensor at the gauss point
             CALL FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint, &
               & materialsInterpPoint,geometricInterpPoint,darcyDependentInterpPoint,independentInterpPoint,cauchyTensor, &
-              & Jznu,dZdNu,elementNumber,gaussPointIdx,err,error,*999)
+              & cauchyTensorFibre,Jznu,dZdNu,dZdX,dNuOdNu,elementNumber,gaussPointIdx,err,error,*999)
 
             IF(diagnostics1) THEN
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
@@ -7746,6 +7698,18 @@ CONTAINS
           
           !We only want to store the independent components 
           SELECT CASE(numberOfDimensions)
+          CASE(1)
+            ! 1 dimensional problem
+            CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+              & TENSOR_TO_VOIGT1(1,1),values(1,1),err,error,*999)
+          CASE(2)
+            ! 2 dimensional problem
+            CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+              & TENSOR_TO_VOIGT2(1,1),values(1,1),err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+              & TENSOR_TO_VOIGT2(1,2),values(1,2),err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+              & TENSOR_TO_VOIGT2(2,2),values(2,2),err,error,*999)
           CASE(3)
             ! 3 dimensional problem
             CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
@@ -7760,18 +7724,6 @@ CONTAINS
               & TENSOR_TO_VOIGT3(2,3),values(2,3),err,error,*999)
             CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
               & TENSOR_TO_VOIGT3(3,3),values(3,3),err,error,*999)
-          CASE(2)
-            ! 2 dimensional problem
-            CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
-              & TENSOR_TO_VOIGT2(1,1),values(1,1),err,error,*999)
-            CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
-              & TENSOR_TO_VOIGT2(1,2),values(1,2),err,error,*999)
-            CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
-              & TENSOR_TO_VOIGT2(2,2),values(2,2),err,error,*999)
-          CASE(1)
-            ! 1 dimensional problem
-            CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
-              & TENSOR_TO_VOIGT1(1,1),values(1,1),err,error,*999)
           CASE DEFAULT
             localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
                 & " is invalid."
@@ -7833,6 +7785,18 @@ CONTAINS
             
             !We only want to store the independent components 
             SELECT CASE(numberOfDimensions)
+            CASE(1)
+              ! 1 dimensional problem
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,TENSOR_TO_VOIGT1(1,1),values(1,1),err,error,*999)
+            CASE(2)
+              ! 2 dimensional problem
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,TENSOR_TO_VOIGT2(1,1),values(1,1),err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,TENSOR_TO_VOIGT2(1,2),values(1,2),err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,TENSOR_TO_VOIGT2(2,2),values(2,2),err,error,*999)
             CASE(3)
               ! 3 dimensional problem
               CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
@@ -7847,18 +7811,6 @@ CONTAINS
                 & elementNumber,TENSOR_TO_VOIGT3(2,3),values(2,3),err,error,*999)
               CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
                 & elementNumber,TENSOR_TO_VOIGT3(3,3),values(3,3),err,error,*999)
-            CASE(2)
-              ! 2 dimensional problem
-              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
-                & elementNumber,TENSOR_TO_VOIGT2(1,1),values(1,1),err,error,*999)
-              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
-                & elementNumber,TENSOR_TO_VOIGT2(1,2),values(1,2),err,error,*999)
-              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
-                & elementNumber,TENSOR_TO_VOIGT2(2,2),values(2,2),err,error,*999)
-            CASE(1)
-              ! 1 dimensional problem
-              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
-                & elementNumber,TENSOR_TO_VOIGT1(1,1),values(1,1),err,error,*999)
             CASE DEFAULT
               localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
                 & " is invalid."
@@ -7899,6 +7851,18 @@ CONTAINS
             
             !We only want to store the independent components 
             SELECT CASE(numberOfDimensions)
+            CASE(1)
+              ! 1 dimensional problem
+              CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+                & TENSOR_TO_VOIGT1(1,1),values(1,1),err,error,*999)
+            CASE(2)
+              ! 2 dimensional problem
+              CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+                & TENSOR_TO_VOIGT2(1,1),values(1,1),err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+                & TENSOR_TO_VOIGT2(1,2),values(1,2),err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+                & TENSOR_TO_VOIGT2(2,2),values(2,2),err,error,*999)
             CASE(3)
               ! 3 dimensional problem
               CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
@@ -7913,18 +7877,6 @@ CONTAINS
                 & TENSOR_TO_VOIGT3(2,3),values(2,3),err,error,*999)
               CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
                 & TENSOR_TO_VOIGT3(3,3),values(3,3),err,error,*999)
-            CASE(2)
-              ! 2 dimensional problem
-              CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
-                & TENSOR_TO_VOIGT2(1,1),values(1,1),err,error,*999)
-              CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
-                & TENSOR_TO_VOIGT2(1,2),values(1,2),err,error,*999)
-              CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
-                & TENSOR_TO_VOIGT2(2,2),values(2,2),err,error,*999)
-            CASE(1)
-              ! 1 dimensional problem
-              CALL FieldVariable_ParameterSetUpdateLocalElement(fieldVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
-                & TENSOR_TO_VOIGT1(1,1),values(1,1),err,error,*999)
             CASE DEFAULT
               localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
                 & " is invalid."
@@ -8064,7 +8016,8 @@ CONTAINS
     CASE(EQUATIONS_SET_CAUCHY_STRESS_TENSOR)
       SELECT CASE(esSpecification(3))
       CASE(EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
-        & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
+        & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
+        & EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE)
         CALL FiniteElasticity_SpatialStressTensorsCalculate(equationsSet,numberOfDimensions,materialsInterpPoint, &
           & Fe,Je,p,haveHydrostaticPressure,sigmaV,err,error,*999)
       CASE(EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, &
@@ -9361,8 +9314,8 @@ CONTAINS
 
   !>Evaluates the Cauchy stress tensor at a given Gauss point
   SUBROUTINE FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint, &
-    & materialsInterpPoint,geometricInterpPoint,darcyDependentInterpPoint,independentInterpPoint,cauchyTensor, &
-    & Jznu,dZdNu,elementNumber,gaussPointNumber,err,error,*)
+    & materialsInterpPoint,geometricInterpPoint,darcyDependentInterpPoint,independentInterpPoint, &
+    & elementNumber,gaussPointNumber,dZdNu,JZNu,cauchyTensor,cauchyTensorFibre,dZdX,dNuOdNu,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -9372,11 +9325,14 @@ CONTAINS
     TYPE(FieldInterpolatedPointType), POINTER :: darcyDependentInterpPoint
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint
     TYPE(FieldInterpolatedPointType), POINTER :: independentInterpPoint
-    REAL(DP), INTENT(OUT) :: cauchyTensor(:,:) !<On exit, the Cauchy stress tensor
-    REAL(DP), INTENT(OUT) :: Jznu !Determinant of deformation gradient tensor (rCauchyGreen)
-    REAL(DP), INTENT(IN) :: dZdNu(3,3) !Deformation gradient tensor at the Gauss point
     INTEGER(INTG), INTENT(IN) :: elementNumber !<Element number
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<Gauss point number
+    REAL(DP), INTENT(IN) :: dZdNu(3,3) !<Deformation gradient tensor at the Gauss point
+    REAL(DP), INTENT(OUT) :: JZNu !<Determinant of deformation gradient tensor (rCauchyGreen)
+    REAL(DP), INTENT(OUT) :: cauchyTensor(:,:) !<On exit, the Cauchy stress tensor
+    REAL(DP), INTENT(OUT) :: cauchyTensorFibre(:,:) !<On exit, the Cauchy stress tensor in orthogonal deformed fibre coordinates
+    REAL(DP), INTENT(OUT) :: dZDX(:,:) !<On exit, the deformation gradient tensor mapping spatial coordintes
+    REAL(DP), INTENT(OUT) :: dNuOdNu(:,:) !<On exit, the deformation gradient tensor mapping fibre coordinates
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -9420,7 +9376,7 @@ CONTAINS
     !piolaTensor2 is the second Piola-Kirchoff tensor (PK2 or S)
     !P is the actual hydrostatic pressure, not double it
 
-    CALL FiniteElasticity_ReferenceStrainTensors(numberOfDimensions,dZdNu,Jznu,rCauchyGreen,I3,piolaDeformation, &
+    CALL FiniteElasticity_ReferenceStrainTensors(numberOfDimensions,dZdNu,JZNu,rCauchyGreen,I3,piolaDeformation, &
       & greenLagrangeStrain,err,error,*999)
     CALL MatrixTranspose(dZdNu,dZdNuT,err,error,*999)
 
@@ -11436,8 +11392,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,dofIdx,esSpecification(3),numberOfIndependentComponents,pressureComponent
-    REAL(DP) :: B(6),dQdE(6),dZdNuT(3,3),E(6),I1,I3,moddZdNu(3,3),moddZdNuT(3,3),oneThirdTrace,P,piolaDeformation(3,3), &
-      & rCauchyGreen(3,3),tempTerm1,tempTerm2,VALUE
+    REAL(DP) :: B(6),dQdE(6),dZdNuT(3,3),E(6),I1,I2,I3,identity(3,3),moddZdNu(3,3),moddZdNuT(3,3),oneThirdTrace,P, &
+      & piolaDeformation(3,3),rCauchyGreen(3,3),rCauchyGreenSq(3,3),secondPiolaKirchoff(3,3),tempTerm1,tempTerm2,VALUE,wvPrime
     REAL(DP), POINTER :: C(:) !Parameters for constitutive laws
     TYPE(FieldType), POINTER :: independentField
     TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
@@ -11481,13 +11437,13 @@ CONTAINS
       I1=rCauchyGreen(1,1)+rCauchyGreen(2,2)+rCauchyGreen(3,3)
       tempTerm1=-2.0_DP*C(2)
       tempTerm2=2.0_DP*(C(1)+I1*C(2))
-      stressTensorV(TENSOR_TO_VOIGT3(1,1))=tempTerm1*rCauchyGreen(1,1)+tempTerm2+P*piolaDeformation(1,1)*Jznu
-      stressTensorV(TENSOR_TO_VOIGT3(2,2))=tempTerm1*rCauchyGreen(2,2)+tempTerm2+P*piolaDeformation(2,2)*Jznu
-      stressTensorV(TENSOR_TO_VOIGT3(3,3))=tempTerm1*rCauchyGreen(3,3)+tempTerm2+P*piolaDeformation(3,3)*Jznu
-      stressTensorV(TENSOR_TO_VOIGT3(2,1))=tempTerm1*rCauchyGreen(2,1)+P*piolaDeformation(2,1)*Jznu
-      stressTensorV(TENSOR_TO_VOIGT3(3,1))=tempTerm1*rCauchyGreen(3,1)+P*piolaDeformation(3,1)*Jznu
-      stressTensorV(TENSOR_TO_VOIGT3(3,2))=tempTerm1*rCauchyGreen(3,2)+P*piolaDeformation(3,2)*Jznu
-
+      secondPiolaKirchoff(1,1)=tempTerm1*rCauchyGreen(1,1)+tempTerm2+P*piolaDeformation(1,1)*Jznu
+      secondPiolaKirchoff(2,2)=tempTerm1*rCauchyGreen(2,2)+tempTerm2+P*piolaDeformation(2,2)*Jznu
+      secondPiolaKirchoff(3,3)=tempTerm1*rCauchyGreen(3,3)+tempTerm2+P*piolaDeformation(3,3)*Jznu
+      secondPiolaKirchoff(1,2)=tempTerm1*rCauchyGreen(1,2)+P*piolaDeformation(1,2)*Jznu
+      secondPiolaKirchoff(1,3)=tempTerm1*rCauchyGreen(1,3)+P*piolaDeformation(1,3)*Jznu
+      secondPiolaKirchoff(2,3)=tempTerm1*rCauchyGreen(2,3)+P*piolaDeformation(2,3)*Jznu
+      
       IF(esSpecification(3)==EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE) THEN
         !add active contraction stress values
         !Be aware for modified dZdNu, should active contraction be added here? Normally should be okay as modified dZdNu and dZdNu
@@ -11500,10 +11456,13 @@ CONTAINS
         DO componentIdx=1,numberOfIndependentComponents
           CALL FieldVariable_LocalGaussDOFGet(fieldVariable,gaussPointNumber,elementNumber,componentIdx,dofIdx,err,error,*999)
           CALL FieldVariable_ParameterSetGetLocalDOF(fieldVariable,FIELD_VALUES_SET_TYPE,dofIdx,value,err,error,*999)
-          stressTensorV(TENSOR_TO_VOIGT3(componentIdx,componentIdx))= &
-            & stressTensorV(TENSOR_TO_VOIGT3(componentIdx,componentIdx))+value
+          secondPiolaKirchoff(componentIdx,componentIdx)=secondPiolaKirchoff(componentIdx,componentIdx)+value
         ENDDO !componentIdx
       ENDIF
+
+      !Convert to Voigt form
+      CALL TensorToVoight(3,[TENSOR_CONTRAVARIANT_INDEX,TENSOR_CONTRAVARIANT_INDEX],secondPiolaKirchoff,stressTensorV, &
+        & err,error,*999)
 
       !Do push-forward of 2nd Piola tensor. 
       !CALL FiniteElasticity_PushStressTensor(stressTensor,moddZdNu,Jznu,err,error,*999)
@@ -11513,6 +11472,32 @@ CONTAINS
       
       CALL FiniteElasticity_PushStressTensor(stressTensorV,dZdNu,Jznu,err,error,*999)
 
+    CASE(EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE)
+      
+      CALL MatrixTransposeProduct(dZdNu,dZdNu,rCauchyGreen,err,error,*999)
+      CALL Invert(rCauchyGreen,piolaDeformation,I3,err,error,*999)
+      CALL Identity(identity,err,error,*999)
+
+      !Form of constitutive model is: W_hat=c1*(I1_hat-3)+c2*(I2_hat-3)+p*J*C^(-1) + W^v(J)
+      !take W^v(J) = 1/2 * kappa * (J-1)^2
+
+      wvPrime=C(3)*(Jznu-1.0_DP)
+      !Compute invariants
+      CALL MatrixProduct(rCauchyGreen,rCauchyGreen,rCauchyGreenSq,err,error,*999)
+      I1=rCauchyGreen(1,1)+rCauchyGreen(2,2)+rCauchyGreen(3,3)
+      I2=0.5_DP*(I1*I1-rCauchyGreenSq(1,1)-rCauchyGreenSq(2,2)-rCauchyGreenSq(3,3))
+
+      !Calculate isochoric fictitious 2nd Piola tensor 
+      secondPiolaKirchoff=2.0_DP*Jznu**(-2.0_DP/3.0_DP)*((C(1)+C(2)*I1)*identity-C(2)*rCauchyGreen- &
+        & (C(1)*I1+2.0_DP*C(2)*I2-1.5_DP*wvPrime*Jznu**(5.0_DP/3.0_DP))/3.0_DP*piolaDeformation)
+      
+      !Convert to Voigt form
+      CALL TensorToVoight(3,[TENSOR_CONTRAVARIANT_INDEX,TENSOR_CONTRAVARIANT_INDEX],secondPiolaKirchoff,stressTensorV, &
+        & err,error,*999)
+     
+      !Do push-forward of 2nd Piola tensor.      
+      CALL FiniteElasticity_PushStressTensor(stressTensorV,dZdNu,Jznu,err,error,*999)
+      
     CASE(EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
       & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE)
       IF(equationsSet%specification(3)==EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN

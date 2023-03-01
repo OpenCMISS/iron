@@ -1550,6 +1550,8 @@ CONTAINS
               !Pre residual evaluate not used
             CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
               !Pre residual evaluate not used
+            CASE(EQUATIONS_SET_FITTING_CLASS)
+              !Pre residual evaluate not used
             CASE DEFAULT
               localError="The first equations set specification of "// &
                 & TRIM(NumberToVString(equationsSet%specification(1),"*",err,error))//" is not valid."
@@ -1664,6 +1666,8 @@ CONTAINS
             CASE(EQUATIONS_SET_MODAL_CLASS)
               !Post residual evaluate not used
             CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
+              !Post residual evaluate not used
+            CASE(EQUATIONS_SET_FITTING_CLASS)
               !Post residual evaluate not used
             CASE DEFAULT
               localError="The first equations set specification of "// &

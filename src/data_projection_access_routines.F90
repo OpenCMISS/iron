@@ -45,6 +45,7 @@
 MODULE DataProjectionAccessRoutines
   
   USE BaseRoutines
+  USE DecompositionAccessRoutines
   USE Kinds
   USE ISO_VARYING_STRING
   USE Strings
@@ -61,32 +62,33 @@ MODULE DataProjectionAccessRoutines
 
   !> \addtogroup DataProjectionRoutines_DataProjectionTypes DataProjectionRoutines::DataProjectionTypes
   !> \brief Datapoint projection definition type parameters
-  !> \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
+  !> \see DataProjectionRoutines,OpenCMISS_DataProjectionTypes
   !>@{ 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE=1 !<The boundary line projection type for data projection, only projects to boundary lines of the mesh. \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE=2 !<The boundary face projection type for data projection, only projects to boundary faces of the mesh. \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE=3 !<The element projection type for data projection, projects to all elements in mesh. \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE=1 !<The boundary line projection type for data projection, only projects to boundary lines of the mesh. \see DataProjectionRoutines,OpenCMISS_DataProjectionTypes
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE=2 !<The boundary face projection type for data projection, only projects to boundary faces of the mesh. \see DataProjectionRoutines,OpenCMISS_DataProjectionTypes
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE=3 !<The element projection type for data projection, projects to all elements in mesh. \see DataProjectionRoutines,OpenCMISS_DataProjectionTypes
   !>@}
 
   !> \addtogroup DataProjectionRoutines_DataProjectionDistanceRelations DataProjectionRoutines::DataProjectionDistanceRelations
  !> \brief Datapoint projection distance relations to select data points based on distance.
-  !> \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  !> \see DataProjectionRoutines,OpenCMISS_DataProjectionExitTags
   !>@{ 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_GREATER=1 !<Data projection distance relation is greater than \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_GREATER_EQUAL=2 !<Data projection distance relation is greater than or equal \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_LESS=3 !<Data projection distance relation is less than \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_LESS_EQUAL=4 !<Data projection distance relation is less than or equal \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_GREATER=1 !<Data projection distance relation is greater than \see DataProjectionRoutines,OpenCMISS_DataProjectionDistanceRelations
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_GREATER_EQUAL=2 !<Data projection distance relation is greater than or equal \see DataProjectionRoutines,OpenCMISS_DataProjectionDistanceRelations
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_LESS=3 !<Data projection distance relation is less than \see DataProjectionRoutines,OpenCMISS_DataProjectionDistanceRelations
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_LESS_EQUAL=4 !<Data projection distance relation is less than or equal \see DataProjectionRoutines,OpenCMISS_DataProjectionDistanceRelations
   !>@}
   
   !> \addtogroup DataProjectionRoutines_DataProjectionExitTags DataProjectionRoutines::DataProjectionExitTags
   !> \brief Datapoint projection exit tags
-  !> \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  !> \see DataProjectionRoutines,OpenCMISS_DataProjectionExitTags
   !>@{ 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_CANCELLED=0 !<Data projection has been cancelled. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_CONVERGED=1 !<Data projection exited due to it being converged \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_BOUNDS=2 !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_MAX_ITERATION=3 !<Data projection exited due to it attaining maximum number of iteration specified by user. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_NO_ELEMENT=4 !<Data projection exited due to no local element found, this happens when none of the candidate elements are within this computational node, and before MPI communication with other nodes. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_CANCELLED=0 !<Data projection has been cancelled. \see DataProjectionRoutines,OpenCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_USER_SPECIFIED=1 !<Data projection was specified by the user. \see DataProjectionRoutines,OpenCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_CONVERGED=2 !<Data projection exited due to it being converged \see DataProjectionRoutines,OpenCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_BOUNDS=3 !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see DataProjectionRoutines,OpenCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_MAX_ITERATION=4 !<Data projection exited due to it attaining maximum number of iteration specified by user. \see DataProjectionRoutines,OpenCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_NO_ELEMENT=5 !<Data projection exited due to no local element found, this happens when none of the candidate elements are within this computational node, and before MPI communication with other nodes. \see DataProjectionRoutines,OpenCMISS_DataProjectionExitTags
   !>@}
 
   !Module types
@@ -107,8 +109,8 @@ MODULE DataProjectionAccessRoutines
   PUBLIC DATA_PROJECTION_DISTANCE_GREATER,DATA_PROJECTION_DISTANCE_GREATER_EQUAL,DATA_PROJECTION_DISTANCE_LESS, &
     & DATA_PROJECTION_DISTANCE_LESS_EQUAL
   
-  PUBLIC DATA_PROJECTION_CANCELLED,DATA_PROJECTION_EXIT_TAG_CONVERGED,DATA_PROJECTION_EXIT_TAG_BOUNDS, &
-    & DATA_PROJECTION_EXIT_TAG_MAX_ITERATION,DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
+  PUBLIC DATA_PROJECTION_CANCELLED,DATA_PROJECTION_USER_SPECIFIED,DATA_PROJECTION_EXIT_TAG_CONVERGED, &
+    & DATA_PROJECTION_EXIT_TAG_BOUNDS,DATA_PROJECTION_EXIT_TAG_MAX_ITERATION,DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
 
   PUBLIC DataProjection_AbsoluteToleranceGet
   
@@ -160,9 +162,9 @@ MODULE DataProjectionAccessRoutines
 
   PUBLIC DataProjection_ResultProjectionVectorGet
   
+  PUBLIC DataProjection_ResultProjectionXiGet
+  
   PUBLIC DataProjection_ResultRMSErrorGet
-
-  PUBLIC DataProjection_ResultXiGet
 
   PUBLIC DataProjection_StartingXiGet
 
@@ -908,16 +910,20 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the projection element number for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultElementNumberGet(dataProjection,dataPointGlobalNumber,projectionElementNumber,err,error,*)
+  !>Gets the projection element user number for a data point identified by a given global number.
+  SUBROUTINE DataProjection_ResultElementNumberGet(dataProjection,dataPointGlobalNumber,projectionElementUserNumber,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
-    INTEGER(INTG), INTENT(IN) :: dataPointGlobalNumber !<The Data projection global number to get the projection element number for
-    INTEGER(INTG), INTENT(OUT) :: projectionElementNumber !<On exit, the projection element number of the specified global data point
+    INTEGER(INTG), INTENT(IN) :: dataPointGlobalNumber !<The data point global number to get the projection userelement number for
+    INTEGER(INTG), INTENT(OUT) :: projectionElementUserNumber !<On exit, the projection element user number of the specified global data point
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: projectionElementLocalNumber
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
 #ifdef WITH_PRECHECKS
     TYPE(VARYING_STRING) :: localError
 #endif    
@@ -937,9 +943,17 @@ CONTAINS
         & " is invalid. The global number should be >= 1 and <= "// &
         & TRIM(NumberToVString(SIZE(dataProjection%dataProjectionResults,1),"*",err,error))//"."
     ENDIF
-#endif    
+#endif
     
-    projectionElementNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementNumber
+    NULLIFY(decomposition)
+    CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)   
+    projectionElementLocalNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLocalNumber
+    CALL DecompositionElements_ElementUserNumberGet(decompositionElements,projectionElementLocalNumber, &
+      & projectionElementUserNumber,err,error,*999)
  
     EXITS("DataProjection_ResultElementNumberGet")
     RETURN
@@ -1071,7 +1085,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
     
-    ENTERS("DataProjection_ResultXiGet",err,error,*999)
+    ENTERS("DataProjection_ResultElementXiGet",err,error,*999)
 
     CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
@@ -1269,6 +1283,44 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the projection xi for a data point identified by a given global number.
+  SUBROUTINE DataProjection_ResultProjectionXiGet(dataProjection,dataPointGlobalNumber,projectionXi,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
+    INTEGER(INTG), INTENT(IN) :: dataPointGlobalNumber !<The Data projection global number to get the projection xi for
+    REAL(DP), INTENT(OUT) :: projectionXi(:) !<On exit, the projection xi of the specified global data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataProjection_ResultProjectionXiGet",err,error,*999)
+
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(projectionXi,1)<dataProjection%numberOfXi) THEN
+      localError="The specified projection xi has size of "//TRIM(NumberToVString(SIZE(projectionXi,1),"*",err,error))// &
+        & " but it needs to have size of >= "//TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))//"." 
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+        
+    projectionXi(1:dataProjection%numberOfXi)=dataProjection%dataProjectionResults(dataPointGlobalNumber)% &
+      & xi(1:dataProjection%numberOfXi)
+
+    EXITS("DataProjection_ResultProjectionXiGet")
+    RETURN
+999 ERRORSEXITS("DataProjection_ResultProjectionXiGet",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_ResultProjectionXiGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the projection Root Mean Squared (RMS) error for a data projection.
   SUBROUTINE DataProjection_ResultRMSErrorGet(dataProjection,rmsError,err,error,*)
 
@@ -1354,13 +1406,14 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the starting xi for a data projection.
-  SUBROUTINE DataProjection_StartingXiGet(dataProjection,numberOfXi,startingXi,err,error,*)
+  !>Gets the starting xi for a data projection for a data point 
+  SUBROUTINE DataProjection_StartingXiGet(dataProjection,dataPointGlobalNumber,numberOfXi,startingXi,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the starting xi for
+    INTEGER(INTG), INTENT(IN) :: dataPointGlobalNumber !<The data point number to get the starting xi for
     INTEGER(INTG), INTENT(OUT) :: numberOfXi !<On exit, the number of xi for the starting xi
-    REAL(DP), INTENT(OUT) :: startingXi(:) !<On exit, the starting xi of the specified data projection
+    REAL(DP), INTENT(OUT) :: startingXi(:) !<On exit, the starting xi of the specified data projection data point
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1369,16 +1422,25 @@ CONTAINS
     ENTERS("DataProjection_StartingXiGet",err,error,*999)
 
     CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-#ifdef WITH_PRECHECKS    
-    IF(SIZE(startingXi,1)<SIZE(dataProjection%startingXi,1)) THEN
-      localError="The size of the specified starting xi array of "//TRIM(NumberToVString(SIZE(startingXi,1),"*",err,error))// &
-        & " is too small. The size must be >= "//TRIM(NumberToVString(SIZE(dataProjection%startingXi,1),"*",err,error))//"."
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(dataProjection%dataPoints)) CALL FlagError("Data projection data points is not associated.",err,error,*999)
+    IF(dataPointGlobalNumber<1.OR.dataPointGlobalNumber>dataProjection%dataPoints%numberOfDataPoints) THEN
+      localError="The specified data point global number of "//TRIM(NumberToVString(dataPointGlobalNumber,"*",err,error))// &
+        & " is invalid. The global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(dataProjection%dataPoints%numberOfDataPoints,"*",err,error))//"."
+    ENDIF
+    IF(.NOT.ALLOCATED(dataProjection%startingXi)) &
+      & CALL FlagError("Data projection starting xi has not been allocated.", err,error,*999)
+    IF(SIZE(startingXi,1)<dataProjection%numberOfElementXi) THEN
+      localError="The size of the specified starting xi array of "// &
+        & TRIM(NumberToVString(SIZE(startingXi,1),"*",err,error))//" is too small. The size must be >= "// &
+        & TRIM(NumberToVString(dataProjection%numberOfElementXi,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
     
-    numberOfXi=SIZE(dataProjection%startingXi,1)
-    startingXi(1:numberOfXi)=dataProjection%startingXi(1:numberOfXi)
+    numberOfXi=dataProjection%numberOfElementXi
+    startingXi(1:numberOfXi)=dataProjection%startingXi(1:numberOfXi,dataPointGlobalNumber)
     
     EXITS("DataProjection_StartingXiGet")
     RETURN
@@ -1488,13 +1550,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
    
-    ENTERS("DataProjection_ResultElementNumberGet",err,error,*999)
+    ENTERS("DataProjectionResult_ElementNumberGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS
     IF(.NOT.ASSOCIATED(dataProjectionResult)) CALL FlagError("Data projection result is not associated.",err,error,*999)
-#endif    
+#endif
     
-    projectionElementNumber=dataProjectionResult%elementNumber
+!!TODO: this should return the element user number
+    projectionElementNumber=dataProjectionResult%elementGlobalNumber
  
     EXITS("DataProjectionResult_ElementNumberGet")
     RETURN
