@@ -65,6 +65,7 @@ MODULE BioelectricFiniteElasticityRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE FiniteElasticityRoutines
+  USE FiniteElasticityUtilityRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
@@ -926,7 +927,7 @@ CONTAINS
               & err,error,*999)
             
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,Jznu,err,error,*999)
               
             !compute C=F^T F

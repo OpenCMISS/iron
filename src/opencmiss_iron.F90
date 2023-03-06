@@ -2197,14 +2197,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_DataPointsPositionEvaluateObj
   END INTERFACE cmfe_DataProjection_DataPointsPositionEvaluate
 
- !>Evaluate the data points position in a field based on data projection
- INTERFACE cmfe_DataProjection_DataPointsPositionEvaluate
-   MODULE PROCEDURE cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber
-   MODULE PROCEDURE cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber
-   MODULE PROCEDURE cmfe_DataProjection_DataPointsPositionEvaluateObj
- END INTERFACE cmfe_DataProjection_DataPointsPositionEvaluate
-
- !>Starts the evluation of data projection on the geometric field.
+ !>Starts the evaluation of data projection on the geometric field.
  INTERFACE cmfe_DataProjection_DataPointsProjectionEvaluate
    MODULE PROCEDURE cmfe_DataProjection_DataPointsProjectionEvaluateNumber
    MODULE PROCEDURE cmfe_DataProjection_DataPointsProjectionEvaluateObj
@@ -2583,7 +2576,7 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_DataProjection_ResultElementFaceNumberGet,cmfe_DataProjection_ResultElementFaceNumberSet
 
- PUBLIC cmfe_DataProjection_ResultElementFaceNumberGet,cmfe_DataProjection_ResultElementLineNumberSet
+ PUBLIC cmfe_DataProjection_ResultElementLineNumberGet,cmfe_DataProjection_ResultElementLineNumberSet
 
  PUBLIC cmfe_DataProjection_ResultElementXiGet
 
@@ -3539,7 +3532,7 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
     & CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE,CMFE_EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE, &
     & CMFE_EQUATIONS_SET_PLATE_SUBTYPE,CMFE_EQUATIONS_SET_SHELL_SUBTYPE, &
-    & CMFE_EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE,CMFE_EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE
+    & CMFE_EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE,CMFE_EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE, &
     & CMFE_EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE,CMFE_EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, &
     & CMFE_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
     & CMFE_EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE, CMFE_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
@@ -14259,7 +14252,7 @@ CONTAINS
 
   !>Constrain multiple nodal equations dependent field DOFs to be a single solver DOF in the solver equations
   SUBROUTINE cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber(contextUserNumber,problemUserNumber,controlLoopIdentifier, &
-    & solverIndex,regionUserNumber,fieldUserNumber,fieldVariableType,versionNumber,derivativeNumber,component,nodes, &
+    & solverIndex,regionUserNumber,fieldUserNumber,fieldVarType,versionNumber,derivativeNumber,component,nodes, &
     & coefficient,err)
     !DLLEXPORT(cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber)
 
@@ -14270,7 +14263,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index of the solver equations.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field DOFs to constrain.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field containing the DOFs to contrain.
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The variable type of the dependent field containing the DOFs to constrain. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldVarType !<The variable type of the dependent field containing the DOFs to constrain. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number.
     INTEGER(INTG), INTENT(IN) :: component !<The field component number of the DOFs to be constrained.
@@ -14306,7 +14299,7 @@ CONTAINS
     CALL Problem_SolverEquationsGet(problem,controlLoopIdentifier,solverIndex,solverEquations,err,error,*999)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
     CALL BoundaryConditions_ConstrainNodeDofsEqual(boundaryConditions,field, &
-      & fieldVariableType,versionNumber,derivativeNumber,component,nodes,coefficient,err,error,*999)
+      & fieldVarType,versionNumber,derivativeNumber,component,nodes,coefficient,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber")
     RETURN
@@ -14322,14 +14315,14 @@ CONTAINS
   !
 
   !>Constrain multiple nodal equations dependent field DOFs to be a single solver DOF in the solver equations
-  SUBROUTINE cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj(boundaryConditions,field,fieldVariableType,versionNumber, &
+  SUBROUTINE cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj(boundaryConditions,field,fieldVarType,versionNumber, &
     & derivativeNumber,component,nodes,coefficient,err)
     !DLLEXPORT(cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to constrain the DOFs in.
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The equations dependent field containing the field DOFs to be constrained.
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type of the DOFs to be constrained. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldVarType !<The field variable type of the DOFs to be constrained. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number.
     INTEGER(INTG), INTENT(IN) :: component !<The field component number of the DOFs to be constrained.
@@ -14340,7 +14333,7 @@ CONTAINS
     ENTERS("cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj",err,error,*999)
 
     CALL BoundaryConditions_ConstrainNodeDofsEqual(boundaryConditions%boundaryConditions,field%field, &
-      & fieldVariableType,versionNumber,derivativeNumber,component,nodes,coefficient,err,error,*999)
+      & fieldVarType,versionNumber,derivativeNumber,component,nodes,coefficient,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj")
     RETURN
@@ -23980,7 +23973,7 @@ CONTAINS
 
   !>Evaluate the data point in a field based on data projection in a region, identified by user number
   SUBROUTINE cmfe_DataProjection_DataPointFieldEvaluateRegionNumber(contextUserNumber,regionUserNumber,dataPointsUserNumber, &
-    & dataProjectionUserNumber,fieldUserNumber,fieldVariableType,fieldParameterSetType,dataPointUserNumber,fieldResult,err)
+    & dataProjectionUserNumber,fieldUserNumber,fieldVarType,fieldParameterSetType,dataPointUserNumber,fieldResult,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointFieldEvaluateRegionNumber)
 
     !Argument variables
@@ -23989,18 +23982,20 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The field user number of the field to be interpolated
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldVarType !<The field variable type to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The field parameter set type to be interpolated
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to evaluate the field at
     REAL(DP), INTENT(OUT) :: fieldResult(:) !<On return, the values of the field evaluated at the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
+    INTEGER(INTG) :: dataPointGlobalNumber
     TYPE(ContextType), POINTER :: context
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(FieldType), POINTER :: field
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_DataPointFieldEvaluateRegionNumber",err,error,*999)
 
@@ -24016,10 +24011,11 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL Field_VariableGet(field,fieldVaribleType,fieldVariable,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_GlobalNumberGet(dataPoints,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
+    CALL Field_VariableGet(field,fieldVarType,fieldVariable,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_DataPointFieldVariableEvaluate(dataProjection,fieldVariable,fieldParameterSetType, &
-      & dataPointUserNumber,fieldResult,err,error,*999)
+      & dataPointGlobalNumber,fieldResult,err,error,*999)
 
     EXITS("cmfe_DataProjection_DataPointFieldEvaluateRegionNumber")
     RETURN
@@ -24036,7 +24032,7 @@ CONTAINS
 
   !>Evaluate the data point in a field based on data projection in an interface, identified by user number
   SUBROUTINE cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber(contextUserNumber,parentRegionUserNumber, &
-    & interfaceUserNumber,dataPointsUserNumber,dataProjectionUserNumber,fieldUserNumber,fieldVariableType,fieldParameterSetType, &
+    & interfaceUserNumber,dataPointsUserNumber,dataProjectionUserNumber,fieldUserNumber,fieldVarType,fieldParameterSetType, &
     & dataPointUserNumber,fieldResult,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber)
 
@@ -24047,12 +24043,13 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The field user number of the field to be interpolated
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldVarType !<The field variable type to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The field parameter set type to be interpolated
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to evaluate the field at
     REAL(DP), INTENT(OUT) :: fieldResult(:) !<On return, the values of the field evaluated at the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
+    INTEGER(INTG) :: dataPointGlobalNumber
     TYPE(ContextType), POINTER :: context
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
@@ -24060,6 +24057,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: parentRegion
+    TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber",err,error,*999)
 
@@ -24076,11 +24074,12 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_GlobalNumberGet(dataPoints,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL Interface_FieldGet(INTERFACE,fieldUserNumber,field,err,error,*999)
-    CALL Field_VariableGet(field,fieldVariableType,fieldVariable,err,error,*999)
+    CALL Field_VariableGet(field,fieldVarType,fieldVariable,err,error,*999)
     CALL DataProjection_DataPointFieldVariableEvaluate(dataProjection,fieldVariable,fieldParameterSetType, &
-      & dataPointUserNumber,fieldResult,err,error,*999)
+      & dataPointGlobalNumber,fieldResult,err,error,*999)
 
     EXITS("cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber")
     RETURN
@@ -24096,14 +24095,14 @@ CONTAINS
   !
 
   !>Evaluate the data point in a field based on data projection, identified by object
-  SUBROUTINE cmfe_DataProjection_DataPointFieldEvaluateObj(dataProjection,field,fieldVariableType,fieldParameterSetType, &
+  SUBROUTINE cmfe_DataProjection_DataPointFieldEvaluateObj(dataProjection,field,fieldVarType,fieldParameterSetType, &
     & dataPointUserNumber,fieldResult,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointFieldEvaluateObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to interpolate
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldVarType !<The field variable type to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The field parameter set type to be interpolated
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to evaluate the field at
     REAL(DP), INTENT(OUT) :: fieldResult(:) !<On return, the values of the field evaluated at the data point.
@@ -24114,7 +24113,7 @@ CONTAINS
     ENTERS("cmfe_DataProjection_DataPointFieldEvaluateObj",err,error,*999)
 
     NULLIFY(fieldVariable)
-    CALL Field_VariableGet(field%field,fieldVariableType,fieldVariable,err,error,*999)
+    CALL Field_VariableGet(field%field,fieldVarType,fieldVariable,err,error,*999)
     CALL DataProjection_DataPointFieldVariableEvaluate(dataProjection%dataProjection,fieldVariable,fieldParameterSetType, &
       & dataPointUserNumber,fieldResult,err,error,*999)
 
@@ -24133,7 +24132,7 @@ CONTAINS
 
   !>Evaluate the data points position in a field based on data projection in a region, identified by user number
   SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber(contextUserNumber,regionUserNumber,dataPointsUserNumber, &
-    & dataProjectionUserNumber,fieldUserNumber,fieldVariableType,fieldParameterSetType,err)
+    & dataProjectionUserNumber,fieldUserNumber,fieldVarType,fieldParameterSetType,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber)
 
     !Argument variables
@@ -24142,7 +24141,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The field user number of the field to be interpolated
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldVarType !<The field variable type to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The field parameter set type to be interpolated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -24167,7 +24166,7 @@ CONTAINS
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_DataPointsPositionEvaluate(dataProjection,field,fieldVariableType,fieldParameterSetType,err,error,*999)
+    CALL DataProjection_DataPointsPositionEvaluate(dataProjection,field,fieldVarType,fieldParameterSetType,err,error,*999)
 
     EXITS("cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber")
     RETURN
@@ -24184,7 +24183,7 @@ CONTAINS
 
   !>Evaluate the data points position in a field based on data projection in an interface, identified by user number
   SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber(contextUserNumber,parentRegionUserNumber, &
-    & interfaceUserNumber,dataPointsUserNumber,dataProjectionUserNumber,fieldUserNumber,fieldVariableType, &
+    & interfaceUserNumber,dataPointsUserNumber,dataProjectionUserNumber,fieldUserNumber,fieldVarType, &
     & fieldParameterSetType,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber)
 
@@ -24195,7 +24194,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The field user number of the field to be interpolated
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldVarType !<The field variable type to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The field parameter set type to be interpolated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -24223,7 +24222,7 @@ CONTAINS
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL Interface_FieldGet(interface,fieldUserNumber,field,err,error,*999)
-    CALL DataProjection_DataPointsPositionEvaluate(dataProjection,field,fieldVariableType,fieldParameterSetType, &
+    CALL DataProjection_DataPointsPositionEvaluate(dataProjection,field,fieldVarType,fieldParameterSetType, &
       & err,error,*999)
 
     EXITS("cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber")
@@ -24240,20 +24239,20 @@ CONTAINS
   !
 
   !>Evaluate the data points position in a field based on data projection, identified by object
-  SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateObj(dataProjection,field,fieldVariableType,fieldParameterSetType,err)
+  SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateObj(dataProjection,field,fieldVarType,fieldParameterSetType,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsPositionEvaluateObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to interpolate
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldVarType !<The field variable type to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The field parameter set type to be interpolated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_DataProjection_DataPointsPositionEvaluateObj",err,error,*999)
 
-    CALL DataProjection_DataPointsPositionEvaluate(dataProjection%dataProjection,field%field,fieldVariableType, &
+    CALL DataProjection_DataPointsPositionEvaluate(dataProjection%dataProjection,field%field,fieldVarType, &
       & fieldParameterSetType,err,error,*999)
 
     EXITS("cmfe_DataProjection_DataPointsPositionEvaluateObj")
@@ -25451,7 +25450,7 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00",err,error,*999)
 
-    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetObj(dataProjection%dataProjection,[dataPointUserNumber], &
+    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11(dataProjection,[dataPointUserNumber], &
       & [candidateElementUserNumber],err)
 
     EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00")
@@ -28526,10 +28525,10 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_RegionsGet(context,regions,err,error,*999)
-    CALL Region_Get(regions,region,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_GlobalNumberGet(dataPoints,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultElementXiGet(dataProjection,dataPointGlobalNumber,numberOfElementXi,elementXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultElementXiGetNumber")
@@ -29014,7 +29013,8 @@ CONTAINS
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_GlobalNumberGet(dataPoints,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ResultXiGet(dataProjection,dataPointGlobalNumber,numberOfProjectionXi,projectionXi,err,error,*999)
+    CALL DataProjection_ResultProjectionXiGet(dataProjection,dataPointGlobalNumber,numberOfProjectionXi,projectionXi, &
+      & err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultProjectionXiGetNumber")
     RETURN
@@ -29022,7 +29022,7 @@ CONTAINS
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_DataProjection_ResultXiGetNumber
+  END SUBROUTINE cmfe_DataProjection_ResultProjectionXiGetNumber
 
   !
   !================================================================================================================================
@@ -29046,8 +29046,8 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL DataProjection_DataPointsGet(dataProjection%dataProjection,dataPoints,err,error,*999)
     CALL DataPoints_GlobalNumberGet(dataPoints,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-    CALL DataProjection_ResultXiGet(dataProjection%dataProjection,dataPointGlobalNumber,numberOfProjectionXi,projectionXi, &
-      & err,error,*999)
+    CALL DataProjection_ResultProjectionXiGet(dataProjection%dataProjection,dataPointGlobalNumber,numberOfProjectionXi, &
+      & projectionXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultProjectionXiGetObj")
     RETURN
@@ -29095,7 +29095,7 @@ CONTAINS
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_GlobalNumberGet(dataPoints,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ResultXiSet(dataProjection,dataPointglobalNumber,projectionXi,err,error,*999)
+    CALL DataProjection_ResultProjectionXiSet(dataProjection,dataPointglobalNumber,projectionXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultProjectionXiSetNumber")
     RETURN
@@ -29127,7 +29127,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL DataProjection_DataPointsGet(dataProjection%dataProjection,dataPoints,err,error,*999)
     CALL DataPoints_GlobalNumberGet(dataPoints,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-    CALL DataProjection_ResultXiSet(dataProjection%dataProjection,dataPointGlobalNumber,projectionXi,err,error,*999)
+    CALL DataProjection_ResultProjectionXiSet(dataProjection%dataProjection,dataPointGlobalNumber,projectionXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultProjectionXiSetObj")
     RETURN
@@ -29561,7 +29561,7 @@ CONTAINS
     ENTERS("cmfe_DataProjection_RelativeToleranceGetObj",err,error,*999)
 
     CALL DataProjection_RelativeToleranceGet(dataProjection%dataProjection,relativeTolerance,err,error,*999)
-7
+
     EXITS("cmfe_DataProjection_RelativeToleranceGetObj")
     RETURN
 999 ERRORSEXITS("cmfe_DataProjection_RelativeToleranceGetObj",err,error)
@@ -32997,7 +32997,7 @@ CONTAINS
 
   !>Sets the field variable type of the derived field to be used to store a derived variable
   SUBROUTINE cmfe_EquationsSet_DerivedVariableSetNumber(contextUserNumber,regionUserNumber,equationsSetUserNumber, &
-    & derivedTensorType,fieldVariableType,err)
+    & derivedTensorType,fieldVarType,err)
     !DLLEXPORT(cmfe_EquationsSet_DerivedVariableSetNumber)
 
     !Argument variables
@@ -33005,7 +33005,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to calculate the output for.
     INTEGER(INTG), INTENT(IN) :: derivedTensorType !<The derived variable tensor type to calculate. \see OpenCMISS_EquationsSetDerivedTensorTypes.
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to store the calculated values in.
+    INTEGER(INTG), INTENT(IN) :: fieldVarType !<The field variable type to store the calculated values in.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -33023,7 +33023,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EquationsSet_DerivedVariableSet(equationsSet,derivedTensorType,fieldVariableType,err,error,*999)
+    CALL EquationsSet_DerivedVariableSet(equationsSet,derivedTensorType,fieldVarType,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DerivedVariableSetNumber")
     RETURN
@@ -33038,18 +33038,18 @@ CONTAINS
   !
 
   !>Sets the field variable type of the derived field to be used to store a derived variable
-  SUBROUTINE cmfe_EquationsSet_DerivedVariableSetObj(equationsSet,derivedTensorType,fieldVariableType,err)
+  SUBROUTINE cmfe_EquationsSet_DerivedVariableSetObj(equationsSet,derivedTensorType,fieldVarType,err)
     !DLLEXPORT(cmfe_EquationsSet_DerivedVariableSetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to calculate the output for.
     INTEGER(INTG), INTENT(IN) :: derivedTensorType !<The derived field type to calculate. \see OpenCMISS_EquationsSetDerivedTensorTypes.
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to store the calculated values in.
+    INTEGER(INTG), INTENT(IN) :: fieldVarType !<The field variable type to store the calculated values in.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
     ENTERS("cmfe_EquationsSet_DerivedVariableSetObj",err,error,*999)
 
-    CALL EquationsSet_DerivedVariableSet(equationsSet%equationsSet,derivedTensorType,fieldVariableType,err,error,*999)
+    CALL EquationsSet_DerivedVariableSet(equationsSet%equationsSet,derivedTensorType,fieldVarType,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DerivedVariableSetObj")
     RETURN

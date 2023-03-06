@@ -127,8 +127,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,esSpecification(4),geometricMeshComponent,geometricScalingType,numberOfComponents, &
-      & numberOfComponents2,numberOfDependentComponents,numberOfDimensions,numberOfIndependentComponents, &
-      & numberOfMaterialsComponents,solutionMethod,sparsityType
+      & numberOfComponents2,numberOfDecompositionDimensions,numberOfDependentComponents,numberOfDimensions, &
+      & numberOfIndependentComponents,numberOfMaterialsComponents,solutionMethod,sparsityType
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -149,7 +149,7 @@ CONTAINS
     CASE(EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE)
       SELECT CASE(esSpecification(3))
       CASE(EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE, &
-        & EQUATIONS_SET_DIFFUSION_TENSOR_FIBRE_FITTING_SUBTYPE)
+        & EQUATIONS_SET_DIFFUSION_TENSOR_FIBRE_DATA_FITTING_SUBTYPE)
         !OK        
       CASE DEFAULT
         localError="The equations set subtype of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
@@ -190,7 +190,7 @@ CONTAINS
           SELECT CASE(esSpecification(3))
           CASE(EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE)
             CALL EquationsSet_LabelSet(equationsSet,"Generalised data fitting equations set",err,error,*999)
-          CASE(EQUATIONS_SET_DIFFUSION_TENSOR_FIBRE_FITTING_SUBTYPE)
+          CASE(EQUATIONS_SET_DIFFUSION_TENSOR_FIBRE_DATA_FITTING_SUBTYPE)
             CALL EquationsSet_LabelSet(equationsSet,"Diffusion tensor fibre data fitting equations set",err,error,*999)
           CASE DEFAULT
             localError="The equations set subtype of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
@@ -455,11 +455,11 @@ CONTAINS
         !Sobolev smoothing material parameters
         SELECT CASE(numberOfDecompositionDimensions)
         CASE(1)
-          numberOfMaterialComponents=2
+          numberOfMaterialsComponents=2
         CASE(2)
-          numberOfMaterialComponents=5
+          numberOfMaterialsComponents=5
         CASE(3)
-          numberOfMaterialComponents=9
+          numberOfMaterialsComponents=9
         CASE DEFAULT
           localError="The number of geometric decomposition dimensions of "// &
             & TRIM(NumberToVString(numberOfDecompositionDimensions,"*",err,error))//" is invalid."
@@ -553,7 +553,7 @@ CONTAINS
           ENDIF
         ENDIF
         !Default the number of independent to the number of dependent
-        numberOfIndependentComponets=numberOfDependentComponents
+        numberOfIndependentComponents=numberOfDependentComponents
         SELECT CASE(equationsSetSetup%actionType)
         CASE(EQUATIONS_SET_SETUP_START_ACTION)
           !Set start action
@@ -871,11 +871,11 @@ CONTAINS
             CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
             SELECT CASE(sparsityType)
             CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-              CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+              CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,1,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
             CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-              CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
+              CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,1,MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
                 & err,error,*999)
-              CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
+              CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,1,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
             CASE DEFAULT
               localError="The equations matrices sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
                 & " is invalid."
@@ -1135,23 +1135,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
+    INTEGER(INTG), PARAMETER :: MAXIMUM_DATA_COMPONENTS=99
     INTEGER(INTG) :: colsVariableType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnXiIdx,componentIdx, &
       & dataPointGlobalNumber,dataPointIdx,dataPointLocalNumber,dataPointUserNumber,derivativeIdx,esSpecification(4), &
-      & gaussPointIdx,localDOFIdx,numberOfColsComponents,numberOfColumnElementParameters,numberOfDataComponents, &
-      & numberOfDimensions,numberOfDOFs,numberOfElementDataPoints,numberOfGauss,numberOfRowsComponents, &
-      & numberOfRowElementParameters,numberOfXi,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowXiIdx, &
-      & rowsVariableType,scalingType,smoothingType,xiIdx
-    INTEGER(INTG), PARAMETER :: MAXIMUM_DATA_COMPONENTS=99
+      & gaussPointIdx,geometricDerivative,localDOFIdx,numberOfColsComponents, &
+      & numberOfColumnElementParameters(MAXIMUM_DATA_COMPONENTS),numberOfDataComponents,numberOfDimensions,numberOfDOFs, &
+      & numberOfElementDataPoints,numberOfElementXi,numberOfGauss,numberOfRowsComponents, &
+      & numberOfRowElementParameters(MAXIMUM_DATA_COMPONENTS),numberOfXi,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx, &
+      & rowXiIdx,rowsVariableType,scalingType,smoothingType,xiIdx
     REAL(DP) :: columnPhi,columndPhidXi(3),columndPhidXi1,columndPhidXi2,columndPhidXi3,columnd2PhidXi1dXi1,columnd2PhidXi2dXi2, &
       & columnd2PhidXi3dXi3,columnd2PhidXi1dXi2,columnd2PhidXi1dXi3,columnd2PhidXi2dXi3,curvature, &
       & dataPointVector(MAXIMUM_DATA_COMPONENTS),dataPointWeight(MAXIMUM_DATA_COMPONENTS),dXdY(3,3),dXdXi(3,3),dYdXi(3,3), &
-      & dXidY(3,3),dXidX(3,3),gaussWeight,jacobian,jacobianGaussWeight,Jxy,Jyxi,kappa11,kappa22,kappa33,kappa12,kappa13,kappa23, &
-      & kappaParam,materialFact,permOverVisParam0,permOverVisParam,porosity0,porosity,projectionXi(3),rowPhi,rowdPhidXi(3), &
-      & rowdPhidXi1,rowdPhidXi2,rowdPhidXi3,rowd2PhidXi1dXi1,rowd2PhidXi2dXi2,rowd2PhidXi3dXi3,rowd2PhidXi1dXi2,rowd2PhidXi1dXi3, &
-      & rowd2PhidXi2dXi3,sum,tau1,tau2,tau3,tauParam,tension,uValue(3)
+      & dXidY(3,3),dXidX(3,3),elementXi(3),gaussWeight,jacobian,jacobianGaussWeight,Jxy,Jyxi,kappa11,kappa22,kappa33,kappa12, &
+      & kappa13,kappa23,kappaParam,materialFact,permOverVisParam0,permOverVisParam,porosity0,porosity,projectionXi(3), &
+      & rhsCurvature,rhsTension,rowPhi, &
+      & rowdPhidXi(3),rowdPhidXi1,rowdPhidXi2,rowdPhidXi3,rowd2PhidXi1dXi1,rowd2PhidXi2dXi2,rowd2PhidXi3dXi3,rowd2PhidXi1dXi2, &
+      & rowd2PhidXi1dXi3,rowd2PhidXi2dXi3,sum,tau1,tau2,tau3,tauParam,tension,uValue(3)
     REAL(DP), POINTER :: independentVectorParameters(:),independentWeightParameters(:)
     LOGICAL :: update,updateMatrix,updateRHS,updateSource
-    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,rowBasis
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
+    TYPE(BasisPtrType) :: columnBasis(MAXIMUM_DATA_COMPONENTS),rowBasis(MAXIMUM_DATA_COMPONENTS)
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DecompositionType), POINTER :: dependentDecomposition,independentDecomposition,geometricDecomposition
     TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints
@@ -1183,8 +1186,8 @@ CONTAINS
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: initialGeometricInterpPointMetrics,geometricInterpPointMetrics
     TYPE(FieldVariableType), POINTER :: colsVariable,dataVariable,dataWeightVariable,dependentVariable,independentVariable, &
       & geometricVariable,materialsVariable,rowsVariable,sourceVariable
-    TYPE(QuadratureSchemeType), POINTER :: columnQuadratureScheme,dependentQuadratureScheme,geometricQuadratureScheme, &
-      & rowQuadratureScheme     
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,geometricQuadratureScheme
+    TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAXIMUM_DATA_COMPONENTS),rowQuadratureScheme(MAXIMUM_DATA_COMPONENTS)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Fitting_FiniteElementCalculate",err,error,*999)
@@ -1335,10 +1338,10 @@ CONTAINS
       CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
       
       !Cache row and column bases and quadrature schemes to avoid repeated calculations
-      IF(numberOfRowsComponents>MAX_NUMBER_OF_COMPONENTS) THEN
+      IF(numberOfRowsComponents>MAXIMUM_DATA_COMPONENTS) THEN
         localError="The number of rows components of "//TRIM(NumberToVString(numberOfRowsComponents,"*",err,error))// &
-          & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAX_NUMBER_OF_COMPONENTS,"*", &
-          & err,error))//". Increase MAX_NUMBER_OF_COMPONENTS."
+          & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAXIMUM_DATA_COMPONENTS,"*", &
+          & err,error))//". Increase MAXIMUM_DATA_COMPONENTS."
         CALL FlagError(localError,err,error,*999)
       ENDIF
       DO rowComponentIdx=1,numberOfRowsComponents
@@ -1357,10 +1360,10 @@ CONTAINS
           & rowQuadratureScheme(rowComponentIdx)%ptr,err,error,*999)
       ENDDO !rowComponentIdx
       IF(updateMatrix) THEN
-        IF(numberOfColsComponents>MAX_NUMBER_OF_COMPONENTS) THEN
+        IF(numberOfColsComponents>MAXIMUM_DATA_COMPONENTS) THEN
           localError="The number of columns components of "//TRIM(NumberToVString(numberOfColsComponents,"*",err,error))// &
-            & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAX_NUMBER_OF_COMPONENTS,"*", &
-            & err,error))//". Increase MAX_NUMBER_OF_COMPONENTS."
+            & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAXIMUM_DATA_COMPONENTS,"*", &
+            & err,error))//". Increase MAXIMUM_DATA_COMPONENTS."
           CALL FlagError(localError,err,error,*999)
         ENDIF
         DO columnComponentIdx=1,numberOfColsComponents
@@ -1465,7 +1468,7 @@ CONTAINS
             CALL DecompositionDataPoints_ElementDataNumbersGet(decompositionDataPoints,dataPointIdx,elementNumber, &
               & dataPointLocalNumber,dataPointGlobalNumber,dataPointUserNumber,err,error,*999)
             !Need to use global number to get the correct projection results
-            CALL DataProjection_ResultElementXiGet(dataProjection,dataPointGlobalNumber,elementXi,err,error,*999)
+            CALL DataProjection_ResultElementXiGet(dataProjection,dataPointGlobalNumber,numberOfElementXi,elementXi,err,error,*999)
             !Get data point vector value and weight
             DO componentIdx=1,numberOfDataComponents
               CALL FieldVariable_LocalDataPointDOFGet(dataVariable,dataPointLocalNumber,componentIdx,localDOFIdx, &
@@ -1513,7 +1516,7 @@ CONTAINS
           CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
             !Do nothing
           CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING, &
-            & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING))
+            & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
             IF(updateMatrix) THEN
               IF(smoothingType==EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING) THEN
                 geometricDerivative=SECOND_PART_DERIV
@@ -1657,8 +1660,6 @@ CONTAINS
               ENDDO !gaussPointIdx
             ENDIF !updateMatrix
             
-          CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
-            CALL FlagError("Not implemented.",err,error,*999)
           CASE(EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
@@ -1771,7 +1772,7 @@ CONTAINS
             rowElementDOFIdx=0
             !Loop over element rows
             DO rowComponentIdx=1,numberOfRowsComponents
-               DO rowElementParameterIdx=1,rowBasis%numberOfElementParameters(rowComponentIdx)
+               DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
                 rowElementDOFIdx=rowElementDOFIdx+1
                 CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr, &
                   & rowElementParameterIdx,NO_PART_DERIV,gaussPointIdx,rowPhi,err,error,*999)
@@ -1781,7 +1782,7 @@ CONTAINS
                     CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr, &
                       & rowElementParameterIdx,PART_DERIV_S1,gaussPointIdx,rowdPhidXi1,err,error,*999)
                     CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr, &
-                      & & rowElementParameterIdx,PART_DERIV_S1_S1,gaussPointIdx,rowd2PhidXi1dXi1,err,error,*999)
+                      & rowElementParameterIdx,PART_DERIV_S1_S1,gaussPointIdx,rowd2PhidXi1dXi1,err,error,*999)
                     IF(numberOfXi>1) THEN
                       CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme(rowComponentIdx)%ptr, &
                         & rowElementParameterIdx,PART_DERIV_S2,gaussPointIdx,rowdPhidXi2,err,error,*999)
@@ -1822,8 +1823,6 @@ CONTAINS
                             & columnElementParameterIdx,PART_DERIV_S1_S1,gaussPointIdx,columnd2PhidXi1dXi1,err,error,*999)
                           tension = tau1*rowdPhidXi1*columndPhidXi1
                           curvature =  kappa11*rowd2PhidXi1dXi1*columnd2PhidXi1dXi1
-                            & PART_DERIV_S1_S1,gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS( &
-                            & dependentElementParameterColumnIdx,PART_DERIV_S1_S1,gaussPointIdx)
                           IF(numberOfXi > 1) THEN
                             CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
                               & columnElementParameterIdx,PART_DERIV_S2,gaussPointIdx,columndPhidXi2,err,error,*999)
@@ -2093,15 +2092,13 @@ CONTAINS
                       CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
                         !Do nothing
                       CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING, &
-                        & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING))
+                        & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
                         CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
                           & columnElementParameterIdx,PART_DERIV_S1,gaussPointIdx,columndPhidXi1,err,error,*999)
                         CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
                           & columnElementParameterIdx,PART_DERIV_S1_S1,gaussPointIdx,columnd2PhidXi1dXi1,err,error,*999)
                         tension = tau1*rowdPhidXi1*columndPhidXi1
                         curvature =  kappa11*rowd2PhidXi1dXi1*columnd2PhidXi1dXi1
-                        & PART_DERIV_S1_S1,gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS( &
-                          & dependentElementParameterColumnIdx,PART_DERIV_S1_S1,gaussPointIdx)
                         IF(numberOfXi > 1) THEN
                           CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
                             & columnElementParameterIdx,PART_DERIV_S2,gaussPointIdx,columndPhidXi2,err,error,*999)
@@ -2268,44 +2265,59 @@ CONTAINS
   SUBROUTINE Fitting_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_COMPONENTS=3
-
+    INTEGER(INTG), PARAMETER :: MAXIMUM_DATA_COMPONENTS=99
+    INTEGER(INTG) ::  colsVariableType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,componentIdx, &
+      & dataPointGlobalNumber,dataPointIdx,dataPointLocalNumber,dataPointUserNumber,dependentComponentColumnIdx, &
+      & dependentComponentRowIdx,dependentElementParameterColumnIdx,dependentElementParameterRowIdx,dependentParameterColumnIdx, &
+      & dependentParameterRowIdx,dependentVariableType,esSpecification(4),gaussPointIdx,geometricDerivative,localDofIdx, &
+      & meshComponentRow,meshComponentColumn,numberOfColsComponents,numberOfColumnElementParameters(MAXIMUM_DATA_COMPONENTS), &
+      & numberOfDataComponents,numberOfDimensions,numberOfElementDataPoints,numberOfElementXi,numberOfGauss, &
+      & numberOfRowsComponents,numberOfRowElementParameters(MAXIMUM_DATA_COMPONENTS),numberOfXi,rowComponentIdx, &
+      & rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,scalingType,smoothingType
+    REAL(DP) :: columnPhi,curvature,dataPointWeight(MAXIMUM_DATA_COMPONENTS),dataPointVector(MAXIMUM_DATA_COMPONENTS), &
+      & elementXi(3),jacobianGaussWeight,kappaParam,rowPhi,sum,tauParam,tension
     REAL(DP), POINTER :: independentVectorParameters(:),independentWeightParameters(:)
-    REAL(DP) :: elementXi(3)
-    REAL(DP) :: dataPointWeight(99),dataPointVector(99)
-    REAL(DP) :: basisFunctionRow,basisFunctionColumn
-    REAL(DP) :: tension,curvature
-    REAL(DP) :: sum,jacobianGaussWeight
-    REAL(DP) :: tauParam,kappaParam
-    INTEGER(INTG) :: numberOfDimensions,smoothingType
-    INTEGER(INTG) :: dataPointIdx,dataPointUserNumber,dataPointLocalNumber,dataPointGlobalNumber
-    INTEGER(INTG) :: numberOfXi,componentIdx
-    INTEGER(INTG) :: dependentComponentColumnIdx,dependentComponentRowIdx,dependentElementParameterColumnIdx, &
-      & dependentElementParameterRowIdx,dependentParameterColumnIdx,dependentParameterRowIdx,gaussPointIdx, &
-      & meshComponentRow,meshComponentColumn,numberOfDataComponents
-    INTEGER(INTG) :: dependentVariableType,localDof
-    TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
-    TYPE(DecompositionDataPointsType), POINTER :: dataPoints
+    LOGICAL :: update,updateMatrix,updateResidual,updateRHS
     TYPE(BasisType), POINTER :: dependentBasis,geometricBasis,dependentBasisRow,dependentBasisColumn
+    TYPE(BasisPtrType) :: columnBasis(MAXIMUM_DATA_COMPONENTS),rowBasis(MAXIMUM_DATA_COMPONENTS)
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition,independentDecomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology,independentDecompositionTopology
+    TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints
+    TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,rowDomain
+    TYPE(DomainElementsType), POINTER :: columnDomainElements,dependentDomainElements,geometricDomainElements,rowDomainElements
+    TYPE(DomainTopologyType), POINTER :: columnDomainTopology,dependentDomainTopology,geometricDomainTopology,rowDomainTopology
     TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,independentField,materialsField
-    TYPE(FieldVariableType), POINTER :: dataVariable,dataWeightVariable,dependentVariable
-    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme,quadratureSchemeColumn,quadratureSchemeRow
+    TYPE(FieldInterpolationParametersType), POINTER :: dataInterpParameters,dataWeightInterpParameters,dependentInterpParameters, &
+      & geometricInterpParameters,materialsInterpParameters,rowsInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: dataInterpPoint,dataWeightInterpPoint,dependentInterpPoint,geometricInterpPoint, &
+      & materialsInterpPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
+    TYPE(FieldVariableType), POINTER :: colsVariable,dataVariable,dataWeightVariable,dependentVariable,geometricVariable, &
+      & materialsVariable,rowsVariable
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
+    TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAXIMUM_DATA_COMPONENTS), &
+      & rowQuadratureScheme(MAXIMUM_DATA_COMPONENTS)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Fitting_FiniteElementResidualEvaluate",err,error,*999)
@@ -2430,10 +2442,10 @@ CONTAINS
       CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
       
       !Cache row and column bases and quadrature schemes to avoid repeated calculations
-      IF(numberOfRowsComponents>MAX_NUMBER_OF_COMPONENTS) THEN
+      IF(numberOfRowsComponents>MAXIMUM_DATA_COMPONENTS) THEN
         localError="The number of rows components of "//TRIM(NumberToVString(numberOfRowsComponents,"*",err,error))// &
-          & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAX_NUMBER_OF_COMPONENTS,"*", &
-          & err,error))//". Increase MAX_NUMBER_OF_COMPONENTS."
+          & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAXIMUM_DATA_COMPONENTS,"*", &
+          & err,error))//". Increase MAXIMUM_DATA_COMPONENTS."
         CALL FlagError(localError,err,error,*999)
       ENDIF
       DO rowComponentIdx=1,numberOfRowsComponents
@@ -2452,10 +2464,10 @@ CONTAINS
           & rowQuadratureScheme(rowComponentIdx)%ptr,err,error,*999)
       ENDDO !rowComponentIdx
       IF(updateMatrix) THEN
-        IF(numberOfColsComponents>MAX_NUMBER_OF_COMPONENTS) THEN
+        IF(numberOfColsComponents>MAXIMUM_DATA_COMPONENTS) THEN
           localError="The number of columns components of "//TRIM(NumberToVString(numberOfColsComponents,"*",err,error))// &
-            & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAX_NUMBER_OF_COMPONENTS,"*", &
-            & err,error))//". Increase MAX_NUMBER_OF_COMPONENTS."
+            & " is greater than the maximum number of components of "//TRIM(NumberToVString(MAXIMUM_DATA_COMPONENTS,"*", &
+            & err,error))//". Increase MAXIMUM_DATA_COMPONENTS."
           CALL FlagError(localError,err,error,*999)
         ENDIF
         DO columnComponentIdx=1,numberOfColsComponents
@@ -2549,7 +2561,7 @@ CONTAINS
             CALL DecompositionDataPoints_ElementDataNumbersGet(decompositionDataPoints,dataPointIdx,elementNumber, &
               & dataPointLocalNumber,dataPointGlobalNumber,dataPointUserNumber,err,error,*999)
             !Need to use global number to get the correct projection results
-            CALL DataProjection_ResultElementXiGet(dataProjection,dataPointGlobalNumber,elementXi,err,error,*999)
+            CALL DataProjection_ResultElementXiGet(dataProjection,dataPointGlobalNumber,numberOfElementXi,elementXi,err,error,*999)
             !Get data point vector value and weight
             DO componentIdx=1,numberOfDataComponents
               CALL FieldVariable_LocalDataPointDOFGet(dataVariable,dataPointLocalNumber,componentIdx,localDOFIdx, &
@@ -2560,7 +2572,7 @@ CONTAINS
               dataPointWeight(componentIdx)=independentWeightParameters(localDOFIdx)
             ENDDO !componentIdx
             CALL Field_InterpolateXi(FIRST_PART_DERIV,elementXi,geometricInterpPoint,err,error,*999)
-            CALL Field_InterpolateXi(FIRST_PART_DERIV,elementXi,dependentInterpPoint(,err,error,*999)
+            CALL Field_InterpolateXi(FIRST_PART_DERIV,elementXi,dependentInterpPoint,err,error,*999)
             CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
             
             rowElementDOFIdx=0
@@ -2645,8 +2657,8 @@ CONTAINS
           DO rowElementParameterIdx=1,numberOfRowElementParameters(rowComponentIdx)
             rowElementDOFIdx=rowElementDOFIdx+1                    
             IF(updateResidual) THEN
-              residualVector%elementVector%vector(rowElementDOFIdx)= &
-                & residualVector%elementVector%vector(rowElementDOFIdx)* &
+              residualVector%elementResidual%vector(rowElementDOFIdx)= &
+                & residualVector%elementResidual%vector(rowElementDOFIdx)* &
                 & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)
             ENDIF !update RHS
             IF(updateRHS) THEN

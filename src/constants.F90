@@ -303,6 +303,8 @@ MODULE Constants
   !> \see Constants
   INTEGER(INTG), PARAMETER :: TENSOR_CONTRAVARIANT_INDEX=1 !<The tensor index is a contravariant/upper index.
   INTEGER(INTG), PARAMETER :: TENSOR_COVARIANT_INDEX=2 !<The tensor index is a covariant/lower index.
+  INTEGER(INTG), PARAMETER :: TENSOR_TWO_POINT_CONTRAVARIANT_INDEX=3 !<The tensor index is a two-point contravariant/upper index.
+  INTEGER(INTG), PARAMETER :: TENSOR_TWO_POINT_COVARIANT_INDEX=4 !<The tensor index is a two-point covariant/lower index.
   !>@}
   
   !> \addtogroup Constants_VoigtTensorIndices OpenCMISS::Iron::Constants::VoigtTensorIndices

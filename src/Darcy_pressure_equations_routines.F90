@@ -66,6 +66,7 @@ MODULE DarcyPressureEquationsRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE FiniteElasticityRoutines
+  USE FiniteElasticityUtilityRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
@@ -347,7 +348,7 @@ CONTAINS
         density=materialsInterpPoint%values(NUMBER_OF_VOIGT(numberOfDimensions)+1,NO_PART_DERIV)
         
         !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-        CALL FiniteElasticity_GaussDeformationGradientTensor(solidDependentInterpPointMetrics, &
+        CALL FiniteElasticity_DeformationGradientTensorCalculate(solidDependentInterpPointMetrics, &
           & geometricInterpPointMetrics,fibreInterpPoint,dZdNu,Jznu,ERR,ERROR,*999)
 
         sigma=density*Jznu*sigma

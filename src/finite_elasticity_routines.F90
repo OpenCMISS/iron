@@ -2834,7 +2834,7 @@ CONTAINS
         ENDDO !columnComponentIdx
 
         !Calculate the deformation gradient tensor
-        CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics, &
+        CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics, &
           & geometricInterpPointMetrics,fibreInterpPoint,F,J,err,error,*999)
         
         !Calculate any growth.
@@ -3411,7 +3411,7 @@ CONTAINS
             ENDDO !columnElementParameterIdx
           ENDDO !columnComponentIdx
           
-          CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+          CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
             & fibreInterpPoint,dZdNu,Jznu,err,error,*999)
 
           CALL FiniteElasticity_GaussElasticityTensor(equationsSet,numberOfDimensions,dependentInterpPoint, &
@@ -5053,7 +5053,7 @@ CONTAINS
               ENDDO !columnElementParameterIdx
             ENDDO !columnComponentIdx
 
-            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,J,err,error,*999)
 
             CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
@@ -5180,7 +5180,7 @@ CONTAINS
               & err,error,*999)
 
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,J,err,error,*999)
             IF(Jznu<0.0_DP) THEN
               localWarning="Volume is negative for gauss point "//TRIM(NumberToVString(gaussPointIdx,"*",err,error))//&
@@ -5207,7 +5207,7 @@ CONTAINS
             !Calculate Sigma=1/Jznu.FTF', the Cauchy stress tensor at the gauss point
             CALL FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint, &
               & materialsInterpPoint,geometricInterpPoint,darcyDependentInterpPoint, &
-              & independentInterpPoint,cauchyTensor,Jznu,dZdNu,elementNumber,gaussPointIdx,err,error,*999)
+              & independentInterpPoint,elementNumber,gaussPointIdx,dZdNu,Jznu,cauchyTensor,err,error,*999)
 
             IF(diagnostics1) THEN
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
@@ -5421,7 +5421,7 @@ CONTAINS
             ENDIF
 
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,Jznu,err,error,*999)
             IF(Jznu<0.0_DP) THEN
               localWarning="Volume is negative for gauss point "//TRIM(NumberToVString(gaussPointIdx,"*",err,error))//&
@@ -5447,8 +5447,8 @@ CONTAINS
 
             !Calculate Sigma=1/Jznu.FTF', the Cauchy stress tensor at the gauss point
             CALL FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint, &
-              & materialsInterpPoint,geometricInterpPoint,darcyDependentInterpPoint,independentInterpPoint,cauchyTensor, &
-              & cauchyTensorFibre,Jznu,dZdNu,dZdX,dNuOdNu,elementNumber,gaussPointIdx,err,error,*999)
+              & materialsInterpPoint,geometricInterpPoint,darcyDependentInterpPoint,independentInterpPoint, &
+              & elementNumber,gaussPointIdx,dZdNu,Jznu,cauchyTensor,err,error,*999)
 
             IF(diagnostics1) THEN
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
@@ -5672,7 +5672,7 @@ CONTAINS
             ENDIF
 
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,J,err,error,*999)
 
             CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
@@ -6021,7 +6021,7 @@ CONTAINS
             ENDIF
 
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,J,err,error,*999)
 
             CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
@@ -6242,12 +6242,12 @@ CONTAINS
             ENDIF
 
             !Calculate F=dZ/dNu, the deformation gradient tensor at the gauss point
-            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,J,err,error,*999)
 
             !Calculate prevF=prevdZ/dNu, the relative deformation gradient tensor at the gauss point
 !!TODO: What happens with the fibres here! They will not be in an orthogonal system
-            CALL FiniteElasticity_GaussDeformationGradientTensor(prevDependentInterpPointMetrics,geometricInterpPointMetrics, &
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(prevDependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,prevdZdNu,prevJ,err,error,*999)
 
             !Get BePrime from the start of the time step
@@ -6855,7 +6855,7 @@ CONTAINS
             darcyVolIncrease = darcyMassIncrease / darcyRho0F
 
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,Jznu,err,error,*999)
 
             CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
@@ -6863,7 +6863,7 @@ CONTAINS
             !Calculate Sigma=1/Jznu.FTF', the Cauchy stress tensor at the gauss point
             CALL FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint, &
               & materialsInterpPoint,geometricInterpPoint,darcyDependentInterpPoint, &
-              & independentInterpPoint,cauchyTensor,Jznu,dZdNu,elementNumber,gaussPointIdx,err,error,*999)
+              & independentInterpPoint,elementNumber,gaussPointIdx,dZdNu,Jznu,cauchyTensor,err,error,*999)
 
             !Calculate dPhi/dZ at the gauss point, Phi is the basis function
             CALL FiniteElasticity_GaussdFdZ(dependentInterpPoint,elementNumber,gaussPointIdx,numberOfDimensions, &
@@ -6977,15 +6977,15 @@ CONTAINS
             ENDIF
 
             !Calculate F=dZ/dNU at the gauss point
-            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,J,err,error,*999)
 
             CALL FieldInterpolatedPointMetrics_JacobianGet(geometricInterpPointMetrics,Jxxi,err,error,*999)
 
             !Calculate Cauchy stress tensor at the gauss point
             CALL FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint, &
-              & materialsInterpPoint,geometricInterpPoint,darcyDependentInterpPoint,independentInterpPoint,cauchyTensor, &
-              & Jznu,dZdNu,elementNumber,gaussPointIdx,err,error,*999)
+              & materialsInterpPoint,geometricInterpPoint,darcyDependentInterpPoint,independentInterpPoint, &
+              & elementNumber,gaussPointIdx,dZdNu,Jznu,cauchyTensor,err,error,*999)
 
             !Calculate dF/DZ at the gauss point
             CALL FiniteElasticity_GaussdFdZ(dependentInterpPoint,elementNumber,gaussPointIdx,numberOfDimensions, &
@@ -7993,7 +7993,7 @@ CONTAINS
     ENDIF
 
     !Calculate F=dZ/dNU, the deformation gradient tensor at the xi location
-    CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+    CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
       & fibreInterpPoint,F,J,err,error,*999)
 
     !Calculate growth tensors
@@ -8023,7 +8023,7 @@ CONTAINS
       CASE(EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, &
         & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE)
         CALL FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint,materialsInterpPoint, &
-          & geometricInterpPoint,darcyInterpPoint,independentInterpPoint,cauchyStressTensor,J,F,elementNumber,0,err,error,*999)
+          & geometricInterpPoint,darcyInterpPoint,independentInterpPoint,elementNumber,0,F,J,cauchyStressTensor,err,error,*999)
         sigmaV(TENSOR_TO_VOIGT3(1,1))=cauchyStressTensor(1,1)
         sigmaV(TENSOR_TO_VOIGT3(2,2))=cauchyStressTensor(2,2)
         sigmaV(TENSOR_TO_VOIGT3(3,3))=cauchyStressTensor(3,3)
@@ -8247,7 +8247,7 @@ CONTAINS
       & err,error,*999)
 
     !Calculate F=dZ/dNU, the deformation gradient tensor at the xi location
-    CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+    CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
       & fibreInterpPoint,dZdNu,Jznu,err,error,*999)
 
     CALL FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je,err,error,*999)
@@ -8327,8 +8327,8 @@ CONTAINS
         
       CASE(EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE)
         CALL FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint,materialsInterpPoint, &
-          & geometricInterpPoint,darcyInterpPoint,independentInterpPoint,cauchyStressTensor,Jznu,dZdNu,localElementNumber, &
-          & 0,err,error,*999)
+          & geometricInterpPoint,darcyInterpPoint,independentInterpPoint,localElementNumber,0,dZdNu,Jznu, &
+          & cauchyStressTensor,err,error,*999)
       CASE DEFAULT
         CALL FlagError("Not implemented.",err,error,*999)
       END SELECT
@@ -8505,7 +8505,7 @@ CONTAINS
     CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,dependentInterpPointMetrics,err,error,*999)
 
     !Calculate F=dZ/dNU, the deformation gradient tensor at the xi location
-    CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+    CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
       & fibreInterpPoint,dZdNu(1:numberOfDimensions,1:numberOfDimensions),Jznu,err,error,*999)
 
     CALL FiniteElasticity_GrowthTensorCalculate(equationsSet,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je,err,error,*999)
@@ -8581,7 +8581,7 @@ CONTAINS
       CASE(EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE)
         CALL FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint,materialsInterpPoint, &
           & geometricInterpPoint,darcyInterpPoint,independentInterpPoint, &
-          & cauchyStressTensor,Jznu,dZdNu,localElementNumber,0,err,error,*999)
+          & localElementNumber,0,dZdNu,Jznu,cauchyStressTensor,err,error,*999)
       CASE DEFAULT
         CALL FlagError("Not implemented.",err,error,*999)
       END SELECT
@@ -9242,80 +9242,10 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Evaluates the deformation gradient tensor at a given interpolated point
-  SUBROUTINE FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics,&
-    & fibreInterpPoint,dZdNu,Jznu,err,error,*)
-
-    !Argument variables
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: dependentInterpPointMetrics !<The interpolated point metrics of the deformed/spatial geometry
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The interpolated point metrics of the undeformed/reference geometry
-    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<A pointer to the fibre field interpolated at the point. If there is no fibre field defined this will be NULL.
-    REAL(DP), INTENT(OUT) :: dZdNu(3,3) !<dZdNu(coordinateIdx,coordinateIdx). On return, the deformation gradient tensor
-    REAL(DP), INTENT(OUT) :: Jznu !<On return, the Jacobian of the deformation i.e., determinant dZdNu
-    INTEGER(INTG), INTENT(OUT) :: err   !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfZDimensions
-    REAL(DP) :: dNudX(3,3),dXdNu(3,3),dNuDXi(3,3),dXidNu(3,3)
-
-    ENTERS("FiniteElasticity_GaussDeformationGradientTensor",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(dependentInterpPointMetrics)) &
-      & CALL FlagError("Dependent interpolated point metrics is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
-      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
-    
-    numberOfXDimensions=geometricInterpPointMetrics%numberOfXDimensions
-    numberOfXiDimensions=geometricInterpPointMetrics%numberOfXiDimensions
-    numberOfZDimensions=dependentInterpPointMetrics%numberOfXDimensions
-
-    CALL CoordinateSystem_MaterialSystemCalculateOld(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu, &
-      & dNudXi(1:numberOfXDimensions,1:numberOfXiDimensions),dXidNu(1:numberOfXiDimensions,1:numberOfXDimensions), &
-      & err,error,*999)
-    !dZ/dNu = dZ/dXi * dXi/dNu  (deformation gradient tensor, F)
-    CALL MatrixProduct(dependentInterpPointMetrics%dXdXi(1:numberOfZDimensions,1:numberOfXiDimensions), &
-      & dXiDNu(1:numberOfXiDimensions,1:numberOfXDimensions),dZdNu(1:numberOfZDimensions,1:numberOfXDimensions), &
-      & err,error,*999)
-    
-    IF(numberOfZDimensions == 2) THEN
-      dZdNu(:,3) = [0.0_DP,0.0_DP,1.0_DP]
-      dZdNu(3,1:2) = 0.0_DP
-    ENDIF
-    
-    CALL Determinant(dZdNu,Jznu,err,error,*999)
-
-    IF(diagnostics1) THEN
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Calculated deformation gradient tensor:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Z dimensions  = ",numberOfZDimensions,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of X wrt to Nu coordinates:",err,error,*999)
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfXDimensions, &
-        & numberOfXDimensions,numberOfXDimensions,dXidNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("    dX_dNu','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deformation gradient tensor wrt Nu coordinates:",err,error,*999)
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfZDimensions,1,1,numberOfXDimensions, &
-        & numberOfXDimensions,numberOfXDimensions,dZdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("    dZ_dNu','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dZ_dNu  = ",Jznu,err,error,*999)
-    ENDIF
-
-    EXITS("FiniteElasticity_GaussDeformationGradientTensor")
-    RETURN
-999 ERRORS("FiniteElasticity_GaussDeformationGradientTensor",err,error)
-    EXITS("FiniteElasticity_GaussDeformationGradientTensor")
-    RETURN 1
-
-  END SUBROUTINE FiniteElasticity_GaussDeformationGradientTensor
-
-  !
-  !================================================================================================================================
-  !
-
   !>Evaluates the Cauchy stress tensor at a given Gauss point
   SUBROUTINE FiniteElasticity_GaussCauchyTensor(equationsSet,numberOfDimensions,dependentInterpPoint, &
     & materialsInterpPoint,geometricInterpPoint,darcyDependentInterpPoint,independentInterpPoint, &
-    & elementNumber,gaussPointNumber,dZdNu,JZNu,cauchyTensor,cauchyTensorFibre,dZdX,dNuOdNu,err,error,*)
+    & elementNumber,gaussPointNumber,dZdNu,JZNu,cauchyTensor,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -9330,9 +9260,9 @@ CONTAINS
     REAL(DP), INTENT(IN) :: dZdNu(3,3) !<Deformation gradient tensor at the Gauss point
     REAL(DP), INTENT(OUT) :: JZNu !<Determinant of deformation gradient tensor (rCauchyGreen)
     REAL(DP), INTENT(OUT) :: cauchyTensor(:,:) !<On exit, the Cauchy stress tensor
-    REAL(DP), INTENT(OUT) :: cauchyTensorFibre(:,:) !<On exit, the Cauchy stress tensor in orthogonal deformed fibre coordinates
-    REAL(DP), INTENT(OUT) :: dZDX(:,:) !<On exit, the deformation gradient tensor mapping spatial coordintes
-    REAL(DP), INTENT(OUT) :: dNuOdNu(:,:) !<On exit, the deformation gradient tensor mapping fibre coordinates
+    !REAL(DP), INTENT(OUT) :: cauchyTensorFibre(:,:) !<On exit, the Cauchy stress tensor in orthogonal deformed fibre coordinates
+    !REAL(DP), INTENT(OUT) :: dZDX(:,:) !<On exit, the deformation gradient tensor mapping spatial coordintes
+    !REAL(DP), INTENT(OUT) :: dNuOdNu(:,:) !<On exit, the deformation gradient tensor mapping fibre coordinates
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -11461,7 +11391,7 @@ CONTAINS
       ENDIF
 
       !Convert to Voigt form
-      CALL TensorToVoight(3,[TENSOR_CONTRAVARIANT_INDEX,TENSOR_CONTRAVARIANT_INDEX],secondPiolaKirchoff,stressTensorV, &
+      CALL TensorToVoigt(3,[TENSOR_CONTRAVARIANT_INDEX,TENSOR_CONTRAVARIANT_INDEX],secondPiolaKirchoff,stressTensorV, &
         & err,error,*999)
 
       !Do push-forward of 2nd Piola tensor. 
@@ -11476,7 +11406,7 @@ CONTAINS
       
       CALL MatrixTransposeProduct(dZdNu,dZdNu,rCauchyGreen,err,error,*999)
       CALL Invert(rCauchyGreen,piolaDeformation,I3,err,error,*999)
-      CALL Identity(identity,err,error,*999)
+      CALL IdentityMatrix(identity,err,error,*999)
 
       !Form of constitutive model is: W_hat=c1*(I1_hat-3)+c2*(I2_hat-3)+p*J*C^(-1) + W^v(J)
       !take W^v(J) = 1/2 * kappa * (J-1)^2
@@ -11492,7 +11422,7 @@ CONTAINS
         & (C(1)*I1+2.0_DP*C(2)*I2-1.5_DP*wvPrime*Jznu**(5.0_DP/3.0_DP))/3.0_DP*piolaDeformation)
       
       !Convert to Voigt form
-      CALL TensorToVoight(3,[TENSOR_CONTRAVARIANT_INDEX,TENSOR_CONTRAVARIANT_INDEX],secondPiolaKirchoff,stressTensorV, &
+      CALL TensorToVoigt(3,[TENSOR_CONTRAVARIANT_INDEX,TENSOR_CONTRAVARIANT_INDEX],secondPiolaKirchoff,stressTensorV, &
         & err,error,*999)
      
       !Do push-forward of 2nd Piola tensor.      
@@ -16883,7 +16813,7 @@ CONTAINS
             !  & err,error,*999)
 
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+            CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
               & fibreInterpPoint,dZdNu,Jznu,err,error,*999)
 
             !get A1, A2, x1, x2 at the Gauss point of the 3D finite elasticity element

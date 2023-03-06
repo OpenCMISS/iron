@@ -335,6 +335,22 @@ MODULE Maths
     MODULE PROCEDURE TensorProductVectorVectorDP
   END INTERFACE TensorProduct
   
+  !>Converts a tensor to a Voigt representation
+  INTERFACE TensorToVoigt
+    MODULE PROCEDURE TensorToVoigt2SP
+    MODULE PROCEDURE TensorToVoigt2DP
+    MODULE PROCEDURE TensorToVoigt4SP
+    MODULE PROCEDURE TensorToVoigt4DP
+  END INTERFACE TensorToVoigt
+
+  !>Performs a transformation on a tensor in one coordinate system to the tensor in another coordinate system.
+  INTERFACE TensorTransform
+    MODULE PROCEDURE TensorTransformVectorDP0
+    MODULE PROCEDURE TensorTransformVectorDP1
+    MODULE PROCEDURE TensorTransformTensorTwoDP
+    MODULE PROCEDURE TensorTransformTensorFourDP
+  END INTERFACE TensorTransform
+  
   !>Calculates and returns the trace of a matrix
   INTERFACE Trace
     MODULE PROCEDURE TraceSP
@@ -347,14 +363,6 @@ MODULE Maths
     MODULE PROCEDURE TransposeMatrixSP
     MODULE PROCEDURE TransposeMatrixDP
   END INTERFACE MatrixTranspose
-
-  !>Converts a tensor to a Voigt representation
-  INTERFACE TensorToVoigt
-    MODULE PROCEDURE TensorToVoigt2SP
-    MODULE PROCEDURE TensorToVoigt2DP
-    MODULE PROCEDURE TensorToVoigt4SP
-    MODULE PROCEDURE TensorToVoigt4DP
-  END INTERFACE TensorToVoigt
 
   !>Calculates and returns the unimodular form of a matrix/tensor
   INTERFACE Unimodular
@@ -455,6 +463,8 @@ MODULE Maths
   PUBLIC TensorProduct
 
   PUBLIC TensorToVoigt
+
+  PUBLIC TensorTransform
 
   PUBLIC Trace
 
@@ -5616,6 +5626,867 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE TensorToVoigt4DP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a vector, a(nu), in nu coordinates to a vector, b(xi), in xi coordinates. 
+  SUBROUTINE TensorTransformVectorDP0(n,vectorIndexType,a,dXidNu,dNudXi,b,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: vectorIndexType !<The type (e.g., covariant or contravariant) of the vector index to transform \see Constants_TensorIndexTypes
+    REAL(DP), INTENT(IN) :: a(:) !<a(nuIdx). The orginal vector a in nu coordinates to transform to xi coordinates.
+    REAL(DP), INTENT(IN) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). The rate of change matrix of xi coordinates with nu coordinates.
+    REAL(DP), INTENT(IN) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). The rate of change matrix of nu coordinates with xi coordinates.
+    REAL(DP), INTENT(OUT) :: b(:) !<b(xiIdx). On exit, the transformed vector b in xi coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("TensorTransformVectorDP0",err,error,*999)
+
+    CALL TensorTransformVectorDP1(n,[vectorIndexType],a,dXidNu,dNudXi,b,err,error,*999)
+       
+    EXITS("TensorTransformVectorDP0")
+    RETURN
+999 ERRORS("TensorTransformVectorDP0",err,error)
+    EXITS("TensorTransformVectorDP0")
+    RETURN 1
+    
+  END SUBROUTINE TensorTransformVectorDP0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a vector, a(nu), in nu coordinates to a vector, b(xi), in xi coordinates. 
+  SUBROUTINE TensorTransformVectorDP1(n,vectorIndexType,a,dXidNu,dNudXi,b,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: vectorIndexType(1) !<The type (e.g., covariant or contravariant) of the vector index to transform \see Constants_TensorIndexTypes
+    REAL(DP), INTENT(IN) :: a(:) !<a(nuIdx). The orginal vector a in nu coordinates to transform to xi coordinates.
+    REAL(DP), INTENT(IN) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). The rate of change matrix of xi coordinates with nu coordinates.
+    REAL(DP), INTENT(IN) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). The rate of change matrix of nu coordinates with xi coordinates.
+    REAL(DP), INTENT(OUT) :: b(:) !<b(xiIdx). On exit, the transformed vector b in xi coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("TensorTransformVectorDP1",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(n<1.OR.n>3) THEN
+      localError="The specified number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number of dimensions should be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(a,1)<n) THEN
+      localError="The size of the vector a to transform of "//TRIM(NumberToVString(SIZE(a,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dXidNu,1)<n) THEN
+      localError="The size of the first index of the dXidNu array of "//TRIM(NumberToVString(SIZE(dXidNu,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dXidNu,2)<n) THEN
+      localError="The size of the second index of the dXidNu array of "//TRIM(NumberToVString(SIZE(dXidNu,2),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dNudXi,1)<n) THEN
+      localError="The size of the first index of the dNudXi array of "//TRIM(NumberToVString(SIZE(dNudXi,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dNudXi,2)<n) THEN
+      localError="The size of the second index of the dNudXi array of "//TRIM(NumberToVString(SIZE(dNudXi,2),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(b,1)<n) THEN
+      localError="The size of the transformed vector b of "//TRIM(NumberToVString(SIZE(b,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    !Transform the vector a in nu coordinates to the vector b in xi coordinates according to the appropriate transformation rule
+    SELECT CASE(vectorIndexType(1))
+    CASE(TENSOR_CONTRAVARIANT_INDEX)
+      !Contravariant vector i.e., b^{r}=\delby{\xi^{r}}{\nu^{a}}.a^{a}
+      CALL MatrixVectorProduct(dXidNu(1:n,1:n),a(1:n),b(1:n),err,error,*999)
+    CASE(TENSOR_COVARIANT_INDEX)
+      !Convariant vector i.e., b_{r}=\delby{\nu^{a}}{\xi^{r}}.a_{a}
+      CALL MatrixTransposeVectorProduct(dNudXi(1:n,1:n),a(1:n),b(1:n),err,error,*999)
+    CASE DEFAULT
+      localError="The vector index type of "//TRIM(NumberToVString(vectorIndexType(1),"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+        
+    EXITS("TensorTransformVectorDP1")
+    RETURN
+999 ERRORS("TensorTransformVectorDP1",err,error)
+    EXITS("TensorTransformVectorDP1")
+    RETURN 1
+    
+  END SUBROUTINE TensorTransformVectorDP1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a second order tenso, A(nu1,nu2), in nu coordinates to a second order tensor, B(xi1,xi2), in xi coordinates. 
+  SUBROUTINE TensorTransformTensorTwoDP(n,tensorIndexTypes,A,dXidNu,dNudXi,B,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) of the rankIdx'th index to transform \see Constants_TensorIndexTypes
+    REAL(DP), INTENT(IN) :: A(:,:) !<A(nuIdx1,nuIdx2). The orginal second order tensor A in nu coordinates to transform to xi coordinates.
+    REAL(DP), INTENT(IN) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). The rate of change matrix of xi coordinates with nu coordinates.
+    REAL(DP), INTENT(IN) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). The rate of change matrix of nu coordinates with xi coordinates.
+    REAL(DP), INTENT(OUT) :: B(:,:) !<B(xiIdx1,xiIdx2). On exit, the transformed second order tensor B in xi coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    REAL(DP) :: tempTensor(3,3)
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("TensorTransformTensorTwoDP",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(n<1.OR.n>3) THEN
+      localError="The specified number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number of dimensions should be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(tensorIndexTypes,1)<2) THEN
+      localError="The size of the specified tensor index types array is "// &
+        & NumberToVString(SIZE(tensorIndexTypes,1),"*",err,error)//" and needs to be at least two for a second order tensor."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,1)<n) THEN
+      localError="The size of the first index of the tensor A to transform of "//TRIM(NumberToVString(SIZE(A,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,2)<n) THEN
+      localError="The size of the second index of the tensor A to transform of "//TRIM(NumberToVString(SIZE(A,2),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dXidNu,1)<n) THEN
+      localError="The size of the first index of the dXidNu array of "//TRIM(NumberToVString(SIZE(dXidNu,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dXidNu,2)<n) THEN
+      localError="The size of the second index of the dXidNu array of "//TRIM(NumberToVString(SIZE(dXidNu,2),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dNudXi,1)<n) THEN
+      localError="The size of the first index of the dNudXi array of "//TRIM(NumberToVString(SIZE(dNudXi,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dNudXi,2)<n) THEN
+      localError="The size of the second index of the dNudXi array of "//TRIM(NumberToVString(SIZE(dNudXi,2),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(B,1)<n) THEN
+      localError="The size of the first index of the transformed tensor B of "//TRIM(NumberToVString(SIZE(B,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(B,2)<n) THEN
+      localError="The size of the second index of the transformed tensor B of "//TRIM(NumberToVString(SIZE(B,2),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    !Transform the tensor A in nu coordinates to the tensor B in xi coordinates according to the appropriate transformation rule
+    SELECT CASE(tensorIndexTypes(1))
+    CASE(TENSOR_CONTRAVARIANT_INDEX)
+      SELECT CASE(tensorIndexTypes(2))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        !(Contravariant,Contravariant) tensor i.e.,
+        !B^{rs}=\delby{\xi^{r}}{\nu^{a}}\delby{\xi^{s}}{\nu^{b}}.A^{ab}
+        CALL MatrixProductTranspose(A(1:n,1:n),dXidNu(1:n,1:n),tempTensor(1:n,1:n),err,error,*999)
+        CALL MatrixProduct(dXidNu(1:n,1:n),tempTensor(1:n,1:n),B(1:n,1:n),err,error,*999)
+      CASE(TENSOR_COVARIANT_INDEX)
+        !(Contravariant,Covariant) tensor i.e.,
+        !B^{r.}_{.s}=\delby{\xi^{r}}{\nu^{a}}\delby{\nu^{b}}{\xi^{s}}.A^{a.}_{.b}
+        CALL MatrixProduct(A(1:n,1:n),dNudXi(1:n,1:n),tempTensor(1:n,1:n),err,error,*999)
+        CALL MatrixProduct(dXidNu(1:n,1:n),tempTensor(1:n,1:n),B(1:n,1:n),err,error,*999)
+      CASE(TENSOR_TWO_POINT_CONTRAVARIANT_INDEX)
+        !Two-point tensor. Transform only as contravariant in the second index.
+      CASE(TENSOR_TWO_POINT_COVARIANT_INDEX)
+        !Two-point tensor. Transform only as covariant in the second index.
+      CASE DEFAULT
+        localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(TENSOR_COVARIANT_INDEX)
+      SELECT CASE(tensorIndexTypes(2))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        !(Covariant,Contravariant) tensor i.e.,
+        !B^{.s}_{r.}=\delby{\nu^{a}}{\xi^{r}}\delby{\xi^{s}}{\nu^{b}}.A^{a.}_{.b}
+        CALL MatrixProduct(A(1:n,1:n),dNudXi(1:n,1:n),tempTensor(1:n,1:n),err,error,*999)
+        CALL MatrixTransposeProduct(dNudXi(1:n,1:n),tempTensor(1:n,1:n),B(1:n,1:n),err,error,*999)
+      CASE(TENSOR_COVARIANT_INDEX)
+        !(Covariant,Covariant) tensor i.e., 
+        !B_{rs}=\delby{\nu^{a}}{\xi^{r}}\delby{\nu^{b}}{\xi^{s}}.A_{ab}
+        CALL MatrixProduct(A(1:n,1:n),dNudXi(1:n,1:n),tempTensor(1:n,1:n),err,error,*999)
+        CALL MatrixTransposeProduct(dNudXi(1:n,1:n),tempTensor(1:n,1:n),B(1:n,1:n),err,error,*999)
+      CASE(TENSOR_TWO_POINT_CONTRAVARIANT_INDEX)
+        !Two-point tensor. Transform only as contravariant in the second index i.e.,
+        !B^{as}=\delby{\xi^{s}}{\nu^{b}}.A^{ab}
+        CALL MatrixProductTranspose(A(1:n,1:n),dXidNu(1:n,1:n),B(1:n,1:n),err,error,*999)
+      CASE(TENSOR_TWO_POINT_COVARIANT_INDEX)
+        !Two-point tensor. Transform only as covariant in the second index i.e.,
+        !B_{as}=\delby{\nu^{b}}{\xi^{s}}.A_{ab}
+        CALL MatrixProduct(A(1:n,1:n),dNudXi(1:n,1:n),B(1:n,1:n),err,error,*999)
+     CASE DEFAULT       
+        localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(TENSOR_TWO_POINT_CONTRAVARIANT_INDEX)
+      !Two-point tensor. Transform only as contravariant in the first index i.e.,
+      !B^{rb}=\delby{\xi^{r}}{\nu^{a}}.A^{ab}
+      SELECT CASE(tensorIndexTypes(2))
+      CASE(TENSOR_CONTRAVARIANT_INDEX, &
+        & TENSOR_COVARIANT_INDEX)
+        CALL MatrixProduct(dNudXi(1:n,1:n),A(1:n,1:n),B(1:n,1:n),err,error,*999)
+      CASE DEFAULT
+        localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT       
+    CASE(TENSOR_TWO_POINT_COVARIANT_INDEX)
+      !Two-point tensor. Transform only as covariant in the first index i.e.,
+      !B_{rb}=\delby{\nu^{a}}{\xi^{r}}.A_{ab}
+      SELECT CASE(tensorIndexTypes(2))
+      CASE(TENSOR_CONTRAVARIANT_INDEX, &
+        & TENSOR_COVARIANT_INDEX)
+        CALL MatrixTransposeProduct(dNudXi(1:n,1:n),A(1:n,1:n),B(1:n,1:n),err,error,*999)
+      CASE DEFAULT
+        localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT       
+   CASE DEFAULT
+      localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+        
+    EXITS("TensorTransformTensorTwoDP")
+    RETURN
+999 ERRORS("TensorTransformTensorTwoDP",err,error)
+    EXITS("TensorTransformTensorTwoDP")
+    RETURN 1
+    
+  END SUBROUTINE TensorTransformTensorTwoDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a fourth order tenso, A(nu1,nu2,nu3,nu4), in nu coordinates to a fourth order tensor, B(xi1,xi2,xi3,xi4), in xi coordinates. 
+  SUBROUTINE TensorTransformTensorFourDP(n,tensorIndexTypes,A,dXidNu,dNudXi,B,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: n !<The number of dimensions
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) of the rankIdx'th index to transform \see Constants_TensorIndexTypes
+    REAL(DP), INTENT(IN) :: A(:,:,:,:) !<A(nuIdx1,nuIdx2,nuIdx3,nuIdx4). The orginal fourth order tensor A in nu coordinates to transform to xi coordinates.
+    REAL(DP), INTENT(IN) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). The rate of change matrix of xi coordinates with nu coordinates.
+    REAL(DP), INTENT(IN) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). The rate of change matrix of nu coordinates with xi coordinates.
+    REAL(DP), INTENT(OUT) :: B(:,:,:,:) !<B(xiIdx1,xiIdx2,xiIdx3,xiIdx4). On exit, the transformed fourth order tensor B in xi coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: aIdx,bIdx,cIdx,dIdx,rIdx,sIdx,tIdx,uIdx
+    REAL(DP) :: sum
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("TensorTransformTensorFourDP",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(n<1.OR.n>3) THEN
+      localError="The specified number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number of dimensions should be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(tensorIndexTypes,1)<4) THEN
+      localError="The size of the specified tensor index types array is "// &
+        & NumberToVString(SIZE(tensorIndexTypes,1),"*",err,error)//" and needs to be at least four for a fourth order tensor."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,1)<n) THEN
+      localError="The size of the first index of the tensor A to transform of "//TRIM(NumberToVString(SIZE(A,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,2)<n) THEN
+      localError="The size of the second index of the tensor A to transform of "//TRIM(NumberToVString(SIZE(A,2),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,3)<n) THEN
+      localError="The size of the third index of the tensor A to transform of "//TRIM(NumberToVString(SIZE(A,3),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(A,4)<n) THEN
+      localError="The size of the fourth index of the tensor A to transform of "//TRIM(NumberToVString(SIZE(A,4),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dXidNu,1)<n) THEN
+      localError="The size of the first index of the dXidNu array of "//TRIM(NumberToVString(SIZE(dXidNu,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dXidNu,2)<n) THEN
+      localError="The size of the second index of the dXidNu array of "//TRIM(NumberToVString(SIZE(dXidNu,2),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dNudXi,1)<n) THEN
+      localError="The size of the first index of the dNudXi array of "//TRIM(NumberToVString(SIZE(dNudXi,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dNudXi,2)<n) THEN
+      localError="The size of the second index of the dNudXi array of "//TRIM(NumberToVString(SIZE(dNudXi,2),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(B,1)<n) THEN
+      localError="The size of the first index of the transformed tensor B of "//TRIM(NumberToVString(SIZE(B,1),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(B,2)<n) THEN
+      localError="The size of the second index of the transformed tensor B of "//TRIM(NumberToVString(SIZE(B,2),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(B,3)<n) THEN
+      localError="The size of the third index of the transformed tensor B of "//TRIM(NumberToVString(SIZE(B,3),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(B,4)<n) THEN
+      localError="The size of the fourth index of the transformed tensor B of "//TRIM(NumberToVString(SIZE(B,4),"*",err,error))// &
+        & " is too small. The size should be >= the number of dimensions of "//TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    !Transform the tensor A in nu coordinates to the tensor B in xi coordinates according to the appropriate transformation rule
+    SELECT CASE(tensorIndexTypes(1))
+    CASE(TENSOR_CONTRAVARIANT_INDEX)
+      SELECT CASE(tensorIndexTypes(2))
+      CASE(TENSOR_CONTRAVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(3))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Contravariant,Contravariant,Contravariant,Contravariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dXidNu(rIdx,aIdx)* &
+                              & dXidNu(sIdx,bIdx)* &
+                              & dXidNu(tIdx,cIdx)* &
+                              & dXidNu(uIdx,dIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                    ENDDO !aIdx
+                    B(rIdx,sIdx,tIdx,uIdx)=sum
+                 ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Contravariant,Contravariant,Contravariant,Covariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dXidNu(rIdx,aIdx)* &
+                              & dXidNu(sIdx,bIdx)* &
+                              & dXidNu(tIdx,cIdx)* &
+                              & dNudXi(dIdx,uIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                    ENDDO !aIdx
+                    B(rIdx,sIdx,tIdx,uIdx)=sum
+                  ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(TENSOR_COVARIANT_INDEX)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Contravariant,Contravariant,Covariant,Contravariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dXidNu(rIdx,aIdx)* &
+                              & dXidNu(sIdx,bIdx)* &
+                              & dNudXi(cIdx,tIdx)* &
+                              & dXidNu(uIdx,dIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                    ENDDO !aIdx
+                    B(rIdx,sIdx,tIdx,uIdx)=sum
+                  ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Contravariant,Contravariant,Covariant,Covariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dXidNu(rIdx,aIdx)* &
+                              & dXidNu(sIdx,bIdx)* &
+                              & dNudXi(cIdx,tIdx)* &
+                              & dNudXi(dIdx,uIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                   ENDDO !aIdx
+                   B(rIdx,sIdx,tIdx,uIdx)=sum
+                  ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The third tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(3),"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(3))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Contravariant,Covariant,Contravariant,Contravariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dXidNu(rIdx,aIdx)* &
+                              & dNudXi(bIdx,sIdx)* &
+                              & dXidNu(tIdx,cIdx)* &
+                              & dXidNu(uIdx,dIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                    ENDDO !aIdx
+                    B(rIdx,sIdx,tIdx,uIdx)=sum
+                  ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+           CASE(TENSOR_COVARIANT_INDEX)
+            !(Contravariant,Covariant,Contravariant,Covariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dXidNu(rIdx,aIdx)* &
+                              & dNudXi(bIdx,sIdx)* &
+                              & dXidNu(tIdx,cIdx)* &
+                              & dNudXi(dIdx,uIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                    ENDDO !aIdx
+                    B(rIdx,sIdx,tIdx,uIdx)=sum
+                 ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(TENSOR_COVARIANT_INDEX)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Contravariant,Covariant,Covariant,Contravariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dXidNu(rIdx,aIdx)* &
+                              & dNudXi(bIdx,sIdx)* &
+                              & dNudXi(cIdx,tIdx)* &
+                              & dXidNu(uIdx,dIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                    ENDDO !aIdx
+                    B(rIdx,sIdx,tIdx,uIdx)=sum
+                  ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Contravariant,Covariant,Covariant,Covariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dXidNu(rIdx,aIdx)* &
+                              & dNudXi(bIdx,sIdx)* &
+                              & dNudXi(cIdx,tIdx)* &
+                              & dNudXi(dIdx,uIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                    ENDDO !aIdx
+                    B(rIdx,sIdx,tIdx,uIdx)=sum
+                   ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+          CASE DEFAULT
+             localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+             CALL FlagError(localError,err,error,*999)
+           END SELECT
+         CASE DEFAULT
+           localError="The third tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(3),"*",err,error))//" is invalid."
+           CALL FlagError(localError,err,error,*999)
+         END SELECT
+       CASE DEFAULT
+         localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
+         CALL FlagError(localError,err,error,*999)
+       END SELECT
+     CASE(TENSOR_COVARIANT_INDEX)
+       SELECT CASE(tensorIndexTypes(2))
+       CASE(TENSOR_CONTRAVARIANT_INDEX)
+         SELECT CASE(tensorIndexTypes(3))
+         CASE(TENSOR_CONTRAVARIANT_INDEX)
+           SELECT CASE(tensorIndexTypes(4))
+           CASE(TENSOR_CONTRAVARIANT_INDEX)
+             !(Covariant,Contravariant,Contravariant,Contravariant) tensor i.e.,
+             DO rIdx=1,n
+               DO sIdx=1,n
+                 DO tIdx=1,n
+                   DO uIdx=1,n
+                     sum=0.0_DP
+                     DO aIdx=1,n
+                       DO bIdx=1,n
+                         DO cIdx=1,n
+                           DO dIdx=1,n
+                             sum=sum+dNudXi(aIdx,rIdx)* &
+                               & dXidNu(sIdx,bIdx)* &
+                               & dXidNu(tIdx,cIdx)* &
+                               & dXidNu(uIdx,dIdx)* &
+                               & A(aIdx,bIdx,cIdx,dIdx)
+                           ENDDO !dIdx
+                         ENDDO !cIdx
+                       ENDDO !bIdx
+                     ENDDO !aIdx
+                     B(rIdx,sIdx,tIdx,uIdx)=sum
+                   ENDDO !uIdx
+                 ENDDO !tIdx
+               ENDDO !sIdx
+             ENDDO !rIdx
+           CASE(TENSOR_COVARIANT_INDEX)
+             !(Covariant,Contravariant,Contravariant,Covariant) tensor i.e.,
+            DO rIdx=1,n
+               DO sIdx=1,n
+                 DO tIdx=1,n
+                   DO uIdx=1,n
+                     sum=0.0_DP
+                     DO aIdx=1,n
+                       DO bIdx=1,n
+                         DO cIdx=1,n
+                           DO dIdx=1,n
+                             sum=sum+dNudXi(aIdx,rIdx)* &
+                               & dXidNu(sIdx,bIdx)* &
+                               & dXidNu(tIdx,cIdx)* &
+                               & dNudXi(dIdx,uIdx)* &
+                               & A(aIdx,bIdx,cIdx,dIdx)
+                           ENDDO !dIdx
+                         ENDDO !cIdx
+                       ENDDO !bIdx
+                     ENDDO !aIdx
+                     B(rIdx,sIdx,tIdx,uIdx)=sum
+                   ENDDO !uIdx
+                 ENDDO !tIdx
+               ENDDO !sIdx
+             ENDDO !rIdx
+         CASE DEFAULT
+             localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+             CALL FlagError(localError,err,error,*999)
+           END SELECT
+         CASE(TENSOR_COVARIANT_INDEX)
+           SELECT CASE(tensorIndexTypes(4))
+           CASE(TENSOR_CONTRAVARIANT_INDEX)
+             !(Covariant,Contravariant,Covariant,Contravariant) tensor
+             DO rIdx=1,n
+               DO sIdx=1,n
+                 DO tIdx=1,n
+                   DO uIdx=1,n
+                     sum=0.0_DP
+                     DO aIdx=1,n
+                       DO bIdx=1,n
+                         DO cIdx=1,n
+                           DO dIdx=1,n
+                             sum=sum+dNudXi(aIdx,rIdx)* &
+                               & dXidNu(sIdx,bIdx)* &
+                               & dNudXi(cIdx,tIdx)* &
+                               & dXidNu(uIdx,dIdx)* &
+                               & A(aIdx,bIdx,cIdx,dIdx)
+                           ENDDO !dIdx
+                         ENDDO !cIdx
+                       ENDDO !bIdx
+                     ENDDO !aIdx
+                     B(rIdx,sIdx,tIdx,uIdx)=sum
+                   ENDDO !uIdx
+                 ENDDO !tIdx
+               ENDDO !sIdx
+             ENDDO !rIdx
+           CASE(TENSOR_COVARIANT_INDEX)
+             !(Covariant,Contravariant,Covariant,Covariant) tensor
+             DO rIdx=1,n
+               DO sIdx=1,n
+                 DO tIdx=1,n
+                   DO uIdx=1,n
+                     sum=0.0_DP
+                      DO aIdx=1,n
+                       DO bIdx=1,n
+                         DO cIdx=1,n
+                           DO dIdx=1,n
+                             sum=sum+dNudXi(aIdx,rIdx)* &
+                               & dXidNu(sIdx,bIdx)* &
+                               & dNudXi(cIdx,tIdx)* &
+                               & dNudXi(dIdx,uIdx)* &
+                               & A(aIdx,bIdx,cIdx,dIdx)
+                           ENDDO !dIdx
+                         ENDDO !cIdx
+                       ENDDO !bIdx
+                     ENDDO !aIdx
+                     B(rIdx,sIdx,tIdx,uIdx)=sum
+                   ENDDO !uIdx
+                 ENDDO !tIdx
+               ENDDO !sIdx
+             ENDDO !rIdx
+          CASE DEFAULT
+             localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+             CALL FlagError(localError,err,error,*999)
+           END SELECT
+         CASE DEFAULT
+           localError="The third tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(3),"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(TENSOR_COVARIANT_INDEX)
+        SELECT CASE(tensorIndexTypes(3))
+        CASE(TENSOR_CONTRAVARIANT_INDEX)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Covariant,Covariant,Contravariant,Contravariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dNudXi(aIdx,rIdx)* &
+                              & dNudXi(bIdx,sIdx)* &
+                              & dXidNu(tIdx,cIdx)* &
+                              & dXidNu(uIdx,dIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                   ENDDO !aIdx
+                   B(rIdx,sIdx,tIdx,uIdx)=sum
+                  ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Covariant,Covariant,Contravariant,Covariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dNudXi(aIdx,rIdx)* &
+                              & dNudXi(bIdx,sIdx)* &
+                              & dXidNu(tIdx,cIdx)* &
+                              & dNudXi(dIdx,uIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                    ENDDO !aIdx
+                    B(rIdx,sIdx,tIdx,uIdx)=sum
+                 ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+         CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(TENSOR_COVARIANT_INDEX)
+          SELECT CASE(tensorIndexTypes(4))
+          CASE(TENSOR_CONTRAVARIANT_INDEX)
+            !(Covariant,Covariant,Covariant,Contravariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dNudXi(aIdx,rIdx)* &
+                              & dNudXi(bIdx,sIdx)* &
+                              & dNudXi(cIdx,tIdx)* &
+                              & dXidNu(uIdx,dIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                    ENDDO !aIdx
+                  ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+            B(rIdx,sIdx,tIdx,uIdx)=sum
+          CASE(TENSOR_COVARIANT_INDEX)
+            !(Covariant,Covariant,Covariant,Covariant) tensor
+            DO rIdx=1,n
+              DO sIdx=1,n
+                DO tIdx=1,n
+                  DO uIdx=1,n
+                    sum=0.0_DP
+                    DO aIdx=1,n
+                      DO bIdx=1,n
+                        DO cIdx=1,n
+                          DO dIdx=1,n
+                            sum=sum+dNudXi(aIdx,rIdx)* &
+                              & dNudXi(bIdx,sIdx)* &
+                              & dNudXi(cIdx,tIdx)* &
+                              & dNudXi(dIdx,uIdx)* &
+                              & A(aIdx,bIdx,cIdx,dIdx)
+                          ENDDO !dIdx
+                        ENDDO !cIdx
+                      ENDDO !bIdx
+                   ENDDO !aIdx
+                   B(rIdx,sIdx,tIdx,uIdx)=sum
+                   ENDDO !uIdx
+                ENDDO !tIdx
+              ENDDO !sIdx
+            ENDDO !rIdx
+          CASE DEFAULT
+            localError="The fourth tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(4),"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The third tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(3),"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The second tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(2),"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The first tensor index type of "//TRIM(NumberToVString(tensorIndexTypes(1),"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("TensorTransformTensorFourDP")
+    RETURN
+999 ERRORS("TensorTransformTensorFourDP",err,error)
+    EXITS("TensorTransformTensorFourDP")
+    RETURN 1
+    
+  END SUBROUTINE TensorTransformTensorFourDP
 
   !
   !================================================================================================================================

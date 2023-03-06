@@ -1249,19 +1249,18 @@ CONTAINS
   
   !>Evaluate the data point in a field based on data projection
   SUBROUTINE DataProjection_DataPointFieldVariableEvaluate(dataProjection,fieldVariable,fieldParameterSetType, &
-    & dataPointUserNumber,fieldVariableResult,err,error,*)
+    & dataPointGlobalNumber,fieldVariableResult,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection to give the xi locations and element number for the data points
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The parameter set to be interpolated
-    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to evaluate
-    REAL(DP), INTENT(OUT) :: fieldResult(:) !<On exit, the field variable interpolated at the data point.
+    INTEGER(INTG), INTENT(IN) :: dataPointGlobalNumber !<The data point global number to evaluate
+    REAL(DP), INTENT(OUT) :: fieldVariableResult(:) !<On exit, the field variable interpolated at the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dataPointGlobalNumber,elementNumber,coordinateIdx
-    TYPE(DataPointsType), POINTER :: dataPoints
+    INTEGER(INTG) :: coordinateIdx,elementNumber,numberOfComponents
     TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
     TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
     TYPE(VARYING_STRING) :: localError
@@ -1276,33 +1275,30 @@ CONTAINS
     
     IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) &
       CALL FlagError("Data projection projection results is not allocated.",err,error,*999)
-    IF(SIZE(fieldResult,1)<numberOfComponents) THEN
-      localError="The size of the supplied field result array of "//TRIM(NumberToVString(SIZE(fieldResult,1),"*",err,error))// &
+    IF(SIZE(fieldVariableResult,1)<numberOfComponents) THEN
+      localError="The size of the supplied field result array of "// &
+        & TRIM(NumberToVString(SIZE(fieldVariableResult,1),"*",err,error))// &
         & " is too small for all field variable components. The size needs to be >= "// &
         & TRIM(NumberToVString(numberOfComponents,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
     
-    NULLIFY(dataPoints)
-    CALL DataProjection_DataPointsGet(dataProjection,dataPoints,err,error,*999)
-    CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-    
     NULLIFY(interpolationParameters)
     CALL FieldVariable_InterpolationParameterInitialise(fieldVariable,interpolationParameters,err,error,*999)
     NULLIFY(interpolatedPoint)
-    CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
+    CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
     
     elementNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLocalNumber
     CALL Field_InterpolationParametersElementGet(fieldParameterSetType,elementNumber,interpolationParameters,err,error,*999)
     CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi, &
       & interpolatedPoint,err,error,*999)
     DO coordinateIdx=1,numberOfComponents
-      fieldResult(coordinateIdx)=interpolatedPoint%values(coordinateIdx,NO_PART_DERIV)
+      fieldVariableResult(coordinateIdx)=interpolatedPoint%values(coordinateIdx,NO_PART_DERIV)
     ENDDO !coordinateIdx     
     
     CALL Field_InterpolatedPointFinalise(interpolatedPoint,err,error,*999)
-    CALL FieldVariable_InterpolationParametersFinalise(interpolationParameters,err,error,*999)
+    CALL FieldVariable_InterpolationParameterFinalise(interpolationParameters,err,error,*999)
     
     EXITS("DataProjection_DataPointFieldVariableEvaluate")
     RETURN
@@ -1877,8 +1873,8 @@ CONTAINS
       !Assign projection information to projected points
       DO dataPointIdx=1,numberOfDataPoints
         dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%exitTag=projectionExitTag(dataPointIdx)
-        dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%localElementNumber=projectedLocalElement(dataPointIdx)
-        dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%globalElementNumber=projectedGlobalElement(dataPointIdx)
+        dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%elementLocalNumber=projectedLocalElement(dataPointIdx)
+        dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%elementGlobalNumber=projectedGlobalElement(dataPointIdx)
         dataProjection%dataProjectionResults(dataPointIdx)%distance=projectedDistance(1,dataPointIdx)
         dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%xi(1:dataProjection%numberOfXi)= &
           & projectedXi(1:dataProjection%numberOfXi,dataPointIdx)
@@ -1887,7 +1883,7 @@ CONTAINS
       ENDDO !dataPointIdx
       projectedXi(:,sortingIndices2)=projectedXi
       projectionVectors(:,sortingIndices2)=projectionVectors
-      projectedLocalElement(sortingIndices2)=projectedLoalElement       
+      projectedLocalElement(sortingIndices2)=projectedLocalElement       
       projectedGlobalElement(sortingIndices2)=projectedGlobalElement       
       IF(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE) THEN
         DO dataPointIdx=1,numberOfDataPoints          
@@ -1966,7 +1962,7 @@ CONTAINS
               & dataProjection%dataProjectionResults(dataPointIdx)%distance, &
               & dataProjection%dataProjectionResults(dataPointIdx)%xi, &
               & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector,err,error,*999)
-            dataProjection%dataProjectionResults(dataPointIdx)%elementGNumber= &
+            dataProjection%dataProjectionResults(dataPointIdx)%elementGlobalNumber= &
               & dataProjection%dataProjectionResults(dataPointIdx)%elementLocalNumber
           ENDDO !dataPointIdx
         CASE DEFAULT
@@ -2621,7 +2617,7 @@ CONTAINS
     IF(projectionExitTag==DATA_PROJECTION_USER_SPECIFIED) THEN
       IF(projectionElementNumber==0) CALL FlagError("The projection element number has not been set.",err,error,*999)
       CALL Field_InterpolationParametersElementGet(dataProjection%projectionSetType,projectionElementNumber, &
-        & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+        & interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,projectionXi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       projectionVector(1:numberOfCoordinates)=dataPointLocation(1:numberOfCoordinates)- &
         & interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
@@ -2998,10 +2994,10 @@ CONTAINS
     IF(projectionExitTag==DATA_PROJECTION_USER_SPECIFIED) THEN
       IF(projectionElementNumber==0) CALL FlagError("The projection element number has not been set.",err,error,*999)
       IF(projectionElementFaceNumber==0) CALL FlagError("The projection element face number has not been set.",err,error,*999)
-      faceNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements% &
-        & elements(projectionElementNumber)%ELEMENT_FACES(projectionElementFaceNumber)
-      CALL Field_InterpolationParametersFaceGet(dataProjection%projectionSetType,faceNumber,interpolatedPoint% &
-        & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+      CALL DecompositionElements_ElementFaceNumberGet(decompositionElements,projectionElementNumber,projectionElementFaceNumber, &
+        & faceNumber,err,error,*999)
+      CALL Field_InterpolationParametersFaceGet(dataProjection%projectionSetType,faceNumber,interpolationParameters, &
+        & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,projectionXi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       projectionVector(1:numberOfCoordinates)=dataPointLocation(1:numberOfCoordinates)- &
         & interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
@@ -3262,8 +3258,8 @@ CONTAINS
     IF(projectionExitTag==DATA_PROJECTION_USER_SPECIFIED) THEN
       IF(projectionElementNumber==0) CALL FlagError("The projection element number has not been set.",err,error,*999)
       IF(projectionElementLineNumber==0) CALL FlagError("The projection element line number has not been set.",err,error,*999)
-      lineNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements% &
-        & elements(projectionElementNumber)%ELEMENT_LINES(projectionElementLineNumber)
+      CALL DecompositionElements_ElementLineNumberGet(decompositionElements,projectionElementNumber,projectionElementLineNumber, &
+        & lineNumber,err,error,*999)
       CALL Field_InterpolationParametersLineGet(dataProjection%projectionSetType,lineNumber,interpolationParameters, &
         & err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,projectionXi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
@@ -3481,13 +3477,12 @@ CONTAINS
     CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
 #ifdef WITH_PRECHECKS
-     IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) &
-       CALL FlagError("Data projection projection results is not allocated.",err,error,*999)
+    IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) &
+      CALL FlagError("Data projection projection results is not allocated.",err,error,*999)
 #endif
     
     DO dataPointIdx=1,SIZE(dataPointGlobalNumbers,1)
-      CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumbers(dataPointIdx),dataPointGlobalNumber, &
-        & err,error,*999)
+      dataPointGlobalNumber=dataPointGlobalNumbers(dataPointIdx)
       CALL DataProjection_DataProjectionResultCancel(dataProjection%dataProjectionResults(dataPointGlobalNumber),err,error,*999)
     ENDDO !dataPointIdx
     
@@ -3639,8 +3634,8 @@ CONTAINS
       DO tagIdx=1,SIZE(exitTags,1)
         IF(dataProjection%dataProjectionResults(dataPointIdx)%exitTag==exitTags(tagIdx)) THEN
           dataProjection%dataProjectionResults(dataPointIdx)%exitTag=DATA_PROJECTION_CANCELLED
-          dataProjection%dataProjectionResults(dataPointIdx)%elementNumber=0
-          dataProjection%dataProjectionResults(dataPointIdx)%globalElementNumber=0
+          dataProjection%dataProjectionResults(dataPointIdx)%elementLocalNumber=0
+          dataProjection%dataProjectionResults(dataPointIdx)%elementGlobalNumber=0
           dataProjection%dataProjectionResults(dataPointIdx)%elementLineFaceNumber=0
           dataProjection%dataProjectionResults(dataPointIdx)%xi=0.0_DP
           dataProjection%dataProjectionResults(dataPointIdx)%elementXi=0.0_DP
@@ -4380,7 +4375,7 @@ CONTAINS
     
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dataProjection%dataPoints)) CALL FlagError("Data projection data points is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(dataProject%dataPoints)) CALL FlagError("Data projection data points is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dataProjection%dataPoints)) CALL FlagError("Data projection data points is not associated.",err,error,*999)
     IF(dataPointGlobalNumber<1.OR.dataPointGlobalNumber>dataProjection%dataPoints%numberOfDataPoints) THEN
       localError="The specified data point global number of "//TRIM(NumberToVString(dataPointGlobalNumber,"*",err,error))// &
         & " is invalid. The global number should be >= 1 and <= "// &
@@ -4681,7 +4676,7 @@ CONTAINS
         ENDIF
       ENDDO !dataPointIdx
       CALL WriteString(outputID,"",err,error,*999)
-      CALL WriteString(outputID,"  Number of cancelled data points = ",numberOfCancelledDataPoints,err,error,*999)
+      CALL WriteStringValue(outputID,"  Number of cancelled data points = ",numberOfCancelledDataPoints,err,error,*999)
       CALL WriteString(outputID,"",err,error,*999)
       CALL WriteString(outputID,"  Errors:",err,error,*999)
       CALL WriteString(outputID,"",err,error,*999)
@@ -4726,7 +4721,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dataPointGlobalNumber,elementLocalNumber
+    INTEGER(INTG) :: elementGlobalNumber,elementLocalNumber
     LOGICAL :: elementExists,ghostElement
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
@@ -4748,7 +4743,7 @@ CONTAINS
       NULLIFY(decomposition)
       CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
       NULLIFY(decompositionTopology)
-      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+      CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
       NULLIFY(decompositionElements)
       CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)      
       CALL DecompositionElements_ElementCheckExists(decompositionElements,projectionElementUserNumber,elementExists, &
@@ -4821,10 +4816,10 @@ CONTAINS
       NULLIFY(decomposition)
       CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
       NULLIFY(decompositionTopology)
-      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+      CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
       NULLIFY(decompositionElements)
       CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)      
-      CALL DecompositionElements_ElementCheckExists(decompositionElements,elementUserNumber,elementExists, &
+      CALL DecompositionElements_ElementCheckExists(decompositionElements,projectionElementUserNumber,elementExists, &
         & elementLocalNumber,ghostElement,err,error,*999)       
       IF(elementExists) THEN
         IF(.NOT.ghostElement) THEN
@@ -4833,11 +4828,11 @@ CONTAINS
           NULLIFY(domain)
           CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
           NULLIFY(domainTopology)
-          CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
           NULLIFY(domainElements)
-          CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+          CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
           NULLIFY(basis)
-          CALL DomainElements_BasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
+          CALL DomainElements_ElementBasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
           CALL Basis_LocalFaceNumberGet(basis,localFaceNormal,localFaceNumber,err,error,*999)
           dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLocalNumber=elementLocalNumber
           dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementGlobalNumber=elementGlobalNumber
@@ -4845,7 +4840,7 @@ CONTAINS
           dataProjection%dataProjectionResults(dataPointGlobalNumber)%exitTag=DATA_PROJECTION_USER_SPECIFIED
         ENDIF
       ELSE
-        localError="Element user number "//TRIM(NumberToVString(elementUserNumber,"*",err,error))// &
+        localError="Element user number "//TRIM(NumberToVString(projectionElementUserNumber,"*",err,error))// &
           & " does not exist."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -4873,7 +4868,7 @@ CONTAINS
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
     INTEGER(INTG), INTENT(IN) :: dataPointGlobalNumber !<The data projection global number to set the element line number for
-    INTEGER(INTG), INTENT(IN) :: projectedElementUserNumber !<The projection candidate user element number to set the result
+    INTEGER(INTG), INTENT(IN) :: projectionElementUserNumber !<The projection candidate user element number to set the result
     INTEGER(INTG), INTENT(IN) :: localLineNormals(:) !<localLineNormals(normalDirectionIdx). The projection candidate element line normals to set the result for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4912,7 +4907,7 @@ CONTAINS
       NULLIFY(decomposition)
       CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
       NULLIFY(decompositionTopology)
-      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+      CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
       NULLIFY(decompositionElements)
       CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
       CALL DecompositionElements_ElementCheckExists(decompositionElements,projectionElementUserNumber,elementExists, &
@@ -4924,11 +4919,11 @@ CONTAINS
           NULLIFY(domain)
           CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
           NULLIFY(domainTopology)
-          CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
           NULLIFY(domainElements)
-          CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+          CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
           NULLIFY(basis)
-          CALL DomainElements_BasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
+          CALL DomainElements_ElementBasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
           CALL Basis_LocalLineNumberGet(basis,localLineNormals,localLineNumber,err,error,*999)
           dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLocalNumber=elementLocalNumber
           dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementGlobalNumber=elementGlobalNumber
@@ -4936,7 +4931,7 @@ CONTAINS
           dataProjection%dataProjectionResults(dataPointGlobalNumber)%exitTag=DATA_PROJECTION_USER_SPECIFIED
         ENDIF
       ELSE
-        localError="Element user number "//TRIM(NumberToVString(elementUserNumber,"*",err,error))// &
+        localError="Element user number "//TRIM(NumberToVString(projectionElementUserNumber,"*",err,error))// &
           & " does not exist."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -4998,13 +4993,13 @@ CONTAINS
     NULLIFY(decomposition)
     CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
     NULLIFY(decompositionTopology)
-    CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
     NULLIFY(domainTopology)
-    CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainElements)
-    CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
 
     IF(dataProjection%numberOfXi==dataProjection%numberOfElementXi) THEN
       dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi= &

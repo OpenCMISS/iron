@@ -896,7 +896,7 @@ CONTAINS
     TYPE(FieldType), POINTER :: dependentFieldFixed,dependentFieldProjection,geometricFieldFixed
     TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
     TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
-    TYPE(FieldVariableType), POINTER :: dependentVariableFixed,dependentVariableProjection,geometricVariableFixed
+    TYPE(FieldVariableType), POINTER :: dependentProjectionVariable,dependentVariableFixed,geometricVariableFixed
     TYPE(InterfaceDependentType), POINTER :: interfaceDependent
     TYPE(InterfacePointConnectivityType), POINTER :: interfacePointConnectivity
     TYPE(InterfacePointsConnectivityType), POINTER :: interfacePointsConnectivity
@@ -2091,7 +2091,7 @@ CONTAINS
       interfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIndex)%ptr%reducedXi(:)= &
         & dataProjectionResult%xi
       interfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIndex)%ptr%coupledElementNumber= &
-        & dataProjectionResult%elementNumber
+        & dataProjectionResult%elementLocalNumber
       interfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIndex)%ptr%elementLineFaceNumber= &
         & dataProjectionResult%elementLineFaceNumber
     ENDDO !dataPointIdx

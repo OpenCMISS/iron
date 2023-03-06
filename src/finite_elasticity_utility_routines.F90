@@ -120,9 +120,9 @@ CONTAINS
     CALL FieldInterpolatedPointMetrics_NumberOfXiDimensionsGet(geometricInterpPointMetrics,numberOfXiDimensions,err,error,*999)
     CALL FieldInterpolatedPointMetrics_NumberOfXDimensionsGet(dependentInterpPointMetrics,numberOfZDimensions,err,error,*999)
 
-    CALL Identity(F,err,error,*999)
+    CALL IdentityMatrix(F,err,error,*999)
     
-    CALL CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
+    CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
       & dNudXi(1:numberOfXDimensions,1:numberOfXiDimensions),dXidNu(1:numberOfXiDimensions,1:numberOfXDimensions), &
       & err,error,*999)
     !F = dZ/dNu = dZ/dXi * dXi/dNu  (deformation gradient tensor, F)
@@ -150,8 +150,8 @@ CONTAINS
 
     EXITS("FiniteElasticity_DeformationGradientTensorCalculate")
     RETURN
-999 ERRORS("FiniteElasticity_GaussDeformationGradientTensorCalculate",err,error)
-    EXITS("FiniteElasticity_GaussDeformationGradientTensorCalculate")
+999 ERRORS("FiniteElasticity_DeformationGradientTensorCalculate",err,error)
+    EXITS("FiniteElasticity_DeformationGradientTensorCalculate")
     RETURN 1
 
   END SUBROUTINE FiniteElasticity_DeformationGradientTensorCalculate

@@ -145,6 +145,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsSetIndependentType), POINTER :: equationsIndependent
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
     TYPE(EquationsSetSourceType), POINTER :: equationsSource
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -964,8 +965,9 @@ CONTAINS
       & esSpecification(3),gaussPointIdx,numberOfColsComponents,numberOfColumnElementParameters(MAX_NUMBER_OF_COMPONENTS), &
       & numberOfDimensions,numberOfGauss,numberOfRowElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfRowsComponents, &
       & numberOfXi,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowXiIdx,rowsVariableType,scalingType,xiIdx
-    REAL(DP) :: aParam,bParam,columnPhi,columndPhidXi(3),conductivity(3,3),dJdt,F(3,3),gaussWeight,jacobian,jacobianGaussWeight, &
-      & JZNu,prevF(3,3),prevJZNu,rowComponentPhi(3),rowPhi,rowdPhidXi(3),sourceParam,sum
+    REAL(DP) :: aParam,bParam,columnPhi,columndPhidXi(3),conductivity(3,3),currentJ,deltaTime,dJdt,F(3,3),gaussWeight,jacobian, &
+      & jacobianGaussWeight,JZNu,JZNuRef,prevF(3,3),prevJ,prevJZNu,prevJZNuRef,rowComponentPhi(3),rowPhi,rowdPhidXi(3), &
+      & sourceParam,sum,velocity(3),gradVelocity(3)
     LOGICAL :: update,updateDamping,updateMatrices,updateRHS,updateSource,updateStiffness
     TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(BasisPtrType) :: columnBasis(MAX_NUMBER_OF_COMPONENTS),rowBasis(MAX_NUMBER_OF_COMPONENTS)
@@ -996,10 +998,10 @@ CONTAINS
       & deludelnIndependentInterpParameters,vIndependentInterpParameters,u1IndependentInterpParameters, &
       & u2IndependentInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint,geometricInterpPoint,materialsInterpPoint, &
-      & sourceInterpPoint,uIndependentInterpPoint,deludelnIndependentInterpPoint,vIndependentInterpPoint, &
-      & u1IndependentInterpPoint,u2IndependentInterpPoint
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,independentInterpPointMetric, &
-      & prevIndependentInterpPointMetrics
+      & prevIndependentInterpPoint,sourceInterpPoint,uIndependentInterpPoint,deludelnIndependentInterpPoint, &
+      & vIndependentInterpPoint,u1IndependentInterpPoint,u2IndependentInterpPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,fibreInterpPointMetrics, &
+      & independentInterpPointMetrics,prevIndependentInterpPointMetrics
     TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,geometricVariable,rowsVariable
     TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,geometricQuadratureScheme
     TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAX_NUMBER_OF_COMPONENTS),rowQuadratureScheme(MAX_NUMBER_OF_COMPONENTS)
@@ -1300,23 +1302,23 @@ CONTAINS
             & u1IndependentInterpPoint,err,error,*999)
           CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
             & u2IndependentInterpPoint,err,error,*999)
-          CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,indepdendentInterpPointMetrics,err,error,*999)
-          CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,prevIndepdendentInterpPointMetrics,err,error,*999)
+          CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,independentInterpPointMetrics,err,error,*999)
+          CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,prevIndependentInterpPointMetrics,err,error,*999)
           DO componentIdx=1,numberOfDimensions
             velocity(componentIdx)=uIndependentInterpPoint%values(componentIdx,NO_PART_DERIV)
             gradVelocity(componentIdx)=deludelnIndependentInterpPoint%values(componentIdx,NO_PART_DERIV)            
           ENDDO !componentIdx
           deltaTime=vIndependentInterpPoint%values(numberOfDimensions,NO_PART_DERIV)
-          CALL FieldInterpolatedPointMetrics_JacobianGet(indepdendentInterpPointMetrics,currentJ,err,error,*999)
+          CALL FieldInterpolatedPointMetrics_JacobianGet(independentInterpPointMetrics,currentJ,err,error,*999)
           JZNuRef=currentJ/jacobian
-          CALL FieldInterpolatedPointMetrics_JacobianGet(prevIndepdendentInterpPointMetrics,prevJ,err,error,*999)
+          CALL FieldInterpolatedPointMetrics_JacobianGet(prevIndependentInterpPointMetrics,prevJ,err,error,*999)
           prevJZNuRef=prevJ/jacobian
           !Calculate current deformation state
-          CALL FiniteElasticity_GaussDeformationGradientTensor(independentInterpPointMetrics,geometricInterpPointMetrics, &
-            & fibreInterpPointMetrics,F,JZNu,err,error,*999)
+          CALL FiniteElasticity_DeformationGradientTensorCalculate(independentInterpPointMetrics,geometricInterpPointMetrics, &
+            & fibreInterpPoint,F,JZNu,err,error,*999)
           !Calculate previous deformation gradient tensor and its determinant
-          CALL FiniteElasticity_GaussDeformationGradientTensor(prevIndependentInterpPointMetrics,geometricInterpPointMetrics, &
-            & fibreInterpPointMetrics,prevF,prevJZNu,err,error,*999)
+          CALL FiniteElasticity_DeformationGradientTensorCalculate(prevIndependentInterpPointMetrics, &
+            & geometricInterpPointMetrics,fibreInterpPoint,prevF,prevJZNu,err,error,*999)
           dJdt=(JZNu-prevJZNu)/deltaTime
         ENDIF
         

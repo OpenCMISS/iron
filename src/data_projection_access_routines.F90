@@ -1284,11 +1284,13 @@ CONTAINS
   !
 
   !>Gets the projection xi for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultProjectionXiGet(dataProjection,dataPointGlobalNumber,projectionXi,err,error,*)
+  SUBROUTINE DataProjection_ResultProjectionXiGet(dataProjection,dataPointGlobalNumber,numberOfProjectionXi,projectionXi, &
+    & err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
     INTEGER(INTG), INTENT(IN) :: dataPointGlobalNumber !<The Data projection global number to get the projection xi for
+    INTEGER(INTG), INTENT(OUT) :: numberOfProjectionXi !<On exit, the number of projection xi elements. 
     REAL(DP), INTENT(OUT) :: projectionXi(:) !<On exit, the projection xi of the specified global data point
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1306,7 +1308,8 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
-        
+
+    numberOfProjectionXi=dataProjection%numberOfXi
     projectionXi(1:dataProjection%numberOfXi)=dataProjection%dataProjectionResults(dataPointGlobalNumber)% &
       & xi(1:dataProjection%numberOfXi)
 
@@ -1344,63 +1347,6 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE DataProjection_ResultRMSErrorGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the projection xi for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultXiGet(dataProjection,dataPointGlobalNumber,numberOfXi,projectionXi,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
-    INTEGER(INTG), INTENT(IN) :: dataPointGlobalNumber !<The data projection global number to get the projection xi for
-    INTEGER(INTG), INTENT(OUT) :: numberOfXi !<On exit, the number of projection xi
-    REAL(DP), INTENT(OUT) :: projectionXi(:) !<On exit, the projection xi of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-#ifdef WITH_PRECHECKS
-    TYPE(VARYING_STRING) :: localError
-#endif    
-    
-    ENTERS("DataProjection_ResultXiGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
-#ifdef WITH_PRECHECKS    
-    IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) THEN
-      localError="The data projection results array is not allocated for data projection number "// &
-        & TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(dataPointGlobalNumber<1.OR.dataPointGlobalNumber>SIZE(dataProjection%dataProjectionResults,1)) THEN
-      localError="The specified data point global number of "//TRIM(NumberToVString(dataPointGlobalNumber,"*",err,error))// &
-        & " is invalid. The global number should be >= 1 and <= "// &
-        & TRIM(NumberToVString(SIZE(dataProjection%dataProjectionResults,1),"*",err,error))//"."
-    ENDIF
-    IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults(dataPointGlobalNumber)%xi)) THEN
-      localError="The xi array is not allocated for global data point number "// &
-        & TRIM(NumberToVString(dataPointGlobalNumber,"*",err,error))//" for data projection number "// &
-        & TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(SIZE(projectionXi,1)<dataProjection%numberOfXi) THEN
-      localError="The specified projection xi has size of "//TRIM(NumberToVString(SIZE(projectionXi,1),"*",err,error))// &
-        & " but it needs to have size of >= "//TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))//"." 
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-#endif    
-
-    numberOfXi=dataProjection%numberOfXi
-    projectionXi(1:numberOfXi)=dataProjection%dataProjectionResults(dataPointGlobalNumber)%xi(1:numberOfXi)
-
-    EXITS("DataProjection_ResultXiGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_ResultXiGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_ResultXiGet
 
   !
   !================================================================================================================================
