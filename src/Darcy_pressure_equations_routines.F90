@@ -122,8 +122,8 @@ CONTAINS
       & numberOfRowsComponents,numberOfRowsElementParameters,numberOfRowsXi,numberOfSolidColsComponents,numberOfSolidXi, &
       & numberOfXi,rowComponentIdx,rowElementDOFIdx,rowXiIdx,rowElementParameterIdx,rowsVariableType,scalingType, &
       & solidComponentNumber,solidColsVariableType,solidNumberOfXi,xiIdx   
-    REAL(DP) :: colsdPhidXi(3),density,dNudZ(3,3),dNudZT(3,3),dZdNu(3,3),gaussWeight,jacobian,jacobianGaussWeight,Jznu,K(3,3), &
-      & rowsdPhidXi(3),sigma(3,3),sum,tempMatrix(3,3)
+    REAL(DP) :: colsdPhidXi(3),density,dNudXi(3,3),dNudZ(3,3),dNudZT(3,3),dXidNu(3,3),dZdNu(3,3),dZdX(3,3),fibreVectors(3,3), &
+      & gaussWeight,jacobian,jacobianGaussWeight,JZ,JZNu,K(3,3),rowsdPhidXi(3),sigma(3,3),sum,tempMatrix(3,3)
     REAL(DP), POINTER :: elementResidualVector(:)
     LOGICAL :: update,updateResidual,updateRHS
     TYPE(BasisType), POINTER :: dependentBasis,fluidBasis,geometricBasis,rowsBasis,solidBasis
@@ -347,11 +347,15 @@ CONTAINS
           & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),sigma,err,error,*999)        
         density=materialsInterpPoint%values(NUMBER_OF_VOIGT(numberOfDimensions)+1,NO_PART_DERIV)
         
-        !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-        CALL FiniteElasticity_DeformationGradientTensorCalculate(solidDependentInterpPointMetrics, &
-          & geometricInterpPointMetrics,fibreInterpPoint,dZdNu,Jznu,ERR,ERROR,*999)
+        !Calculate material fibre coordinate system
+        CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
+          & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+          & fibreVectors(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
+        !Calculate F=dZ/dNu, the deformation gradient tensor at the gauss point
+        CALL FiniteElasticity_DeformationGradientTensorCalculate(solidDependentInterpPointMetrics,geometricInterpPointMetrics, &
+          & dXidNu(1:numberOfXi,1:numberOfDimensions),dZdX,JZ,dZdNu,JZNu,err,error,*999)
 
-        sigma=density*Jznu*sigma
+        sigma=density*JZNu*sigma
         
         !Calculate jacobianGaussWeight.      
 !!TODO: Think about symmetric problems.

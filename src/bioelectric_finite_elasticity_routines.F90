@@ -53,6 +53,7 @@ MODULE BioelectricFiniteElasticityRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
+  USE CoordinateSystemRoutines
   USE DecompositionAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
@@ -771,8 +772,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dofIdx,elementIdx,equationsSetIdx,gaussPointIdx,iterationNumber,loopType,meshComponentNumber, &
-      & numberOfElements,numberOfEquationsSets,numberOfGauss,numberOfIterations,numberOfSubLoops,numberOfXi,variableType
-    REAL(DP) :: dZdNu(3,3),dZdNuT(3,3),AZL(3,3),Jznu
+      & numberOfDimensions,numberOfElements,numberOfEquationsSets,numberOfGauss,numberOfIterations,numberOfSubLoops, &
+      & numberOfXi,variableType
+    REAL(DP) :: AZL(3,3),dNudXi(3,3),dXidNu(3,3),dZdNu(3,3),dZdNuT(3,3),dZdX(3,3),fibreVectors(3,3),JZ,JZNu
     TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
@@ -791,7 +793,7 @@ CONTAINS
     TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters,fibreInterpParameters,dependentInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,dependentInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,dependentInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: fieldVariableU1,residualVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariableU1,geometricVariable,residualVariable
     TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
@@ -842,7 +844,11 @@ CONTAINS
           NULLIFY(nonlinearMapping)
           CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
         ENDDO !equationsSetIdx
-        
+
+        NULLIFY(geometricVariable)
+        CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+        CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+        NULLIFY(fieldVariableU1)
         CALL Field_VariableGet(independentField,FIELD_U1_VARIABLE_TYPE,fieldVariableU1,err,error,*999)
         
         NULLIFY(decomposition)
@@ -925,12 +931,16 @@ CONTAINS
             CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
             CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
               & err,error,*999)
-            
-            !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
+
+            !Calculate material fibre coordinate system
+            CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
+              & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+              & fibreVectors(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
+            !Calculate F=dZ/dNu, the deformation gradient tensor at the gauss point
             CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
-              & fibreInterpPoint,dZdNu,Jznu,err,error,*999)
+              & dXidNu(1:numberOfXi,1:numberOfDimensions),dZdX,JZ,dZdNu,JZNu,err,error,*999)
               
-            !compute C=F^T F
+            !compute CNu=FNu^T.FNu
             CALL MatrixTranspose(dZdNu,dZdNuT,err,error,*999)
             CALL MatrixProduct(dZdNuT,dZdNu,AZL,err,error,*999)
             

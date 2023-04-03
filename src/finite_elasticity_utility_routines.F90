@@ -82,19 +82,20 @@ CONTAINS
 
   !>Calculates the deformation gradient tensor at a given interpolated point
   SUBROUTINE FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics,&
-    & fibreInterpPoint,F,J,err,error,*)
+    & dXidNu,F,J,FNu,JNu,err,error,*)
 
     !Argument variables
     TYPE(FieldInterpolatedPointMetricsType), POINTER, INTENT(IN) :: dependentInterpPointMetrics !<The interpolated point metrics of the deformed/spatial geometry
     TYPE(FieldInterpolatedPointMetricsType), POINTER, INTENT(IN) :: geometricInterpPointMetrics !<The interpolated point metrics of the undeformed/reference geometry
-    TYPE(FieldInterpolatedPointType), POINTER, INTENT(IN) :: fibreInterpPoint !<A pointer to the fibre field interpolated at the point. If there is no fibre field defined this will be NULL.
-    REAL(DP), INTENT(OUT) :: F(:,:) !<F(dependentCoordinateIdx,geometricCoordinateIdx). On return, the deformation gradient tensor F
+    REAL(DP), INTENT(IN) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). The transformation matrix between Xi and Nu coordinates (identity if there are no fibres). 
+    REAL(DP), INTENT(OUT) :: F(:,:) !<F(zIdx,xIdx). On return, the deformation gradient tensor F with respect to X (material geometric) coordinates.
     REAL(DP), INTENT(OUT) :: J !<On return, the Jacobian of the deformation i.e., determinant F
+    REAL(DP), INTENT(OUT) :: FNu(:,:) !<F(zIdx,nuIdx). On return, the deformation gradient tensor F with respect to Nu (material fibre) coordinates
+    REAL(DP), INTENT(OUT) :: JNu !<On return, the Jacobian of the deformation with respect to material fibre coordinates i.e., determinant FNu
     INTEGER(INTG), INTENT(OUT) :: err   !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfZDimensions
-    REAL(DP) :: dNudX(3,3),dXdNu(3,3),dNudXi(3,3),dXidNu(3,3)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FiniteElasticity_DeformationGradientTensorCalculate",err,error,*999)
@@ -104,13 +105,39 @@ CONTAINS
       & CALL FlagError("Dependent interpolated point metrics is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
       & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
+    IF(SIZE(dXidNu,1)<geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="The size of the first index of dXidNu of "//TRIM(NumberToVString(SIZE(dXidNu,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dXidNu,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the second index of dXidNu of "//TRIM(NumberToVString(SIZE(dXidNu,2),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     IF(SIZE(F,1)<dependentInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The size of the first index of F is too small. The size should be >= "// &
+      localError="The size of the first index of F of "//TRIM(NumberToVString(SIZE(F,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
         & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(SIZE(F,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The size of the second index of F is too small. The size should be >= "// &
+      localError="The size of the second index of F of "//TRIM(NumberToVString(SIZE(F,2),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(FNu,1)<dependentInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the first index of FNu of "//TRIM(NumberToVString(SIZE(FNu,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(FNu,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the second index of F of "//TRIM(NumberToVString(SIZE(FNu,2),"*",err,error))// &
+        & " is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -121,31 +148,35 @@ CONTAINS
     CALL FieldInterpolatedPointMetrics_NumberOfXDimensionsGet(dependentInterpPointMetrics,numberOfZDimensions,err,error,*999)
 
     CALL IdentityMatrix(F,err,error,*999)
+    CALL IdentityMatrix(FNu,err,error,*999)
     
-    CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
-      & dNudXi(1:numberOfXDimensions,1:numberOfXiDimensions),dXidNu(1:numberOfXiDimensions,1:numberOfXDimensions), &
-      & err,error,*999)
-    !F = dZ/dNu = dZ/dXi * dXi/dNu  (deformation gradient tensor, F)
+    !F = dz/dX = dz/dXi * dXi/dX (deformation gradient tensor in material coordinates, F)
     CALL MatrixProduct(dependentInterpPointMetrics%dXdXi(1:numberOfZDimensions,1:numberOfXiDimensions), &
-      & dXidNu(1:numberOfXiDimensions,1:numberOfXDimensions),F(1:numberOfZDimensions,1:numberOfXDimensions), &
-      & err,error,*999)
-    
+      & geometricInterpPointMetrics%dXidX(1:numberOfXiDimensions,1:numberOfXDimensions), &
+      & F(1:numberOfZDimensions,1:numberOfXDimensions),err,error,*999)
     CALL Determinant(F(1:numberOfZDimensions,1:numberOfXDimensions),J,err,error,*999)
+    !FNu = dz/dNu = dz/dXi * dXi/dNu  (deformation gradient tensor in material fibre coordinates, FNu)
+    CALL MatrixProduct(dependentInterpPointMetrics%dXdXi(1:numberOfZDimensions,1:numberOfXiDimensions), &
+      & dXidNu(1:numberOfXiDimensions,1:numberOfXDimensions), &
+      & FNu(1:numberOfZDimensions,1:numberOfXDimensions),err,error,*999)    
+    CALL Determinant(FNu(1:numberOfZDimensions,1:numberOfXDimensions),JNu,err,error,*999)
 
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Calculated deformation gradient tensor:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Z dimensions  = ",numberOfZDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of z dimensions  = ",numberOfZDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions  = ",numberOfXDimensions,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Xi wrt to Nu coordinates:",err,error,*999)
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfXDimensions, &
-        & numberOfXDimensions,numberOfXDimensions,dXidNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("    dXidNu','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deformation gradient tensor wrt X coordinates:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfZDimensions,1,1,numberOfXiDimensions, &
+        & numberOfXDimensions,numberOfXDimensions,F,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    F','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant F = ",J,err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deformation gradient tensor wrt Nu coordinates:",err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfZDimensions,1,1,numberOfXDimensions, &
         & numberOfXDimensions,numberOfXDimensions,F,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("         F','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant F  = ",J,err,error,*999)
+        & '("    FNu','(",I1,",:)',' :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant FNu = ",JNu,err,error,*999)
     ENDIF
 
     EXITS("FiniteElasticity_DeformationGradientTensorCalculate")

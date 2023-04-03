@@ -600,7 +600,7 @@ CONTAINS
     CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
       CALL AdvectionDiffusion_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
     CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
+      CALL ReactionDiffusion_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,.FALSE.,err,error,*999)
     CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT

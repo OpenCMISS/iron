@@ -1309,7 +1309,7 @@ CONTAINS
         !Create analytic field if required
         IF(numberOfAnalyticComponents>=1) THEN
           IF(equationsAnalytic%analyticFieldAutoCreated) THEN
-            !Create the auto created source field
+            !Create the auto created analytic field
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsAnalytic%analyticField,err,error,*999)
             CALL Field_LabelSet(equationsAnalytic%analyticField,"Analytic Field",err,error,*999)
             CALL Field_TypeSetAndLock(equationsAnalytic%analyticField,FIELD_GENERAL_TYPE,err,error,*999)

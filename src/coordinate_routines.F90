@@ -3639,17 +3639,19 @@ CONTAINS
  
   !>Calculates the transformation (and the inverse transformation) from the material coordinate system, nu, to the local coordinate
   !>system, xi.
-  SUBROUTINE CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudXi,dXidNu,err,error,*)
+  SUBROUTINE CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudXi,dXidNu, &
+    & materialFibreVectors,err,error,*)
   
     !Argument variables
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolation point metrics at the point to calculate the material coordinate system from.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolation point at the point to calculate the material coordinate system from
     REAL(DP), INTENT(OUT) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). On return, the transformation from the local coordinate system, xi, to the material coordinate system nu.
     REAL(DP), INTENT(OUT) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). On return, the transformation from the material system, nu, to the local coordinate system, xi.
+    REAL(DP), INTENT(OUT) :: materialFibreVectors(:,:) !<materialFibreVectors(XIdx,nuIdx). On return, the unit vectors defining the material fibre coorinate system.
     INTEGER(INTG), INTENT(OUT) :: err   !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) ::  error   !<The error string
     !Local variables
-    INTEGER(INTG) :: numberOfXiDimensions,numberOfNuDimensions
+    INTEGER(INTG) :: numberOfNuDimensions,numberOfXDimensions,numberOfXiDimensions
     REAL(DP) :: angles(3),c(3),s(3)
     TYPE(VARYING_STRING) :: localError 
      
@@ -3693,16 +3695,40 @@ CONTAINS
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+    IF(SIZE(materialFibreVectors,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the first index of the specified fibre vectors matrix of "// &
+        & TRIM(NumberToVString(SIZE(materialFibreVectors,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(materialFibreVectors,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the second index of the specified fibre vectors matrix of "// &
+        & TRIM(NumberToVString(SIZE(materialFibreVectors,2),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
 #endif    
       
+    numberOfXDimensions=geometricInterpPointMetrics%numberOfXDimensions
     numberOfNuDimensions=geometricInterpPointMetrics%numberOfXDimensions
     numberOfXiDimensions=geometricInterpPointMetrics%numberOfXiDimensions
+
+    !Initialise matrices
+    CALL IdentityMatrix(dNudXi,err,error,*999)
+    CALL IdentityMatrix(dXidNu,err,error,*999)
+    CALL IdentityMatrix(materialFibreVectors,err,error,*999)
+
     SELECT CASE(numberOfNuDimensions)
     CASE(1)
-      !In 1D the material coordinates are aligned with the xi coordinates regardless
+      !In 1D the material fibre coordinates are aligned with the xi coordinates regardless
       dNudXi(1,1)=1.0_DP
       !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
       dXidNu(1,1)=1.0_DP
+      !Calculate the unit fibre vectors, f 
+      !f
+      materialFibreVectors(1,1)=1.0_DP
     CASE(2)
       IF(ASSOCIATED(fibreInterpPoint)) THEN
         !With fibres
@@ -3725,6 +3751,19 @@ CONTAINS
       dXidNu(1,2)=dNudXi(2,1)
       dXidNu(2,1)=dNudXi(1,2)
       dXidNu(2,2)=dNudXi(2,2)
+      !Calculate the unit fibre vectors, f & g
+      !f
+      materialFibreVectors(1,1)=dNudXi(1,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
+        & dNudXi(1,2)*geometricInterpPointMetrics%dXidX(2,1)
+      materialFibreVectors(2,1)=dNudXi(1,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+        & dNudXi(1,2)*geometricInterpPointMetrics%dXidX(2,2)      
+      CALL Normalise(materialFibreVectors(1:2,1),materialFibreVectors(1:2,1),err,error,*999)
+      !g
+      materialFibreVectors(1,2)=dNudXi(2,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
+        & dNudXi(2,2)*geometricInterpPointMetrics%dXidX(2,1)
+      materialFibreVectors(2,2)=dNudXi(2,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+        & dNudXi(2,2)*geometricInterpPointMetrics%dXidX(2,2)
+      CALL Normalise(materialFibreVectors(1:2,2),materialFibreVectors(1:2,2),err,error,*999)
     CASE(3)
       IF(ASSOCIATED(fibreInterpPoint)) THEN
         !With fibres
@@ -3769,6 +3808,40 @@ CONTAINS
       dXidNu(3,1)=dNudXi(1,3)
       dXidNu(3,2)=dNudXi(2,3)
       dXidNu(3,3)=dNudXi(3,3)
+      !Calculate the unit fibre vectors, f, g & h
+      !f
+      materialFibreVectors(1,1)=dNudXi(1,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
+        & dNudXi(1,2)*geometricInterpPointMetrics%dXidX(2,1)+ &
+        & dNudXi(1,3)*geometricInterpPointMetrics%dXidX(3,1)
+      materialFibreVectors(2,1)=dNudXi(1,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+        & dNudXi(1,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
+        & dNudXi(1,3)*geometricInterpPointMetrics%dXidX(3,2)
+      materialFibreVectors(3,1)=dNudXi(1,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+        & dNudXi(1,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
+        & dNudXi(1,3)*geometricInterpPointMetrics%dXidX(3,3)
+      CALL Normalise(materialFibreVectors(1:3,1),materialFibreVectors(1:3,1),err,error,*999)
+      !g
+      materialFibreVectors(1,2)=dNudXi(2,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
+        & dNudXi(2,2)*geometricInterpPointMetrics%dXidX(2,1)+ &
+        & dNudXi(2,3)*geometricInterpPointMetrics%dXidX(3,1)
+      materialFibreVectors(2,2)=dNudXi(2,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+        & dNudXi(2,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
+        & dNudXi(2,3)*geometricInterpPointMetrics%dXidX(3,2)
+      materialFibreVectors(3,2)=dNudXi(2,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+        & dNudXi(2,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
+        & dNudXi(2,3)*geometricInterpPointMetrics%dXidX(3,3)
+      CALL Normalise(materialFibreVectors(1:3,2),materialFibreVectors(1:3,2),err,error,*999)
+      !h
+      materialFibreVectors(1,3)=dNudXi(3,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
+        & dNudXi(3,2)*geometricInterpPointMetrics%dXidX(2,1)+ &
+        & dNudXi(3,3)*geometricInterpPointMetrics%dXidX(3,1)
+      materialFibreVectors(2,3)=dNudXi(3,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+        & dNudXi(3,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
+        & dNudXi(3,3)*geometricInterpPointMetrics%dXidX(3,2)
+      materialFibreVectors(3,3)=dNudXi(3,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+        & dNudXi(3,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
+        & dNudXi(3,3)*geometricInterpPointMetrics%dXidX(3,3)
+      CALL Normalise(materialFibreVectors(1:3,3),materialFibreVectors(1:3,3),err,error,*999)
     CASE DEFAULT
       localError="The number of dimensions in the geometric interpolated point of "// &
         & TRIM(NumberToVString(numberOfNuDimensions,"*",err,error))// &
@@ -3778,7 +3851,8 @@ CONTAINS
        
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Calculated material coordinate system:",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Calculated material fibre coordinate system:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions = ",numberOfXDimensions,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Nu dimensions = ",numberOfNuDimensions,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt Xi:",err,error,*999)
@@ -3789,6 +3863,17 @@ CONTAINS
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfNuDimensions, &
         & numberOfNuDimensions,numberOfNuDimensions,dXidNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
         & '("    dXidNu','(",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Unit material fibre coordinate system vectors:",err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,numberOfXDimensions,numberOfXDimensions, &
+        & materialFibreVectors(:,1),'("    f              :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+      IF(numberOfXDimensions>1) THEN
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,numberOfXDimensions,numberOfXDimensions, &
+          & materialFibreVectors(:,2),'("    g              :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+        IF(numberOfXDimensions>2) THEN
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,numberOfXDimensions,numberOfXDimensions, &
+            & materialFibreVectors(:,3),'("    h              :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+        ENDIF
+      ENDIF
     ENDIF
    
     EXITS("CoordinateSystem_MaterialFibreSystemCalculate")
@@ -3803,8 +3888,8 @@ CONTAINS
   !
  
   !>Calculates the tensor to get from material coordinate system, nu, to local coordinate system, xi.
-  SUBROUTINE CoordinateSystem_MaterialFibreSystemCalculateOld(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu,dNudXi,dXidNu, &
-    & err,error,*)
+  SUBROUTINE CoordinateSystem_MaterialFibreSystemCalculateOld(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu,dNudXi, &
+    & dXidNu,err,error,*)
   
     !Argument variables
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolation point metrics at the point to calculate the material coordinate system from.
@@ -4168,7 +4253,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: numberOfDimensions,numberOfXi
-    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),tempTensor(3,3)
+    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempTensor(3,3)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("CoordinateSystem_MaterialTransformTensor2",err,error,*999)
@@ -4219,7 +4304,8 @@ CONTAINS
     
     !Calculate material coordinates
     CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
-      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions),err,error,*999)
+      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & materialFibreVectors(1:numberOfDimensions,1:numberOfXi),err,error,*999)
 
     !First transform the tensor from material/nu coordinates to element/xi coordinates
     CALL TensorTransform(numberOfDimensions,tensorIndexTypes,materialTensor(1:numberOfDimensions,1:numberOfDimensions), &
@@ -4276,7 +4362,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: numberOfDimensions,numberOfXi
-    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),tempTensor(3,3,3,3)
+    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempTensor(3,3,3,3)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("CoordinateSystem_MaterialTransformTensor4",err,error,*999)
@@ -4351,7 +4437,8 @@ CONTAINS
     
     !Calculate material coordinates
     CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
-      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions),err,error,*999)
+      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & materialFibreVectors(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
     
     !First transform the tensor from material/nu coordinates to element/xi coordinates
     CALL TensorTransform(numberOfDimensions,tensorIndexTypes, &
@@ -4697,7 +4784,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: numberOfDimensions,numberOfXi
-    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),tempVector(3)
+    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempVector(3)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("CoordinateSystem_MaterialTransformVector1",err,error,*999)
@@ -4739,7 +4826,7 @@ CONTAINS
     !Calculate material coordinates
     CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
       & dNudXi(1:numberOfDimensions,1:numberOfDimensions),dXidNu(1:numberOfXi,1:numberOfDimensions), &
-      & err,error,*999)
+      & materialFibreVectors(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
 
     !First transform the tensor from material/nu coordinates to element/xi coordinates
     CALL TensorTransform(numberOfDimensions,vectorIndexType,materialVector(1:numberOfDimensions), &
@@ -4811,158 +4898,200 @@ CONTAINS
  
   !>Calculates the transformation (and the inverse transformation) from the spatial coordinate system, nu, to the local coordinate
   !>system, xi.
-  SUBROUTINE CoordinateSystem_SpatialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudXi,dXidNu,err,error,*)
+  SUBROUTINE CoordinateSystem_SpatialFibreSystemCalculate(dependentInterpPointMetrics,materialFibreVectors,F,dnudx,dxdnu, &
+    & spatialFibreVectors,err,error,*)
   
     !Argument variables
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolation point metrics at the point to calculate the material coordinate system from.
-    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolation point at the point to calculate the material coordinate system from
-    REAL(DP), INTENT(OUT) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). On return, the transformation from the local coordinate system, xi, to the material coordinate system nu.
-    REAL(DP), INTENT(OUT) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). On return, the transformation from the material system, nu, to the local coordinate system, xi.
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: dependentInterpPointMetrics !<The dependent interpolation point metrics at the point to calculate the material coordinate system from.
+    REAL(DP), INTENT(IN) :: materialFibreVectors(:,:) !<materialFibreVectors(XIdx,NuIdx). The unit fibre vectors in the material coordinate system to calculate the spatial fibre vectors from.
+    REAL(DP), INTENT(IN) :: F(:,:) !<F(xIdx,XIdx). The deformation gradient two point tensor that maps from material coordinates, X, to spatial coordinates, x.
+    REAL(DP), INTENT(OUT) :: dnudx(:,:) !<dnudx(nuIdx,xIdx). On return, the transformation from the spatial fibre coordinate system, nu, to the spatial coordinate system x.
+    REAL(DP), INTENT(OUT) :: dxdnu(:,:) !<dxdnu(xIdx,nuIdx). On return, the transformation from the spatial coordinate system, x, to the spatial fibre coordinate system, nu.
+    REAL(DP), INTENT(OUT) :: spatialFibreVectors(:,:) !<spatialFibreVectors(xIdx,nuIdx). On return, the unit fibre vectors in spatial coordinate system. 
     INTEGER(INTG), INTENT(OUT) :: err   !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) ::  error   !<The error string
     !Local variables
-    INTEGER(INTG) :: numberOfXiDimensions,numberOfNuDimensions
-    REAL(DP) :: angles(3),c(3),s(3)
-    TYPE(VARYING_STRING) :: localError 
+    INTEGER(INTG) :: numberOfNuDimensions,numberOfXDimensions,numberOfXiDimensions
+    REAL(DP) :: deformedFibreVectors(3,3),detdnudx
+    TYPE(VARYING_STRING) :: localError,localWarning
      
     ENTERS("CoordinateSystem_SpatialFibreSystemCalculate",err,error,*999)
     
 #ifdef WITH_PRECHECKS
-    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
-      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
-    IF(geometricInterpPointMetrics%numberOfXDimensions/=geometricInterpPointMetrics%numberOfXiDimensions) THEN
+    IF(.NOT.ASSOCIATED(dependentInterpPointMetrics)) &
+      & CALL FlagError("Dependent interpolated point metrics is not associated.",err,error,*999)
+    IF(dependentInterpPointMetrics%numberOfXDimensions/=dependentInterpPointMetrics%numberOfXiDimensions) THEN
       localError="A different number of nu and xi dimensions is not implemented. The number of nu dimensions is "// &
-        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXDimensions,"*",err,error))// &
         & " and the number of xi dimensions is "// &
-        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(dNudXi,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The size of the first index of the specified dNudXi matrix of "// &
-        & TRIM(NumberToVString(SIZE(dNudXi,1),"*",err,error))// &
-        & " is too small. The size should be >= "// &
-        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+    IF(SIZE(materialFibreVectors,1)<dependentInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the first index of the material fibre vectors array of "// &
+        & TRIM(NumberToVString(SIZE(materialFibreVectors,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(dNudXi,2)<geometricInterpPointMetrics%numberOfXiDimensions) THEN
-      localError="The size of the second index of the specified dNudXi matrix of "// &
-        & TRIM(NumberToVString(SIZE(dNudXi,2),"*",err,error))// &
-        & " is too small. The size should be >= "// &
-        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+    IF(SIZE(materialFibreVectors,2)<dependentInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="The size of the second index of the material fibre vectors array of "// &
+        & TRIM(NumberToVString(SIZE(materialFibreVectors,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(dXidNu,1)<geometricInterpPointMetrics%numberOfXiDimensions) THEN
-      localError="The size of the first index of the specified dXidNu matrix of "// &
-        & TRIM(NumberToVString(SIZE(dXidNu,1),"*",err,error))// &
-        & " is too small. The size should be >= "// &
-        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+    IF(SIZE(F,1)<dependentInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the first index of the deformation gradient tensor, F, of "// &
+        & TRIM(NumberToVString(SIZE(F,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(dXidNu,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The size of the second index of the specified dXidNu matrix of "// &
-        & TRIM(NumberToVString(SIZE(dXidNu,2),"*",err,error))// &
-        & " is too small. The size should be >= "// &
-        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+    IF(SIZE(F,2)<dependentInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the second index of the deformation gradient tensor, F, of "// &
+        & TRIM(NumberToVString(SIZE(F,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dnudx,1)<dependentInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="The size of the first index of the specified dnudx matrix of "// &
+        & TRIM(NumberToVString(SIZE(dnudx,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dnudx,2)<dependentInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the second index of the specified dnudx matrix of "// &
+        & TRIM(NumberToVString(SIZE(dnudx,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dxdnu,1)<dependentInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the first index of the specified dxdnu matrix of "// &
+        & TRIM(NumberToVString(SIZE(dxdnu,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dxdnu,2)<dependentInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="The size of the second index of the specified dxdnu matrix of "// &
+        & TRIM(NumberToVString(SIZE(dxdnu,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(spatialFibreVectors,1)<dependentInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the first index of the specified spatial fibre vectors array of "// &
+        & TRIM(NumberToVString(SIZE(spatialFibreVectors,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(spatialFibreVectors,2)<dependentInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="The size of the second index of the specified spatial fibre vectors array of "// &
+        & TRIM(NumberToVString(SIZE(spatialFibreVectors,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(dependentInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
       
-    numberOfNuDimensions=geometricInterpPointMetrics%numberOfXDimensions
-    numberOfXiDimensions=geometricInterpPointMetrics%numberOfXiDimensions
+    numberOfXDimensions=dependentInterpPointMetrics%numberOfXDimensions
+    numberOfNuDimensions=dependentInterpPointMetrics%numberOfXiDimensions
+    numberOfXiDimensions=dependentInterpPointMetrics%numberOfXiDimensions
 
+    !Initialise matrices
+    CALL IdentityMatrix(dnudx,err,error,*999)
+    CALL IdentityMatrix(dxdnu,err,error,*999)
+    CALL IdentityMatrix(spatialFibreVectors,err,error,*999)                        
     
-    SELECT CASE(numberOfNuDimensions)
+    SELECT CASE(numberOfXDimensions)
     CASE(1)
-      !In 1D the material coordinates are aligned with the xi coordinates regardless
-      dNudXi(1,1)=1.0_DP
-      !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
-      dXidNu(1,1)=1.0_DP
+      !In 1D the spatial fibre coordinates are aligned with the x coordinates regardless
+      dnudx(1,1)=1.0_DP
+      !Calculate dxdnu as the transpose of dnudx as the matrices are orthogonal 
+      dxdnu(1,1)=1.0_DP
+      !Calculate the unit spatial fibre vectors, f 
+      !f
+      spatialFibreVectors(1,1)=1.0_DP
     CASE(2)
-      IF(ASSOCIATED(fibreInterpPoint)) THEN
-        !With fibres
-        !Get the fibre angle
-        angles(1)=fibreInterpPoint%values(1,NO_PART_DERIV)
-        !Calculate dNudXi as the rotation matrix
-        dNudXi(1,1)=COS(angles(1))
-        dNudXi(1,2)=SIN(angles(1))
-        dNudXi(2,1)=-1.0_DP*SIN(angles(1))
-        dNudXi(2,2)=COS(angles(1))
-      ELSE
-        !Without fibres, the material coordinates are aligned with the xi coordinates
-        dNudXi(1,1)=1.0_DP
-        dNudXi(1,2)=0.0_DP
-        dNudXi(2,1)=0.0_DP
-        dNudXi(2,2)=1.0_DP
+      !Push material fibre vector through to the spatial coordinate system using the deformation gradient tensor
+      CALL MatrixVectorProduct(F(1:2,1:2),materialFibreVectors(1:2,1),deformedFibreVectors(1:2,1),err,error,*999)
+      !Normalise the deformed fibre vector
+      CALL Normalise(deformedFibreVectors(1:2,1),spatialFibreVectors(1:2,1),err,error,*999)
+      !Rotate the deformed fibre vector 90 degrees to obtain the deformed sheet vector
+      spatialFibreVectors(1,2)=-1.0_DP*spatialFibreVectors(2,1)
+      spatialFibreVectors(2,2)=spatialFibreVectors(1,1)
+      !Construct the transformation matrix
+      dnudx(1,1)=spatialFibreVectors(1,1)
+      dnudx(1,2)=spatialFibreVectors(2,1)
+      dnudx(2,1)=spatialFibreVectors(1,2)
+      dnudx(2,2)=spatialFibreVectors(2,2)
+      !Calculate dxdnu by inverting dnudx
+      CALL Invert(dnudx(1:2,1:2),dxdnu(1:2,1:2),detdnudx,err,error,*999)
+      !Check orthogonality
+      IF(ABS(detdnudx-1.0_DP)>ZERO_TOLERANCE) THEN
+        localWarning="The spatial fibre coordinate transormation matrix is not orthogonal. det dnudx = "// &
+          & TRIM(NumberToVString(detdnudx,"*",err,error))//"."
+        CALL FlagWarning(localWarning,err,error,*999)
       ENDIF
-      !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
-      dXidNu(1,1)=dNudXi(1,1)
-      dXidNu(1,2)=dNudXi(2,1)
-      dXidNu(2,1)=dNudXi(1,2)
-      dXidNu(2,2)=dNudXi(2,2)
     CASE(3)
-      IF(ASSOCIATED(fibreInterpPoint)) THEN
-        !With fibres
-        !Get the fibre/roll, sheet/pitch and imbrication/yaw angles
-        angles(1:3)=fibreInterpPoint%values(1:3,NO_PART_DERIV)
-        !Calculate dNudXi as the 3D rotation matrix
-        c(1)=COS(angles(1))
-        c(2)=COS(angles(2))
-        c(3)=COS(angles(3))
-        s(1)=SIN(angles(1))
-        s(2)=SIN(angles(2))
-        s(3)=SIN(angles(3))
-        !Use yaw, pitch, roll convection i.e., extrinsic rotations about X-Y-Z
-        dNudXi(1,1)=c(2)*c(3)
-        dNudXi(1,2)=-1.0_DP*c(2)*s(3)
-        dNudXi(1,3)=s(2)
-        dNudXi(2,1)=c(1)*s(3)+c(3)*s(1)*s(2)
-        dNudXi(2,2)=c(1)*c(3)-s(1)*s(2)*s(3)
-        dNudXi(2,3)=-1.0_DP*c(2)*s(1)
-        dNudXi(3,1)=s(1)*s(3)-c(1)*c(3)*s(2)
-        dNudXi(3,2)=c(3)*s(1)+c(1)*s(2)*s(3)
-        dNudXi(3,3)=c(1)*c(2)                
-      ELSE
-        !Without fibres, the material coordinates are aligned with the xi coordinates
-        dNudXi(1,1)=1.0_DP
-        dNudXi(1,2)=0.0_DP
-        dNudXi(1,3)=0.0_DP
-        dNudXi(2,1)=0.0_DP
-        dNudXi(2,2)=1.0_DP
-        dNudXi(2,3)=0.0_DP
-        dNudXi(3,1)=0.0_DP
-        dNudXi(3,2)=0.0_DP
-        dNudXi(3,3)=1.0_DP
+      !Push material fibre vector through to the spatial coordinate system using the deformation gradient tensor
+      CALL MatrixVectorProduct(F(1:3,1:3),materialFibreVectors(1:3,1),deformedFibreVectors(1:3,1),err,error,*999)
+      CALL Normalise(deformedFibreVectors(1:3,1),spatialFibreVectors(1:3,1),err,error,*999)
+      !Push material sheet vector through to the spatial coordinate system using the deformation gradient tensor
+      CALL MatrixVectorProduct(F(1:3,1:3),materialFibreVectors(1:3,2),deformedFibreVectors(1:3,2),err,error,*999)
+      !Compute the deformed spatial normal vector from the cross product of the deformed fibre and sheet vectors
+      CALL CrossProduct(spatialFibreVectors(1:3,1),deformedFibreVectors(1:3,2),spatialFibreVectors(1:3,3), &
+        & err,error,*999)
+      CALL Normalise(spatialFibreVectors(1:3,3),spatialFibreVectors(1:3,3),err,error,*999)
+      !Compute the orthogonal spatial sheet vector from the corss product of the spatial normal and fibre vectors
+      CALL CrossProduct(spatialFibreVectors(1:3,3),spatialFibreVectors(1:3,1),spatialFibreVectors(1:3,2), &
+        & err,error,*999)
+      CALL Normalise(spatialFibreVectors(1:3,2),spatialFibreVectors(1:3,2),err,error,*999)
+      !Construct the transformation matrix
+      dnudx(1,1)=spatialFibreVectors(1,1)
+      dnudx(1,2)=spatialFibreVectors(2,1)
+      dnudx(1,3)=spatialFibreVectors(3,1)
+      dnudx(2,1)=spatialFibreVectors(1,2)
+      dnudx(2,2)=spatialFibreVectors(2,2)
+      dnudx(2,3)=spatialFibreVectors(3,2)
+      dnudx(3,1)=spatialFibreVectors(1,3)
+      dnudx(3,2)=spatialFibreVectors(2,3)
+      dnudx(3,3)=spatialFibreVectors(3,3)
+      !Calculate dxdnu by inverting dnudx
+      CALL Invert(dnudx(1:3,1:3),dxdnu(1:3,1:3),detdnudx,err,error,*999)
+      !Check orthogonality
+      IF(ABS(detdnudx-1.0_DP)>ZERO_TOLERANCE) THEN
+        localWarning="The spatial fibre coordinate transormation matrix is not orthogonal. det dnudx = "// &
+          & TRIM(NumberToVString(detdnudx,"*",err,error))//"."
+        CALL FlagWarning(localWarning,err,error,*999)
       ENDIF
-      !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
-      dXidNu(1,1)=dNudXi(1,1)
-      dXidNu(1,2)=dNudXi(2,1)
-      dXidNu(1,3)=dNudXi(3,1)
-      dXidNu(2,1)=dNudXi(1,2)
-      dXidNu(2,2)=dNudXi(2,2)
-      dXidNu(2,3)=dNudXi(3,2)
-      dXidNu(3,1)=dNudXi(1,3)
-      dXidNu(3,2)=dNudXi(2,3)
-      dXidNu(3,3)=dNudXi(3,3)
     CASE DEFAULT
-      localError="The number of dimensions in the geometric interpolated point of "// &
-        & TRIM(NumberToVString(numberOfNuDimensions,"*",err,error))// &
+      localError="The number of dimensions in the dependent interpolated point of "// &
+        & TRIM(NumberToVString(numberOfXDimensions,"*",err,error))// &
         & " is invalid. The number of dimensions must be >= 1 and <= 3."
       CALL FlagError(localError,err,error,*999)
     END SELECT
        
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Calculated material coordinate system:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Nu dimensions = ",numberOfNuDimensions,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt Xi:",err,error,*999)
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNuDimensions,1,1,numberOfXiDimensions, &
-        & numberOfXiDimensions,numberOfXiDimensions,dNudXi,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("    dNudXi','(",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Xi wrt Nu:",err,error,*999)
-      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfNuDimensions, &
-        & numberOfNuDimensions,numberOfNuDimensions,dXidNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("    dXidNu','(",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Calculated spatial fibre coordinate system:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of x dimensions = ",numberOfXDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of nu dimensions = ",numberOfNuDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of xi dimensions = ",numberOfXiDimensions,err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of nu wrt x:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNuDimensions,1,1,numberOfXDimensions, &
+        & numberOfXDimensions,numberOfXDimensions,dnudx,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    dnudx','(",I1,",:)',' :",3(X,E13.6))','(16X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of x wrt nu:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfNuDimensions, &
+        & numberOfNuDimensions,numberOfNuDimensions,dxdnu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    dxdnu','(",I1,",:)',' :",3(X,E13.6))','(16X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Unit spatial fibre coordinate system vectors:",err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,numberOfXDimensions,numberOfXDimensions, &
+        & spatialFibreVectors(:,1),'("    f             :",3(X,E13.6))','(16X,3(X,E13.6))',err,error,*999)
+      IF(numberOfXDimensions>1) THEN
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,numberOfXDimensions,numberOfXDimensions, &
+          & spatialFibreVectors(:,2),'("    g             :",3(X,E13.6))','(16X,3(X,E13.6))',err,error,*999)
+        IF(numberOfXDimensions>2) THEN
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,numberOfXDimensions,numberOfXDimensions, &
+            & spatialFibreVectors(:,3),'("    h             :",3(X,E13.6))','(16X,3(X,E13.6))',err,error,*999)
+        ENDIF
+      ENDIF
     ENDIF
    
     EXITS("CoordinateSystem_SpatialFibreSystemCalculate")
