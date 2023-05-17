@@ -2948,9 +2948,12 @@ CONTAINS
     CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,1,residualVector,err,error,*999)
     NULLIFY(jacobianMatrix)
     CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,1,jacobianMatrix,err,error,*999)
-    updateJacobian=jacobianMatrix%updateJacobian
+    CALL JacobianMatrix_UpdateMatrixGet(jacobianMatrix,updateJacobian,err,error,*999)
     
     IF(updateJacobian) THEN
+      
+      NULLIFY(equationsInterpolation)
+      CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
       
       NULLIFY(lhsMapping)
       CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
@@ -3312,6 +3315,9 @@ CONTAINS
 
     IF(update) THEN
     
+      NULLIFY(equationsInterpolation)
+      CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+      
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       NULLIFY(dependentField)

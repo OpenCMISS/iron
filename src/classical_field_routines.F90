@@ -371,7 +371,7 @@ CONTAINS
     CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
+      CALL ReactionDiffusion_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
@@ -430,7 +430,7 @@ CONTAINS
     CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
       CALL Advection_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
+      CALL ReactionDiffusion_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT

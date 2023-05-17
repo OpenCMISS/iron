@@ -480,6 +480,11 @@ MODULE EquationsSetAccessRoutines
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1=1 !<u(x,y)=tanh(1 - alpha.(x.tan(Phi) - y)),this is a steady-state solution
   !>@}
+  !> \addtogroup EquationsSetRoutines_ReactionDiffusionAnalyticFunctionTypes EquationsSet::Constants::ReactionDiffusionAnalyticFunctionTypes
+  !> \brief The analytic function types for a reaction-diffusion equation
+  !>@{  
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_ONE_DIM_1=1 !<Fisher's equation, u(x,t)=1/[1 + A.exp(-5.c.t/6 +/- \sqrt(6.c)x/6)]^2
+  !>@}
   !> \addtogroup EquationsSetRoutines_LinearElasticityAnalyticFunctionTypes EquationsSet::Constants::LinearElasticityAnalyticFunctionTypes
   !> \brief The analytic function types for a Linear Elasticity equation
   !>@{
@@ -767,6 +772,8 @@ MODULE EquationsSetAccessRoutines
     & EQUATIONS_SET_MULTI_COMP_DIFFUSION_THREE_COMP_THREE_DIM,EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM
 
   PUBLIC EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1
+
+  PUBLIC EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_ONE_DIM_1
 
   PUBLIC EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1,EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1, &
     & EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_2,EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1, &

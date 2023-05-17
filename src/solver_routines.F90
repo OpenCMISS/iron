@@ -14700,6 +14700,7 @@ CONTAINS
     CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
     NULLIFY(solverEquations)
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+    CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
     SELECT CASE(linesearchSolver%solverLibrary)
     CASE(SOLVER_CMISS_LIBRARY)
       CALL FlagError("Not implemented.",err,error,*999)
@@ -14794,31 +14795,30 @@ CONTAINS
       NULLIFY(solverMatrices)
       CALL SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*999)
       IF(.NOT.ASSOCIATED(solverMatrices)) THEN
-      CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
-      CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
-      CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
-      SELECT CASE(sparsityType)
-      CASE(SOLVER_SPARSE_MATRICES)
-        CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-      CASE(SOLVER_FULL_MATRICES)
-        CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
-      CASE DEFAULT
-        localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
-          & " is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
-      SELECT CASE(symmetryType)
-      CASE(SOLVER_SYMMETRIC_MATRICES)
-        CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
-      CASE(SOLVER_UNSYMMETRIC_MATRICES)
-        CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
-      CASE DEFAULT
-        localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
-          & " is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
+        CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
+        SELECT CASE(sparsityType)
+        CASE(SOLVER_SPARSE_MATRICES)
+          CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+        CASE(SOLVER_FULL_MATRICES)
+          CALL SolverMatrices_StorageTypesSet(solverMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+        CASE DEFAULT
+          localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+        SELECT CASE(symmetryType)
+        CASE(SOLVER_SYMMETRIC_MATRICES)
+          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
+        CASE(SOLVER_UNSYMMETRIC_MATRICES)
+          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
+        CASE DEFAULT
+          localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
       ENDIF
       !Link linear solver
       linkedLinearSolver%solverEquations=>solver%solverEquations
