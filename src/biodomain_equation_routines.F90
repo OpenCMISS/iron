@@ -65,6 +65,7 @@ MODULE BIODOMAIN_EQUATION_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Kinds
+  USE Maths
   USE MatrixVector
   USE PROBLEM_CONSTANTS
   USE Strings
@@ -2277,9 +2278,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) FIELD_VAR_TYPE,mh,mhs,ms,ng,nh,nhs,ni,nj,ns
+    INTEGER(INTG) FIELD_VAR_TYPE,mh,mhs,ms,ng,nh,nhs,ni,nj,ns,numberOfDimensions
     LOGICAL :: USE_FIBRES
-    REAL(DP) :: CONDUCTIVITY(3,3),DPHIDX(3,64),RWG,SUM
+    REAL(DP) :: CONDUCTIVITY(3,3),DPHIDX(3,64),RWG,SUM,matConductivity(3,3),tempTensor1(3,3),tempTensor2(3,3),dNudXi(3,3), &
+      & dXidNu(3,3),dXidX(3,3),dXdXi(3,3),angles(3),c(3),s(3)
     TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS,FIBRE_BASIS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -2351,8 +2353,8 @@ CONTAINS
               IF(USE_FIBRES) THEN
                 CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                   & fibreInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(FIBRE_BASIS%NUMBER_OF_XI,equations%interpolation% &
-                  & fibreInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                !CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(FIBRE_BASIS%NUMBER_OF_XI,equations%interpolation% &
+                !  & fibreInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               ENDIF
               !Calculate RWG.
               RWG=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
@@ -2361,7 +2363,123 @@ CONTAINS
               CONDUCTIVITY=0.0_DP
               IF(USE_FIBRES) THEN
                 !Calculate the conductivity tensor in fibre coordinates
-                CALL FlagError("Not implemented.",err,error,*999)
+                numberOfDimensions=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr% &
+                  & NUMBER_OF_X_DIMENSIONS
+                SELECT CASE(numberOfDimensions)
+                CASE(1)
+                  !In 1D the material fibre coordinates are aligned with the xi coordinates regardless
+                  dNudXi(1,1)=1.0_DP
+                  !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
+                  dXidNu(1,1)=1.0_DP
+                  !Get the dXdXi and dXidX from the metric tensor
+                  dXdXi(1,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(1,1)
+                  dXidX(1,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(1,1)
+                  !material conductivity tensor
+                  matConductivity(1,1)=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(3,1)
+                  !transform tensor to spatial conductivity tensor
+                  conductivity(1,1)=matConductivity(1,1)
+                CASE(2)
+                  !Get the fibre angle
+                  angles(1)=equations%interpolation%fibreInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
+                  !Calculate dNudXi as the rotation matrix
+                  dNudXi(1,1)=COS(angles(1))
+                  dNudXi(1,2)=SIN(angles(1))
+                  dNudXi(2,1)=-1.0_DP*SIN(angles(1))
+                  dNudXi(2,2)=COS(angles(1))
+                  !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
+                  dXidNu(1,1)=dNudXi(1,1)
+                  dXidNu(1,2)=dNudXi(2,1)
+                  dXidNu(2,1)=dNudXi(1,2)
+                  dXidNu(2,2)=dNudXi(2,2)
+                  !Get the dXdXi and dXidX from the metric tensor
+                  dXdXi(1,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(1,1)
+                  dXdXi(1,2)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(1,2)
+                  dXdXi(2,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(2,1)
+                  dXdXi(2,2)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(2,2)
+                  dXidX(1,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(1,1)
+                  dXidX(1,2)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(1,2)
+                  dXidX(2,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(2,1)
+                  dXidX(2,2)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(2,2)
+                  !material conductivity tensor
+                  matConductivity(1,1)=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(3,1)
+                  matConductivity(1,2)=0.0_DP
+                  matConductivity(2,1)=0.0_DP
+                  matConductivity(2,2)=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(4,1)
+                  !transform tensor to spatial conductivity tensor
+                  CALL MatrixProduct(matConductivity(1:2,1:2),dNudXi(1:2,1:2),tempTensor1(1:2,1:2),err,error,*999)
+                  CALL MatrixProduct(dXidNu(1:2,1:2),tempTensor1(1:2,1:2),tempTensor2(1:2,1:2),err,error,*999)
+                  CALL MatrixProduct(tempTensor2(1:2,1:2),dXidX(1:2,1:2),tempTensor1(1:2,1:2),err,error,*999)
+                  CALL MatrixProduct(dXdXi(1:2,1:2),tempTensor1(1:2,1:2),conductivity(1:2,1:2),err,error,*999)
+                CASE(3)
+                  !Get the fibre/roll, sheet/pitch and imbrication/yaw angles
+                  angles(1:3)=equations%interpolation%fibreInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1:3,NO_PART_DERIV)
+                  !Calculate dNudXi as the 3D rotation matrix
+                  c(1)=COS(angles(1))
+                  c(2)=COS(angles(2))
+                  c(3)=COS(angles(3))
+                  s(1)=SIN(angles(1))
+                  s(2)=SIN(angles(2))
+                  s(3)=SIN(angles(3))
+                  !Use yaw, pitch, roll convection i.e., extrinsic rotations about X-Y-Z
+                  dNudXi(1,1)=c(2)*c(3)
+                  dNudXi(1,2)=-1.0_DP*c(2)*s(3)
+                  dNudXi(1,3)=s(2)
+                  dNudXi(2,1)=c(1)*s(3)+c(3)*s(1)*s(2)
+                  dNudXi(2,2)=c(1)*c(3)-s(1)*s(2)*s(3)
+                  dNudXi(2,3)=-1.0_DP*c(2)*s(1)
+                  dNudXi(3,1)=s(1)*s(3)-c(1)*c(3)*s(2)
+                  dNudXi(3,2)=c(3)*s(1)+c(1)*s(2)*s(3)
+                  dNudXi(3,3)=c(1)*c(2)                
+                  !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
+                  dXidNu(1,1)=dNudXi(1,1)
+                  dXidNu(1,2)=dNudXi(2,1)
+                  dXidNu(1,3)=dNudXi(3,1)
+                  dXidNu(2,1)=dNudXi(1,2)
+                  dXidNu(2,2)=dNudXi(2,2)
+                  dXidNu(2,3)=dNudXi(3,2)
+                  dXidNu(3,1)=dNudXi(1,3)
+                  dXidNu(3,2)=dNudXi(2,3)
+                  dXidNu(3,3)=dNudXi(3,3)
+                  !Get the dXdXi and dXidX from the metric tensor
+                  dXdXi(1,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(1,1)
+                  dXdXi(1,2)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(1,2)
+                  dXdXi(1,3)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(1,3)
+                  dXdXi(2,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(2,1)
+                  dXdXi(2,2)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(2,2)
+                  dXdXi(2,3)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(2,3)
+                  dXdXi(3,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(3,1)
+                  dXdXi(3,2)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(3,2)
+                  dXdXi(3,3)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DX_DXI(3,3)
+                  dXidX(1,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(1,1)
+                  dXidX(1,2)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(1,2)
+                  dXidX(1,3)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(1,3)
+                  dXidX(2,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(2,1)
+                  dXidX(2,2)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(2,2)
+                  dXidX(2,3)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(2,3)
+                  dXidX(3,1)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(3,1)
+                  dXidX(3,2)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(3,2)
+                  dXidX(3,3)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(3,3)
+                  !material conductivity tensor
+                  matConductivity(1,1)=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(3,1)
+                  matConductivity(1,2)=0.0_DP
+                  matConductivity(1,3)=0.0_DP
+                  matConductivity(2,1)=0.0_DP
+                  matConductivity(2,2)=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(4,1)
+                  matConductivity(2,3)=0.0_DP
+                  matConductivity(3,1)=0.0_DP
+                  matConductivity(3,2)=0.0_DP
+                  matConductivity(3,3)=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(5,1)
+                  !transform tensor to spatial conductivity tensor
+                  CALL MatrixProduct(matConductivity(1:3,1:3),dNudXi(1:3,1:3),tempTensor1(1:3,1:3),err,error,*999)
+                  CALL MatrixProduct(dXidNu(1:3,1:3),tempTensor1(1:3,1:3),tempTensor2(1:3,1:3),err,error,*999)
+                  CALL MatrixProduct(tempTensor2(1:3,1:3),dXidX(1:3,1:3),tempTensor1(1:3,1:3),err,error,*999)
+                  CALL MatrixProduct(dXdXi(1:3,1:3),tempTensor1(1:3,1:3),conductivity(1:3,1:3),err,error,*999)
+                CASE DEFAULT
+                  LOCAL_ERROR="The number of dimensions in the geometric interpolated point of "// &
+                    & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
+                    & " is invalid. The number of dimensions must be >= 1 and <= 3."
+                  CALL FlagError(LOCAL_ERROR,err,error,*999)
+                END SELECT
               ELSE
                 !Use the conductivity tensor in geometric coordinates
                 DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS

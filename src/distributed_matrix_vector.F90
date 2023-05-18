@@ -129,7 +129,9 @@ MODULE DistributedMatrixVector
 
   !Module variables
 
-  INTEGER(INTG), SAVE :: distributedDataId=100000000
+  !CPB 13/3/19 TEMPORARY TO GET AROUND INTEL MPI BUG
+  !INTEGER(INTG), SAVE :: distributedDataId=100000000
+  INTEGER(INTG), SAVE :: distributedDataId=1000
 
   !Interfaces
 

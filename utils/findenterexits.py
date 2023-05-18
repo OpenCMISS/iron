@@ -129,12 +129,6 @@ for source in source_files:
 	      if startroutine_match.group(1) != None:
 	          pure_routine = 1
 	      in_routine = 1
-	      enters = []
-	      exits = []
-	      errors = []
-	      errorsexits = []
-	      num_returns = 0
-	      problem_return = 0
               if debug_level >= 2:
 	          print("  Routine : %s\n") % routinename
 	          print("    Start routine ....\n") 
