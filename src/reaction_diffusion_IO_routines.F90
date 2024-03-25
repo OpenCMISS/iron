@@ -103,6 +103,7 @@ CONTAINS
     LOGICAL :: OUTPUT_SOURCE
     TYPE(VARYING_STRING) :: FILENAME !<the prefix name of file.
     CHARACTER(50) :: INTG_STRING,INTG_STRING2
+    CHARACTER(255) :: FMT_STRING
 
 
     ENTERS("REACTION_DIFFUSION_IO_WRITE_CMGUI",ERR,ERROR,*999)
@@ -145,14 +146,14 @@ CONTAINS
 
     OPEN(UNIT=myComputationalNodeNumber, FILE=CHAR(FILENAME),STATUS='unknown')
     ! WRITING HEADER INFORMATION
-    WRITE(myComputationalNodeNumber,*) 'Group name: Cell'
+    FMT_STRING='("Group name: '//TRIM(REGION%LABEL)//'")'
+    WRITE(myComputationalNodeNumber,FMT_STRING)
     WRITE(INTG_STRING,'(I0)') NumberOfOutputFields
     WRITE(myComputationalNodeNumber,*) '#Fields=',TRIM(INTG_STRING)
 
     ValueIndex=1
-    WRITE(INTG_STRING,'(I0)') NumberOfDimensions
-    WRITE(myComputationalNodeNumber,*) &
-      & ' 1) coordinates,  coordinate, rectangular cartesian, #Components=',TRIM(INTG_STRING)
+    FMT_STRING='(" 1) Coordinates, coordinate, rectangular cartesian, #Components=",I0)'
+    WRITE(myComputationalNodeNumber,FMT_STRING) NumberOfDimensions
     DO I=1,NumberOfDimensions
       IF(I==1) THEN
         WRITE(INTG_STRING,'(I0)') ValueIndex
@@ -167,9 +168,9 @@ CONTAINS
       ValueIndex=ValueIndex+1
     END DO
 
-    WRITE(INTG_STRING,'(I0)') NumberOfVariableComponents
-    WRITE(myComputationalNodeNumber,*) ' 2) dependent, field, rectangular cartesian, #Components=', &
-      & TRIM(INTG_STRING)
+    FMT_STRING='(" 2) '//TRIM(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
+      & variables(1)%variable_label)//', field, rectangular cartesian, #Components=",I0)'
+    WRITE(myComputationalNodeNumber,FMT_STRING) NumberOfVariableComponents
 
     DO I=1,NumberOfVariableComponents
       WRITE(INTG_STRING,'(I0)') ValueIndex
@@ -180,9 +181,9 @@ CONTAINS
     END DO
 
     IF( OUTPUT_SOURCE ) THEN !Watch out that no numbering conflict occurs with Analytic: 4.)
-      WRITE(INTG_STRING,'(I0)') NumberOfSourceComponents
-      WRITE(myComputationalNodeNumber,*) ' 3) source, field, rectangular cartesian, #Components=', &
-        & TRIM(INTG_STRING)
+      FMT_STRING='(" 3) '//TRIM(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field% &
+        & variables(1)%variable_label)//', field, rectangular cartesian, #Components=",I0)'
+      WRITE(myComputationalNodeNumber,FMT_STRING) NumberOfSourceComponents
       DO I=1,NumberOfSourceComponents
         WRITE(INTG_STRING,'(I0)') ValueIndex
         WRITE(INTG_STRING2,'(I0)') I
@@ -250,7 +251,8 @@ CONTAINS
       CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Writing Elements...",ERR,ERROR,*999)
       FILENAME="./output/"//TRIM(NAME)//".exelem"
       OPEN(UNIT=myComputationalNodeNumber, FILE=CHAR(FILENAME),STATUS='unknown')
-      WRITE(myComputationalNodeNumber,*) 'Group name: Cell'
+      FMT_STRING='("Group name: '//TRIM(REGION%LABEL)//'")'
+      WRITE(myComputationalNodeNumber,FMT_STRING)
       IF (BasisType==1) THEN !lagrange basis in 1 and 2D
         WRITE(INTG_STRING,'(I0)') NumberOfDimensions
         WRITE(myComputationalNodeNumber,*) 'Shape.  Dimension= ',TRIM(INTG_STRING)
@@ -343,17 +345,16 @@ CONTAINS
       NumberOfFieldComponents(3) = NumberOfSourceComponents
       DO I=1,NumberOfOutputFields
         IF(I==1)THEN
-          WRITE(INTG_STRING,'(I0)') NumberOfDimensions
-          WRITE(myComputationalNodeNumber,*) &
-            & ' 1) coordinates,  coordinate, rectangular cartesian, #Components= ',TRIM(INTG_STRING)
+          FMT_STRING='(" 1) Coordinates, coordinate, rectangular cartesian, #Components=",I0)'
+          WRITE(myComputationalNodeNumber,FMT_STRING) NumberOfDimensions
         ELSE IF(I==2) THEN
-          WRITE(INTG_STRING,'(I0)') NumberOfVariableComponents
-          WRITE(myComputationalNodeNumber,*) &
-          & ' 2) dependent,  field,  rectangular cartesian, #Components= ',TRIM(INTG_STRING)
+          FMT_STRING='(" 2) '//TRIM(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent% &
+            & dependent_field%variables(1)%variable_label)//', field, rectangular cartesian, #Components=",I0)'
+          WRITE(myComputationalNodeNumber,FMT_STRING) NumberOfVariableComponents
         ELSE IF(I==3) THEN
-          WRITE(INTG_STRING,'(I0)') NumberOfSourceComponents
-          WRITE(myComputationalNodeNumber,*) &
-            & ' 3) source,  field,  rectangular cartesian, #Components= ',TRIM(INTG_STRING)
+          FMT_STRING='(" 3) '//TRIM(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source% &
+            & source_field%variables(1)%variable_label)//', field, rectangular cartesian, #Components=",I0)'
+          WRITE(myComputationalNodeNumber,FMT_STRING) NumberOfSourceComponents
         END IF
 
         DO J=1,NumberOfFieldComponents(I)
